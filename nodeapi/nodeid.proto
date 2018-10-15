@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package nodeapi;
+
+service Node {
+    rpc RegisterNode(NodeInfo) returns (NodeID) {}
+    rpc QueryNode(NodeID) returns (NodeInfo){}
+    rpc UnRegisterNode(NodeID) returns (Response){}
+}
+
+message NodeInfo{
+    string node_name = 1;
+    bool is_server = 2; // node is server?
+}
+
+message NodeID{
+    int32 node_id = 1;
+    fixed64 secret = 2; // secret id with node_server (Not used for Query)
+}
+
+message Response {
+    bool ok = 1;
+    string err = 2;
+}

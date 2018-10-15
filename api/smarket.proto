@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package api;
+
+option go_package="api";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "fleet/fleet.proto";
+import "rideshare/rideshare.proto";
+import "adservice/adservice.proto";
+import "library/library.proto";
+
+service SMarket {
+    rpc RegisterDemand(Demand) returns (Response) {}
+
+    rpc RegisterSupply(Supply) returns (Response) {}
+
+    rpc ProposeDemand(Demand) returns (Response) {}
+
+    rpc ProposeSupply(Supply) returns (Response) {}
+
+    rpc ReserveSupply(Target) returns (ConfirmResponse) {}
+
+    rpc ReserveDemand(Target) returns (ConfirmResponse) {}
+
+    rpc SelectSupply(Target) returns (ConfirmResponse) {}
+
+    rpc SelectDemand(Target) returns (ConfirmResponse) {}
+
+    rpc Confirm(Target) returns (Response){}
+
+    rpc SubscribeDemand(Channel) returns (stream Demand) {}
+
+    rpc SubscribeSupply(Channel) returns (stream Supply) {}
+}
+
+message Response {
+    bool ok = 1;
+    string err = 2;
+}
+
+message ConfirmResponse{
+    bool ok = 1;
+    google.protobuf.Duration wait =2;
+    string err = 3;
+}
+
+enum MarketType {
+    NONE = 0;
+    RIDE_SHARE = 1;
+    AD_SERVICE = 2;
+    LIB_SERVICE = 3;
+    END = 10;
+}
+
+message Supply{
+    fixed64 id = 1;
+    fixed64 sender_id = 2;
+    fixed64 target_id = 3;// for message id (not for sender_id)
+    MarketType type = 4;
+    string supply_name = 5;
+    google.protobuf.Timestamp ts = 6;
+    //message content = 7; // json
+    string arg_json = 7;
+    oneof arg_oneof {
+        api.fleet.Fleet arg_Fleet  = 10;   // message Fleet
+        api.rideshare.RideShare arg_RideShare = 11;
+        api.adservice.AdService arg_AdService = 12;
+        api.library.LibService arg_LibService = 13;
+    }
+}
+
+message Demand {
+    fixed64 id = 1;
+    fixed64 sender_id = 2;
+    fixed64 target_id = 3; // for message id (not for sender_id)
+    MarketType type = 4;
+    string demand_name = 5;
+    google.protobuf.Timestamp ts = 6;
+    //message content = 7; // json
+    string arg_json = 7;
+    oneof arg_oneof {
+        api.fleet.Fleet arg_Fleet = 10;   // message Fleet
+        api.rideshare.RideShare arg_RideShare = 11;
+        api.adservice.AdService arg_AdService = 12;
+        api.library.LibService arg_LibService = 13;
+    }
+}
+
+
+
+message Target {
+    fixed64 id = 1;
+    fixed64 sender_id = 2;
+    fixed64 target_id = 3; // for target
+    MarketType type = 4; 
+    google.protobuf.Duration wait = 5;
+}
+
+message Channel {
+    fixed64 client_id = 1;
+    MarketType type = 2;
+    string arg_json = 3;  // for Channel Argument
+}

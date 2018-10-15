@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package api.common;
+
+option go_package="api/common";
+
+import "google/protobuf/timestamp.proto";
+
+message Place {
+    oneof value {
+        Point point = 1;
+        Areas areas = 2;
+    }
+}
+
+message Point {
+    double latitude = 1;
+    double longitude = 2;
+    string name = 3;
+}
+
+message Areas {
+    repeated Area values = 1;
+}
+
+message Area {
+    repeated Point points = 1;
+}
+
+message Time {
+     oneof value {
+        google.protobuf.Timestamp timestamp = 1;
+        Period periods = 2;
+        OtherTime other = 3;
+     }
+}
+
+message Periods {
+    repeated Period values = 1;
+}
+
+message Period {
+    google.protobuf.Timestamp from = 1;
+    google.protobuf.Timestamp to = 2;
+    repeated RepeatOption options = 3;
+}
+
+message RepeatOption {
+    repeated bool weeks = 1;
+    repeated bool weekdays = 2;
+    repeated uint32 times = 3;
+}
+
+enum OtherTime {
+    NONE = 0;
+    AS_SONN_AS = 1;
+}

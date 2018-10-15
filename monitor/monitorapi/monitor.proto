@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package monitorapi;
+
+service Monitor {
+    rpc SendReport(Mes) returns (Response){}
+}
+
+message Mes{
+    string msgtype = 1;
+    int32   chtype = 2;
+    uint64   src = 3;
+    uint64   dst = 4;
+    string args = 5;
+    string from_id = 6;
+    string to_id = 7;
+}
+
+
+message Response {
+    bool ok = 1;
+    string err = 2;
+}

@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+package api.rideshare;
+
+option go_package="api/rideshare";
+
+import "google/protobuf/duration.proto";
+import "api/common/common.proto";
+
+message RideShare {
+    api.common.Place depart_point = 1;
+    api.common.Place arrive_point = 2;
+    api.common.Time  depart_time = 3;
+    api.common.Time  arrive_time = 4;
+    uint32 num_adult = 5;
+    uint32 num_childe = 6;
+    repeated Route routes = 7;
+    uint32 amount_price = 8;
+}
+
+message Route {
+    TrafficType traffic_type = 1;
+    string transport_name = 2;
+    string transport_line = 3;
+    api.common.Place depart_point = 4;
+    api.common.Place arrive_point = 5;
+    api.common.Time depart_time = 6;
+    api.common.Time arrive_time = 7;
+    google.protobuf.Duration amount_time = 8;
+    uint32 amount_price = 9;
+    uint32 amount_sheets = 10;
+    uint32 available_sheets = 11;
+}
+
+enum TrafficType {
+    TAXI = 0;
+    BUS = 1;
+    TRAIN = 2;
+}
