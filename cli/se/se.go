@@ -14,7 +14,7 @@
 
 package main
 
-import "cli/se/cmd"
+import "github.com/synerex/synerex_alpha/cli/se/cmd"
 
 func main() {
 	cmd.Execute()
