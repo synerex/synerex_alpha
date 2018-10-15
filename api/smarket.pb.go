@@ -6,12 +6,12 @@ package api
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import adservice "api/adservice"
+import fleet "api/fleet"
+import library "api/library"
+import rideshare "api/rideshare"
 import duration "github.com/golang/protobuf/ptypes/duration"
 import timestamp "github.com/golang/protobuf/ptypes/timestamp"
-import adservice "github.com/synerex/synerex_alpha/api/adservice"
-import fleet "github.com/synerex/synerex_alpha/api/fleet"
-import library "github.com/synerex/synerex_alpha/api/library"
-import rideshare "github.com/synerex/synerex_alpha/api/rideshare"
 
 import (
 	context "golang.org/x/net/context"
@@ -58,7 +58,7 @@ func (x MarketType) String() string {
 	return proto.EnumName(MarketType_name, int32(x))
 }
 func (MarketType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_smarket_d288598fe4bb1dad, []int{0}
+	return fileDescriptor_smarket_aa340c6406d0ebe9, []int{0}
 }
 
 type Response struct {
@@ -73,7 +73,7 @@ func (m *Response) Reset()         { *m = Response{} }
 func (m *Response) String() string { return proto.CompactTextString(m) }
 func (*Response) ProtoMessage()    {}
 func (*Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_smarket_d288598fe4bb1dad, []int{0}
+	return fileDescriptor_smarket_aa340c6406d0ebe9, []int{0}
 }
 func (m *Response) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Response.Unmarshal(m, b)
@@ -120,7 +120,7 @@ func (m *ConfirmResponse) Reset()         { *m = ConfirmResponse{} }
 func (m *ConfirmResponse) String() string { return proto.CompactTextString(m) }
 func (*ConfirmResponse) ProtoMessage()    {}
 func (*ConfirmResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_smarket_d288598fe4bb1dad, []int{1}
+	return fileDescriptor_smarket_aa340c6406d0ebe9, []int{1}
 }
 func (m *ConfirmResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConfirmResponse.Unmarshal(m, b)
@@ -185,7 +185,7 @@ func (m *Supply) Reset()         { *m = Supply{} }
 func (m *Supply) String() string { return proto.CompactTextString(m) }
 func (*Supply) ProtoMessage()    {}
 func (*Supply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_smarket_d288598fe4bb1dad, []int{2}
+	return fileDescriptor_smarket_aa340c6406d0ebe9, []int{2}
 }
 func (m *Supply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Supply.Unmarshal(m, b)
@@ -453,7 +453,7 @@ func (m *Demand) Reset()         { *m = Demand{} }
 func (m *Demand) String() string { return proto.CompactTextString(m) }
 func (*Demand) ProtoMessage()    {}
 func (*Demand) Descriptor() ([]byte, []int) {
-	return fileDescriptor_smarket_d288598fe4bb1dad, []int{3}
+	return fileDescriptor_smarket_aa340c6406d0ebe9, []int{3}
 }
 func (m *Demand) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Demand.Unmarshal(m, b)
@@ -712,7 +712,7 @@ func (m *Target) Reset()         { *m = Target{} }
 func (m *Target) String() string { return proto.CompactTextString(m) }
 func (*Target) ProtoMessage()    {}
 func (*Target) Descriptor() ([]byte, []int) {
-	return fileDescriptor_smarket_d288598fe4bb1dad, []int{4}
+	return fileDescriptor_smarket_aa340c6406d0ebe9, []int{4}
 }
 func (m *Target) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Target.Unmarshal(m, b)
@@ -780,7 +780,7 @@ func (m *Channel) Reset()         { *m = Channel{} }
 func (m *Channel) String() string { return proto.CompactTextString(m) }
 func (*Channel) ProtoMessage()    {}
 func (*Channel) Descriptor() ([]byte, []int) {
-	return fileDescriptor_smarket_d288598fe4bb1dad, []int{5}
+	return fileDescriptor_smarket_aa340c6406d0ebe9, []int{5}
 }
 func (m *Channel) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Channel.Unmarshal(m, b)
@@ -1288,9 +1288,9 @@ var _SMarket_serviceDesc = grpc.ServiceDesc{
 	Metadata: "smarket.proto",
 }
 
-func init() { proto.RegisterFile("smarket.proto", fileDescriptor_smarket_d288598fe4bb1dad) }
+func init() { proto.RegisterFile("smarket.proto", fileDescriptor_smarket_aa340c6406d0ebe9) }
 
-var fileDescriptor_smarket_d288598fe4bb1dad = []byte{
+var fileDescriptor_smarket_aa340c6406d0ebe9 = []byte{
 	// 736 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x56, 0x4d, 0x6f, 0xda, 0x4a,
 	0x14, 0x05, 0x9b, 0x00, 0xb9, 0x7c, 0xbe, 0xd1, 0x7b, 0x7a, 0x0e, 0x4f, 0x7a, 0x89, 0xe8, 0xa2,

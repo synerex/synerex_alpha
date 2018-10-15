@@ -64,10 +64,10 @@ message Supply{
     //message content = 7; // json
     string arg_json = 7;
     oneof arg_oneof {
-        api.fleet.Fleet arg_Fleet  = 10;   // message Fleet
-        api.rideshare.RideShare arg_RideShare = 11;
-        api.adservice.AdService arg_AdService = 12;
-        api.library.LibService arg_LibService = 13;
+        fleet.Fleet arg_Fleet  = 10;   // message Fleet
+        rideshare.RideShare arg_RideShare = 11;
+        adservice.AdService arg_AdService = 12;
+        library.LibService arg_LibService = 13;
     }
 }
 
@@ -81,10 +81,10 @@ message Demand {
     //message content = 7; // json
     string arg_json = 7;
     oneof arg_oneof {
-        api.fleet.Fleet arg_Fleet = 10;   // message Fleet
-        api.rideshare.RideShare arg_RideShare = 11;
-        api.adservice.AdService arg_AdService = 12;
-        api.library.LibService arg_LibService = 13;
+        fleet.Fleet arg_Fleet = 10;   // message Fleet
+        rideshare.RideShare arg_RideShare = 11;
+        adservice.AdService arg_AdService = 12;
+        library.LibService arg_LibService = 13;
     }
 }
 

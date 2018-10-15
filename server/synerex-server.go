@@ -1,10 +1,10 @@
 package main
 
-//go:generate protoc -I .. --go_out=.. api/common/common.proto
-//go:generate protoc -I .. --go_out=.. api/adservice/adservice.proto
-//go:generate protoc -I ..  --go_out=.. api/fleet/fleet.proto
-//go:generate protoc -I ..  --go_out=.. api/library/library.proto
-//go:generate protoc -I ..  --go_out=.. api/rideshare/rideshare.proto
+//go:generate protoc -I ../api --go_out=.. common/common.proto
+//go:generate protoc -I ../api --go_out=.. adservice/adservice.proto
+//go:generate protoc -I ../api  --go_out=.. fleet/fleet.proto
+//go:generate protoc -I ../api  --go_out=.. library/library.proto
+//go:generate protoc -I ../api  --go_out=.. rideshare/rideshare.proto
 
 //go:generate protoc -I ../api -I .. --go_out=plugins=grpc:../api smarket.proto
 
