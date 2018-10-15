@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.fleet;
 
-option go_package="api/fleet";
+option go_package="github.com/synerex/synerex_alpha/api/fleet";
 
 message FleetService {
     message ShareRideSerivce {

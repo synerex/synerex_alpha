@@ -21,9 +21,9 @@ import (
 
 	"strconv"
 
-	pb "../api"
-	"../monitor/monitorapi"
-	"../sxutil"
+	"github.com/synerex/synerex_alpha/api"
+	"github.com/synerex/synerex_alpha/monitor/monitorapi"
+	"github.com/synerex/synerex_alpha/sxutil"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -35,11 +35,11 @@ var (
 )
 
 type synerexServerInfo struct {
-	demandChans  [pb.MarketType_END][]chan *pb.Demand // create slices for each MarketType(each slice contains channels)
-	supplyChans  [pb.MarketType_END][]chan *pb.Supply
-	demandMap    map[sxutil.IDType]chan *pb.Demand // map from IDtype to Demand channel
-	supplyMap    map[sxutil.IDType]chan *pb.Supply // map from IDtype to Supply channel
-	waitConfirms map[sxutil.IDType]chan *pb.Target // confirm maps
+	demandChans  [api.MarketType_END][]chan *api.Demand // create slices for each MarketType(each slice contains channels)
+	supplyChans  [api.MarketType_END][]chan *api.Supply
+	demandMap    map[sxutil.IDType]chan *api.Demand // map from IDtype to Demand channel
+	supplyMap    map[sxutil.IDType]chan *api.Supply // map from IDtype to Supply channel
+	waitConfirms map[sxutil.IDType]chan *api.Target // confirm maps
 	mu           sync.RWMutex
 	messageStore *MessageStore // message store
 }
@@ -49,7 +49,7 @@ func init() {
 }
 
 // Implementation of each Protocol API
-func (s *synerexServerInfo) RegisterDemand(c context.Context, dm *pb.Demand) (r *pb.Response, e error) {
+func (s *synerexServerInfo) RegisterDemand(c context.Context, dm *api.Demand) (r *api.Response, e error) {
 	// send demand for desired channels
 	s.mu.RLock()
 	chs := s.demandChans[dm.GetType()]
@@ -58,11 +58,11 @@ func (s *synerexServerInfo) RegisterDemand(c context.Context, dm *pb.Demand) (r 
 		ch <- dm
 	}
 	s.mu.RUnlock()
-	r = &pb.Response{Ok: true, Err: ""}
+	r = &api.Response{Ok: true, Err: ""}
 	return r, nil
 }
 
-func (s *synerexServerInfo) RegisterSupply(c context.Context, sp *pb.Supply) (r *pb.Response, e error) {
+func (s *synerexServerInfo) RegisterSupply(c context.Context, sp *api.Supply) (r *api.Response, e error) {
 	s.mu.RLock()
 	chs := s.supplyChans[sp.GetType()]
 	for i := range chs {
@@ -70,10 +70,10 @@ func (s *synerexServerInfo) RegisterSupply(c context.Context, sp *pb.Supply) (r 
 		ch <- sp
 	}
 	s.mu.RUnlock()
-	r = &pb.Response{Ok: true, Err: ""}
+	r = &api.Response{Ok: true, Err: ""}
 	return r, nil
 }
-func (s *synerexServerInfo) ProposeDemand(c context.Context, dm *pb.Demand) (r *pb.Response, e error) {
+func (s *synerexServerInfo) ProposeDemand(c context.Context, dm *api.Demand) (r *api.Response, e error) {
 	s.mu.RLock()
 	chs := s.demandChans[dm.GetType()]
 	for i := range chs {
@@ -81,10 +81,10 @@ func (s *synerexServerInfo) ProposeDemand(c context.Context, dm *pb.Demand) (r *
 		ch <- dm
 	}
 	s.mu.RUnlock()
-	r = &pb.Response{Ok: true, Err: ""}
+	r = &api.Response{Ok: true, Err: ""}
 	return r, nil
 }
-func (s *synerexServerInfo) ProposeSupply(c context.Context, sp *pb.Supply) (r *pb.Response, e error) {
+func (s *synerexServerInfo) ProposeSupply(c context.Context, sp *api.Supply) (r *api.Response, e error) {
 	s.mu.RLock()
 	chs := s.supplyChans[sp.GetType()]
 	for i := range chs {
@@ -92,26 +92,26 @@ func (s *synerexServerInfo) ProposeSupply(c context.Context, sp *pb.Supply) (r *
 		ch <- sp
 	}
 	s.mu.RUnlock()
-	r = &pb.Response{Ok: true, Err: ""}
+	r = &api.Response{Ok: true, Err: ""}
 	return r, nil
 }
-func (s *synerexServerInfo) ReserveSupply(c context.Context, tg *pb.Target) (r *pb.ConfirmResponse, e error) {
+func (s *synerexServerInfo) ReserveSupply(c context.Context, tg *api.Target) (r *api.ConfirmResponse, e error) {
 	//	chs := s.demandChans[tg.GetType()]
-	//	dm := &pb.Demand{}
+	//	dm := &api.Demand{}
 
-	r = &pb.ConfirmResponse{Ok: true, Err: ""}
+	r = &api.ConfirmResponse{Ok: true, Err: ""}
 	return r, nil
 }
 
-func (s *synerexServerInfo) SelectSupply(c context.Context, tg *pb.Target) (r *pb.ConfirmResponse, e error) {
+func (s *synerexServerInfo) SelectSupply(c context.Context, tg *api.Target) (r *api.ConfirmResponse, e error) {
 	ch, ok := s.demandMap[sxutil.IDType(tg.GetSenderId())]
 	if !ok {
-		r = &pb.ConfirmResponse{Ok: false, Err: "Can't find demand receiver from SelectSupply"}
+		r = &api.ConfirmResponse{Ok: false, Err: "Can't find demand receiver from SelectSupply"}
 		e = errors.New("Cant find channel in SelectSupply")
 		return
 	}
 	id := sxutil.GenerateIntID()
-	dm := &pb.Demand{
+	dm := &api.Demand{
 		Id:       id, // generate ID from market server
 		SenderId: tg.SenderId,
 		TargetId: tg.TargetId,
@@ -119,44 +119,44 @@ func (s *synerexServerInfo) SelectSupply(c context.Context, tg *pb.Target) (r *p
 	}
 	ch <- dm // send select message
 
-	tch := make(chan *pb.Target)
+	tch := make(chan *api.Target)
 	s.waitConfirms[sxutil.IDType(id)] = tch
 	tb := <-tch // got confirm!
 	if tb.TargetId == id {
-		r = &pb.ConfirmResponse{Ok: true, Err: ""}
+		r = &api.ConfirmResponse{Ok: true, Err: ""}
 		return r, nil
 	} else {
-		r = &pb.ConfirmResponse{Ok: false, Err: "should not happen"}
+		r = &api.ConfirmResponse{Ok: false, Err: "should not happen"}
 		return r, errors.New("Should not happen")
 	}
 	// TODO: should check response from target .. umm.
 }
 
-func (s *synerexServerInfo) ReserveDemand(c context.Context, tg *pb.Target) (r *pb.ConfirmResponse, e error) {
-	r = &pb.ConfirmResponse{Ok: true, Err: ""}
+func (s *synerexServerInfo) ReserveDemand(c context.Context, tg *api.Target) (r *api.ConfirmResponse, e error) {
+	r = &api.ConfirmResponse{Ok: true, Err: ""}
 	return r, nil
 }
-func (s *synerexServerInfo) SelectDemand(c context.Context, tg *pb.Target) (r *pb.ConfirmResponse, e error) {
+func (s *synerexServerInfo) SelectDemand(c context.Context, tg *api.Target) (r *api.ConfirmResponse, e error) {
 	// select!
 
-	r = &pb.ConfirmResponse{Ok: true, Err: ""}
+	r = &api.ConfirmResponse{Ok: true, Err: ""}
 	return r, nil
 }
 
-func (s *synerexServerInfo) Confirm(c context.Context, tg *pb.Target) (r *pb.Response, e error) {
+func (s *synerexServerInfo) Confirm(c context.Context, tg *api.Target) (r *api.Response, e error) {
 	// check waitConfirms
 	ch, ok := s.waitConfirms[sxutil.IDType(tg.TargetId)]
 	if !ok {
-		r = &pb.Response{Ok: false, Err: "Can't find channel"}
+		r = &api.Response{Ok: false, Err: "Can't find channel"}
 		return r, errors.New("can't find channels for Confirm")
 	}
 	ch <- tg // send OK
-	r = &pb.Response{Ok: true, Err: ""}
+	r = &api.Response{Ok: true, Err: ""}
 	return r, nil
 }
 
 // go routine which wait demand channel and sending demands to each providers.
-func demandServerFunc(ch chan *pb.Demand, stream pb.SMarket_SubscribeDemandServer) {
+func demandServerFunc(ch chan *api.Demand, stream api.SMarket_SubscribeDemandServer) {
 	for {
 		select {
 		case sp := <-ch:
@@ -171,7 +171,7 @@ func demandServerFunc(ch chan *pb.Demand, stream pb.SMarket_SubscribeDemandServe
 
 // remove channel from slice
 
-func removeDemandChannelFromSlice(sl []chan *pb.Demand, c chan *pb.Demand) []chan *pb.Demand {
+func removeDemandChannelFromSlice(sl []chan *api.Demand, c chan *api.Demand) []chan *api.Demand {
 	for i, ch := range sl {
 		if ch == c {
 			return append(sl[:i], sl[i+1:]...)
@@ -181,7 +181,7 @@ func removeDemandChannelFromSlice(sl []chan *pb.Demand, c chan *pb.Demand) []cha
 	return nil
 }
 
-func removeSupplyChannelFromSlice(sl []chan *pb.Supply, c chan *pb.Supply) []chan *pb.Supply {
+func removeSupplyChannelFromSlice(sl []chan *api.Supply, c chan *api.Supply) []chan *api.Supply {
 	for i, ch := range sl {
 		if ch == c {
 			return append(sl[:i], sl[i+1:]...)
@@ -192,7 +192,7 @@ func removeSupplyChannelFromSlice(sl []chan *pb.Supply, c chan *pb.Supply) []cha
 }
 
 // SubscribeDemand is called form client to subscribe channel
-func (s *synerexServerInfo) SubscribeDemand(ch *pb.Channel, stream pb.SMarket_SubscribeDemandServer) error {
+func (s *synerexServerInfo) SubscribeDemand(ch *api.Channel, stream api.SMarket_SubscribeDemandServer) error {
 	// TODO: we can check the duplication of node id here! (especially 1024 snowflake node ID)
 	if _, ok := s.demandMap[sxutil.IDType(ch.GetClientId())]; ok { // check the availability of duplicated client ID
 		return errors.New("duplicated ClientID")
@@ -204,7 +204,7 @@ func (s *synerexServerInfo) SubscribeDemand(ch *pb.Channel, stream pb.SMarket_Su
 	//	monitorapi.SendMes(&monitorapi.Mes{Message:"Subscribe Demand", Args: fmt.Sprintf("Type:%d,From: %x  %s",ch.Type,ch.ClientId, ch.ArgJson )})
 	monitorapi.SendMessage("SubscribeDemand", int(ch.Type), ch.ClientId, 0, ch.ArgJson)
 
-	subCh := make(chan *pb.Demand, 10)
+	subCh := make(chan *api.Demand, 10)
 	// We should think about thread safe coding.
 	tp := ch.GetType()
 	idt := sxutil.IDType(ch.GetClientId())
@@ -223,7 +223,7 @@ func (s *synerexServerInfo) SubscribeDemand(ch *pb.Channel, stream pb.SMarket_Su
 	return nil
 }
 
-func supplyServerFunc(ch chan *pb.Supply, stream pb.SMarket_SubscribeSupplyServer) {
+func supplyServerFunc(ch chan *api.Supply, stream api.SMarket_SubscribeSupplyServer) {
 	for {
 		select {
 		case sp := <-ch:
@@ -236,8 +236,8 @@ func supplyServerFunc(ch chan *pb.Supply, stream pb.SMarket_SubscribeSupplyServe
 	}
 }
 
-func (s *synerexServerInfo) SubscribeSupply(ch *pb.Channel, stream pb.SMarket_SubscribeSupplyServer) error {
-	subCh := make(chan *pb.Supply, 10)
+func (s *synerexServerInfo) SubscribeSupply(ch *api.Channel, stream api.SMarket_SubscribeSupplyServer) error {
+	subCh := make(chan *api.Supply, 10)
 	tp := ch.GetType()
 
 	//	monitorapi.SendMes(&monitorapi.Mes{Message:"Subscribe Supply", Args: fmt.Sprintf("Type:%d, From: %x %s",ch.Type,ch.ClientId,ch.ArgJson )})
@@ -259,9 +259,9 @@ func (s *synerexServerInfo) SubscribeSupply(ch *pb.Channel, stream pb.SMarket_Su
 func newServerInfo() *synerexServerInfo {
 	var ms synerexServerInfo
 	s := &ms
-	s.demandMap = make(map[sxutil.IDType]chan *pb.Demand)
-	s.supplyMap = make(map[sxutil.IDType]chan *pb.Supply)
-	s.waitConfirms = make(map[sxutil.IDType]chan *pb.Target)
+	s.demandMap = make(map[sxutil.IDType]chan *api.Demand)
+	s.supplyMap = make(map[sxutil.IDType]chan *api.Supply)
+	s.waitConfirms = make(map[sxutil.IDType]chan *api.Target)
 
 	s.messageStore = CreateLocalMessageStore()
 
@@ -298,7 +298,7 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 		switch method {
 		// Demand
 		case "RegisterDemand", "ProposeDemand":
-			dm := req.(*pb.Demand)
+			dm := req.(*api.Demand)
 			msgType = int(dm.Type)
 			srcId = dm.SenderId
 			tgtId = dm.TargetId
@@ -306,7 +306,7 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 			args = "Type:" + strconv.Itoa(int(dm.Type)) + ":" + strconv.FormatUint(dm.Id, 16) + ":" + idToNode(dm.SenderId) + "->" + strconv.FormatUint(dm.TargetId, 16)
 			// Supply
 		case "RegisterSupply", "ProposeSupply":
-			sp := req.(*pb.Supply)
+			sp := req.(*api.Supply)
 			msgType = int(sp.Type)
 			srcId = sp.SenderId
 			tgtId = sp.TargetId
@@ -314,7 +314,7 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 			args = "Type:" + strconv.Itoa(int(sp.Type)) + ":" + strconv.FormatUint(sp.Id, 16) + ":" + idToNode(sp.SenderId) + "->" + strconv.FormatUint(sp.TargetId, 16)
 			// Target
 		case "SelectSupply", "Confirm", "SelectDemand":
-			tg := req.(*pb.Target)
+			tg := req.(*api.Target)
 			msgType = int(tg.Type)
 			mid = tg.Id
 			srcId = tg.SenderId
@@ -397,7 +397,7 @@ func streamServerInterceptor(logger *logrus.Logger) grpc.StreamServerInterceptor
 
 func prepareGrpcServer(s *synerexServerInfo, opts ...grpc.ServerOption) *grpc.Server {
 	gcServer := grpc.NewServer(opts...)
-	pb.RegisterSMarketServer(gcServer, s)
+	api.RegisterSMarketServer(gcServer, s)
 	return gcServer
 }
 

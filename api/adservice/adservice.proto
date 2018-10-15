@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.adservice;
 
-option go_package="api/adservice";
+option go_package="github.com/synerex/synerex_alpha/api/adservice";
 
 import "google/protobuf/duration.proto";
 

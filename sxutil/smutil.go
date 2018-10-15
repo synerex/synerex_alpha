@@ -10,18 +10,15 @@ import (
 	"io"
 	"log"
 	"time"
-
-	pb "../api"
-	"api/fleet"
-	nodeapi "../nodeapi"
-
 	"google.golang.org/grpc"
-
-	//	"github.com/bwmarrin/snowflake" // shuold use only at here
 	"github.com/bwmarrin/snowflake"
 	"github.com/golang/protobuf/ptypes"
-	//	uuid "github.com/satori/go.uuid"
-)
+
+	"github.com/synerex/synerex_alpha/api"
+	"github.com/synerex/synerex_alpha/api/fleet"
+	"github.com/synerex/synerex_alpha/nodeapi"
+
+	)
 
 // IDType for all ID in Synergic Market
 type IDType uint64
@@ -121,13 +118,13 @@ func UnRegisterNode() {
 // SMServiceClient Wrappter Structure for market client
 type SMServiceClient struct {
 	ClientID IDType
-	MType    pb.MarketType
-	Client   pb.SMarketClient
+	MType    api.MarketType
+	Client   api.SMarketClient
 	ArgJson  string
 }
 
 // NewSMServiceClient Creates wrapper structre SMServiceClient from SMarketClient
-func NewSMServiceClient(clt pb.SMarketClient, mtype pb.MarketType, argJson string) *SMServiceClient {
+func NewSMServiceClient(clt api.SMarketClient, mtype api.MarketType, argJson string) *SMServiceClient {
 	s := &SMServiceClient{
 		ClientID: IDType(node.Generate()),
 		MType:    mtype,
@@ -142,12 +139,12 @@ func GenerateIntID() uint64 {
 	return uint64(node.Generate())
 }
 
-func (clt SMServiceClient) getChannel() *pb.Channel {
-	return &pb.Channel{ClientId: uint64(clt.ClientID), Type: clt.MType, ArgJson: clt.ArgJson}
+func (clt SMServiceClient) getChannel() *api.Channel {
+	return &api.Channel{ClientId: uint64(clt.ClientID), Type: clt.MType, ArgJson: clt.ArgJson}
 }
 
 // IsSupplyTarget is a helper function to check target
-func (clt *SMServiceClient) IsSupplyTarget(sp *pb.Supply, idlist []uint64) bool {
+func (clt *SMServiceClient) IsSupplyTarget(sp *api.Supply, idlist []uint64) bool {
 	spid := sp.TargetId
 	for _, id := range idlist {
 		if id == spid {
@@ -158,7 +155,7 @@ func (clt *SMServiceClient) IsSupplyTarget(sp *pb.Supply, idlist []uint64) bool 
 }
 
 // IsDemandTarget is a helper function to check target
-func (clt *SMServiceClient) IsDemandTarget(dm *pb.Demand, idlist []uint64) bool {
+func (clt *SMServiceClient) IsDemandTarget(dm *api.Demand, idlist []uint64) bool {
 	dmid := dm.TargetId
 	for _, id := range idlist {
 		if id == dmid {
@@ -173,7 +170,7 @@ func (clt *SMServiceClient) IsDemandTarget(dm *pb.Demand, idlist []uint64) bool 
 // ProposeSupply send proposal Supply message to server
 func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64{
 	pid :=GenerateIntID()
-	sp := &pb.Supply{
+	sp := &api.Supply{
 		Id:         pid,
 		SenderId:   uint64(clt.ClientID),
 		TargetId:   spo.Target,
@@ -192,8 +189,8 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64{
 }
 
 // SelectSupply send select message to server
-func (clt *SMServiceClient) SelectSupply(sp *pb.Supply) {
-	tgt := &pb.Target{
+func (clt *SMServiceClient) SelectSupply(sp *api.Supply) {
+	tgt := &api.Target{
 		Id:       GenerateIntID(),
 		SenderId: uint64(sp.SenderId), // use senderId
 		TargetId: sp.Id,
@@ -209,8 +206,8 @@ func (clt *SMServiceClient) SelectSupply(sp *pb.Supply) {
 }
 
 // SelectDemand send select message to server
-func (clt *SMServiceClient) SelectDemand(dm *pb.Demand) {
-	tgt := &pb.Target{
+func (clt *SMServiceClient) SelectDemand(dm *api.Demand) {
+	tgt := &api.Target{
 		Id:       GenerateIntID(),
 		SenderId: uint64(dm.SenderId), // use senderId
 		TargetId: dm.Id,
@@ -228,7 +225,7 @@ func (clt *SMServiceClient) SelectDemand(dm *pb.Demand) {
 
 
 // SubscribeSupply  Wrapper function for SMServiceClient
-func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMServiceClient, *pb.Supply)) {
+func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMServiceClient, *api.Supply)) {
 	ch := clt.getChannel()
 	smc, err := clt.Client.SubscribeSupply(ctx, ch)
 	if err != nil {
@@ -251,7 +248,7 @@ func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMSe
 }
 
 // SubscribeDemand  Wrapper function for SMServiceClient
-func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMServiceClient, *pb.Demand)) {
+func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMServiceClient, *api.Demand)) {
 	ch := clt.getChannel()
 	dmc, err := clt.Client.SubscribeDemand(ctx, ch)
 	if err != nil {
@@ -277,7 +274,7 @@ func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMSe
 func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 	id := GenerateIntID()
 	ts := ptypes.TimestampNow()
-	dm := pb.Demand{
+	dm := api.Demand{
 		Id:         id,
 		SenderId:   uint64(clt.ClientID),
 		Type:       clt.MType,
@@ -300,7 +297,7 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 	id := GenerateIntID()
 	ts := ptypes.TimestampNow()
-	dm := pb.Supply{
+	dm := api.Supply{
 		Id:         id,
 		SenderId:   uint64(clt.ClientID),
 		Type:       clt.MType,
@@ -309,8 +306,8 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 		ArgJson:    smo.JSON,
 	}
 
-	if(clt.MType == pb.MarketType_RIDE_SHARE) {
-		sp := pb.Supply_Arg_Fleet{
+	if(clt.MType == api.MarketType_RIDE_SHARE) {
+		sp := api.Supply_Arg_Fleet{
 			smo.Fleet,
 		}
 		dm.ArgOneof = &sp
@@ -331,7 +328,7 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 
 // Confirm sends confirm message to sender
 func (clt *SMServiceClient) Confirm(id IDType) {
-	tg := &pb.Target{
+	tg := &api.Target{
 		Id:       GenerateIntID(),
 		SenderId: uint64(clt.ClientID),
 		TargetId: uint64(id),
