@@ -9,8 +9,8 @@ import (
 	"sync"
 	"time"
 
-	pb "../../api"
-	"../../sxutil"
+	pb "github.com/synerex/synerex_alpha/api"
+	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 	"strconv"
 	"fmt"
