@@ -4,7 +4,7 @@ package main
 
 import (
 	pb "github.com/synerex/synerex_alpha/api"
-	"api/fleet"
+	"github.com/synerex/synerex_alpha/api/fleet"
 
 	//	"api/fleet"
 	"github.com/synerex/synerex_alpha/sxutil"
