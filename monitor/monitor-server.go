@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"time"
 
-	monitorpb "./monitorapi"
+	monitorpb "github.com/synerex/synerex_alpha/monitor/monitorapi"
 	//	nodeapi "../nodeapi"
 	"github.com/mtfelian/golang-socketio"
 	"google.golang.org/grpc"
