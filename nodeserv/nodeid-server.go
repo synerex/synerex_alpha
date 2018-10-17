@@ -11,7 +11,7 @@ import (
 	"net"
 	"time"
 
-	nodepb "../nodeapi"
+	nodepb "github.com/synerex/synerex_alpha/nodeapi"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 )
