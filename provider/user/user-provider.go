@@ -7,8 +7,8 @@ import (
 	"sync"
 	"math/rand"
 
-	pb "../../api"
-	"../../sxutil"
+	pb "github.com/synerex/synerex_alpha/api"
+	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 	"time"
 	"encoding/json"

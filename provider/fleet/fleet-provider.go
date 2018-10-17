@@ -3,11 +3,11 @@ package main
 // Simple Fleet Provider to communicate with FleetManager
 
 import (
-	pb "../../api"
+	pb "github.com/synerex/synerex_alpha/api"
 	"api/fleet"
 
 	//	"api/fleet"
-	"../../sxutil"
+	"github.com/synerex/synerex_alpha/sxutil"
 	"context"
 	"flag"
 	"fmt"

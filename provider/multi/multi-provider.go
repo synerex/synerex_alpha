@@ -19,8 +19,8 @@ import (
 	"strconv"
 	"sync"
 
-	pb "../../api"
-	"../../sxutil"
+	pb "github.com/synerex/synerex_alpha/api"
+	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 )
 

@@ -8,8 +8,8 @@ import (
 	"log"
 	"sync"
 
-	pb "../../api"
-	smutil "../../sxutil"
+	pb "github.com/synerex/synerex_alpha/api"
+	smutil "github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 	"fmt"
 )
