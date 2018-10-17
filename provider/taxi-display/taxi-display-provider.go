@@ -8,8 +8,8 @@ import (
 	"log"
 	"sync"
 
-	pb "../../api"
-	smutil "../../sxutil"
+	pb "github.com/synerex/synerex_alpha/api"
+	sxutil "github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 	"fmt"
 )
@@ -18,16 +18,16 @@ var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	idlist     []uint64
-	dmMap      map[uint64]*smutil.SupplyOpts
+	dmMap      map[uint64]*sxutil.SupplyOpts
 )
 
 func init() {
 	idlist = make([]uint64, 10)
-	dmMap = make(map[uint64]*smutil.SupplyOpts)
+	dmMap = make(map[uint64]*sxutil.SupplyOpts)
 }
 
 // callback for each Demand
-func demandCallback(clt *smutil.SMServiceClient, dm *pb.Demand) {
+func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	// check if supply is match with my demand.
 	log.Println("Got ad demand callback")
 	// choice is supply for me? or not.
@@ -37,15 +37,15 @@ func demandCallback(clt *smutil.SMServiceClient, dm *pb.Demand) {
 	}
 }
 
-func subscribeDemand(client *smutil.SMServiceClient) {
+func subscribeDemand(client *sxutil.SMServiceClient) {
 	// ここは goroutine!
 	ctx := context.Background() // 必要？
 	client.SubscribeDemand(ctx, demandCallback)
 	// comes here if channel closed
 }
 
-func addSupply(sclient *smutil.SMServiceClient, nm string) {
-	opts := &smutil.SupplyOpts{Name: nm}
+func addSupply(sclient *sxutil.SMServiceClient, nm string) {
+	opts := &sxutil.SupplyOpts{Name: nm}
 //	log.Printf("addSuply %v",*opts)
 	id := sclient.RegisterSupply(opts)
 	idlist = append(idlist, id)
@@ -54,10 +54,10 @@ func addSupply(sclient *smutil.SMServiceClient, nm string) {
 
 func main() {
 	flag.Parse()
-	smutil.RegisterNodeName(*nodesrv, "TaxiDisplayProvider", false)
+	sxutil.RegisterNodeName(*nodesrv, "TaxiDisplayProvider", false)
 
-	go smutil.HandleSigInt()
-	smutil.RegisterDeferFunction(smutil.UnRegisterNode)
+	go sxutil.HandleSigInt()
+	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
 
 	var opts []grpc.DialOption
 	wg := sync.WaitGroup{} // for syncing other goroutines
@@ -67,17 +67,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
-	smutil.RegisterDeferFunction(func() { conn.Close() })
+	sxutil.RegisterDeferFunction(func() { conn.Close() })
 
 	client := pb.NewSMarketClient(conn)
 	argJson := fmt.Sprintf("{Client:TaxiDisplay}")
 	// create client wrapper
-	sclient := smutil.NewSMServiceClient(client, pb.MarketType_AD_SERVICE, argJson)
+	sclient := sxutil.NewSMServiceClient(client, pb.MarketType_AD_SERVICE, argJson)
 
 	wg.Add(1)
 	go subscribeDemand(sclient)
 	addSupply(sclient, "Display for Ad/Entertainment")
 	wg.Wait()
 
-	smutil.CallDeferFunctions() // cleanup!
+	sxutil.CallDeferFunctions() // cleanup!
 }
