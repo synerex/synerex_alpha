@@ -14,3 +14,14 @@
 # Eclipse project settings
 .project
 
+# Binaries for server, providers, cli tool
+cli/daemon/se-daemon
+cli/se/se
+monitor/monitor-server
+nodeserv/nodeid-server
+provider/ad/ad-provider
+provider/fleet/fleet-provider
+provider/multi/multi-provider
+provider/taxi/taxi-provider
+provider/user/user-provider
+server/synerex-server
