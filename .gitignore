@@ -25,3 +25,6 @@ provider/multi/multi-provider
 provider/taxi/taxi-provider
 provider/user/user-provider
 server/synerex-server
+
+# Go module file
+go.sum
