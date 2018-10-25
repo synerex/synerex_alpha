@@ -70,15 +70,18 @@ func TestPoint_IsSamePoint(t *testing.T) {
 	tests := []struct {
 		p1   *Point
 		p2   *Point
+		r    float64
 		want bool
 	}{
-		{makePoint(35.689166, 139.704444), makePoint(35.689166, 139.704444), true},  // 新宿-新宿
-		{makePoint(35.689166, 139.704444), makePoint(35.654444, 139.706666), false}, // 新宿-渋谷
+		{makePoint(35.689166, 139.704444), makePoint(35.689166, 139.704444), 0, true},    // 新宿-新宿
+		{makePoint(35.689166, 139.704444), makePoint(35.654444, 139.706666), 0, false},   // 新宿-渋谷
+		{makePoint(35.689166, 139.704444), makePoint(35.689904, 139.704163), 100, true},  // 新宿-新宿 (100m以内)
+		{makePoint(35.689166, 139.704444), makePoint(35.654444, 139.706666), 100, false}, // 新宿-渋谷 (100m以内)
 	}
 
 	for i, test := range tests {
 		want := test.want
-		got := IsSamePoint(test.p1, test.p2)
+		got := test.p1.IsSamePoint(test.p2, test.r)
 
 		if want != got {
 			t.Errorf("[%d], want=%t, got=%t", i, want, got)

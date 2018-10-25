@@ -27,8 +27,15 @@ func ValidatePoint(p *Point) error {
 }
 
 // IsSamePoint determins whether two points are same.
-func IsSamePoint(p1, p2 *Point) bool {
-	return p1.GetLatitude() == p2.GetLatitude() && p1.GetLatitude() == p2.GetLatitude()
+// If r is 0, matching is strict.
+// Otherwise, matching is lenient. (consider as same if they are within r meters)
+func (p1 *Point) IsSamePoint(p2 *Point, r float64) bool {
+	if r <= 0.0 {
+		return p1.GetLatitude() == p2.GetLatitude() && p1.GetLatitude() == p2.GetLatitude()
+	} else {
+		d, _ := p1.Distance(p2)
+		return d <= r
+	}
 }
 
 // convert degree to radian
