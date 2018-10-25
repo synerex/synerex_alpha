@@ -117,7 +117,7 @@ func (r *RideShare) CalcAmountDistance() (float64, error) {
 			prevArrvPoint := r.GetRoutes()[i-1].GetArrivePoint().GetPoint()
 			currDeptPoint := route.GetDepartPoint().GetPoint()
 
-			if !common.IsSamePoint(prevArrvPoint, currDeptPoint) {
+			if !prevArrvPoint.IsSamePoint(currDeptPoint, 0) {
 				dist, _ := prevArrvPoint.Distance(currDeptPoint)
 				amntDist += dist
 			}
