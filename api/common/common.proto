@@ -30,7 +30,7 @@ message Area {
 message Time {
      oneof value {
         google.protobuf.Timestamp timestamp = 1;
-        Period periods = 2;
+        Periods periods = 2;
         OtherTime other = 3;
      }
 }
