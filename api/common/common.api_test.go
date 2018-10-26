@@ -4,6 +4,16 @@ import (
 	"math"
 	"regexp"
 	"testing"
+	"time"
+
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/stretchr/testify/assert"
+)
+
+const (
+	ON  = true
+	OFF = false
 )
 
 func makePoint(lat, lon float64) *Point {
@@ -12,6 +22,17 @@ func makePoint(lat, lon float64) *Point {
 	} else {
 		return &Point{Latitude: lat, Longitude: lon}
 	}
+}
+
+func makeTimestampPb(s string) *timestamp.Timestamp {
+	tm, _ := time.Parse("2006-01-02", s)
+	ts, _ := ptypes.TimestampProto(tm)
+	return ts
+}
+
+func makeTimestampTm(s string) time.Time {
+	tm, _ := time.Parse("2006-01-02", s)
+	return tm
 }
 
 func TestPoint_ValidatePoint_Success(t *testing.T) {
@@ -114,4 +135,89 @@ func TestPoint_Distance(t *testing.T) {
 			t.Errorf("[%d] want=%f, got=%f", i, want, got)
 		}
 	}
+}
+
+func TestNewPlace(t *testing.T) {
+	p := NewPlace()
+
+	assert.Nil(t, p.Value)
+}
+
+func TestWithPoint(t *testing.T) {
+	p := NewPlace().WithPoint(&Point{Latitude: 35.689, Longitude: 139.704})
+
+	assert.IsType(t, &Place_Point{}, p.Value, "p.Value shuld be *Place_Point")
+	assert.Equal(t, 35.689, p.GetPoint().Latitude)
+	assert.Equal(t, 139.704, p.GetPoint().Longitude)
+}
+
+func TestWithAreas(t *testing.T) {
+	p := NewPlace().WithAreas([][]*Point{
+		[]*Point{
+			&Point{Latitude: 35.689, Longitude: 139.704},
+			&Point{Latitude: 35.789, Longitude: 139.804},
+			&Point{Latitude: 35.889, Longitude: 139.904},
+		},
+		[]*Point{
+			&Point{Latitude: 36.589, Longitude: 139.604},
+			&Point{Latitude: 36.489, Longitude: 139.504},
+			&Point{Latitude: 36.389, Longitude: 139.404},
+			&Point{Latitude: 36.289, Longitude: 139.304},
+		},
+	})
+
+	assert.IsType(t, &Place_Areas{}, p.Value)
+	assert.Len(t, p.GetAreas().Values, 2)
+	assert.Len(t, p.GetAreas().Values[0].Points, 3)
+	assert.Len(t, p.GetAreas().Values[1].Points, 4)
+}
+
+func TestNewTime(t *testing.T) {
+	tm := NewTime()
+
+	assert.Nil(t, tm.Value)
+}
+
+func TestWithTimestamp(t *testing.T) {
+	tm := NewTime().WithTimestamp(&timestamp.Timestamp{Seconds: 1540542272, Nanos: 550878777})
+
+	assert.IsType(t, &Time_Timestamp{}, tm.Value)
+	assert.Equal(t, int64(1540542272), tm.GetTimestamp().Seconds)
+	assert.Equal(t, int32(550878777), tm.GetTimestamp().Nanos)
+}
+
+func TestWithPeriods(t *testing.T) {
+	tp := NewTime().WithPeriods([]*Period{
+		// 10月 (第1-2週)
+		&Period{
+			From: makeTimestampPb("2018-10-01"),
+			To:   makeTimestampPb("2018-10-31"),
+			Options: []*RepeatOption{
+				&RepeatOption{
+					Weeks: []bool{ON, ON, OFF, OFF, OFF},
+				},
+			},
+		},
+		// 11月 (毎土・日曜日)
+		&Period{
+			From: makeTimestampPb("2018-11-01"),
+			To:   makeTimestampPb("2018-11-30"),
+			Options: []*RepeatOption{
+				&RepeatOption{
+					Weekdays: []bool{ON, OFF, OFF, OFF, OFF, OFF, ON},
+				},
+			},
+		},
+	})
+
+	assert.IsType(t, &Time_Periods{}, tp.Value)
+	assert.Len(t, tp.GetPeriods().Values, 2)
+	assert.Equal(t, makeTimestampPb("2018-10-01"), tp.GetPeriods().Values[0].From)
+}
+
+func TestWithOtherTime(t *testing.T) {
+	to := NewTime().WithOtherTime(OtherTime_AS_SOON_AS)
+
+	assert.IsType(t, &Time_Other{}, to.Value)
+	assert.Equal(t, OtherTime_AS_SOON_AS, to.GetOther())
 }
