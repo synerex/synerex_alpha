@@ -1,10 +1,10 @@
 package rideshare
 
 import (
-	"github.com/synerex/synerex_alpha/api/common"
 	"errors"
 	"fmt"
-	"math"
+
+	"github.com/synerex/synerex_alpha/api/common"
 
 	"github.com/golang/protobuf/ptypes"
 	durpb "github.com/golang/protobuf/ptypes/duration"
@@ -28,39 +28,10 @@ func (m *Route) CalcAmountDistance() (float64, error) {
 		}
 
 		// get distance
-		return distance(deptPoint, arrvPoint)
+		return deptPoint.Distance(arrvPoint)
 	} else {
 		return -1, nil
 	}
-}
-
-// convert degree to radian
-func deg2rad(deg float64) float64 {
-	return deg * math.Pi / 180.0
-}
-
-// calculate distance using Hubeny formula.
-func distance(p1, p2 *common.Point) (float64, error) {
-	a := 6378137.000
-	b := 6356752.314
-	e := math.Sqrt((math.Pow(a, 2) - math.Pow(b, 2)) / math.Pow(a, 2))
-
-	x1 := deg2rad(p1.GetLongitude())
-	y1 := deg2rad(p1.GetLatitude())
-	x2 := deg2rad(p2.GetLongitude())
-	y2 := deg2rad(p2.GetLatitude())
-
-	dy := y1 - y2
-	dx := x1 - x2
-	uy := (y1 + y2) / 2.0
-
-	W := math.Sqrt(1 - math.Pow(e, 2)*math.Pow(math.Sin(uy), 2))
-	M := a * (1 - math.Pow(e, 2)) / math.Pow(W, 3)
-	N := a / W
-
-	d := math.Sqrt(math.Pow(dy*M, 2) + math.Pow(dx*N*math.Cos(uy), 2))
-
-	return d, nil
 }
 
 // CalcAmountTime returns difference between ArriveTime and DepartTime.
@@ -146,8 +117,8 @@ func (r *RideShare) CalcAmountDistance() (float64, error) {
 			prevArrvPoint := r.GetRoutes()[i-1].GetArrivePoint().GetPoint()
 			currDeptPoint := route.GetDepartPoint().GetPoint()
 
-			if !common.IsSamePoint(prevArrvPoint, currDeptPoint) {
-				dist, _ := distance(prevArrvPoint, currDeptPoint)
+			if !prevArrvPoint.IsSamePoint(currDeptPoint, 0) {
+				dist, _ := prevArrvPoint.Distance(currDeptPoint)
 				amntDist += dist
 			}
 		}

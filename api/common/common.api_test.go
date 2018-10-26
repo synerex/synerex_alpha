@@ -70,18 +70,48 @@ func TestPoint_IsSamePoint(t *testing.T) {
 	tests := []struct {
 		p1   *Point
 		p2   *Point
+		r    float64
 		want bool
 	}{
-		{makePoint(35.689, 139.704), makePoint(35.689, 139.704), true},
-		{makePoint(35.689, 139.704), makePoint(35.654, 139.706), false},
+		{makePoint(35.689166, 139.704444), makePoint(35.689166, 139.704444), 0, true},    // 新宿-新宿
+		{makePoint(35.689166, 139.704444), makePoint(35.654444, 139.706666), 0, false},   // 新宿-渋谷
+		{makePoint(35.689166, 139.704444), makePoint(35.689904, 139.704163), 100, true},  // 新宿-新宿 (100m以内)
+		{makePoint(35.689166, 139.704444), makePoint(35.654444, 139.706666), 100, false}, // 新宿-渋谷 (100m以内)
 	}
 
 	for i, test := range tests {
 		want := test.want
-		got := IsSamePoint(test.p1, test.p2)
+		got := test.p1.IsSamePoint(test.p2, test.r)
 
 		if want != got {
 			t.Errorf("[%d], want=%t, got=%t", i, want, got)
+		}
+	}
+}
+
+func TestPoint_Distance(t *testing.T) {
+	tests := []struct {
+		Lat1 float64
+		Lon1 float64
+		Lat2 float64
+		Lon2 float64
+		want float64
+	}{
+		{35.689166, 139.704444, 35.654444, 139.706666, 3857.347000}, // 新宿-渋谷
+		{35.654444, 139.706666, 35.632904, 139.715935, 2532.790000}, // 渋谷-目黒
+		{35.647078, 139.710099, 35.632904, 139.715935, 1658.913000}, // 恵比寿-目黒
+		{35.654444, 139.706666, 35.647078, 139.710099, 874.316000},  // 渋谷-恵比寿
+	}
+
+	for i, test := range tests {
+		p1 := makePoint(test.Lat1, test.Lon1)
+		p2 := makePoint(test.Lat2, test.Lon2)
+
+		want := test.want
+		got, _ := p1.Distance(p2)
+
+		if math.Abs(want-got) > 100 {
+			t.Errorf("[%d] want=%f, got=%f", i, want, got)
 		}
 	}
 }
