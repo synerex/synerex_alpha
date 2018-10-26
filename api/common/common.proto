@@ -53,5 +53,5 @@ message RepeatOption {
 
 enum OtherTime {
     NONE = 0;
-    AS_SONN_AS = 1;
+    AS_SOON_AS = 1;
 }

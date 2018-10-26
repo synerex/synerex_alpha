@@ -11,6 +11,8 @@ require (
 	github.com/mtfelian/synced v0.0.0-20180626092057-b82cebd56589 // indirect
 	github.com/sirupsen/logrus v1.1.1 // indirect
 	github.com/synerex/synerex_alpha/api v0.0.0-20181022060441-dfa79ea6fc95 // indirect
+	github.com/synerex/synerex_alpha/api/fleet v0.0.0-20181026025933-45f695eaf7b1 // indirect
+	github.com/synerex/synerex_alpha/sxutil v0.0.0-20181026025933-45f695eaf7b1 // indirect
 	golang.org/x/net v0.0.0-20181011144130-49bb7cea24b1
 	google.golang.org/grpc v1.15.0
 )
