@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+
+	"github.com/golang/protobuf/ptypes/timestamp"
 )
 
 const (
@@ -65,4 +67,48 @@ func (p1 *Point) Distance(p2 *Point) (float64, error) {
 	d := math.Sqrt(math.Pow(dy*M, 2) + math.Pow(dx*N*math.Cos(uy), 2))
 
 	return d, nil
+}
+
+// NewPlace returns empty Place.
+func NewPlace() *Place {
+	return &Place{}
+}
+
+// WithPoint set a given Point to Place.Place_Point.Point.
+func (p *Place) WithPoint(point *Point) *Place {
+	p.Value = &Place_Point{point}
+	return p
+}
+
+// WithAreas makes []*Area from a given points and set to Place.Place_Areas.Areas.
+func (p *Place) WithAreas(areas [][]*Point) *Place {
+	values := make([]*Area, len(areas))
+	for i, points := range areas {
+		values[i] = &Area{Points: points}
+	}
+	p.Value = &Place_Areas{&Areas{Values: values}}
+	return p
+}
+
+// NewTime returns empty Time.
+func NewTime() *Time {
+	return &Time{}
+}
+
+// WithTimestamp set a given timestamp to Time.Time_Timestamp.Timestamp.
+func (t *Time) WithTimestamp(ts *timestamp.Timestamp) *Time {
+	t.Value = &Time_Timestamp{ts}
+	return t
+}
+
+// WithPeriods set given periods to Time.Time_Periods.Periods.
+func (t *Time) WithPeriods(periods []*Period) *Time {
+	t.Value = &Time_Periods{&Periods{Values: periods}}
+	return t
+}
+
+// WithOtherTime set a given time to Time.Time_Other.Other.
+func (t *Time) WithOtherTime(other OtherTime) *Time {
+	t.Value = &Time_Other{other}
+	return t
 }
