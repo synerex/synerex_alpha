@@ -1,20 +1,27 @@
 {
-  "name": "client",
-  "version": "0.1.0",
+  "name": "synerex-monitor-client",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
     "react-resize-listener": "^0.3.6",
-    "react-scripts": "1.1.4",
+    "react-scripts": "2.1.1",
+    "sane": "^4.0.2",
     "socket.io": "^2.1.1",
     "socket.io-client": "^2.1.1",
-    "three": "^0.96.0"
+    "three": "^0.98.0"
   },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test --env=jsdom",
+    "test": "react-scripts test",
     "eject": "react-scripts eject"
-  }
+  },
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
 }

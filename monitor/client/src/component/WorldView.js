@@ -6,14 +6,14 @@ import TrackballControls from './TrackballControls';
 import {ResizeListener} from 'react-resize-listener';
 import TextBoardCanvas from './TextBoardCanvas';
 
-
+const MAX_MES_NUM = 500;
 
 // メッセージ の可視化ベース
 export default class WorldView extends React.Component {
 
 
     constructor(props, context) {
-        console.log("Base construct!");
+        console.log("World3DView!");
         super(props, context);
         this.cpw = 10; // core line location
         this.lpw = 50; // node location
@@ -24,7 +24,7 @@ export default class WorldView extends React.Component {
 
         this.cameraPosition = new THREE.Vector3(0, 0, 100);
         this.element = null;
-        this.mcount = 0;
+        this.mcount = 0; //  we should fix the number of messages (around 500?)
         this.visible = false;
 //        const width = this.element.clientWidth;
 //        const height = this.element.clientHeight;
@@ -80,7 +80,23 @@ export default class WorldView extends React.Component {
         // we need to check non-displayed messages.
 
         const mct = this.store.getMsgCount();
-        if(mct > this.mcount){
+        // if this.mcount larger then max_message,, 
+
+        if(this.mcount > MAX_MES_NUM){ // we need to update all vectors...
+/*            for(let i = 0; i < MAX_MES_NUM ; i ++){
+                let ms = this.store.getMsg(mct-MAX_MES_NUM+i);
+                const srcIx =  this.store.getNodeIndex(ms.getSrcNodeID())
+                let gm = new THREE.Geometry();
+                let tm = 20-i*tmspan;
+                let cv = this.getCoreVector(ms.getChType(),tm-tmspan/2);
+                let fromNodept = new THREE.Vector3(lpw * Math.cos(Math.PI*2/8*srcIx), tm,lpw * Math.sin(Math.PI*2/8*srcIx));
+                gm.vertices.push(fromNodept,  cv);
+                let str = ms.getMsgType()+":"+ms.getArgs();
+                this.add2dRenderText(str,fromNodept, true);
+                let mline = new THREE.Line(gm,this.mesMaterial);
+                this.mgroup.add(mline)
+            }*/
+        }else if(mct > this.mcount){
             for(let i = this.mcount; i < mct ; i ++){
                 let ms = this.store.getMsg(i);
                 const srcIx =  this.store.getNodeIndex(ms.getSrcNodeID())
@@ -100,8 +116,8 @@ export default class WorldView extends React.Component {
                let mline = new THREE.Line(gm,this.mesMaterial);
                 this.mgroup.add(mline)
             }
+            this.mcount = mct;
         }
-        this.mcount = mct;
 
         // turning ::
         if(this.props.turn){

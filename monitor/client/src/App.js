@@ -36,6 +36,8 @@ class App extends Component {
         let lg = this.state.logs;
         const obj = JSON.parse(message);
         const now = new Date();
+        if (lg.length === 999) console.log("Log length is now maximum 1000");
+        if(lg.length > 999 ) lg.shift(); // if log array length larger than 1000, then remove head.
         lg.push({
             msgType: obj.msgType,
             chType: obj.chType,
@@ -45,7 +47,8 @@ class App extends Component {
             value: value,
             time: now.toLocaleString()
         })
-        console.log("lg:", lg);
+
+//        console.log("lg:", lg);
         this.setState({
             logs:lg,
         });

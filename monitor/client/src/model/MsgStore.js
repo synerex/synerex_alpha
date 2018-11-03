@@ -3,6 +3,8 @@
 import Message from './Message';
 import Node from './Node';
 
+const MAX_NUM=10000;
+
 export default class MsgStore {
     constructor(){
         console.log("New Message Store");
@@ -31,9 +33,13 @@ export default class MsgStore {
         }
     }
 
+    // message store also should have the maximum number of messages
     addMsg(mes){ // get JSON string
         const ms = new Message(mes)
         this.addNode(ms.getSrcNodeID())
+        if (this.store.length > MAX_NUM){
+            this.store.shift(); // remove top data
+        }
 //        this.addNode(ms.getDestNodeID())
         this.store.push(ms)
     }
