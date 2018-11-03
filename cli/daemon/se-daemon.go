@@ -1,12 +1,9 @@
 package main
 
-
 // Daemon code for Synergic Exchange
 import (
 	"bufio"
 	"fmt"
-	"github.com/google/gops/agent"
-	"github.com/mtfelian/golang-socketio"
 	"io"
 	"log"
 	"net/http"
@@ -19,10 +16,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/gops/agent"
+	"github.com/mtfelian/golang-socketio"
+
 	"github.com/kardianos/service"
 )
 
-var version = "0.02"
+var version = "0.03"
 var logger service.Logger
 var errlog *log.Logger
 var port = 9995
@@ -35,18 +35,16 @@ var server *gosocketio.Server
 var providerMap map[string]*exec.Cmd
 var providerMutex sync.RWMutex
 
-
-
 type SynerexService struct {
 }
 
 type SubCommands struct {
-	CmdName string
+	CmdName     string
 	Description string
-	SrcDir	string
-	BinName string
-	GoFiles []string
-	RunFunc func()
+	SrcDir      string
+	BinName     string
+	GoFiles     []string
+	RunFunc     func()
 }
 
 var cmdArray []SubCommands
@@ -59,64 +57,60 @@ func init() {
 
 	cmdArray = []SubCommands{
 		{
-			CmdName:"All",
+			CmdName: "All",
 			RunFunc: runAllServ,
 			GoFiles: nil,
 		},
 		{
-			CmdName:"NodeIDServer",
-			SrcDir: "nodeserv",
+			CmdName: "NodeIDServer",
+			SrcDir:  "nodeserv",
 			BinName: "nodeid-server",
 			GoFiles: []string{"nodeid-server.go"},
 		},
 		{
-			CmdName:"MonitorServer",
-			SrcDir: "monitor",
+			CmdName: "MonitorServer",
+			SrcDir:  "monitor",
 			BinName: "monitor-server",
 			GoFiles: []string{"monitor-server.go"},
 		},
 		{
-			CmdName:"SynerexServer",
-			SrcDir: "server",
+			CmdName: "SynerexServer",
+			SrcDir:  "server",
 			BinName: "synerex-server",
 			GoFiles: []string{"synerex-server.go", "message-store.go"},
 		},
 		{
-		CmdName:
-			"Taxi",
-				SrcDir: "provider/taxi",
+			CmdName: "Taxi",
+			SrcDir:  "provider/taxi",
 			BinName: "taxi-provider",
 			GoFiles: []string{"taxi-provider.go"},
 		},
 		{
-		CmdName:
-			"Ad",
-				SrcDir: "provider/ad",
+			CmdName: "Ad",
+			SrcDir:  "provider/ad",
 			BinName: "ad-provider",
 			GoFiles: []string{"ad-provider.go"},
 		},
 		{
-		CmdName:
-			"Multi",
-				SrcDir: "provider/multi",
+			CmdName: "Multi",
+			SrcDir:  "provider/multi",
 			BinName: "multi-provider",
 			GoFiles: []string{"multi-provider.go"},
 		},
 		{
-			CmdName:"User",
-			SrcDir: "provider/user",
+			CmdName: "User",
+			SrcDir:  "provider/user",
 			BinName: "user-provider",
 			GoFiles: []string{"user-provider.go"},
 		},
 		{
-			CmdName:"Fleet",
-			SrcDir: "provider/fleet",
+			CmdName: "Fleet",
+			SrcDir:  "provider/fleet",
 			BinName: "fleet-provider",
 			GoFiles: []string{"fleet-provider.go"},
 		},
 	}
 }
-
 
 func (sesrv *SynerexService) Start(s service.Service) error {
 	go sesrv.run()
@@ -149,12 +143,12 @@ func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, file, fi.ModTime(), f)
 }
 
-func runMyCmd(cmd *exec.Cmd, cmdName string){
+func runMyCmd(cmd *exec.Cmd, cmdName string) {
 	providerMutex.Lock()
 	providerMap[cmdName] = cmd
 	providerMutex.Unlock()
 
-	pipe ,err := cmd.StderrPipe()
+	pipe, err := cmd.StderrPipe()
 	if err != nil {
 		logger.Infof("Error for getting stdout pipe %s\n", cmd.Args[0])
 		return
@@ -169,38 +163,38 @@ func runMyCmd(cmd *exec.Cmd, cmdName string){
 	reader := bufio.NewReader(pipe)
 	for {
 		line, _, err := reader.ReadLine()
-		if err == io.EOF{
+		if err == io.EOF {
 			logger.Infof("Command [%s] EOF\n", cmdName)
 			break
 		} else if err != nil {
-			logger.Infof("Err %v\n",err)
+			logger.Infof("Err %v\n", err)
 		}
 		server.BroadcastToAll("log", "["+cmdName+"]"+string(line))
-		logger.Infof("[%s]:%s",cmdName,string(line))
+		logger.Infof("[%s]:%s", cmdName, string(line))
 	}
-//	log.Printf("[%s]:Now ending...",cmdName)
-	logger.Infof("[%s]:Now ending...",cmdName)
+	//	log.Printf("[%s]:Now ending...",cmdName)
+	logger.Infof("[%s]:Now ending...", cmdName)
 
 	cmd.Wait()
 	providerMutex.Lock()
-	delete(providerMap,cmdName)
+	delete(providerMap, cmdName)
 	providerMutex.Unlock()
 
 	logger.Infof("Command [%s] closed\n", cmdName)
 }
 
 // delete all bin files
-func cleanCmd(sc SubCommands) string{// build local node server
-	logger.Infof("clean '%s'\n",sc.CmdName)
+func cleanCmd(sc SubCommands) string { // build local node server
+	logger.Infof("clean '%s'\n", sc.CmdName)
 
 	d, err := getRegisteredDir()
 	if err != nil {
-		logger.Errorf("%s",err.Error())
-		return "cannot get dir: "+err.Error()
+		logger.Errorf("%s", err.Error())
+		return "cannot get dir: " + err.Error()
 	}
 
-	binpath := filepath.FromSlash(filepath.ToSlash(d)+"/../../"+sc.SrcDir+"/"+binName(sc.BinName))
-	_ , err = os.Stat(binpath)
+	binpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../" + sc.SrcDir + "/" + binName(sc.BinName))
+	_, err = os.Stat(binpath)
 
 	if err != nil {
 		return "none"
@@ -209,35 +203,34 @@ func cleanCmd(sc SubCommands) string{// build local node server
 	return "ok"
 }
 
-
 // bulid From SubCommand
-func buildCmd(sc SubCommands) string{// build local node server
-	logger.Infof("build '%s'\n",sc.CmdName)
+func buildCmd(sc SubCommands) string { // build local node server
+	logger.Infof("build '%s'\n", sc.CmdName)
 	providerMutex.RLock()
-	_, ok :=  providerMap[sc.CmdName]
+	_, ok := providerMap[sc.CmdName]
 	providerMutex.RUnlock()
 	if ok {
 		logger.Warningf("%s is already running\n", sc.CmdName)
-		return sc.CmdName+" is already running"  // return to se command
+		return sc.CmdName + " is already running" // return to se command
 	}
 
 	d, err := getRegisteredDir()
 	if err != nil {
-		logger.Errorf("%s",err.Error())
-		return "cannot get dir: "+err.Error()
+		logger.Errorf("%s", err.Error())
+		return "cannot get dir: " + err.Error()
 	}
 
 	// get src dir
-	srcpath := filepath.FromSlash(filepath.ToSlash(d)+"/../../"+sc.SrcDir)
-	binpath := filepath.FromSlash(filepath.ToSlash(d)+"/../../"+sc.SrcDir+"/"+binName(sc.BinName))
+	srcpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../" + sc.SrcDir)
+	binpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../" + sc.SrcDir + "/" + binName(sc.BinName))
 	fi, err := os.Stat(binpath)
 	sfi, _ := os.Stat(srcpath)
 
 	// obtain most latest source file time.
 	modTime := sfi.ModTime()
 	for _, fn := range sc.GoFiles {
-		sp := filepath.FromSlash(filepath.ToSlash(srcpath)+"/"+fn)
-		ss , _ := os.Stat(sp)
+		sp := filepath.FromSlash(filepath.ToSlash(srcpath) + "/" + fn)
+		ss, _ := os.Stat(sp)
 		if ss.ModTime().After(modTime) {
 			modTime = ss.ModTime()
 		}
@@ -246,12 +239,12 @@ func buildCmd(sc SubCommands) string{// build local node server
 	var cmd *exec.Cmd
 
 	// check mod time
-	if err==nil && fi.ModTime().After(modTime){ // check binary time
+	if err == nil && fi.ModTime().After(modTime) { // check binary time
 		// if binary is newer than sources
 		return "ok"
-	}else{
-		runArgs := append([]string{"build"},sc.GoFiles...)
-		cmd = exec.Command("go",  runArgs...) // run go build with srcfile
+	} else {
+		runArgs := append([]string{"build"}, sc.GoFiles...)
+		cmd = exec.Command("go", runArgs...) // run go build with srcfile
 	}
 
 	cmd.Dir = srcpath
@@ -262,36 +255,33 @@ func buildCmd(sc SubCommands) string{// build local node server
 	return "ok"
 }
 
-
-
 // run From SubCommand
-func runProp(sc SubCommands) string{// start local node server
-	logger.Infof("run '%s'\n",sc.CmdName)
+func runProp(sc SubCommands) string { // start local node server
+	logger.Infof("run '%s'\n", sc.CmdName)
 	providerMutex.RLock()
-	_, ok :=  providerMap[sc.CmdName]
+	_, ok := providerMap[sc.CmdName]
 	providerMutex.RUnlock()
 	if ok {
 		logger.Warningf("%s is already running\n", sc.CmdName)
-		return sc.CmdName+" is already running"  // return to se command
+		return sc.CmdName + " is already running" // return to se command
 	}
 
 	d, err := getRegisteredDir()
 	if err != nil {
-		logger.Errorf("%s",err.Error())
-		return "cannot get dir: "+err.Error()
+		logger.Errorf("%s", err.Error())
+		return "cannot get dir: " + err.Error()
 	}
 
 	// get src dir
-	srcpath := filepath.FromSlash(filepath.ToSlash(d)+"/../../"+sc.SrcDir)
-	binpath := filepath.FromSlash(filepath.ToSlash(d)+"/../../"+sc.SrcDir+"/"+binName(sc.BinName))
+	srcpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../" + sc.SrcDir)
+	binpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../" + sc.SrcDir + "/" + binName(sc.BinName))
 	fi, err := os.Stat(binpath)
-	sfi, _ := os.Stat(srcpath)
 
 	// obtain most latest source file time.
-	modTime := sfi.ModTime()
+	modTime := time.Date(2018, time.August, 1, 0, 0, 0, 0, time.UTC)
 	for _, fn := range sc.GoFiles {
-		sp := filepath.FromSlash(filepath.ToSlash(srcpath)+"/"+fn)
-		ss , _ := os.Stat(sp)
+		sp := filepath.FromSlash(filepath.ToSlash(srcpath) + "/" + fn)
+		ss, _ := os.Stat(sp)
 		if ss.ModTime().After(modTime) {
 			modTime = ss.ModTime()
 		}
@@ -300,12 +290,12 @@ func runProp(sc SubCommands) string{// start local node server
 	var cmd *exec.Cmd
 
 	// check mod time
-	if err==nil && fi.ModTime().After(modTime){ // check binary time
-		cmd = exec.Command("./"+binName(sc.BinName))  // run binary
-	}else{
-		runArgs := append([]string{"run"},sc.GoFiles...)
-		logger.Infof("runArgs: [%s] %d, %s %s",sc.CmdName, len(sc.GoFiles), runArgs[0], runArgs[1])
-		cmd = exec.Command("go",  runArgs...) // run go with srcfile
+	if err == nil && fi.ModTime().After(modTime) { // check binary time
+		cmd = exec.Command("./" + binName(sc.BinName)) // run binary
+	} else {
+		runArgs := append([]string{"run"}, sc.GoFiles...)
+		logger.Infof("runArgs: [%s] %d, %s %s", sc.CmdName, len(sc.GoFiles), runArgs[0], runArgs[1])
+		cmd = exec.Command("go", runArgs...) // run go with srcfile
 	}
 
 	cmd.Dir = srcpath
@@ -316,24 +306,24 @@ func runProp(sc SubCommands) string{// start local node server
 	return "ok"
 }
 
-func getGoEnv() []string {	// we need to get/set gopath
-	d, _  := getRegisteredDir()  // may obtain dir of se-daemon
-	gopath := filepath.FromSlash(filepath.ToSlash(d)+"/../../../")
-	absGopath,_ := filepath.Abs(gopath)
+func getGoEnv() []string { // we need to get/set gopath
+	d, _ := getRegisteredDir() // may obtain dir of se-daemon
+	gopath := filepath.FromSlash(filepath.ToSlash(d) + "/../../../")
+	absGopath, _ := filepath.Abs(gopath)
 	env := os.Environ()
-	newenv := make([]string,0,1)
+	newenv := make([]string, 0, 1)
 	foundPath := false
 	for _, ev := range env {
-		if strings.Contains(ev,"GOPATH=") {
+		if strings.Contains(ev, "GOPATH=") {
 			// this might depends on each OS
 			newenv = append(newenv, ev+string(os.PathListSeparator)+filepath.FromSlash(filepath.ToSlash(absGopath)+"/"))
 			foundPath = true
-		}else{
+		} else {
 			newenv = append(newenv, ev)
 		}
 	}
 	if !foundPath { // this might happen at in the daemon..
-		gp , err :=	getRegisteredGoPath()
+		gp, err := getRegisteredGoPath()
 		if err == nil {
 			newenv = append(newenv, gp)
 		}
@@ -341,21 +331,20 @@ func getGoEnv() []string {	// we need to get/set gopath
 	return newenv
 }
 
-
-func runAllServ(){
+func runAllServ() {
 	runSubCmd("NodeIDServer")
 	runSubCmd("MonitorServer")
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 	runSubCmd("SynerexServer")
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 	runSubCmd("Taxi")
 	runSubCmd("Ad")
 	runSubCmd("Multi")
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 	runSubCmd("User")
 }
 
-func killAll(){
+func killAll() {
 	killCmd("User")
 	killCmd("Multi")
 	killCmd("Ad")
@@ -365,36 +354,34 @@ func killAll(){
 	killCmd("NodeIDServer")
 }
 
-func buildAll() []string{
+func buildAll() []string {
 	resp := make([]string, len(cmdArray))
-	i:=0
-	for _, sc := range cmdArray{
+	i := 0
+	for _, sc := range cmdArray {
 		if sc.CmdName != "All" {
 			resp[i] = buildSubCmd(sc.CmdName)
-			i ++
+			i++
 		}
 	}
 	return resp
 }
 
-func cleanAll() []string{
+func cleanAll() []string {
 	resp := make([]string, len(cmdArray))
-	i:=0
-	for _, sc := range cmdArray{
+	i := 0
+	for _, sc := range cmdArray {
 		if sc.CmdName != "All" {
 			resp[i] = cleanSubCmd(sc.CmdName)
-			i ++
+			i++
 		}
 	}
 	return resp
 }
 
-
-
 // obtain key of the cmdMap array
-func getCmdArray() []string{
-	keys := make([]string,len(cmdArray))
-	for i, sc := range cmdArray{
+func getCmdArray() []string {
+	keys := make([]string, len(cmdArray))
+	for i, sc := range cmdArray {
 		keys[i] = sc.CmdName
 	}
 	return keys
@@ -407,111 +394,109 @@ func runSubCmd(cmd string) {
 			return
 		}
 	}
-	logger.Errorf("Can't find subcommand %s",cmd)
+	logger.Errorf("Can't find subcommand %s", cmd)
 }
 
-func buildSubCmd(cmd string) string{
+func buildSubCmd(cmd string) string {
 	for _, sc := range cmdArray {
 		if sc.CmdName == cmd {
 			return buildCmd(sc)
 		}
 	}
-	str := fmt.Sprintf("Can't find subcommand %s",cmd)
+	str := fmt.Sprintf("Can't find subcommand %s", cmd)
 	return str
 }
-func cleanSubCmd(cmd string) string{
+func cleanSubCmd(cmd string) string {
 	for _, sc := range cmdArray {
 		if sc.CmdName == cmd {
 			return cleanCmd(sc)
 		}
 	}
-	str := fmt.Sprintf("Can't find subcommand %s",cmd)
+	str := fmt.Sprintf("Can't find subcommand %s", cmd)
 	return str
 }
 
-func handleBuild(target []string)[]string{
+func handleBuild(target []string) []string {
 	resp := make([]string, len(target))
 	for i, proc := range target {
-		if proc == "All" || proc =="all"{
+		if proc == "All" || proc == "all" {
 			return buildAll()
-			  // you don't need to build others
-		}else{
+			// you don't need to build others
+		} else {
 			resp[i] = buildSubCmd(proc)
 		}
 	}
 	return resp
 
 }
-func handleClean(target []string)[]string{
+func handleClean(target []string) []string {
 	resp := make([]string, len(target))
 	for i, proc := range target {
-		if proc == "All" || proc =="all"{
+		if proc == "All" || proc == "all" {
 			return cleanAll()
 			// you don't need to build others
-		}else{
+		} else {
 			resp[i] = cleanSubCmd(proc)
 		}
 	}
 	return resp
 }
 
-
-func handleRun(target string) string{
-	for _, sc := range cmdArray{
+func handleRun(target string) string {
+	for _, sc := range cmdArray {
 		if sc.CmdName == target {
 			var res string
-			if( sc.RunFunc == nil){
+			if sc.RunFunc == nil {
 				res = runProp(sc)
-			}else {
-	//			res = sc.RunFunc()
+			} else {
+				//			res = sc.RunFunc()
 				res = "ok"
 				sc.RunFunc()
 			}
 			return res
 		}
 	}
-	logger.Infof("Can't find command %s",target)
-	return "Can't find command "+target
+	logger.Infof("Can't find command %s", target)
+	return "Can't find command " + target
 }
 
-func killCmd(target string) string{
+func killCmd(target string) string {
 	res := "no"
 	providerMutex.RLock()
-	cmd, ok :=  providerMap[target]
+	cmd, ok := providerMap[target]
 	providerMutex.RUnlock()
 	if ok {
-		logger.Infof("Try to stop %s\n",target)
-		err :=cmd.Process.Signal(os.Kill)
+		logger.Infof("Try to stop %s\n", target)
+		err := cmd.Process.Signal(os.Kill)
 		if err != nil {
 			res = err.Error()
-		}else{
-			logger.Infof("OK to kill %s\n",target)
+		} else {
+			logger.Infof("OK to kill %s\n", target)
 			res = "ok"
-/*			err = cmd.Process.Release()
-			if err != nil {
-				logger.Info("Release failed on %s\n",target)
-			}
-*/
+			/*			err = cmd.Process.Release()
+						if err != nil {
+							logger.Info("Release failed on %s\n",target)
+						}
+			*/
 		}
 	}
 	return res
 }
 
-func handleStop(target []string) []string{
+func handleStop(target []string) []string {
 	resp := make([]string, len(target))
 	for i, proc := range target {
-		if proc == "All" || proc =="all"{
+		if proc == "All" || proc == "all" {
 			killAll()
-			break  // you don't need to kill others
-		}else{
+			break // you don't need to kill others
+		} else {
 			resp[i] = killCmd(proc)
 		}
 	}
 	return resp
 }
 
-
-func handleRestart(target []string) []string{
+func handleRestart(target []string) []string {
 	resp := handleStop(target)
 	for _, tg := range target {
 		handleRun(tg)
@@ -520,41 +505,43 @@ func handleRestart(target []string) []string{
 }
 
 // ps commands from se cli
-func checkRunning(opt string) []string{
+func checkRunning(opt string) []string {
 	isLong := false
-	if opt == "long" {isLong = true}
+	if opt == "long" {
+		isLong = true
+	}
 	var procs []string
 	i := 0
 	providerMutex.RLock()
 	if isLong {
-		procs = make([]string,len(providerMap)+2)
-		str := fmt.Sprintf("  pid: %-20s : \n",  "process name")
+		procs = make([]string, len(providerMap)+2)
+		str := fmt.Sprintf("  pid: %-20s : \n", "process name")
 		procs[i] = str
 		procs[i+1] = "-----------------------------------------------------------------\n"
-		i+=2
-	}else{
-		procs = make([]string,len(providerMap))
+		i += 2
+	} else {
+		procs = make([]string, len(providerMap))
 	}
-	for key,cx := range providerMap {
+	for key, cx := range providerMap {
 		pid := cx.Process.Pid
 		if isLong {
 			str := fmt.Sprintf("%5d: %-20s : \n", pid, key)
 			procs[i] = str
-		}else{
+		} else {
 			if i != 0 {
-				procs[i] = ", "+key
-			}else{
+				procs[i] = ", " + key
+			} else {
 				procs[i] = key
 			}
 		}
-		i+=1
+		i += 1
 	}
 	providerMutex.RUnlock()
 	return procs
 
 }
 
-func interfaceToString(target interface{})[]string{
+func interfaceToString(target interface{}) []string {
 	procs := target.([]interface{})
 	resp := make([]string, len(procs))
 	for i, pp := range procs {
@@ -563,12 +550,11 @@ func interfaceToString(target interface{})[]string{
 	return resp
 }
 
-
-func (sesrv *SynerexService) run()  error {
-	logger.Info("Starting.. Synergic Engine:"+version)
+func (sesrv *SynerexService) run() error {
+	logger.Info("Starting.. Synergic Engine:" + version)
 	currentRoot, err := getRegisteredDir()
 	if err != nil {
-		logger.Errorf("se-daemon: Can' get registered directory: %s",err.Error())
+		logger.Errorf("se-daemon: Can' get registered directory: %s", err.Error())
 	}
 	d := filepath.Join(currentRoot, "dclient", "build")
 
@@ -585,38 +571,36 @@ func (sesrv *SynerexService) run()  error {
 		logger.Infof("Disconnected from %s as %s", c.IP(), c.Id())
 	})
 
-	server.On("ps", func(c *gosocketio.Channel, param interface{}) [] string{
+	server.On("ps", func(c *gosocketio.Channel, param interface{}) []string {
 		// need to check param short or long
 		opt := param.(string)
 
 		return checkRunning(opt)
 	})
 
-	server.On("stop", func(c *gosocketio.Channel, param interface{}) [] string{
+	server.On("stop", func(c *gosocketio.Channel, param interface{}) []string {
 		procs := interfaceToString(param)
 		return handleStop(procs)
 	})
 
-	server.On("restart", func(c *gosocketio.Channel, param interface{}) [] string{
+	server.On("restart", func(c *gosocketio.Channel, param interface{}) []string {
 		procs := interfaceToString(param)
 		return handleRestart(procs)
 	})
 
-	server.On("build", func(c *gosocketio.Channel, param interface{}) [] string{
+	server.On("build", func(c *gosocketio.Channel, param interface{}) []string {
 		procs := interfaceToString(param)
 		return handleBuild(procs)
 	})
 
-	server.On("clean", func(c *gosocketio.Channel, param interface{}) [] string{
+	server.On("clean", func(c *gosocketio.Channel, param interface{}) []string {
 		procs := interfaceToString(param)
 		return handleClean(procs)
 	})
 
-
-
 	server.On("run", func(c *gosocketio.Channel, param interface{}) string {
 		nid := param.(string)
-//		fmt.Printf("Get Run Command %s\n", nid)
+		//		fmt.Printf("Get Run Command %s\n", nid)
 		logger.Infof("Get run command %s", nid)
 		return handleRun(nid)
 	})
@@ -626,17 +610,16 @@ func (sesrv *SynerexService) run()  error {
 	serveMux.Handle("/socket.io/", server)
 	serveMux.HandleFunc("/", assetsFileHandler)
 
-
 	logger.Info("Starting Synerex Engine daemon on port ", port)
-	err = http.ListenAndServe(fmt.Sprintf(":%d",port), serveMux)
-	if err != nil{
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
+	if err != nil {
 		logger.Error(err)
 	}
 
 	return nil
 }
 
-func (sesrv *SynerexService) Stop(s service.Service) error{
+func (sesrv *SynerexService) Stop(s service.Service) error {
 	// how to stop serv.
 	logger.Info("Stopping Synerex Engine.")
 	// stop all running sub commands
@@ -658,26 +641,26 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 			// Install se-daemon as a service
 			//
 			err := registerCurrentDir() // for each Operating System.
-			if err != nil{
+			if err != nil {
 				logger.Error(err)
 			}
 
-			return "Synerex Engine Installed.",s.Install()
+			return "Synerex Engine Installed.", s.Install()
 		case "uninstall":
 			err := removeRegisteredDir() // uninstall
-			if err != nil{
+			if err != nil {
 				logger.Error(err)
 			}
-			return "Synerex Engine Uninstalled.",s.Uninstall()
+			return "Synerex Engine Uninstalled.", s.Uninstall()
 		case "start":
-			return "Start Synerex Engine",s.Start()
+			return "Start Synerex Engine", s.Start()
 		case "stop":
 
-			return "Stop Synerex Engine",s.Stop()
+			return "Stop Synerex Engine", s.Stop()
 		case "status":
 			st, err := s.Status()
 			var stst string
-			switch (st){
+			switch st {
 			case service.StatusRunning:
 				stst = "Running"
 			case service.StatusStopped:
@@ -685,7 +668,7 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 			default:
 				stst = "Unknown"
 			}
-			return  "Status :"+stst,err
+			return "Status :" + stst, err
 		default:
 			return usage, nil
 		}
@@ -695,14 +678,13 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 	if err != nil {
 		logger.Error(err)
 	}
-	return "",nil
+	return "", nil
 }
-
 
 func main() {
 	// add gops agent.
-//	fmt.Println("Start gops agent")
-	if gerr := agent.Listen(agent.Options{}); gerr != nil{
+	//	fmt.Println("Start gops agent")
+	if gerr := agent.Listen(agent.Options{}); gerr != nil {
 		log.Fatal(gerr)
 	}
 
@@ -721,23 +703,23 @@ func main() {
 		os.Exit(1)
 	}
 
-	errs := make (chan error, 5)
+	errs := make(chan error, 5)
 	logger, err = svc.Logger(errs)
 	st, err := svc.Status()
-	if st == service.StatusRunning{
+	if st == service.StatusRunning {
 		isDaemon = true
 	}
 
-	go func(){
+	go func() {
 		for {
-			err := <- errs
+			err := <-errs
 			if err != nil {
 				log.Print(err)
 			}
 		}
 	}()
 
-//	logger.Info("Starting Synerex Engine "+version)
+	//	logger.Info("Starting Synerex Engine "+version)
 	status, err := serv.Manage(svc)
 	if err != nil {
 		errlog.Println(status, "\nError:", err)
