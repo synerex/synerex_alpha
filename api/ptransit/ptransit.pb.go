@@ -6,7 +6,7 @@ package ptransit
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
-import common "github.com/synerex/synerex_alpha/api/common"
+import common "common"
 import duration "github.com/golang/protobuf/ptypes/duration"
 
 // Reference imports to suppress errors if they are not otherwise used.

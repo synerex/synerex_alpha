@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.ptransit;
 
-option go_package="ptransit";
+option go_package="github.com/synerex/synerex_alpha/api/ptransit";
 
 import "google/protobuf/duration.proto";
 import "common/common.proto";
