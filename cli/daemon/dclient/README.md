@@ -1,3 +1,9 @@
+# Synerex Enigine Web Client.
+
+This web client connects to synerex engine through socket.io.
+(Do not open this to public)
+
+
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
 Below you will find some information on how to perform common tasks.<br>
