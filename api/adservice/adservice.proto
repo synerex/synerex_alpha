@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.adservice;
 
-option go_package="api/adservice";
+option go_package="adservice";
 
 import "google/protobuf/duration.proto";
 
