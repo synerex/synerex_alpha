@@ -5,6 +5,7 @@ package main
 //go:generate protoc -I ../api  --go_out=.. fleet/fleet.proto
 //go:generate protoc -I ../api  --go_out=.. library/library.proto
 //go:generate protoc -I ../api  --go_out=.. rideshare/rideshare.proto
+//go:generate protoc -I ../api  --go_out=.. ptransit/ptransit.proto
 
 //go:generate protoc -I ../api -I .. --go_out=plugins=grpc:../api smarket.proto
 

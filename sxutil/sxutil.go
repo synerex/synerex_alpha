@@ -306,9 +306,15 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 		ArgJson:    smo.JSON,
 	}
 
-	if(clt.MType == api.MarketType_RIDE_SHARE) {
+	switch(clt.MType){
+	case api.MarketType_RIDE_SHARE:
 		sp := api.Supply_Arg_Fleet{
 			smo.Fleet,
+		}
+		dm.ArgOneof = &sp
+	case api.MarketType_PT_SERVICE:
+		sp := api.Supply_Arg_PTService{
+			smo.PTService,
 		}
 		dm.ArgOneof = &sp
 	}
@@ -317,7 +323,7 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 	defer cancel()
 	resp, err := clt.Client.RegisterSupply(ctx, &dm)
 	if err != nil {
-		log.Fatalf("%v.RegisterSupply err %v", clt, err)
+		log.Fatalf("Error for sending:RegisterSupply to  Synerex Server as %v", err)
 	}
 	log.Println("RegiterSupply:", smo, resp)
 	smo.ID = id // assign ID
