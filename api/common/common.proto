@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.common;
 
-option go_package="common";
+option go_package="github.com/synerex/synerex_alpha/api/common";
 
 import "google/protobuf/timestamp.proto";
 

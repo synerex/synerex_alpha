@@ -6,13 +6,13 @@ package api
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import duration "github.com/golang/protobuf/ptypes/duration"
+import timestamp "github.com/golang/protobuf/ptypes/timestamp"
 import adservice "github.com/synerex/synerex_alpha/api/adservice"
 import fleet "github.com/synerex/synerex_alpha/api/fleet"
 import library "github.com/synerex/synerex_alpha/api/library"
 import ptransit "github.com/synerex/synerex_alpha/api/ptransit"
 import rideshare "github.com/synerex/synerex_alpha/api/rideshare"
-import duration "github.com/golang/protobuf/ptypes/duration"
-import timestamp "github.com/golang/protobuf/ptypes/timestamp"
 
 import (
 	context "golang.org/x/net/context"
