@@ -10,6 +10,7 @@ import "fleet/fleet.proto";
 import "rideshare/rideshare.proto";
 import "adservice/adservice.proto";
 import "library/library.proto";
+import "ptransit/ptransit.proto";
 
 service SMarket {
     rpc RegisterDemand(Demand) returns (Response) {}
@@ -48,9 +49,10 @@ message ConfirmResponse{
 
 enum MarketType {
     NONE = 0;
-    RIDE_SHARE = 1;
-    AD_SERVICE = 2;
-    LIB_SERVICE = 3;
+    RIDE_SHARE = 1;  // Rideshare Service Information
+    AD_SERVICE = 2;  // Advertisement Service Information
+    LIB_SERVICE = 3; // Public Library Service Information
+    PT_SERVICE = 4;  // Public Transit Information
     END = 10;
 }
 
@@ -68,6 +70,7 @@ message Supply{
         rideshare.RideShare arg_RideShare = 11;
         adservice.AdService arg_AdService = 12;
         library.LibService arg_LibService = 13;
+        ptransit.PTService arg_PTService = 14;
     }
 }
 
@@ -85,6 +88,7 @@ message Demand {
         rideshare.RideShare arg_RideShare = 11;
         adservice.AdService arg_AdService = 12;
         library.LibService arg_LibService = 13;
+        ptransit.PTService arg_PTService = 14;
     }
 }
 

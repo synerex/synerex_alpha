@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package api.ptransit;
+
+option go_package="api/ptransit";
+
+import "google/protobuf/duration.proto";
+import "common/common.proto";
+
+message PTService
+{ // Location Service for Public Transit
+    int32 operator_id = 1;
+    int32 line_id = 2;
+    int32 past_station_id = 3;
+    int32 station_group_id = 4;
+    int32 next_station_id = 5;
+    string next_station_name = 6;
+    int32 vehicle_id = 7;
+    float angle = 8;
+    int32 speed = 9;
+    api.common.Place current_location = 10;
+    api.common.Time next_arraival_timetable_time = 11;
+    api.common.Time past_departure_time = 12;
+    google.protobuf.Duration delay_time = 13;
+}
