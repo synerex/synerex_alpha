@@ -1,4 +1,4 @@
-module github.com/synerex/synerex_alpha/api/fleet
+module github.com/synerex/synerex_alpha/api/adservice
 
 require (
 	github.com/golang/protobuf v1.2.0
