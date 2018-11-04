@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 package nodeapi;
+option go_package="github.com/synerex/synerex_alpha/nodeapi/nodeapi";
 
 service Node {
     rpc RegisterNode(NodeInfo) returns (NodeID) {}
