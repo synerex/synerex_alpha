@@ -16,6 +16,7 @@ import (
 
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/fleet"
+	"github.com/synerex/synerex_alpha/api/ptransit"
 	"github.com/synerex/synerex_alpha/nodeapi"
 
 	)
@@ -47,6 +48,7 @@ type SupplyOpts struct {
 	Name   string
 	JSON   string
 	Fleet 	*fleet.Fleet
+	PTService *ptransit.PTService
 }
 
 func init() {
