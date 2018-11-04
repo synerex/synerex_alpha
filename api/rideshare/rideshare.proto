@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.rideshare;
 
-option go_package="api/rideshare";
+option go_package="rideshare";
 
 import "google/protobuf/duration.proto";
 import "common/common.proto";

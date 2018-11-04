@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.common;
 
-option go_package="api/common";
+option go_package="common";
 
 import "google/protobuf/timestamp.proto";
 
