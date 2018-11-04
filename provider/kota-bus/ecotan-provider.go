@@ -4,12 +4,15 @@ import (
 	"flag"
 	"fmt"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
-	"github.com/synerex/synerex_alpha/sxutil"
+	"github.com/synerex/synerex_alpha/api"
+	"github.com/synerex/synerex_alpha/api/common"
 	"github.com/synerex/synerex_alpha/api/ptransit"
-	api "github.com/synerex/synerex_alpha/api"
+	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -46,14 +49,46 @@ func subscribe(client MQTT.Client, sub chan<- MQTT.Message) {
 	}
 }
 
-func handleMQMessage(sclient *sxutil.SMServiceClient, msg MQTT.Message){
+func convertDocor2PTService(msg *string) (service *ptransit.PTService){
+	// using docor info
+	payloads := strings.Split(*msg,",")
+	lat, err := strconv.ParseFloat(payloads[8],64)
+	if err != nil {
+		log.Printf("Can't convert latitude from `%s`", payloads[8])
+	}
+	lon, err2 := strconv.ParseFloat(payloads[9],64)
+	if err2 != nil {
+		log.Printf("Can't convert longitude from `%s`", payloads[9])
+	}
+	place := common.NewPlace().WithPoint(&common.Point{
+		Latitude: lat,
+		Longitude: lon,
+	})
 
-	smo := sxutil.SupplyOpts{
-		Name:  "Ecotan Bus Info",
-		Fleet: &fleet,
+	vid,_ := strconv.Atoi(payloads[1][4:]) // scrape from "KOTAXX"
+	angle,_ := strconv.ParseFloat(payloads[12],32)
+	speed,_ := strconv.ParseFloat(payloads[13], 32)
+
+	service = &ptransit.PTService{
+		VehicleId: int32(vid),
+		Angle: float32(angle),
+		Speed: int32(speed),
+		CurrentLocation: place,
 	}
 
-	sclient.RegisterSupply()
+	log.Printf("msg:%v",*service)
+	return service
+}
+
+
+func handleMQMessage(sclient *sxutil.SMServiceClient, msg *string){
+
+	pts := convertDocor2PTService(msg)
+	smo := sxutil.SupplyOpts{
+		Name:  "Ecotan Bus Info",
+		PTService: pts,
+	}
+	sclient.RegisterSupply(&smo)
 
 }
 
@@ -76,10 +111,15 @@ func main() {
 		log.Fatalf("fail to dial: %v", err)
 	}
 
-	client := pb.NewSMarketClient(conn)
+	client := api.NewSMarketClient(conn)
 	sclient := sxutil.NewSMServiceClient(client, api.MarketType_PT_SERVICE,"")
 
 	// MQTT
+
+	if len(*mqsrv) == 0 {
+		log.Printf("Should speficy server addresses")
+		os.Exit(1)
+	}
 
 	mopts := MQTT.NewClientOptions()
 	mopts.AddBroker(*mqsrv)
@@ -102,8 +142,8 @@ func main() {
 		select {
 			case s := <- sub:
 				msg := string(s.Payload())
-				fmt.Printf("\nmsg: %s\n", msg)
-				handleMQMessage(sclient, msg)
+//				fmt.Printf("\nmsg: %s\n", msg)
+				handleMQMessage(sclient, &msg)
 		}
 	}
 
