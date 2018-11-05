@@ -7,6 +7,7 @@ import (
 	"flag"
 	"log"
 	"sync"
+	"time"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	smutil "github.com/synerex/synerex_alpha/sxutil"
@@ -75,7 +76,10 @@ func main() {
 
 	wg.Add(1)
 	go subscribeSupply(sclient)
-	addDemand(sclient, "Advertise video for 30s woman")
+	for {
+		addDemand(sclient, "Advertise video for 30s woman")
+		time.Sleep(time.Second * 30)
+	}
 	wg.Wait()
 
 	smutil.CallDeferFunctions() // cleanup!
