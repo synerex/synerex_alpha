@@ -6,8 +6,8 @@ export default class Header extends Component {
         return (
             <header className="main-header">
                 <a href="" className="logo">
-                    <span className="logo-mini"><b>SM</b>M</span>
-                    <span className="logo-lg"><b>SMarket</b>Monitor</span>
+                    <span className="logo-mini"><b>SX</b>M</span>
+                    <span className="logo-lg"><b>Synerex</b>Monitor</span>
                 </a>
                 <nav className="navbar navbar-static-top">
                     <a href="" className="sidebar-toggle" data-toggle="push-menu" role="button" >

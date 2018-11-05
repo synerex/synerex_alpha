@@ -17,6 +17,7 @@ import (
 	"log"
 	"net"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -269,6 +270,8 @@ func newServerInfo() *synerexServerInfo {
 	return s
 }
 
+
+// synerex ID system
 var (
 	NodeBits uint8 = 10
 	StepBits uint8 = 12
@@ -286,7 +289,9 @@ func idToNode(id uint64) string {
 	if str, ok = nodeMap[nodeNum]; !ok {
 		str = sxutil.GetNodeName(nodeNum)
 	}
-	return str + ":" + strconv.Itoa(nodeNum)
+	rs := strings.Replace(str,"Provider","",-1)
+	rs2 := strings.Replace(rs, "Server", "",-1)
+	return rs2 + ":" + strconv.Itoa(nodeNum)
 }
 
 func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.UnaryServerInterceptor {
@@ -304,7 +309,8 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 			srcId = dm.SenderId
 			tgtId = dm.TargetId
 			mid = dm.Id
-			args = "Type:" + strconv.Itoa(int(dm.Type)) + ":" + strconv.FormatUint(dm.Id, 16) + ":" + idToNode(dm.SenderId) + "->" + strconv.FormatUint(dm.TargetId, 16)
+//			args = "Type:" + strconv.Itoa(int(dm.Type)) + ":" + strconv.FormatUint(dm.Id, 16) + ":" + idToNode(dm.SenderId) + "->" + strconv.FormatUint(dm.TargetId, 16)
+			args = idToNode(dm.SenderId) + "->" + idToNode(dm.TargetId)
 			// Supply
 		case "RegisterSupply", "ProposeSupply":
 			sp := req.(*api.Supply)
@@ -312,7 +318,8 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 			srcId = sp.SenderId
 			tgtId = sp.TargetId
 			mid = sp.Id
-			args = "Type:" + strconv.Itoa(int(sp.Type)) + ":" + strconv.FormatUint(sp.Id, 16) + ":" + idToNode(sp.SenderId) + "->" + strconv.FormatUint(sp.TargetId, 16)
+//			args = "Type:" + strconv.Itoa(int(sp.Type)) + ":" + strconv.FormatUint(sp.Id, 16) + ":" + idToNode(sp.SenderId) + "->" + strconv.FormatUint(sp.TargetId, 16)
+			args = idToNode(sp.SenderId) + "->" + idToNode(sp.TargetId)
 			// Target
 		case "SelectSupply", "Confirm", "SelectDemand":
 			tg := req.(*api.Target)
@@ -320,13 +327,18 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 			mid = tg.Id
 			srcId = tg.SenderId
 			tgtId = tg.TargetId
-			args = "Type:" + strconv.Itoa(int(tg.Type)) + ":" + strconv.FormatUint(tg.Id, 16) + ":" + idToNode(tg.Id) + "->" + strconv.FormatUint(tg.TargetId, 16)
+			args = idToNode(tg.SenderId) + "->" + idToNode(tg.TargetId)
+//			args = "Type:" + strconv.Itoa(int(tg.Type)) + ":" + strconv.FormatUint(tg.Id, 16) + ":" + idToNode(tg.Id) + "->" + strconv.FormatUint(tg.TargetId, 16)
 		}
 
 		//		monitorapi.SendMes(&monitorapi.Mes{Message:method+":"+args, Args:""})
 
 		dstId := s.messageStore.getSrcId(tgtId)
-		monitorapi.SendMessage(method, msgType, srcId, dstId, args)
+		meth := strings.Replace(method, "Propose", "P",1)
+		met2 := strings.Replace(meth, "Register", "R",1)
+		met3 := strings.Replace(met2, "Supply", "S",1)
+		met4 := strings.Replace(met3, "Demand", "D",1)
+		monitorapi.SendMessage(met4, msgType, srcId, dstId, args)
 
 		// register for messageStore
 		s.messageStore.AddMessage(method, msgType, mid, srcId, dstId, args)
