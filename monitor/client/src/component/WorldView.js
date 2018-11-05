@@ -6,21 +6,25 @@ import TrackballControls from './TrackballControls';
 import {ResizeListener} from 'react-resize-listener';
 import TextBoardCanvas from './TextBoardCanvas';
 
-const MAX_MES_NUM = 500;
+const MAX_MES_NUM = 200;
 
 // メッセージ の可視化ベース
 export default class WorldView extends React.Component {
 
 
     constructor(props, context) {
-        console.log("World3DView!");
+        console.log("World3DView2!");
         super(props, context);
         this.cpw = 10; // core line location
         this.lpw = 50; // node location
-        this.coreCount = 3;
+        this.coreCount = 4;
+        this.ndCount = 6;
         this.yaw =0;
+        this.rotation = 0;
 
         this.text2d = []; // 2d text
+        this.nodeNameText = []; // keep nodename texts
+//        this.nodeNames = ["Taxi:10","Taxi:11","Taxi:12","Multi:13","Ad:14","User:15"];
 
         this.cameraPosition = new THREE.Vector3(0, 0, 100);
         this.element = null;
@@ -40,6 +44,13 @@ export default class WorldView extends React.Component {
         this.vertexShaderStr = "";
         this.fragmentShaderStr = "";
 
+        this.props.store.setNodeUpdateFunc(this.updateNodeName.bind(this));
+    }
+
+    updateNodeName(nodeID, name){
+        console.log("Update ID of node ID",nodeID);
+        this.nodeNameText[nodeID].text = name;
+
     }
 
     getCoreVector(type, loc){
@@ -48,21 +59,9 @@ export default class WorldView extends React.Component {
     }
 
     // rotate all world
-    rotateCamera(angle){
-        let m = new THREE.Matrix4();
-        let am = new THREE.Matrix4();
-        this.yaw = this.camera.rotation.y;
-        this.pitch = this.camera.rotation.x;
-        this.roll = this.camera.rotation.z;
+    rotateObjects(angle){
 
-        this.yaw += angle;
-        m.multiplyMatrices(am.makeRotationY(this.yaw),m);
-        m.multiplyMatrices(am.makeRotationX(this.pitch),m);
-        m.multiplyMatrices(am.makeRotationZ(this.roll),m);
-//        m.multiplyMatrices(am.makeTranslation(0,0,0),m);
-        this.camera.position.copy(new THREE.Vector3(0,0,110).applyMatrix4(m));
-//        this.camera.rotation.order="YXZ";
-        this.camera.rotation.y = this.yaw;
+
     }
 
     onAnimate(){
@@ -75,7 +74,7 @@ export default class WorldView extends React.Component {
 
         //  Update Scene using current MsgObject
         const lpw = this.lpw;
-        const tmspan = 1.8;
+        const tmspan = 2.3;
 
         // we need to check non-displayed messages.
 
@@ -102,10 +101,10 @@ export default class WorldView extends React.Component {
                 const srcIx =  this.store.getNodeIndex(ms.getSrcNodeID())
 //                const dstIx =  this.store.getNodeIndex(ms.getDstNodeID())
                 let gm = new THREE.Geometry();
-                let tm = 20-i*tmspan;
+                let tm = 10-i*tmspan;
                 let cv = this.getCoreVector(ms.getChType(),tm-tmspan/2);
 //                console.log("Link Message", ms.getMsgType(), ms.obj);
-                let fromNodept = new THREE.Vector3(lpw * Math.cos(Math.PI*2/8*srcIx), tm,lpw * Math.sin(Math.PI*2/8*srcIx));
+                let fromNodept = new THREE.Vector3(lpw * Math.cos(Math.PI*2/this.ndCount*srcIx), tm,lpw * Math.sin(Math.PI*2/this.ndCount*srcIx));
                 gm.vertices.push(fromNodept,  cv);
 
                 let str = ms.getMsgType()+":"+ms.getArgs();
@@ -121,13 +120,14 @@ export default class WorldView extends React.Component {
 
         // turning ::
         if(this.props.turn){
-//            this.scene.rotation.y += 0.003;
+            this.scene.rotation.y += 0.003;
+            this.rotation += 0.003;
 //            this.camera.rotation.y += 0.003;
-//            this.rotateCamera(0.003);
+//            this.rotateObjects(0.003);
         }
 
 
-        this.renderer.render(this.scene,this.camera);
+        this.renderer.render(this.topScene,this.camera);
 
         this.render2d();
 
@@ -138,7 +138,11 @@ export default class WorldView extends React.Component {
     convertWorldToScreenXY(vec3d){
 //        console.log("Before ",vec3d.x,vec3d.y,vec3d.z)
         let vv = new THREE.Vector3(vec3d.x,vec3d.y, vec3d.z);
-        vv.project(this.camera)
+        // need to rotate
+        let axis = new THREE.Vector3(0,1,0);
+        vv = vv.applyAxisAngle(axis, this.rotation);
+//        console.log("apply! ",vv);
+        vv.project(this.camera);
 
         const xw = this.state.width /2, yw = this.state.height /2;
         let x = (vv.x +1 )* xw;
@@ -186,10 +190,13 @@ export default class WorldView extends React.Component {
         console.log("WorldView did mount");
         this.visible = true;
 
+
         const {width, height} = this.state;
 
 // Prepare Three Scene
-        this.scene = new THREE.Scene();
+        this.topScene = new THREE.Scene();
+        this.scene = new THREE.Group();
+        this.topScene.add(this.scene);
         this.camera = new THREE.PerspectiveCamera(55, width/ height, 0.00001, 10000);
         this.camera.position.set(0,0,110);
 
@@ -208,9 +215,10 @@ export default class WorldView extends React.Component {
 
         // make a circle from lines
         let loopGeom = new THREE.Geometry();
+        let innerLoopGeom = new THREE.Geometry();
         const lpw = this.lpw;
         const cpw = this.cpw;
-        const names = ["Lib","RideShare","Ad"];
+        const names = ["Lib","RideShare","Ad","PublicTransit"];
 
         // core lines
         for (let i = 0; i < this.coreCount; i++){
@@ -248,6 +256,7 @@ export default class WorldView extends React.Component {
             */
             //canvas2d
 
+
             this.add2dRenderText(names[i], new THREE.Vector3(cpw * Math.cos(Math.PI*2/this.coreCount*i), 23, cpw * Math.sin(Math.PI*2/this.coreCount*i)), false);
 
         }
@@ -256,16 +265,22 @@ export default class WorldView extends React.Component {
             loopGeom.vertices.push(
                 new THREE.Vector3(lpw * Math.cos(Math.PI*i/90), 20,lpw * Math.sin(Math.PI*i/90))
             )
+            innerLoopGeom.vertices.push(
+                new THREE.Vector3(cpw * Math.cos(Math.PI*i/90), 20,cpw * Math.sin(Math.PI*i/90))
+            )
         }
+        this.iloop = new THREE.LineLoop(innerLoopGeom,lineMaterial);
 
-        this.loop = new THREE.LineLoop(loopGeom,lineMaterial)
+        this.loop = new THREE.LineLoop(loopGeom,lineMaterial);
 
         let clGeom = new THREE.Geometry();
-        clGeom.vertices.push( new THREE.Vector3(0,50,0), new THREE.Vector3(0,-1000,0))
-        this.cLine = new THREE.Line(clGeom,clineMaterial)
-        this.scene.add(this.cLine)
+        clGeom.vertices.push( new THREE.Vector3(0,50,0), new THREE.Vector3(0,-1000,0));
+        this.cLine = new THREE.Line(clGeom,clineMaterial);
+        this.scene.add(this.cLine);
 
         const ct = this.store.getNodeNum();
+
+        this.scene.add(this.iloop);
 
         this.scene.add(this.loop);
 
@@ -314,8 +329,9 @@ export default class WorldView extends React.Component {
             this.scene.add(tobj);
 */
 
-            this.add2dRenderText("Node"+i, new THREE.Vector3(mesh.position.x, 23, mesh.position.z), false);
 
+            this.nodeNameText[i]= {text:"Node:"+i , vec:new THREE.Vector3(mesh.position.x, 23, mesh.position.z) , withline:false}
+            this.text2d.push(this.nodeNameText[i]);
 
         }
 

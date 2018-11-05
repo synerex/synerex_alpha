@@ -7,11 +7,14 @@ import (
 	"flag"
 	"fmt"
 	"github.com/google/gops/agent"
+	"github.com/synerex/synerex_alpha/nodeapi"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	monitorpb "github.com/synerex/synerex_alpha/monitor/monitorapi"
@@ -27,9 +30,11 @@ type monitorInfo struct {
 var (
 	port      = flag.Int("port", 9999, "Monitor Server Listening Port")
 	mesPort   = flag.Int("mesPort", 9998, "Monitor gRPC Port")
+	nodesrv = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	mInfo     monitorInfo
 	assetsDir http.FileSystem
 )
+
 
 // assetsFileHandler for static Data
 func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
@@ -81,9 +86,41 @@ func prepareGrpcServer(opts ...grpc.ServerOption) *grpc.Server {
 	return monitorServer
 }
 
+
+func GetNodeName(n int) string {
+	var opts []grpc.DialOption
+	opts = append(opts, grpc.WithInsecure()) // insecure
+	nsv_conn, err := grpc.Dial(*nodesrv, opts...)
+	if err != nil {
+		log.Fatalf("Can not connect to NodeID Server: %v", err)
+		return ""
+	}
+
+	nsv_clt := nodeapi.NewNodeClient(nsv_conn)
+
+	ni, err := nsv_clt.QueryNode(context.Background(), &nodeapi.NodeID{NodeId: int32(n)})
+	if err != nil {
+			log.Printf("Error on QueryNode %v", err)
+	}
+
+	rs := strings.Replace( ni.NodeName,"Provider","",-1)
+	rs2 := strings.Replace(rs, "Server", "",-1)
+	return rs2 + ":" + strconv.Itoa(n)
+
+}
+
+var (
+	NodeBits uint8 = 10
+	StepBits uint8 = 12
+
+	nodeMax   int64 = -1 ^ (-1 << NodeBits)
+	nodeMask  int64 = nodeMax << StepBits
+	nodeShift uint8 = StepBits
+)
+
 func main() {
 	// we need to moniter messages from smarket-server
-	if gerr := agent.Listen(agent.Options{}); gerr != nil{
+	if gerr := agent.Listen(agent.Options{}); gerr != nil {
 		log.Fatal(gerr)
 	}
 
@@ -114,9 +151,19 @@ func main() {
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		log.Printf("Disconnected %s", c.Id())
 	})
-	server.On("node", func(c *gosocketio.Channel, param interface{}) {
-		nid := param.(string)
-		log.Printf("Get node query %s", nid)
+	server.On("node", func(c *gosocketio.Channel, param interface{}) []string {
+
+		snid ,_ := param.(string)
+//		log.Printf("Get node query '%v' -> %s",param, snid)
+
+		nid , _ := strconv.Atoi(snid)
+//		nid := int(int64(snid) & nodeMask >> nodeShift) // already converted nodes.
+
+		nm := GetNodeName(nid)
+//		c.Emit("nodename",nm)
+		str := make([]string,1)
+		str[0]=nm
+		return str
 	})
 
 	serveMux := http.NewServeMux()

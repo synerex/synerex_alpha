@@ -22,12 +22,24 @@ export default class Message {
         this.obj = JSON.parse(json);
     }
 
+    extractBitsFrom (n, begin, end) {
+        return (n % Math.pow(2, end) - n % Math.pow(2, begin)) / Math.pow(2, begin);
+    };
+
+    //;
+    snowflakeToNodeID(sid){
+        return this.extractBitsFrom(sid,12,22)
+    }
+
     getSrcNodeID(){
-        return this.obj.src;
+        let s = this.snowflakeToNodeID(this.obj.src);
+//        console.log("sid",this.obj.src, s);
+        return s
     }
 
     getDstNodeID(){
-        return this.obj.dst;
+        let s = this.snowflakeToNodeID(this.obj.dst);
+        return s;
     }
 
     getMsgType(){

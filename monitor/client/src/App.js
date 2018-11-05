@@ -13,14 +13,15 @@ class App extends Component {
     constructor(props) {
         super(props);
         const socket = io();
-        this.mstore = new MsgStore();
+        this.mstore = new MsgStore(this.queryNodeName.bind(this));
         this.state = {
             logs:[],
             store: this.mstore,
             socket: socket,
             turn: true
         }
-        socket.on('connect', () => { console.log("Socket.IO Connected!") });
+        this.socket = socket;
+        socket.on('connect', () => { console.log("Socket.IO Connected!");  });
         socket.on('event', this.getEvent.bind(this));
         socket.on('disconnect', () => { console.log("Socket.IO Disconnected!") });
 
@@ -71,7 +72,8 @@ class App extends Component {
         this.mstore.clear();
         this.setState({
             logs:this.selArg.logs,
-            store: this.mstore
+            store: this.mstore,
+            turn: this.state.turn
         });
     }
 
@@ -80,7 +82,7 @@ class App extends Component {
         if (this.selComp !== WorldView) {
 
             this.selComp = WorldView;
-            this.selArg = {logs: this.state.logs, store:this.state.store};
+            this.selArg = {logs: this.state.logs, store:this.state.store, turn:this.state.turn};
             this.setState({
                 logs:this.state.logs,
                 turn:this.state.turn,
@@ -88,7 +90,7 @@ class App extends Component {
             });
         }else{
             this.selComp = Content;
-            this.selArg = {logs: this.state.logs};
+            this.selArg = {logs: this.state.logs, turn: true};
             this.setState({
                 logs:this.state.logs
             });
@@ -102,11 +104,17 @@ class App extends Component {
         this.addLog(lg)
     }
 
-    queryNodeName(nid,names){
-        this.socket.emit("node",nid,
+    convId(nid){
+
+    }
+
+    queryNodeName(nid, mstore){
+        console.log("QueryNodeName:",nid, this.socket);
+        this.socket.emit("node","0"+nid,
             function(data){
                console.log("Got! nodeInfo",data);
-               names[nid] = data;
+               mstore.setNodeName(nid, data);
+//               names[nid] = data;
             });
     }
 
@@ -119,6 +127,7 @@ class App extends Component {
             turn:!this.state.turn
         });
         this.selArg.turn = this.state.turn;
+//        console.log(this.state.turn);
     }
 
     componentDidMount(){
