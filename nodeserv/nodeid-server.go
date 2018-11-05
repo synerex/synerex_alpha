@@ -16,7 +16,7 @@ import (
 	"google.golang.org/grpc/peer"
 )
 
-//go:generate protoc -I ../nodeapi --go_out=plugins=grpc:../nodeapi ../nodeapi/nodeid.proto
+//go:generate protoc -I ../nodeapi --go_out=paths=source_relative,plugins=grpc:../nodeapi ../nodeapi/nodeid.proto
 
 // NodeID Server for  keep all node ID
 //    node ID = 0-1023. (less than 10 is for server)
