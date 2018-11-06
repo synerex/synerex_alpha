@@ -6,12 +6,25 @@ Synerex alpha is an alpha version of Synergic Exchange and its support systems.
 This project is supported by JST.
 
 ## Requirements
-go 1.10 or later
-nodejs / npm / yarn for web client development.
+go 1.11 or later (we use go.mod files for module dependencies)
+nodejs(10.13.0) / npm(6.4.1) / yarn(1.12.1) for web client development.
 
 ## How to start
-Do 'go get' at all source directories to install dependent libraries
-Then you can run 'go run xxx.go'
+Do 'go get' at all source directories to install dependent libraries.
+
+Starting from SynerexEngine.
+```
+  cd cli/daemon
+  go build
+  ./se-daemon
+```
+
+Then move to se directory.
+```
+cd ../se
+go build
+./se build all
+```
 
 ## Source Directories
 
