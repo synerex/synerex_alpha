@@ -73,30 +73,37 @@ func getCmdName(alias string)  string{
 }
 
 func handleProvider(cmd *cobra.Command, args []string){
-//	fmt.Println("run called")
 	if len(args) > 0 {
-//		fmt.Printf("Args is %s\n", args[0])
-		for _, ci  := range cmds {
-			for _,str := range ci.Aliases {
-				if(args[0] == str){
-					fmt.Printf("se: Starting '%s'\n", ci.CmdName)
+		for n := range args{
+			findflag := false
+			for _, ci  := range cmds {
+				for _,str := range ci.Aliases {
+					if args[n] == str {
+						fmt.Printf("se: Starting '%s'\n", ci.CmdName)
 
-					// we should use ack for this. but its not working....
-					res, err :=	sioClient.Ack("run",ci.CmdName, 20*time.Second)
-//					err := sioClient.Emit("run",ci.CmdName) //, 20*time.Second)
-					time.Sleep(3*time.Second)
+						// we should use ack for this. but its not working....
+						res, err := sioClient.Ack("run", ci.CmdName, 20*time.Second)
+						//					err := sioClient.Emit("run",ci.CmdName) //, 20*time.Second)
+						time.Sleep(3 * time.Second)
 
-					if err != nil || res != "\"ok\""{
-						fmt.Printf("se: Got error on reply:'%s',%v\n",res,err)
-					}else{
-						fmt.Printf("se: Reply [%s]\n", res)
-						fmt.Printf("se: Run '%s' succeeded.\n",ci.CmdName)
+						if err != nil || res != "\"ok\"" {
+							fmt.Printf("se: Got error on reply:'%s',%v\n", res, err)
+							return
+						} else {
+							fmt.Printf("se: Reply [%s]\n", res)
+							fmt.Printf("se: Run '%s' succeeded.\n", ci.CmdName)
+							findflag = true
+						}
+						break
 					}
-					return
 				}
+
+			}
+			if !findflag {
+				fmt.Printf("se: Can't find command run '%s'.\n",args[n])
+				break
 			}
 		}
-		fmt.Printf("se: Can't find command run '%s'.\n",args[0])
 	}
 }
 
