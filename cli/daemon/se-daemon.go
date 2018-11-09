@@ -30,7 +30,7 @@ var isDaemon = false
 var interrupt chan os.Signal
 
 var assetsDir http.FileSystem
-var server *gosocketio.Server
+var server *gosocketio.Server = nil
 
 var providerMap map[string]*exec.Cmd
 var providerMutex sync.RWMutex
@@ -181,7 +181,9 @@ func runMyCmd(cmd *exec.Cmd, cmdName string) {
 		} else if err != nil {
 			logger.Infof("Err %v\n", err)
 		}
-		server.BroadcastToAll("log", "["+cmdName+"]"+string(line))
+		if server != nil {
+			server.BroadcastToAll("log", "["+cmdName+"]"+string(line))
+		}
 		logger.Infof("[%s]:%s", cmdName, string(line))
 	}
 	//	log.Printf("[%s]:Now ending...",cmdName)
