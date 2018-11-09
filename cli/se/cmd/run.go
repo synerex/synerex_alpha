@@ -81,7 +81,7 @@ func handleProvider(cmd *cobra.Command, args []string){
 					if args[n] == str {
 						fmt.Printf("se: Starting '%s'\n", ci.CmdName)
 
-						// we should use ack for this. but its not working....
+						//todo: we should use ack for this. but its not working....
 						res, err := sioClient.Ack("run", ci.CmdName, 20*time.Second)
 						//					err := sioClient.Emit("run",ci.CmdName) //, 20*time.Second)
 						time.Sleep(3 * time.Second)

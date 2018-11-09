@@ -225,6 +225,8 @@ func (s *synerexServerInfo) SubscribeDemand(ch *api.Channel, stream api.SMarket_
 	return nil
 }
 
+// This function is created for each subscribed provider
+// This is not efficient if the number of providers increases.
 func supplyServerFunc(ch chan *api.Supply, stream api.SMarket_SubscribeSupplyServer) {
 	for {
 		select {
