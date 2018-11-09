@@ -6,3 +6,5 @@ require (
 	github.com/synerex/synerex_alpha/nodeapi v0.0.1
 	google.golang.org/grpc v1.16.0
 )
+
+replace github.com/synerex/synerex_alpha/nodeapi => ../nodeapi

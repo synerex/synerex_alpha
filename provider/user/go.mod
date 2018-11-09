@@ -1,7 +1,19 @@
 module github.com/synerex/synerex_alpha/provider/user
 
 require (
-	github.com/bwmarrin/snowflake v0.0.0-20180412010544-68117e6bbede // indirect
-	github.com/synerex/synerex_alpha v0.0.1
-	google.golang.org/grpc v1.15.0 // indirect
+	github.com/synerex/synerex_alpha/api v0.0.0
+	github.com/synerex/synerex_alpha/sxutil v0.0.0
+	google.golang.org/grpc v1.16.0
+)
+
+replace (
+	github.com/synerex/synerex_alpha/api => ../../api
+	github.com/synerex/synerex_alpha/api/adservice => ../../api/adservice
+	github.com/synerex/synerex_alpha/api/common => ../../api/common
+	github.com/synerex/synerex_alpha/api/fleet => ../../api/fleet
+	github.com/synerex/synerex_alpha/api/library => ../../api/library
+	github.com/synerex/synerex_alpha/api/ptransit => ../../api/ptransit
+	github.com/synerex/synerex_alpha/api/rideshare => ../../api/rideshare
+	github.com/synerex/synerex_alpha/nodeapi => ../../nodeapi
+	github.com/synerex/synerex_alpha/sxutil => ../../sxutil
 )
