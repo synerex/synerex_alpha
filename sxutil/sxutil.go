@@ -191,7 +191,7 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 func (clt *SMServiceClient) SelectSupply(sp *api.Supply) {
 	tgt := &api.Target{
 		Id:       GenerateIntID(),
-		SenderId: uint64(sp.SenderId), // use senderId
+		SenderId: uint64(clt.ClientID),    // Should not use senderId! should use
 		TargetId: sp.Id,
 		Type:     sp.Type,
 	}
