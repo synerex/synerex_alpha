@@ -1,4 +1,4 @@
-# synerex_alpha :
+# synerex_alpha :  [![CircleCI](https://circleci.com/gh/synerex/synerex_alpha.svg?style=svg)](https://circleci.com/gh/synerex/synerex_alpha))] [![Apache Licensed](https://img.shields.io/badge/license-Apache-blue.svg)]
 Demand/Supply Exchange Services for Synergic Mobility
 
 # Introduction
