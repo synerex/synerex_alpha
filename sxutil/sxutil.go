@@ -320,7 +320,8 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 	defer cancel()
 	resp, err := clt.Client.RegisterSupply(ctx, &dm)
 	if err != nil {
-		log.Fatalf("Error for sending:RegisterSupply to  Synerex Server as %v", err)
+		log.Printf("Error for sending:RegisterSupply to  Synerex Server as %v ", err)
+		
 	}
 	log.Println("RegiterSupply:", smo, resp)
 	smo.ID = id // assign ID
