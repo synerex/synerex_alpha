@@ -65,7 +65,9 @@ func convertDocor2PTService(msg *string) (service *ptransit.PTService, argJson s
 		Longitude: lon,
 	})
 	vid,_ := strconv.Atoi(payloads[1][4:]) // scrape from "KOTAXX"
-
+	human := payloads[4]
+	time := payloads[7]
+	state,_ := strconv.ParseInt(payloads[5],10,32)
 	accuracy, _ := strconv.ParseFloat(payloads[10],32)
 	altitude, _ := strconv.ParseFloat(payloads[11],32)
 
@@ -85,7 +87,8 @@ func convertDocor2PTService(msg *string) (service *ptransit.PTService, argJson s
 	gps_speed, _ := strconv.ParseFloat(payloads[41],32)
 //	gps_speed, _ := strconv.ParseFloat(payloads[41],32)
 
-	argJson = fmt.Sprintf("pre:%.1f temp:%.1f hum:%.1f alt:%.1f rpm:%.1f speed:%.1f acc:%.1f fuel:%.1f ig:%d odm:%.1f",pressure, temparature, humidity,altitude, rpm, gps_speed,accuracy,fuel,  ig_acc, total_odm)
+	argJson = fmt.Sprintf("tm:%s,hm:%s,st:%d,pre:%.1f,temp:%.1f,hum:%.1f,alt:%.1f,rpm:%.1f,speed:%.1f,acc:%.1f,fuel:%.1f,ig:%d,odm:%.1f",
+		time, human, state, pressure, temparature, humidity,altitude, rpm, gps_speed,accuracy,fuel,  ig_acc, total_odm)
 
 	service = &ptransit.PTService{
 		VehicleId: int32(vid),
