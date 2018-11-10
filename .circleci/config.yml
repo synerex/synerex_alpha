@@ -1,0 +1,26 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.11
+
+    working_directory: /go/src/github.com/synerex/synerex_alpha
+
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-pkg-cache
+
+      - run:
+          command: |
+            cd cli/daemon
+            go build
+            ./se-daemon build
+            cd ../se
+            go build
+
+      - save_cache:
+          - "/go/pkg"
+
+          
