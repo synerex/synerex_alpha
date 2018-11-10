@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.11.2-stretch-node
 
     working_directory: /go/src/github.com/synerex/synerex_alpha
 
@@ -13,6 +13,7 @@ jobs:
             - v1-pkg-cache
 
       - run:
+          name: Build go
           command: |
             cd cli/daemon
             go build
@@ -23,4 +24,4 @@ jobs:
       - save_cache:
           - "/go/pkg"
 
-          
+
