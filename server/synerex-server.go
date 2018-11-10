@@ -358,7 +358,7 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 				fields["error"] = err
 				logger.WithFields(fields).Error("Failed")
 			} else {
-				logger.WithFields(fields).Info("Succeeded")
+//				logger.WithFields(fields).Info("Succeeded")
 			}
 		}(time.Now())
 
