@@ -12,9 +12,9 @@ require (
 )
 
 replace (
-	github.com/synerex/synerex_alpha/api/rideshare => ./rideshare
-	github.com/synerex/synerex_alpha/api/ptransit => ./ptransit
-	github.com/synerex/synerex_alpha/api/library => ./library
-	github.com/synerex/synerex_alpha/api/fleet => ./fleet
 	github.com/synerex/synerex_alpha/api/adservice => ./adservice
+	github.com/synerex/synerex_alpha/api/fleet => ./fleet
+	github.com/synerex/synerex_alpha/api/library => ./library
+	github.com/synerex/synerex_alpha/api/ptransit => ./ptransit
+	github.com/synerex/synerex_alpha/api/rideshare => ./rideshare
 )

@@ -658,7 +658,7 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 	interrupt = make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	usage := "Usage: se-daemon install | uninstall | start | stop | status | build"
+	usage := "Usage: se-daemon install | uninstall | start | stop | status | build | clean"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
