@@ -30,6 +30,9 @@ import (
 	"google.golang.org/grpc"
 )
 
+const MessageChannelBufferSize = 10
+
+
 var (
 	port    = flag.Int("port", 10000, "The Synerex Server Listening Port")
 	nodesrv = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
@@ -73,7 +76,9 @@ func (s *synerexServerInfo) RegisterSupply(c context.Context, sp *api.Supply) (r
 	for i := range chs {
 		ch := chs[i]
 		str = str+ fmt.Sprintf("%d ",len(ch))
-		ch <- sp
+		if len(ch) < MessageChannelBufferSize { // run under not blocking state.
+			ch <- sp
+		}
 	}
 	s.mu.RUnlock()
 	fmt.Printf("RS: %d, %s:",len(chs),str)
@@ -163,14 +168,14 @@ func (s *synerexServerInfo) Confirm(c context.Context, tg *api.Target) (r *api.R
 }
 
 // go routine which wait demand channel and sending demands to each providers.
-func demandServerFunc(ch chan *api.Demand, stream api.SMarket_SubscribeDemandServer) {
+func demandServerFunc(ch chan *api.Demand, stream api.SMarket_SubscribeDemandServer) error {
 	for {
 		select {
-		case sp := <-ch:
+		case sp := <-ch: // may block until receiving info
 			err := stream.Send(sp)
 			if err != nil {
 				//				log.Printf("Error in DemandServer Error %v", err)
-				return
+				return err
 			}
 		}
 	}
@@ -211,7 +216,7 @@ func (s *synerexServerInfo) SubscribeDemand(ch *api.Channel, stream api.SMarket_
 	//	monitorapi.SendMes(&monitorapi.Mes{Message:"Subscribe Demand", Args: fmt.Sprintf("Type:%d,From: %x  %s",ch.Type,ch.ClientId, ch.ArgJson )})
 	monitorapi.SendMessage("SubscribeDemand", int(ch.Type), ch.ClientId, 0, ch.ArgJson)
 
-	subCh := make(chan *api.Demand, 10)
+	subCh := make(chan *api.Demand, MessageChannelBufferSize)
 	// We should think about thread safe coding.
 	tp := ch.GetType()
 	idt := sxutil.IDType(ch.GetClientId())
@@ -232,21 +237,21 @@ func (s *synerexServerInfo) SubscribeDemand(ch *api.Channel, stream api.SMarket_
 
 // This function is created for each subscribed provider
 // This is not efficient if the number of providers increases.
-func supplyServerFunc(ch chan *api.Supply, stream api.SMarket_SubscribeSupplyServer) {
+func supplyServerFunc(ch chan *api.Supply, stream api.SMarket_SubscribeSupplyServer) error {
 	for {
 		select {
 		case sp := <-ch:
 			err := stream.Send(sp)
 			if err != nil {
 				//				log.Printf("Error SupplyServer Error %v", err)
-				return
+				return err
 			}
 		}
 	}
 }
 
 func (s *synerexServerInfo) SubscribeSupply(ch *api.Channel, stream api.SMarket_SubscribeSupplyServer) error {
-	subCh := make(chan *api.Supply, 10)
+	subCh := make(chan *api.Supply, MessageChannelBufferSize)
 	tp := ch.GetType()
 
 	//	monitorapi.SendMes(&monitorapi.Mes{Message:"Subscribe Supply", Args: fmt.Sprintf("Type:%d, From: %x %s",ch.Type,ch.ClientId,ch.ArgJson )})
@@ -255,14 +260,14 @@ func (s *synerexServerInfo) SubscribeSupply(ch *api.Channel, stream api.SMarket_
 	s.mu.Lock()
 	s.supplyChans[tp] = append(s.supplyChans[tp], subCh)
 	s.mu.Unlock()
-	supplyServerFunc(subCh, stream)
+	err := supplyServerFunc(subCh, stream)
 	// this supply stream may closed. so take care.
 
 	s.mu.Lock()
 	s.supplyChans[tp] = removeSupplyChannelFromSlice(s.supplyChans[tp], subCh)
 	log.Printf("Remove Supply Stream Channel %v", ch)
 	s.mu.Unlock()
-	return nil
+	return err
 }
 
 func newServerInfo() *synerexServerInfo {
