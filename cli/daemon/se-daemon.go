@@ -116,6 +116,12 @@ func init() {
 			GoFiles: []string{"map-provider.go"},
 		},
 		{
+			CmdName: "Datastore",
+			SrcDir: "provider/datastore",
+			BinName: "datastore-provider",
+			GoFiles: []string{"datastore-provider.go"},
+		},
+		{
 			CmdName: "Ecotan",
 			SrcDir: "provider/kota-bus",
 			BinName: "ecotan-provider",
@@ -652,7 +658,7 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 	interrupt = make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	usage := "Usage: se-daemon install | uninstall | start | stop | status | build"
+	usage := "Usage: se-daemon install | uninstall | start | stop | status | build | clean"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
@@ -693,6 +699,10 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 			// just build all codes for simplicity
 			buildAll()
 			return "Build all binaries", nil
+		case "clean":
+			// just build all codes for simplicity
+			cleanAll()
+			return "Clean all binaries", nil
 		default:
 			return usage, nil
 		}
