@@ -1,2 +1,2 @@
 *       text=auto
-*.mod   text
+go.mod   text eol=lfs
