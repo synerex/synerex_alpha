@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -27,6 +28,8 @@ type IDType uint64
 var (
 	node       *snowflake.Node // package variable for keeping unique ID.
 	nid        *nodeapi.NodeID
+	nupd	   *nodeapi.NodeUpdate
+	numu		sync.RWMutex
 	myNodeName string
 	conn       *grpc.ClientConn
 	clt        nodeapi.NodeClient
@@ -52,7 +55,6 @@ type SupplyOpts struct {
 
 func init() {
 	fmt.Println("Synergic Market Util init() is called!")
-
 }
 
 // InitNodeNum for initialize NodeNum again
@@ -72,6 +74,27 @@ func GetNodeName(n int) string {
 		log.Printf("Error on QueryNode %v", err)
 	}
 	return ni.NodeName
+}
+
+func SetNodeStatus(status int32, arg string){
+	numu.Lock()
+	nupd.NodeStatus = status
+	nupd.NodeArg = arg
+	numu.Unlock()
+}
+
+func startKeepAlive(){
+	for {
+//		fmt.Printf("KeepAlive %s %d\n",nupd.NodeStatus, nid.KeepaliveDuration)
+		time.Sleep(time.Second * time.Duration(nid.KeepaliveDuration))
+		if nid.Secret == 0 { // this means the node is disconnected
+			break
+		}
+		numu.RLock()
+		nupd.UpdateCount++
+		clt.KeepAlive(context.Background(), nupd )
+		numu.RUnlock()
+	}
 }
 
 // RegisterNodeName is a function to register node name with node server address
@@ -94,11 +117,18 @@ func RegisterNodeName(nodesrv string, nm string, isServ bool) error{ // register
 	myNodeName = nm
 	var ee error
 	nid, ee = clt.RegisterNode(context.Background(), &nif)
+
+	nupd = &nodeapi.NodeUpdate{
+		NodeId: nid.NodeId,
+		Secret: nid.Secret,
+		UpdateCount : 0,
+		NodeStatus : 0,
+		NodeArg : "",
+	}
 	if ee != nil { // has error!
 		log.Println("Error on get NodeID", ee)
 		return ee
 	} else {
-
 		var nderr error
 		node, nderr = snowflake.NewNode(int64(nid.NodeId))
 		if nderr != nil {
@@ -108,6 +138,9 @@ func RegisterNodeName(nodesrv string, nm string, isServ bool) error{ // register
 			fmt.Println("Successfully Initialize node ", nid.NodeId)
 		}
 	}
+	// start keepalive goroutine
+	go startKeepAlive()
+//	fmt.Println("KeepAlive started!")
 	return nil
 }
 
@@ -115,6 +148,7 @@ func RegisterNodeName(nodesrv string, nm string, isServ bool) error{ // register
 func UnRegisterNode() {
 	log.Println("UnRegister Node ", nid)
 	resp, err := clt.UnRegisterNode(context.Background(), nid)
+	nid.Secret = 0
 	if err != nil || !resp.Ok {
 		log.Print("Can't unregister", err, resp)
 	}
