@@ -75,13 +75,14 @@ func GetNodeName(n int) string {
 }
 
 // RegisterNodeName is a function to register node name with node server address
-func RegisterNodeName(nodesrv string, nm string, isServ bool) { // register ID to server
+func RegisterNodeName(nodesrv string, nm string, isServ bool) error{ // register ID to server
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure()) // insecure
 	var err error
 	conn, err = grpc.Dial(nodesrv, opts...)
 	if err != nil {
-		log.Fatalf("fail to dial: %v", err)
+		log.Printf("fail to dial: %v", err)
+		return err
 	}
 	//	defer conn.Close()
 
@@ -94,17 +95,20 @@ func RegisterNodeName(nodesrv string, nm string, isServ bool) { // register ID t
 	var ee error
 	nid, ee = clt.RegisterNode(context.Background(), &nif)
 	if ee != nil { // has error!
-		log.Fatalln("Error on get NodeID", ee)
+		log.Println("Error on get NodeID", ee)
+		return ee
 	} else {
 
 		var nderr error
 		node, nderr = snowflake.NewNode(int64(nid.NodeId))
 		if nderr != nil {
 			fmt.Println("Error in initializing snowflake:", err)
+			return nderr
 		} else {
 			fmt.Println("Successfully Initialize node ", nid.NodeId)
 		}
 	}
+	return nil
 }
 
 // UnRegisterNode de-registrate node id
@@ -181,14 +185,15 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 	defer cancel()
 	resp, err := clt.Client.ProposeSupply(ctx, sp)
 	if err != nil {
-		log.Fatalf("%v.ProposeSupply err %v", clt, err)
+		log.Printf("%v.ProposeSupply err %v", clt, err)
+		return 0 // should check...
 	}
 	log.Println("ProposeSupply Response:", resp)
 	return pid
 }
 
 // SelectSupply send select message to server
-func (clt *SMServiceClient) SelectSupply(sp *api.Supply) {
+func (clt *SMServiceClient) SelectSupply(sp *api.Supply) error{
 	tgt := &api.Target{
 		Id:       GenerateIntID(),
 		SenderId: uint64(clt.ClientID),    // Should not use senderId! should use
@@ -199,13 +204,15 @@ func (clt *SMServiceClient) SelectSupply(sp *api.Supply) {
 	defer cancel()
 	resp, err := clt.Client.SelectSupply(ctx, tgt)
 	if err != nil {
-		log.Fatalf("%v.SelectSupply err %v", clt, err)
+		log.Printf("%v.SelectSupply err %v", clt, err)
+		return err
 	}
 	log.Println("SelectSupply Response:", resp)
+	return nil
 }
 
 // SelectDemand send select message to server
-func (clt *SMServiceClient) SelectDemand(dm *api.Demand) {
+func (clt *SMServiceClient) SelectDemand(dm *api.Demand) error{
 	tgt := &api.Target{
 		Id:       GenerateIntID(),
 		SenderId: uint64(dm.SenderId), // use senderId
@@ -216,25 +223,29 @@ func (clt *SMServiceClient) SelectDemand(dm *api.Demand) {
 	defer cancel()
 	resp, err := clt.Client.SelectDemand(ctx, tgt)
 	if err != nil {
-		log.Fatalf("%v.SelectDemand err %v", clt, err)
+		log.Printf("%v.SelectDemand err %v", clt, err)
+		return err
 	}
 	log.Println("SelectDemand Response:", resp)
+	return nil
 }
 
 // SubscribeSupply  Wrapper function for SMServiceClient
-func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMServiceClient, *api.Supply)) {
+func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMServiceClient, *api.Supply)) error {
 	ch := clt.getChannel()
 	smc, err := clt.Client.SubscribeSupply(ctx, ch)
 	if err != nil {
-		log.Fatalf("%v SubscribeSupply Error %v", clt, err)
+		log.Printf("%v SubscribeSupply Error %v", clt, err)
+		return err
 	}
 	for {
-		sp, err := smc.Recv() // receive Demand
+		var sp *api.Supply
+		sp, err = smc.Recv() // receive Demand
 		if err != nil {
 			if err == io.EOF {
 				log.Print("End Supply subscribe OK")
 			} else {
-				log.Fatalf("%v SMServiceClient SubscribeSupply error %v", clt, err)
+				log.Printf("%v SMServiceClient SubscribeSupply error %v", clt, err)
 			}
 			break
 		}
@@ -242,22 +253,25 @@ func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMSe
 		// call Callback!
 		spcb(clt, sp)
 	}
+	return err
 }
 
 // SubscribeDemand  Wrapper function for SMServiceClient
-func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMServiceClient, *api.Demand)) {
+func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMServiceClient, *api.Demand)) error {
 	ch := clt.getChannel()
 	dmc, err := clt.Client.SubscribeDemand(ctx, ch)
 	if err != nil {
-		log.Fatalf("%v SubscribeDemand Error %v", clt, err)
+		log.Printf("%v SubscribeDemand Error %v", clt, err)
+		return err // sender should handle error...
 	}
 	for {
-		dm, err := dmc.Recv() // receive Demand
+		var dm *api.Demand
+		dm, err = dmc.Recv() // receive Demand
 		if err != nil {
 			if err == io.EOF {
 				log.Print("End Demand subscribe OK")
 			} else {
-				log.Fatalf("%v SMServiceClient SubscribeDemand error %v", clt, err)
+				log.Printf("%v SMServiceClient SubscribeDemand error %v", clt, err)
 			}
 			break
 		}
@@ -265,6 +279,7 @@ func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMSe
 		// call Callback!
 		dmcb(clt, dm)
 	}
+	return err
 }
 
 // RegisterDemand sends Typed Demand to Server
@@ -283,7 +298,8 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 	defer cancel()
 	resp, err := clt.Client.RegisterDemand(ctx, &dm)
 	if err != nil {
-		log.Fatalf("%v.RegisterDemand err %v", clt, err)
+		log.Printf("%v.RegisterDemand err %v", clt, err)
+		return 0
 	}
 	log.Println(resp)
 	dmo.ID = id // assign ID
@@ -321,7 +337,7 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 	resp, err := clt.Client.RegisterSupply(ctx, &dm)
 	if err != nil {
 		log.Printf("Error for sending:RegisterSupply to  Synerex Server as %v ", err)
-		
+		return 0
 	}
 	log.Println("RegiterSupply:", smo, resp)
 	smo.ID = id // assign ID
@@ -329,7 +345,7 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 }
 
 // Confirm sends confirm message to sender
-func (clt *SMServiceClient) Confirm(id IDType) {
+func (clt *SMServiceClient) Confirm(id IDType) error{
 	tg := &api.Target{
 		Id:       GenerateIntID(),
 		SenderId: uint64(clt.ClientID),
@@ -340,7 +356,9 @@ func (clt *SMServiceClient) Confirm(id IDType) {
 	defer cancel()
 	resp, err := clt.Client.Confirm(ctx, tg)
 	if err != nil {
-		log.Fatalf("%v Confirm Failier %v", clt, err)
+		log.Printf("%v Confirm Failier %v", clt, err)
+		return err
 	}
 	log.Println("Confirm Success:", resp)
+	return nil
 }

@@ -65,13 +65,18 @@ func (s *synerexServerInfo) RegisterDemand(c context.Context, dm *api.Demand) (r
 }
 
 func (s *synerexServerInfo) RegisterSupply(c context.Context, sp *api.Supply) (r *api.Response, e error) {
+	fmt.Printf("Register Supply!!!")
+	str := ""
 	s.mu.RLock()
 	chs := s.supplyChans[sp.GetType()]
+
 	for i := range chs {
 		ch := chs[i]
+		str = str+ fmt.Sprintf("%d ",len(ch))
 		ch <- sp
 	}
 	s.mu.RUnlock()
+	fmt.Printf("RS: %d, %s:",len(chs),str)
 	r = &api.Response{Ok: true, Err: ""}
 	return r, nil
 }
@@ -340,7 +345,8 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 		met2 := strings.Replace(meth, "Register", "R",1)
 		met3 := strings.Replace(met2, "Supply", "S",1)
 		met4 := strings.Replace(met3, "Demand", "D",1)
-		monitorapi.SendMessage(met4, msgType, srcId, dstId, args)
+		// it seems here to stuck.
+		go monitorapi.SendMessage(met4, msgType, srcId, dstId, args)
 
 		// register for messageStore
 		s.messageStore.AddMessage(method, msgType, mid, srcId, dstId, args)
