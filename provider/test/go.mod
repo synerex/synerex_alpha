@@ -3,7 +3,7 @@ module test-provider
 require (
 	github.com/synerex/synerex_alpha v0.0.1 // indirect
 	github.com/synerex/synerex_alpha/api v0.0.0
-	github.com/synerex/synerex_alpha/api/common v0.0.0-20181109124415-7e489c434123
+	github.com/synerex/synerex_alpha/api/common v0.0.0
 	github.com/synerex/synerex_alpha/api/ptransit v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
 	golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8

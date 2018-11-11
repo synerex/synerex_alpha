@@ -117,7 +117,8 @@ func supplyRideCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 
 func subscribeRideSupply(client *sxutil.SMServiceClient) {
 	ctx := context.Background() //
-	client.SubscribeSupply(ctx, supplyRideCallback)
+	err := client.SubscribeSupply(ctx, supplyRideCallback)
+	log.Printf("Error:Supply %s\n",err.Error())
 }
 
 
@@ -138,7 +139,8 @@ func supplyPTCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 
 func subscribePTSupply(client *sxutil.SMServiceClient) {
 	ctx := context.Background() //
-	client.SubscribeSupply(ctx, supplyPTCallback)
+	err := client.SubscribeSupply(ctx, supplyPTCallback)
+	log.Printf("Error:Supply %s\n",err.Error())
 }
 
 

@@ -5,14 +5,14 @@ require (
 	github.com/bwmarrin/snowflake v0.0.0-20180412010544-68117e6bbede
 	github.com/golang/lint v0.0.0-20181026193005-c67002cb31c3 // indirect
 	github.com/golang/protobuf v1.2.0
-	github.com/synerex/synerex_alpha/api v0.0.0-20181109124415-7e489c434123
-	github.com/synerex/synerex_alpha/api/adservice v0.0.0-20181109124415-7e489c434123 // indirect
-	github.com/synerex/synerex_alpha/api/common v0.0.0-20181109124415-7e489c434123 // indirect
-	github.com/synerex/synerex_alpha/api/fleet v0.0.0-20181109124415-7e489c434123
-	github.com/synerex/synerex_alpha/api/library v0.0.0-20181109124415-7e489c434123 // indirect
-	github.com/synerex/synerex_alpha/api/ptransit v0.0.0-20181109124415-7e489c434123
-	github.com/synerex/synerex_alpha/api/rideshare v0.0.0-20181109124415-7e489c434123 // indirect
-	github.com/synerex/synerex_alpha/nodeapi v0.0.0-20181109124415-7e489c434123
+	github.com/synerex/synerex_alpha/api v0.0.0
+	github.com/synerex/synerex_alpha/api/adservice v0.0.0
+	github.com/synerex/synerex_alpha/api/common v0.0.0
+	github.com/synerex/synerex_alpha/api/fleet v0.0.0
+	github.com/synerex/synerex_alpha/api/library v0.0.0
+	github.com/synerex/synerex_alpha/api/ptransit v0.0.0
+	github.com/synerex/synerex_alpha/api/rideshare v0.0.0
+	github.com/synerex/synerex_alpha/nodeapi v0.0.0
 	golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3 // indirect
 	golang.org/x/net v0.0.0-20181108082009-03003ca0c849 // indirect
 	golang.org/x/oauth2 v0.0.0-20181106182150-f42d05182288 // indirect
@@ -25,12 +25,15 @@ require (
 	honnef.co/go/tools v0.0.0-20180920025451-e3ad64cb4ed3 // indirect
 )
 
-replace github.com/synerex/synerex_alph/api/rideshare => ../api/rideshare
-
-replace github.com/synerex/synerex_alph/api/ptransit => ../api/ptransit
-
-replace github.com/synerex/synerex_alph/api/library => ../api/library
-
-replace github.com/synerex/synerex_alph/api/fleet => ../api/fleet
-
-replace github.com/synerex/synerex_alph/api/adservice => ../api/adservice
+replace (
+	github.com/synerex/synerex_alpha/api => ../api
+	github.com/synerex/synerex_alpha/api/adservice => ../api/adservice
+	github.com/synerex/synerex_alpha/api/common => ../api/common
+	github.com/synerex/synerex_alpha/api/fleet => ../api/fleet
+	github.com/synerex/synerex_alpha/api/library => ../api/library
+	github.com/synerex/synerex_alpha/api/ptransit => ../api/ptransit
+	github.com/synerex/synerex_alpha/api/rideshare => ../api/rideshare
+	github.com/synerex/synerex_alpha/monitor/monitorapi => ../monitor/monitorapi
+	github.com/synerex/synerex_alpha/nodeapi => ../nodeapi
+	github.com/synerex/synerex_alpha/sxutil => ../sxutil
+)
