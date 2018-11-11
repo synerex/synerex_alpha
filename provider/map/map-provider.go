@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/mtfelian/golang-socketio"
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
@@ -11,23 +12,20 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"github.com/mtfelian/golang-socketio"
 	"sync"
 )
 
 // map provider provides map information to Web Service through socket.io.
 
-
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	port      = flag.Int("port", 10080, "Map Provider Listening Port")
+	port       = flag.Int("port", 10080, "Map Provider Listening Port")
 	mu         sync.Mutex
-	version = "0.01"
-	assetsDir http.FileSystem
-	ioserv *gosocketio.Server
+	version    = "0.01"
+	assetsDir  http.FileSystem
+	ioserv     *gosocketio.Server
 )
-
 
 // assetsFileHandler for static Data
 func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
@@ -54,7 +52,6 @@ func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	http.ServeContent(w, r, file, fi.ModTime(), f)
 }
-
 
 func run_server() *gosocketio.Server {
 
@@ -83,32 +80,30 @@ func run_server() *gosocketio.Server {
 }
 
 type MapMarker struct {
-	mtype int32 `json:"mtype"`
-	id int32 `json:"id"`
-	lat float32 `json:"lat"`
-	lon float32 `json:"lon"`
+	mtype int32   `json:"mtype"`
+	id    int32   `json:"id"`
+	lat   float32 `json:"lat"`
+	lon   float32 `json:"lon"`
 	angle float32 `json:"angle"`
-	speed int32 `json:"speed"`
+	speed int32   `json:"speed"`
 }
 
-func (m *MapMarker)GetJson() string {
+func (m *MapMarker) GetJson() string {
 	s := fmt.Sprintf("{\"mtype\":%d,\"id\":%d,\"lat\":%f,\"lon\":%f,\"angle\":%f,\"speed\":%d}",
-		m.mtype,m.id, m.lat, m.lon, m.angle, m.speed)
+		m.mtype, m.id, m.lat, m.lon, m.angle, m.speed)
 	return s
 }
 
-
-
 func supplyRideCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	flt := sp.GetArg_Fleet()
-	if flt != nil{ // get Fleet supplu
+	if flt != nil { // get Fleet supplu
 		mm := &MapMarker{
-			mtype:int32(api.MarketType_RIDE_SHARE),
-			id:flt.VehicleId,
-			lat:flt.Coord.Lat,
-			lon:flt.Coord.Lon,
-			angle:flt.Angle,
-			speed:flt.Speed,
+			mtype: int32(api.MarketType_RIDE_SHARE),
+			id:    flt.VehicleId,
+			lat:   flt.Coord.Lat,
+			lon:   flt.Coord.Lon,
+			angle: flt.Angle,
+			speed: flt.Speed,
 		}
 		ioserv.BroadcastToAll("event", mm.GetJson())
 
@@ -121,15 +116,14 @@ func subscribeRideSupply(client *sxutil.SMServiceClient) {
 	log.Printf("Error:Supply %s\n",err.Error())
 }
 
-
 func supplyPTCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	pt := sp.GetArg_PTService()
-	if pt != nil{ // get Fleet supplu
+	if pt != nil { // get Fleet supplu
 		mm := &MapMarker{
-			mtype:int32(api.MarketType_PT_SERVICE),
-			id: pt.VehicleId,
-			lat: float32(pt.CurrentLocation.GetPoint().Latitude),
-			lon: float32(pt.CurrentLocation.GetPoint().Longitude),
+			mtype: int32(api.MarketType_PT_SERVICE),
+			id:    pt.VehicleId,
+			lat:   float32(pt.CurrentLocation.GetPoint().Latitude),
+			lon:   float32(pt.CurrentLocation.GetPoint().Longitude),
 			angle: pt.Angle,
 			speed: pt.Speed,
 		}
@@ -142,7 +136,6 @@ func subscribePTSupply(client *sxutil.SMServiceClient) {
 	err := client.SubscribeSupply(ctx, supplyPTCallback)
 	log.Printf("Error:Supply %s\n",err.Error())
 }
-
 
 func main() {
 	flag.Parse()
@@ -160,17 +153,17 @@ func main() {
 		log.Fatalf("Fail to Connect Synerex Server: %v", err)
 	}
 	ioserv = run_server()
-	log.Printf("Runnin Map Server..\n")
+	fmt.Printf("Running Map Server..\n")
 	if ioserv == nil {
 		os.Exit(1)
 	}
 
 	client := api.NewSMarketClient(conn)
 	argJson := fmt.Sprintf("{Client:Map:RIDE}")
-	ride_client := sxutil.NewSMServiceClient(client, api.MarketType_RIDE_SHARE,argJson)
+	ride_client := sxutil.NewSMServiceClient(client, api.MarketType_RIDE_SHARE, argJson)
 
 	argJson2 := fmt.Sprintf("{Client:Map:PT}")
-	pt_client := sxutil.NewSMServiceClient(client, api.MarketType_PT_SERVICE,argJson2)
+	pt_client := sxutil.NewSMServiceClient(client, api.MarketType_PT_SERVICE, argJson2)
 
 	wg.Add(1)
 	go subscribeRideSupply(ride_client)
