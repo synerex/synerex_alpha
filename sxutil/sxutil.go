@@ -72,6 +72,7 @@ func GetNodeName(n int) string {
 	ni, err := clt.QueryNode(context.Background(), &nodeapi.NodeID{NodeId: int32(n)})
 	if err != nil {
 		log.Printf("Error on QueryNode %v", err)
+		return "Unknown"
 	}
 	return ni.NodeName
 }

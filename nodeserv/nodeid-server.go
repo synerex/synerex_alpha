@@ -132,7 +132,7 @@ func (s *srvNodeInfo) listNodes() {
 	for i := range nk {
 		eni := s.nodeMap[nk[i]]
 		sub := time.Now().Sub(eni.lastAlive)/time.Second
-		log.Printf("ID: %4d %20s %14s %3d %2d %s\n", nk[i], eni.nodeName, eni.address, int(sub), eni.count, eni.arg)
+		log.Printf("ID: %4d %20s %14s %3d %2d:%3d %s\n", nk[i], eni.nodeName, eni.address, int(sub), eni.count, eni.status, eni.arg)
 	}
 	nmmu.RUnlock()
 }
@@ -182,7 +182,11 @@ func (s *srvNodeInfo) QueryNode(cx context.Context, nid *nodepb.NodeID) (ni *nod
 func (s *srvNodeInfo) KeepAlive(ctx context.Context, nu *nodepb.NodeUpdate) (nr *nodepb.Response, e error) {
 	nid := nu.NodeId
 	r := nu.Secret
-	ni := s.nodeMap[nid]
+	ni,ok := s.nodeMap[nid]
+	if !ok  {
+		fmt.Printf("Can't find node... It's killed")
+		return &nodepb.Response{Ok: false, Err: "Killed at Nodeserv"}, e
+	}
 	if r != ni.secret {
 		e = errors.New("Secret Failed")
 		return &nodepb.Response{Ok: false, Err: "Secret Failed"}, e
@@ -204,8 +208,15 @@ func (s *srvNodeInfo) KeepAlive(ctx context.Context, nu *nodepb.NodeUpdate) (nr 
 func (s *srvNodeInfo) UnRegisterNode(cx context.Context, nid *nodepb.NodeID) (nr *nodepb.Response, e error) {
 	r := nid.Secret
 	n := nid.NodeId
-	if r != s.nodeMap[n].secret { // secret failed
+	ni,ok := s.nodeMap[n]
+	if !ok  {
+		fmt.Printf("Can't find node... It's killed")
+		return &nodepb.Response{Ok: false, Err: "Killed at Nodeserv"}, e
+	}
+
+	if r != ni.secret { // secret failed
 		e = errors.New("Secret Failed")
+		log.Println("Invalid unregister")
 		return &nodepb.Response{Ok: false, Err: "Secret Failed"}, e
 	}
 
