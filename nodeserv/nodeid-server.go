@@ -132,7 +132,7 @@ func (s *srvNodeInfo) listNodes() {
 	for i := range nk {
 		eni := s.nodeMap[nk[i]]
 		sub := time.Now().Sub(eni.lastAlive)/time.Second
-		log.Printf("ID: %4d %20s %14s %3d %2d %s\n", nk[i], eni.nodeName, eni.address, int(sub), eni.count, eni.arg)
+		log.Printf("ID: %4d %20s %14s %3d %2d:%3d %s\n", nk[i], eni.nodeName, eni.address, int(sub), eni.count, eni.status, eni.arg)
 	}
 	nmmu.RUnlock()
 }
