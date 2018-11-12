@@ -12,7 +12,9 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
+	"time"
 )
 
 // map provider provides map information to Web Service through socket.io.
@@ -140,6 +142,13 @@ func subscribePTSupply(client *sxutil.SMServiceClient) {
 	log.Printf("Error:Supply %s\n",err.Error())
 }
 
+func monitorStatus(){
+	for{
+		sxutil.SetNodeStatus(int32(runtime.NumGoroutine()),"MapGoroute")
+		time.Sleep(time.Second * 3)
+	}
+}
+
 func main() {
 	flag.Parse()
 	sxutil.RegisterNodeName(*nodesrv, "MapProvider", false)
@@ -172,6 +181,8 @@ func main() {
 	go subscribeRideSupply(ride_client)
 	wg.Add(1)
 	go subscribePTSupply(pt_client)
+
+	go monitorStatus() // keep status
 
 	serveMux := http.NewServeMux()
 
