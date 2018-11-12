@@ -105,8 +105,9 @@ func supplyRideCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 			angle: flt.Angle,
 			speed: flt.Speed,
 		}
+		mu.Lock()
 		ioserv.BroadcastToAll("event", mm.GetJson())
-
+		mu.Unlock()
 	}
 }
 
@@ -127,7 +128,9 @@ func supplyPTCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 			angle: pt.Angle,
 			speed: pt.Speed,
 		}
+		mu.Lock()
 		ioserv.BroadcastToAll("event", mm.GetJson())
+		mu.Unlock()
 	}
 }
 
