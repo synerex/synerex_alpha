@@ -11,8 +11,10 @@ import "rideshare/rideshare.proto";
 import "adservice/adservice.proto";
 import "library/library.proto";
 import "ptransit/ptransit.proto";
+import "routing/routing.proto";
+import "marketing/marketing.proto";
 
-service SMarket {
+service Synerex {
     rpc RegisterDemand(Demand) returns (Response) {}
 
     rpc RegisterSupply(Supply) returns (Response) {}
@@ -34,6 +36,12 @@ service SMarket {
     rpc SubscribeDemand(Channel) returns (stream Demand) {}
 
     rpc SubscribeSupply(Channel) returns (stream Supply) {}
+
+    rpc SubscribeMbus(Mbus) returns (stream MbusMsg) {}
+
+    rpc SendMsg(MbusMsg) returns (Response){}
+
+    rpc CloseMbus(Mbus) returns (Response){}
 }
 
 message Response {
@@ -47,12 +55,14 @@ message ConfirmResponse{
     string err = 3;
 }
 
-enum MarketType {
+enum ChannelType {
     NONE = 0;
     RIDE_SHARE = 1;  // Rideshare Service Information
     AD_SERVICE = 2;  // Advertisement Service Information
     LIB_SERVICE = 3; // Public Library Service Information
     PT_SERVICE = 4;  // Public Transit Information
+    ROUTING_SERVICE = 5; // Routing Service
+    MARKETING_SERVICE = 6; // Marketing (Ad/Enquate)
     END = 10;
 }
 
@@ -60,7 +70,7 @@ message Supply{
     fixed64 id = 1;
     fixed64 sender_id = 2;
     fixed64 target_id = 3;// for message id (not for sender_id)
-    MarketType type = 4;
+    ChannelType type = 4;
     string supply_name = 5;
     google.protobuf.Timestamp ts = 6;
     //message content = 7; // json
@@ -71,6 +81,8 @@ message Supply{
         adservice.AdService arg_AdService = 12;
         library.LibService arg_LibService = 13;
         ptransit.PTService arg_PTService = 14;
+        routing.RoutingService arg_RoutingSerivice = 15;
+        marketing.MarketingService arg_MarketingSerivice = 16;
     }
 }
 
@@ -78,7 +90,7 @@ message Demand {
     fixed64 id = 1;
     fixed64 sender_id = 2;
     fixed64 target_id = 3; // for message id (not for sender_id)
-    MarketType type = 4;
+    ChannelType type = 4;
     string demand_name = 5;
     google.protobuf.Timestamp ts = 6;
     //message content = 7; // json
@@ -89,6 +101,8 @@ message Demand {
         adservice.AdService arg_AdService = 12;
         library.LibService arg_LibService = 13;
         ptransit.PTService arg_PTService = 14;
+        routing.RoutingService arg_RoutingSerivice = 15;
+        marketing.MarketingService arg_MarketingSerivice = 16;
     }
 }
 
@@ -98,12 +112,25 @@ message Target {
     fixed64 id = 1;
     fixed64 sender_id = 2;
     fixed64 target_id = 3; // for target
-    MarketType type = 4; 
+    ChannelType type = 4;
     google.protobuf.Duration wait = 5;
 }
 
 message Channel {
     fixed64 client_id = 1;
-    MarketType type = 2;
+    ChannelType type = 2;
     string arg_json = 3;  // for Channel Argument
+}
+
+message Mbus {
+    fixed64 mbus_id = 1;
+}
+
+message MbusMsg {
+    fixed64 msg_id = 1;    // if 0 for close message
+    fixed64 sender_id = 2;
+    fixed64 target_id = 3; // for target // if 0 for broadcast in mbus
+    uint32 msg_type = 4;  // for message type
+    string msg_info = 5;   // for abstract information
+    string arg_json = 6;
 }
