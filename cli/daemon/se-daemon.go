@@ -30,7 +30,7 @@ var isDaemon = false
 var interrupt chan os.Signal
 
 var assetsDir http.FileSystem
-var server *gosocketio.Server
+var server *gosocketio.Server = nil
 
 var providerMap map[string]*exec.Cmd
 var providerMutex sync.RWMutex
@@ -116,6 +116,12 @@ func init() {
 			GoFiles: []string{"map-provider.go"},
 		},
 		{
+			CmdName: "Datastore",
+			SrcDir: "provider/datastore",
+			BinName: "datastore-provider",
+			GoFiles: []string{"datastore-provider.go"},
+		},
+		{
 			CmdName: "Ecotan",
 			SrcDir: "provider/kota-bus",
 			BinName: "ecotan-provider",
@@ -181,7 +187,9 @@ func runMyCmd(cmd *exec.Cmd, cmdName string) {
 		} else if err != nil {
 			logger.Infof("Err %v\n", err)
 		}
-		server.BroadcastToAll("log", "["+cmdName+"]"+string(line))
+		if server != nil {
+			server.BroadcastToAll("log", "["+cmdName+"]"+string(line))
+		}
 		logger.Infof("[%s]:%s", cmdName, string(line))
 	}
 	//	log.Printf("[%s]:Now ending...",cmdName)
@@ -650,7 +658,7 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 	interrupt = make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	usage := "Usage: se-daemon install | uninstall | start | stop | status | build"
+	usage := "Usage: se-daemon install | uninstall | start | stop | status | build | clean"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
@@ -691,6 +699,10 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 			// just build all codes for simplicity
 			buildAll()
 			return "Build all binaries", nil
+		case "clean":
+			// just build all codes for simplicity
+			cleanAll()
+			return "Clean all binaries", nil
 		default:
 			return usage, nil
 		}

@@ -1,11 +1,24 @@
 module fleet-provider
 
 require (
-	github.com/bwmarrin/snowflake v0.0.0-20180412010544-68117e6bbede // indirect
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/mtfelian/golang-socketio v0.0.0-20181017124241-8d8ec6f9bb4c
-	github.com/mtfelian/synced v0.0.0-20180626092057-b82cebd56589 // indirect
-	github.com/sirupsen/logrus v1.1.1 // indirect
-	github.com/synerex/synerex_alpha v0.0.0-20181017125626-3d0a87285f40
-	google.golang.org/grpc v1.15.0
+	github.com/mtfelian/synced v0.0.0-20181026093311-f1dd911faaa7 // indirect
+	github.com/sirupsen/logrus v1.2.0 // indirect
+	github.com/synerex/synerex_alpha/api v0.0.1
+	github.com/synerex/synerex_alpha/api/fleet v0.0.1
+	github.com/synerex/synerex_alpha/sxutil v0.0.1
+	google.golang.org/grpc v1.16.0
+)
+
+replace (
+	github.com/synerex/synerex_alpha/api => ../../api
+	github.com/synerex/synerex_alpha/api/adservice => ../../api/adservice
+	github.com/synerex/synerex_alpha/api/common => ../../api/common
+	github.com/synerex/synerex_alpha/api/fleet => ../../api/fleet
+	github.com/synerex/synerex_alpha/api/library => ../../api/library
+	github.com/synerex/synerex_alpha/api/ptransit => ../../api/ptransit
+	github.com/synerex/synerex_alpha/api/rideshare => ../../api/rideshare
+	github.com/synerex/synerex_alpha/nodeapi => ../../nodeapi
+	github.com/synerex/synerex_alpha/sxutil => ../../sxutil
 )

@@ -1,0 +1,27 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.11.2-stretch-node
+
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-pkg-cache
+
+      - run:
+          name: Build go
+          command: |
+            cd cli/daemon
+            go build
+            ./se-daemon build
+            cd ../se
+            go build
+
+      - save_cache:
+          key: v1-pkg-cache
+          paths:
+            - "/go/pkg"
+
+

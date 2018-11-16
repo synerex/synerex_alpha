@@ -9,6 +9,8 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"sort"
+	"sync"
 	"time"
 
 	nodepb "github.com/synerex/synerex_alpha/nodeapi"
@@ -32,28 +34,39 @@ const MaxNodeNum = 1024
 
 // MaxServerID  Max Market Server Node ID (Small number ID is for smarket server)
 const MaxServerID = 10
+const DefaultDuration int32 = 10   // need keepalive for each 10 sec.
+const MaxDurationCount = 3   // duration count.
 
 type eachNodeInfo struct {
 	nodeName string
 	secret   uint64
 	address  string
+	lastAlive time.Time
+	count 	int32
+	status 	int32
+	arg		string
+	duration int32     // duration for checking next time
 }
 
 type srvNodeInfo struct {
-	nodeMap map[int32]eachNodeInfo // map from nodeID to eachNodeInfo
+	nodeMap map[int32]*eachNodeInfo // map from nodeID to eachNodeInfo
 }
 
 var (
 	port     = flag.Int("port", 9990, "NodeID Server Listening Port")
 	srvInfo  srvNodeInfo
 	lastNode int32 = MaxServerID // start ID from MAX_SERVER_ID to MAX_NODE_NUM
+	lastPrint time.Time
+	nmmu sync.RWMutex
 )
 
 func init() {
 	log.Println("Starting Node ID Server..")
 	rand.Seed(time.Now().UnixNano())
 	s := &srvInfo
-	s.nodeMap = make(map[int32]eachNodeInfo)
+	s.nodeMap = make(map[int32]*eachNodeInfo)
+	lastPrint = time.Now()
+	go keepNodes(s)
 }
 
 // find unused ID from map.
@@ -64,6 +77,7 @@ func getNextNodeID(sv bool) int32 {
 	} else {
 		n = lastNode
 	}
+	nmmu.RLock()
 	for {
 		_, ok := srvInfo.nodeMap[n]
 		if !ok {
@@ -75,21 +89,52 @@ func getNextNodeID(sv bool) int32 {
 			n = (n-9)%(MaxNodeNum-MaxServerID) + MaxServerID
 		}
 		if n == lastNode || n == 0 { // loop
+			nmmu.RUnlock()
 			return -1 // all id is full...
 		}
 	}
+	nmmu.RUnlock()
 	if !sv {
 		lastNode = n
 	}
 	return n
 }
 
+func keepNodes(s *srvNodeInfo){
+	for {
+		time.Sleep(time.Second * time.Duration(DefaultDuration))
+		killNodes := make([]int32,0)
+		nmmu.Lock()
+		for k, eni := range s.nodeMap {
+			sub := time.Now().Sub(eni.lastAlive) / time.Second
+			if sub > time.Duration(MaxDurationCount*DefaultDuration){
+				killNodes = append(killNodes,k)
+			}
+		}
+		for _, k := range killNodes {
+			delete(s.nodeMap,k)
+		}
+		nmmu.Unlock()
+	}
+}
+
+
 // display all node info
 func (s *srvNodeInfo) listNodes() {
-	for k, eni := range s.nodeMap {
-		log.Printf("ID: %4d %20s %14s\n", k, eni.nodeName, eni.address)
+	nmmu.RLock()
+	nk := make([]int32, len(s.nodeMap))
+	i :=0
+	for k := range s.nodeMap {
+		nk[i] = k
+		i++
 	}
-
+	sort.Slice(nk, func(i,j int) bool {return nk[i] < nk[j]})
+	for i := range nk {
+		eni := s.nodeMap[nk[i]]
+		sub := time.Now().Sub(eni.lastAlive)/time.Second
+		log.Printf("ID: %4d %20s %14s %3d %2d:%3d %s\n", nk[i], eni.nodeName, eni.address, int(sub), eni.count, eni.status, eni.arg)
+	}
+	nmmu.RUnlock()
 }
 
 func (s *srvNodeInfo) RegisterNode(cx context.Context, ni *nodepb.NodeInfo) (nid *nodepb.NodeID, e error) {
@@ -112,13 +157,15 @@ func (s *srvNodeInfo) RegisterNode(cx context.Context, ni *nodepb.NodeInfo) (nid
 		nodeName: ni.NodeName,
 		secret:   r,
 		address:  ipaddr,
+		lastAlive: time.Now(),
+		duration: DefaultDuration,
 	}
 	log.Println("Node Connection from :", ipaddr, ",", ni.NodeName)
-	s.nodeMap[n] = eni
+	s.nodeMap[n] = &eni
 	log.Println("------------------------------------------------------")
 	s.listNodes()
 	log.Println("------------------------------------------------------")
-	nid = &nodepb.NodeID{NodeId: n, Secret: r}
+	nid = &nodepb.NodeID{NodeId: n, Secret: r, KeepaliveDuration: eni.duration}
 	return nid, nil
 }
 
@@ -132,11 +179,44 @@ func (s *srvNodeInfo) QueryNode(cx context.Context, nid *nodepb.NodeID) (ni *nod
 	return ni, nil
 }
 
+func (s *srvNodeInfo) KeepAlive(ctx context.Context, nu *nodepb.NodeUpdate) (nr *nodepb.Response, e error) {
+	nid := nu.NodeId
+	r := nu.Secret
+	ni,ok := s.nodeMap[nid]
+	if !ok  {
+		fmt.Printf("Can't find node... It's killed")
+		return &nodepb.Response{Ok: false, Err: "Killed at Nodeserv"}, e
+	}
+	if r != ni.secret {
+		e = errors.New("Secret Failed")
+		return &nodepb.Response{Ok: false, Err: "Secret Failed"}, e
+	}
+	ni.lastAlive = time.Now()
+	ni.count = nu.UpdateCount
+	ni.status = nu.NodeStatus
+	ni.arg = nu.NodeArg
+
+	if ni.lastAlive.Sub(lastPrint) > time.Second *time.Duration(DefaultDuration/2) {
+		log.Println("---KeepAlive------------------------------------------")
+		s.listNodes()
+		log.Println("------------------------------------------------------")
+	}
+
+	return &nodepb.Response{Ok: true, Err: ""}, nil
+}
+
 func (s *srvNodeInfo) UnRegisterNode(cx context.Context, nid *nodepb.NodeID) (nr *nodepb.Response, e error) {
 	r := nid.Secret
 	n := nid.NodeId
-	if r != s.nodeMap[n].secret { // secret failed
+	ni,ok := s.nodeMap[n]
+	if !ok  {
+		fmt.Printf("Can't find node... It's killed")
+		return &nodepb.Response{Ok: false, Err: "Killed at Nodeserv"}, e
+	}
+
+	if r != ni.secret { // secret failed
 		e = errors.New("Secret Failed")
+		log.Println("Invalid unregister")
 		return &nodepb.Response{Ok: false, Err: "Secret Failed"}, e
 	}
 

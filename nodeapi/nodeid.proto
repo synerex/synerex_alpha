@@ -1,11 +1,12 @@
 syntax = "proto3";
 
 package nodeapi;
-option go_package="github.com/synerex/synerex_alpha/nodeapi/nodeapi";
+option go_package="github.com/synerex/synerex_alpha/nodeapi";
 
 service Node {
     rpc RegisterNode(NodeInfo) returns (NodeID) {}
     rpc QueryNode(NodeID) returns (NodeInfo){}
+    rpc KeepAlive(NodeUpdate) returns (Response){}    // each provider should keep alive.
     rpc UnRegisterNode(NodeID) returns (Response){}
 }
 
@@ -17,6 +18,15 @@ message NodeInfo{
 message NodeID{
     int32 node_id = 1;
     fixed64 secret = 2; // secret id with node_server (Not used for Query)
+    int32 keepalive_duration = 3; // at least make keep alive less than this time.
+}
+
+message NodeUpdate {
+    int32 node_id = 1;
+    fixed64 secret = 2;
+    int32 update_count = 3;  // sequential counter for nodes
+    int32  node_status = 4;  // running state (health check)
+    string node_arg = 5;
 }
 
 message Response {

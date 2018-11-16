@@ -13,4 +13,25 @@ require (
 	github.com/sirupsen/logrus v1.1.1 // indirect
 	golang.org/x/net v0.0.0-20181011144130-49bb7cea24b1
 	google.golang.org/grpc v1.15.0
+	github.com/synerex/synerex_alpha/api v0.0.0
+	github.com/synerex/synerex_alpha/nodeapi v0.0.0
+	github.com/synerex/synerex_alpha/sxutil v0.0.0
+	github.com/synerex/synerex_alpha/api/rideshare v0.0.0
+	github.com/synerex/synerex_alpha/api/ptransit v0.0.0
+	github.com/synerex/synerex_alpha/api/library v0.0.0
+	github.com/synerex/synerex_alpha/api/fleet v0.0.0
+	github.com/synerex/synerex_alpha/api/adservice v0.0.0
+)
+
+replace (
+	github.com/synerex/synerex_alpha/api => ./api
+	github.com/synerex/synerex_alpha/nodeapi => ./nodeapi
+	github.com/synerex/synerex_alpha/sxutil => ./sxutil
+	github.com/synerex/synerex_alpha/api/rideshare => ./api/rideshare
+	github.com/synerex/synerex_alpha/api/ptransit => ./api/ptransit
+	github.com/synerex/synerex_alpha/api/library => ./api/library
+	github.com/synerex/synerex_alpha/api/fleet => ./api/fleet
+	github.com/synerex/synerex_alpha/api/adservice => ./api/adservice
+	github.com/synerex/synerex_alpha/api/routing => ./api/routing
+	github.com/synerex/synerex_alpha/api/marketing => ./api/marketing
 )

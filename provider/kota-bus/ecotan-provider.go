@@ -49,7 +49,7 @@ func subscribe(client MQTT.Client, sub chan<- MQTT.Message) {
 	}
 }
 
-func convertDocor2PTService(msg *string) (service *ptransit.PTService){
+func convertDocor2PTService(msg *string) (service *ptransit.PTService, argJson string){
 	// using docor info
 	payloads := strings.Split(*msg,",")
 	lat, err := strconv.ParseFloat(payloads[8],64)
@@ -64,10 +64,31 @@ func convertDocor2PTService(msg *string) (service *ptransit.PTService){
 		Latitude: lat,
 		Longitude: lon,
 	})
-
 	vid,_ := strconv.Atoi(payloads[1][4:]) // scrape from "KOTAXX"
+	human := payloads[4]
+	time := payloads[7]
+	state,_ := strconv.ParseInt(payloads[5],10,32)
+	accuracy, _ := strconv.ParseFloat(payloads[10],32)
+	altitude, _ := strconv.ParseFloat(payloads[11],32)
+
 	angle,_ := strconv.ParseFloat(payloads[12],32)
 	speed,_ := strconv.ParseFloat(payloads[13], 32)
+
+	rpm,_ := strconv.ParseFloat(payloads[14], 32)
+//	odo,_ := strconv.ParseFloat(payloads[15], 32) // odometry from today's start
+	total_odm,_ := strconv.ParseFloat(payloads[16], 32) // odometry from car
+	pressure,_ := strconv.ParseFloat(payloads[21], 32)
+	temparature,_ := strconv.ParseFloat(payloads[22], 32)
+	humidity,_ := strconv.ParseFloat(payloads[23], 32)
+	ig_acc, _ := strconv.ParseInt(payloads[34],10,32)
+
+
+	fuel, _ := strconv.ParseFloat(payloads[35],32)
+	gps_speed, _ := strconv.ParseFloat(payloads[41],32)
+//	gps_speed, _ := strconv.ParseFloat(payloads[41],32)
+
+	argJson = fmt.Sprintf("tm:%s,hm:%s,st:%d,pre:%.1f,temp:%.1f,hum:%.1f,alt:%.1f,rpm:%.1f,speed:%.1f,acc:%.1f,fuel:%.1f,ig:%d,odm:%.1f",
+		time, human, state, pressure, temparature, humidity,altitude, rpm, gps_speed,accuracy,fuel,  ig_acc, total_odm)
 
 	service = &ptransit.PTService{
 		VehicleId: int32(vid),
@@ -76,17 +97,18 @@ func convertDocor2PTService(msg *string) (service *ptransit.PTService){
 		CurrentLocation: place,
 	}
 
-	log.Printf("msg:%v",*service)
-	return service
+//	log.Printf("msg:%v",*service)
+	return service,argJson
 }
 
 
 func handleMQMessage(sclient *sxutil.SMServiceClient, msg *string){
 
-	pts := convertDocor2PTService(msg)
+	pts,argJson := convertDocor2PTService(msg)
 	smo := sxutil.SupplyOpts{
 		Name:  "Ecotan Bus Info",
 		PTService: pts,
+		JSON: argJson,
 	}
 	sclient.RegisterSupply(&smo)
 
@@ -111,8 +133,8 @@ func main() {
 		log.Fatalf("fail to dial: %v", err)
 	}
 
-	client := api.NewSMarketClient(conn)
-	sclient := sxutil.NewSMServiceClient(client, api.MarketType_PT_SERVICE,"")
+	client := api.NewSynerexClient(conn)
+	sclient := sxutil.NewSMServiceClient(client, api.ChannelType_PT_SERVICE,"")
 
 	// MQTT
 

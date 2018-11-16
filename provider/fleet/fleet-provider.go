@@ -91,8 +91,8 @@ func subscribeDemand(client *sxutil.SMServiceClient) {
 	log.Printf("Server closed... on taxi provider")
 }
 
-func oldproposeSupply(client pb.SMarketClient, targetNum uint64) {
-	dm := pb.Supply{Id: 200, SenderId: 555, TargetId: targetNum, Type: pb.MarketType_RIDE_SHARE, SupplyName: "Taxi"}
+func oldproposeSupply(client pb.SynerexClient, targetNum uint64) {
+	dm := pb.Supply{Id: 200, SenderId: 555, TargetId: targetNum, Type: pb.ChannelType_RIDE_SHARE, SupplyName: "Taxi"}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -191,9 +191,9 @@ func main() {
 		log.Fatalf("fail to dial: %v", err)
 	}
 
-	client := pb.NewSMarketClient(conn)
+	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Fleet}")
-	sclient := sxutil.NewSMServiceClient(client, pb.MarketType_RIDE_SHARE,argJson)
+	sclient := sxutil.NewSMServiceClient(client, pb.ChannelType_RIDE_SHARE,argJson)
 
 	wg.Add(1)
 
