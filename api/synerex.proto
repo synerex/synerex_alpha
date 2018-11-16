@@ -83,8 +83,8 @@ message Supply{
         adservice.AdService arg_AdService = 12;
         library.LibService arg_LibService = 13;
         ptransit.PTService arg_PTService = 14;
-        routing.RoutingService arg_RoutingSerivice = 15;
-        marketing.MarketingService arg_MarketingSerivice = 16;
+        routing.RoutingService arg_RoutingService = 15;
+        marketing.MarketingService arg_MarketingService = 16;
     }
 }
 
@@ -104,8 +104,8 @@ message Demand {
         adservice.AdService arg_AdService = 12;
         library.LibService arg_LibService = 13;
         ptransit.PTService arg_PTService = 14;
-        routing.RoutingService arg_RoutingSerivice = 15;
-        marketing.MarketingService arg_MarketingSerivice = 16;
+        routing.RoutingService arg_RoutingService = 15;
+        marketing.MarketingService arg_MarketingService = 16;
     }
 }
 
