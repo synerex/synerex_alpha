@@ -234,7 +234,7 @@ func (clt *SMServiceClient) SelectSupply(sp *api.Supply) error {
 	tgt := &api.Target{
 		Id:       GenerateIntID(),
 		SenderId: uint64(clt.ClientID), // Should not use senderId! should use
-		TargetId: sp.Id,
+		TargetId: sp.SenderId,
 		Type:     sp.Type,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
