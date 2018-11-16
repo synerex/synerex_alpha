@@ -51,17 +51,17 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 // callback for each Ad Demand
 func adDemandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	// check if supply is match with my demand.
-	log.Println("Got rideshare demand callback")
+	log.Println("Got ad demand callback")
 
 	if dm.GetDemandName() == "" { // this is Select!
 		log.Println("getSelect!")
 		clt.Confirm(sxutil.IDType(dm.GetId()))
+	} else {
+		// select any ride share demand!
+		sp := &sxutil.SupplyOpts{Target: dm.GetId()} // ターゲットにDemand.Idを設定 (利用者側のSupplyチェックで使用)
+
+		clt.ProposeSupply(sp)
 	}
-	// select any ride share demand!
-	sp := &sxutil.SupplyOpts{Target: dm.GetId()} // ターゲットにDemand.Idを設定 (利用者側のSupplyチェックで使用)
-
-	clt.ProposeSupply(sp)
-
 }
 
 // callback for each Demand
@@ -74,16 +74,16 @@ func rideDemandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	if dm.GetDemandName() == "" { // this is Select!
 		log.Println("getSelect!")
 		clt.Confirm(sxutil.IDType(dm.GetId()))
+	} else {
+		// select any ride share demand!
+		sp := &sxutil.SupplyOpts{
+			Target: dm.GetId(),
+			Name:   "RideShare by Taxi",
+			JSON:   `{"Price":` + strconv.Itoa(myPrice) + `,"Distance": 5200, "Arrival": 300, "Destination": 500, "Position":{"Latitude":36.6, "Longitude":135}}`,
+		} // set TargetID as Demand.Id (User will check by them)
+
+		clt.ProposeSupply(sp)
 	}
-	// select any ride share demand!
-	sp := &sxutil.SupplyOpts{
-		Target: dm.GetId(),
-		Name:   "RideShare by Taxi",
-		JSON:   `{"Price":` + strconv.Itoa(myPrice) + `,"Distance": 5200, "Arrival": 300, "Destination": 500, "Position":{"Latitude":36.6, "Longitude":135}}`,
-	} // set TargetID as Demand.Id (User will check by them)
-
-	clt.ProposeSupply(sp)
-
 }
 
 func subscribeAdSupply(client *sxutil.SMServiceClient) {
