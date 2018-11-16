@@ -109,6 +109,18 @@ func init() {
 			BinName: "fleet-provider",
 			GoFiles: []string{"fleet-provider.go"},
 		},
+		{
+			CmdName: "Map",
+			SrcDir: "provider/map",
+			BinName: "map-provider",
+			GoFiles: []string{"map-provider.go"},
+		},
+		{
+			CmdName: "Ecotan",
+			SrcDir: "provider/kota-bus",
+			BinName: "ecotan-provider",
+			GoFiles: []string{"ecotan-provider.go"},
+		},
 	}
 }
 
@@ -224,13 +236,16 @@ func buildCmd(sc SubCommands) string { // build local node server
 	srcpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../" + sc.SrcDir)
 	binpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../" + sc.SrcDir + "/" + binName(sc.BinName))
 	fi, err := os.Stat(binpath)
-	sfi, _ := os.Stat(srcpath)
 
 	// obtain most latest source file time.
-	modTime := sfi.ModTime()
+	modTime := time.Date(2018, time.August, 1, 0, 0, 0, 0, time.UTC)
 	for _, fn := range sc.GoFiles {
 		sp := filepath.FromSlash(filepath.ToSlash(srcpath) + "/" + fn)
-		ss, _ := os.Stat(sp)
+		ss, errf := os.Stat(sp)
+		if errf != nil {
+			return "Can't find file "+srcpath+":"+err.Error()
+		}
+
 		if ss.ModTime().After(modTime) {
 			modTime = ss.ModTime()
 		}
@@ -241,7 +256,7 @@ func buildCmd(sc SubCommands) string { // build local node server
 	// check mod time
 	if err == nil && fi.ModTime().After(modTime) { // check binary time
 		// if binary is newer than sources
-		return "ok"
+		return "new"
 	} else {
 		runArgs := append([]string{"build"}, sc.GoFiles...)
 		cmd = exec.Command("go", runArgs...) // run go build with srcfile
@@ -360,6 +375,9 @@ func buildAll() []string {
 	for _, sc := range cmdArray {
 		if sc.CmdName != "All" {
 			resp[i] = buildSubCmd(sc.CmdName)
+			if resp[i] == "ok" {
+				time.Sleep(7 * time.Second)
+			}
 			i++
 		}
 	}
@@ -632,7 +650,7 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 	interrupt = make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	usage := "Usage: se-daemon install | uninstall | start | stop | status"
+	usage := "Usage: se-daemon install | uninstall | start | stop | status | build"
 
 	if len(os.Args) > 1 {
 		command := os.Args[1]
@@ -669,6 +687,10 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 				stst = "Unknown"
 			}
 			return "Status :" + stst, err
+		case "build":
+			// just build all codes for simplicity
+			buildAll()
+			return "Build all binaries", nil
 		default:
 			return usage, nil
 		}
