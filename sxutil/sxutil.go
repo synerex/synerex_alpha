@@ -6,6 +6,7 @@ package sxutil
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -22,7 +23,7 @@ import (
 	"github.com/synerex/synerex_alpha/nodeapi"
 )
 
-// IDType for all ID in Synergic Market
+// IDType for all ID in Synergic Exchange
 type IDType uint64
 
 var (
@@ -54,7 +55,7 @@ type SupplyOpts struct {
 }
 
 func init() {
-	fmt.Println("Synergic Market Util init() is called!")
+	fmt.Println("Synergic Exchange Util init() is called!")
 }
 
 // InitNodeNum for initialize NodeNum again
@@ -158,13 +159,14 @@ func UnRegisterNode() {
 // SMServiceClient Wrappter Structure for market client
 type SMServiceClient struct {
 	ClientID IDType
-	MType    api.MarketType
-	Client   api.SMarketClient
+	MType    api.ChannelType
+	Client   api.SynerexClient
 	ArgJson  string
+	MbusID	IDType
 }
 
-// NewSMServiceClient Creates wrapper structre SMServiceClient from SMarketClient
-func NewSMServiceClient(clt api.SMarketClient, mtype api.MarketType, argJson string) *SMServiceClient {
+// NewSMServiceClient Creates wrapper structre SMServiceClient from SynerexClient
+func NewSMServiceClient(clt api.SynerexClient, mtype api.ChannelType, argJson string) *SMServiceClient {
 	s := &SMServiceClient{
 		ClientID: IDType(node.Generate()),
 		MType:    mtype,
@@ -243,6 +245,12 @@ func (clt *SMServiceClient) SelectSupply(sp *api.Supply) error{
 		return err
 	}
 	log.Println("SelectSupply Response:", resp)
+	// if mbus is OK, start mbus!
+	clt.MbusID = IDType(resp.MbusId)
+	if(clt.MbusID != 0){
+//		clt.SubscribeMbus()
+	}
+
 	return nil
 }
 
@@ -317,6 +325,65 @@ func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMSe
 	return err
 }
 
+
+// SubscribeMbus  Wrapper function for SMServiceClient
+func (clt *SMServiceClient) SubscribeMbus(ctx context.Context, mbcb func(*SMServiceClient, *api.MbusMsg)) error {
+
+	mb := &api.Mbus{
+		ClientId:uint64(clt.ClientID),
+		MbusId:uint64(clt.MbusID),
+	}
+
+	smc, err := clt.Client.SubscribeMbus(ctx, mb)
+	if err != nil {
+		log.Printf("%v Synerex_SubscribeMbusClient Error %v", clt, err)
+		return err // sender should handle error...
+	}
+	for {
+		var mes *api.MbusMsg
+		mes, err = smc.Recv() // receive Demand
+		if err != nil {
+			if err == io.EOF {
+				log.Print("End Mbus subscribe OK")
+			} else {
+				log.Printf("%v SMServiceClient SubscribeMbus error %v", clt, err)
+			}
+			break
+		}
+		log.Printf("Receive Mbus Message %v", *mes)
+		// call Callback!
+		mbcb(clt, mes)
+	}
+	return err
+}
+
+func  (clt *SMServiceClient) SendMsg(ctx context.Context, msg *api.MbusMsg) error {
+	msg.SenderId = uint64(clt.ClientID)
+	if clt.MbusID == 0 {
+		return errors.New("No Mbus opened!")
+	}
+	_, err :=	clt.Client.SendMsg(ctx ,msg)
+
+	return err
+}
+
+func  (clt *SMServiceClient) CloseMbus(ctx context.Context) error {
+	if clt.MbusID == 0 {
+		return errors.New("No Mbus opened!")
+	}
+	mbus := &api.Mbus{
+		ClientId: uint64(clt.ClientID),
+		MbusId: uint64(clt.MbusID),
+	}
+	_, err :=	clt.Client.CloseMbus(ctx ,mbus)
+	if err == nil {
+		clt.MbusID = 0
+	}
+	return err
+}
+
+
+
 // RegisterDemand sends Typed Demand to Server
 func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 	id := GenerateIntID()
@@ -355,12 +422,12 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 	}
 
 	switch clt.MType {
-	case api.MarketType_RIDE_SHARE:
+	case api.ChannelType_RIDE_SHARE:
 		sp := api.Supply_Arg_Fleet{
 			smo.Fleet,
 		}
 		dm.ArgOneof = &sp
-	case api.MarketType_PT_SERVICE:
+	case api.ChannelType_PT_SERVICE:
 		sp := api.Supply_Arg_PTService{
 			smo.PTService,
 		}

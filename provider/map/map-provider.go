@@ -100,7 +100,7 @@ func supplyRideCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	flt := sp.GetArg_Fleet()
 	if flt != nil { // get Fleet supplu
 		mm := &MapMarker{
-			mtype: int32(api.MarketType_RIDE_SHARE),
+			mtype: int32(api.ChannelType_RIDE_SHARE),
 			id:    flt.VehicleId,
 			lat:   flt.Coord.Lat,
 			lon:   flt.Coord.Lon,
@@ -123,7 +123,7 @@ func supplyPTCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	pt := sp.GetArg_PTService()
 	if pt != nil { // get Fleet supplu
 		mm := &MapMarker{
-			mtype: int32(api.MarketType_PT_SERVICE),
+			mtype: int32(api.ChannelType_PT_SERVICE),
 			id:    pt.VehicleId,
 			lat:   float32(pt.CurrentLocation.GetPoint().Latitude),
 			lon:   float32(pt.CurrentLocation.GetPoint().Longitude),
@@ -170,12 +170,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	client := api.NewSMarketClient(conn)
+	client := api.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Map:RIDE}")
-	ride_client := sxutil.NewSMServiceClient(client, api.MarketType_RIDE_SHARE, argJson)
+	ride_client := sxutil.NewSMServiceClient(client, api.ChannelType_RIDE_SHARE, argJson)
 
 	argJson2 := fmt.Sprintf("{Client:Map:PT}")
-	pt_client := sxutil.NewSMServiceClient(client, api.MarketType_PT_SERVICE, argJson2)
+	pt_client := sxutil.NewSMServiceClient(client, api.ChannelType_PT_SERVICE, argJson2)
 
 	wg.Add(1)
 	go subscribeRideSupply(ride_client)

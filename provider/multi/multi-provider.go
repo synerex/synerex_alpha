@@ -138,13 +138,13 @@ func main() {
 	}
 	sxutil.RegisterDeferFunction(func(){conn.Close()} )
 
-	client := pb.NewSMarketClient(conn)
+	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Multi_AD}")
 	argJson2 := fmt.Sprintf("{Client:Multi_RIDE_SHARE}")
 
-	sclient := sxutil.NewSMServiceClient(client, pb.MarketType_AD_SERVICE,argJson) // connection for AD
+	sclient := sxutil.NewSMServiceClient(client, pb.ChannelType_AD_SERVICE,argJson) // connection for AD
 
-	ride_sclient := sxutil.NewSMServiceClient(client, pb.MarketType_RIDE_SHARE, argJson2) // create sclient for each type
+	ride_sclient := sxutil.NewSMServiceClient(client, pb.ChannelType_RIDE_SHARE, argJson2) // create sclient for each type
 
 	wg.Add(1)
 	go subscribeAdDemand(sclient) // from ad company

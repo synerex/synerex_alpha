@@ -133,8 +133,8 @@ func main() {
 		log.Fatalf("fail to dial: %v", err)
 	}
 
-	client := api.NewSMarketClient(conn)
-	sclient := sxutil.NewSMServiceClient(client, api.MarketType_PT_SERVICE,"")
+	client := api.NewSynerexClient(conn)
+	sclient := sxutil.NewSMServiceClient(client, api.ChannelType_PT_SERVICE,"")
 
 	// MQTT
 

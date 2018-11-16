@@ -69,10 +69,10 @@ func main() {
 	}
 	smutil.RegisterDeferFunction(func() { conn.Close() })
 
-	client := pb.NewSMarketClient(conn)
+	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Ad}")
 	// create client wrapper
-	sclient := smutil.NewSMServiceClient(client, pb.MarketType_AD_SERVICE, argJson)
+	sclient := smutil.NewSMServiceClient(client, pb.ChannelType_AD_SERVICE, argJson)
 
 	wg.Add(1)
 	go subscribeSupply(sclient)

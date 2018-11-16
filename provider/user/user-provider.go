@@ -136,9 +136,9 @@ func main() {
 	}
 	sxutil.RegisterDeferFunction(func() { conn.Close() })
 
-	client := pb.NewSMarketClient(conn)
+	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:User}")
-	sclient := sxutil.NewSMServiceClient(client, pb.MarketType_RIDE_SHARE,argJson)
+	sclient := sxutil.NewSMServiceClient(client, pb.ChannelType_RIDE_SHARE,argJson)
 
 	wg := sync.WaitGroup{}
 
