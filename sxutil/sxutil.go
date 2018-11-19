@@ -450,6 +450,7 @@ func (clt *SMServiceClient) Confirm(id IDType) error {
 		SenderId: uint64(clt.ClientID),
 		TargetId: uint64(id),
 		Type:     clt.MType,
+		MbusId:   uint64(id),
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
