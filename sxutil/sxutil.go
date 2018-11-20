@@ -29,8 +29,8 @@ type IDType uint64
 var (
 	node       *snowflake.Node // package variable for keeping unique ID.
 	nid        *nodeapi.NodeID
-	nupd	   *nodeapi.NodeUpdate
-	numu		sync.RWMutex
+	nupd       *nodeapi.NodeUpdate
+	numu       sync.RWMutex
 	myNodeName string
 	conn       *grpc.ClientConn
 	clt        nodeapi.NodeClient
@@ -78,29 +78,29 @@ func GetNodeName(n int) string {
 	return ni.NodeName
 }
 
-func SetNodeStatus(status int32, arg string){
+func SetNodeStatus(status int32, arg string) {
 	numu.Lock()
 	nupd.NodeStatus = status
 	nupd.NodeArg = arg
 	numu.Unlock()
 }
 
-func startKeepAlive(){
+func startKeepAlive() {
 	for {
-//		fmt.Printf("KeepAlive %s %d\n",nupd.NodeStatus, nid.KeepaliveDuration)
+		//		fmt.Printf("KeepAlive %s %d\n",nupd.NodeStatus, nid.KeepaliveDuration)
 		time.Sleep(time.Second * time.Duration(nid.KeepaliveDuration))
 		if nid.Secret == 0 { // this means the node is disconnected
 			break
 		}
 		numu.RLock()
 		nupd.UpdateCount++
-		clt.KeepAlive(context.Background(), nupd )
+		clt.KeepAlive(context.Background(), nupd)
 		numu.RUnlock()
 	}
 }
 
 // RegisterNodeName is a function to register node name with node server address
-func RegisterNodeName(nodesrv string, nm string, isServ bool) error{ // register ID to server
+func RegisterNodeName(nodesrv string, nm string, isServ bool) error { // register ID to server
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithInsecure()) // insecure
 	var err error
@@ -121,11 +121,11 @@ func RegisterNodeName(nodesrv string, nm string, isServ bool) error{ // register
 	nid, ee = clt.RegisterNode(context.Background(), &nif)
 
 	nupd = &nodeapi.NodeUpdate{
-		NodeId: nid.NodeId,
-		Secret: nid.Secret,
-		UpdateCount : 0,
-		NodeStatus : 0,
-		NodeArg : "",
+		NodeId:      nid.NodeId,
+		Secret:      nid.Secret,
+		UpdateCount: 0,
+		NodeStatus:  0,
+		NodeArg:     "",
 	}
 	if ee != nil { // has error!
 		log.Println("Error on get NodeID", ee)
@@ -142,7 +142,7 @@ func RegisterNodeName(nodesrv string, nm string, isServ bool) error{ // register
 	}
 	// start keepalive goroutine
 	go startKeepAlive()
-//	fmt.Println("KeepAlive started!")
+	//	fmt.Println("KeepAlive started!")
 	return nil
 }
 
@@ -162,7 +162,7 @@ type SMServiceClient struct {
 	MType    api.ChannelType
 	Client   api.SynerexClient
 	ArgJson  string
-	MbusID	IDType
+	MbusID   IDType
 }
 
 // NewSMServiceClient Creates wrapper structre SMServiceClient from SynerexClient
@@ -230,11 +230,11 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 }
 
 // SelectSupply send select message to server
-func (clt *SMServiceClient) SelectSupply(sp *api.Supply) error{
+func (clt *SMServiceClient) SelectSupply(sp *api.Supply) error {
 	tgt := &api.Target{
 		Id:       GenerateIntID(),
-		SenderId: uint64(clt.ClientID),    // Should not use senderId! should use
-		TargetId: sp.Id,
+		SenderId: uint64(clt.ClientID), // Should not use senderId! should use
+		TargetId: sp.SenderId,
 		Type:     sp.Type,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -247,15 +247,15 @@ func (clt *SMServiceClient) SelectSupply(sp *api.Supply) error{
 	log.Println("SelectSupply Response:", resp)
 	// if mbus is OK, start mbus!
 	clt.MbusID = IDType(resp.MbusId)
-	if(clt.MbusID != 0){
-//		clt.SubscribeMbus()
+	if clt.MbusID != 0 {
+		//		clt.SubscribeMbus()
 	}
 
 	return nil
 }
 
 // SelectDemand send select message to server
-func (clt *SMServiceClient) SelectDemand(dm *api.Demand) error{
+func (clt *SMServiceClient) SelectDemand(dm *api.Demand) error {
 	tgt := &api.Target{
 		Id:       GenerateIntID(),
 		SenderId: uint64(dm.SenderId), // use senderId
@@ -325,13 +325,12 @@ func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMSe
 	return err
 }
 
-
 // SubscribeMbus  Wrapper function for SMServiceClient
 func (clt *SMServiceClient) SubscribeMbus(ctx context.Context, mbcb func(*SMServiceClient, *api.MbusMsg)) error {
 
 	mb := &api.Mbus{
-		ClientId:uint64(clt.ClientID),
-		MbusId:uint64(clt.MbusID),
+		ClientId: uint64(clt.ClientID),
+		MbusId:   uint64(clt.MbusID),
 	}
 
 	smc, err := clt.Client.SubscribeMbus(ctx, mb)
@@ -357,32 +356,30 @@ func (clt *SMServiceClient) SubscribeMbus(ctx context.Context, mbcb func(*SMServ
 	return err
 }
 
-func  (clt *SMServiceClient) SendMsg(ctx context.Context, msg *api.MbusMsg) error {
+func (clt *SMServiceClient) SendMsg(ctx context.Context, msg *api.MbusMsg) error {
 	msg.SenderId = uint64(clt.ClientID)
 	if clt.MbusID == 0 {
 		return errors.New("No Mbus opened!")
 	}
-	_, err :=	clt.Client.SendMsg(ctx ,msg)
+	_, err := clt.Client.SendMsg(ctx, msg)
 
 	return err
 }
 
-func  (clt *SMServiceClient) CloseMbus(ctx context.Context) error {
+func (clt *SMServiceClient) CloseMbus(ctx context.Context) error {
 	if clt.MbusID == 0 {
 		return errors.New("No Mbus opened!")
 	}
 	mbus := &api.Mbus{
 		ClientId: uint64(clt.ClientID),
-		MbusId: uint64(clt.MbusID),
+		MbusId:   uint64(clt.MbusID),
 	}
-	_, err :=	clt.Client.CloseMbus(ctx ,mbus)
+	_, err := clt.Client.CloseMbus(ctx, mbus)
 	if err == nil {
 		clt.MbusID = 0
 	}
 	return err
 }
-
-
 
 // RegisterDemand sends Typed Demand to Server
 func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
@@ -447,12 +444,13 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 }
 
 // Confirm sends confirm message to sender
-func (clt *SMServiceClient) Confirm(id IDType) error{
+func (clt *SMServiceClient) Confirm(id IDType) error {
 	tg := &api.Target{
 		Id:       GenerateIntID(),
 		SenderId: uint64(clt.ClientID),
 		TargetId: uint64(id),
 		Type:     clt.MType,
+		MbusId:   uint64(id),
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
