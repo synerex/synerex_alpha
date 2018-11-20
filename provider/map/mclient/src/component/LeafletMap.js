@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import L from 'leaflet';
-import {Map, Marker, Popup, TileLayer} from 'react-leaflet';
+import {Map, Marker, Popup, TileLayer, Polyline} from 'react-leaflet';
 import RMarker from './RMarker';
 
 var smallVehicleIcon = L.icon({
@@ -75,6 +75,24 @@ export default class LeafletMap extends Component {
                 )
             });
         }
+        if(this.props.busTrace){
+            let vs = this.props.store.getVehicle(4);
+            Object.keys(vs).forEach(function (key) {
+
+                let vec = vs[key]
+                let arr = []
+                vec.forEach(function (arg){
+                    arr.push([arg[0],arg[1]])
+                })
+                ms.push(
+                    <Polyline
+                        positions={arr}
+
+                    />
+                )
+            });
+        }
+
         let markers = <div></div>;
         if(ms.length > 0){
             markers = ms;

@@ -48,6 +48,13 @@ export default class SideBar extends Component {
                             </a>
                         </li>
                         <li>
+                            <a href="#" onClick={()=>{this.props.showBusTrace()}}>
+                                <i className="fa fa-th"></i> <span>Show Bus Trace</span>
+                                <span className="pull-right-container">
+                            </span>
+                            </a>
+                        </li>
+                        <li>
                             <a href="#" onClick={()=>{this.props.showTaxi()}}>
                                 <i className="fa fa-th"></i> <span>Show Taxi</span>
                                 <span className="pull-right-container">
