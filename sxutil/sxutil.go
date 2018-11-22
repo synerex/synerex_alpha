@@ -459,6 +459,7 @@ func (clt *SMServiceClient) Confirm(id IDType) error {
 		log.Printf("%v Confirm Failier %v", clt, err)
 		return err
 	}
+	clt.MbusID = id
 	log.Println("Confirm Success:", resp)
 	return nil
 }
