@@ -25,15 +25,14 @@ import (
 
 	"strconv"
 
+	"github.com/sirupsen/logrus"
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/monitor/monitorapi"
 	"github.com/synerex/synerex_alpha/sxutil"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
 
 const MessageChannelBufferSize = 10
-
 
 var (
 	port    = flag.Int("port", 10000, "The Synerex Server Listening Port")
@@ -42,15 +41,15 @@ var (
 )
 
 type synerexServerInfo struct {
-	demandChans  [api.ChannelType_END][]chan *api.Demand // create slices for each ChannelType(each slice contains channels)
-	supplyChans  [api.ChannelType_END][]chan *api.Supply
-	mbusChans map[uint64][]chan *api.MbusMsg // Private Message bus for each provider
-	mbusMap   map[sxutil.IDType]map[uint64]chan *api.MbusMsg  // map from IDtype to Mbus channel
-	demandMap    [api.ChannelType_END]map[sxutil.IDType]chan *api.Demand // map from IDtype to Demand channel
-	supplyMap    [api.ChannelType_END]map[sxutil.IDType]chan *api.Supply // map from IDtype to Supply channel
-	waitConfirms [api.ChannelType_END]map[sxutil.IDType]chan *api.Target // confirm maps
-	dmu,smu,mmu,wmu           sync.RWMutex
-	messageStore *MessageStore // message store
+	demandChans        [api.ChannelType_END][]chan *api.Demand // create slices for each ChannelType(each slice contains channels)
+	supplyChans        [api.ChannelType_END][]chan *api.Supply
+	mbusChans          map[uint64][]chan *api.MbusMsg                          // Private Message bus for each provider
+	mbusMap            map[sxutil.IDType]map[uint64]chan *api.MbusMsg          // map from IDtype to Mbus channel
+	demandMap          [api.ChannelType_END]map[sxutil.IDType]chan *api.Demand // map from IDtype to Demand channel
+	supplyMap          [api.ChannelType_END]map[sxutil.IDType]chan *api.Supply // map from IDtype to Supply channel
+	waitConfirms       [api.ChannelType_END]map[sxutil.IDType]chan *api.Target // confirm maps
+	dmu, smu, mmu, wmu sync.RWMutex
+	messageStore       *MessageStore // message store
 }
 
 func init() {
@@ -68,10 +67,10 @@ func (s *synerexServerInfo) RegisterDemand(c context.Context, dm *api.Demand) (r
 		ch := chs[i]
 		if len(ch) < MessageChannelBufferSize {
 			ch <- dm
-		}else{
-			okMsg = fmt.Sprintf("RD MessageDrop %v",dm)
+		} else {
+			okMsg = fmt.Sprintf("RD MessageDrop %v", dm)
 			okFlag = false
-			log.Printf("RD MessageDrop %v\n",dm)
+			log.Printf("RD MessageDrop %v\n", dm)
 		}
 	}
 	s.dmu.RUnlock()
@@ -88,18 +87,18 @@ func (s *synerexServerInfo) RegisterSupply(c context.Context, sp *api.Supply) (r
 	chs := s.supplyChans[sp.GetType()]
 	for i := range chs {
 		ch := chs[i]
-		str = str+ fmt.Sprintf("%d ",len(ch))
+		str = str + fmt.Sprintf("%d ", len(ch))
 		if len(ch) < MessageChannelBufferSize { // run under not blocking state.
 			ch <- sp
-		}else{
-			okMsg = fmt.Sprintf("RS MessageDrop %v",sp)
+		} else {
+			okMsg = fmt.Sprintf("RS MessageDrop %v", sp)
 			okFlag = false
-			log.Printf("RS MessageDrop %v\n",sp)
+			log.Printf("RS MessageDrop %v\n", sp)
 		}
 
 	}
 	s.smu.RUnlock()
-	fmt.Printf("RS: %d, %s:",len(chs),str)
+	fmt.Printf("RS: %d, %s:", len(chs), str)
 	r = &api.Response{Ok: okFlag, Err: okMsg}
 	return r, nil
 }
@@ -110,12 +109,12 @@ func (s *synerexServerInfo) ProposeDemand(c context.Context, dm *api.Demand) (r 
 	chs := s.demandChans[dm.GetType()]
 	for i := range chs {
 		ch := chs[i]
-		if len(ch) < MessageChannelBufferSize	 {
+		if len(ch) < MessageChannelBufferSize {
 			ch <- dm
-		}else{
-			okMsg = fmt.Sprintf("PD MessageDrop %v",dm)
+		} else {
+			okMsg = fmt.Sprintf("PD MessageDrop %v", dm)
 			okFlag = false
-			log.Printf("PD MessageDrop %v\n",dm)
+			log.Printf("PD MessageDrop %v\n", dm)
 		}
 	}
 	s.dmu.RUnlock()
@@ -129,12 +128,12 @@ func (s *synerexServerInfo) ProposeSupply(c context.Context, sp *api.Supply) (r 
 	chs := s.supplyChans[sp.GetType()]
 	for i := range chs {
 		ch := chs[i]
-		if len(ch) < MessageChannelBufferSize	 {
+		if len(ch) < MessageChannelBufferSize {
 			ch <- sp
-		}else{
-			okMsg = fmt.Sprintf("PS MessageDrop %v",sp)
+		} else {
+			okMsg = fmt.Sprintf("PS MessageDrop %v", sp)
 			okFlag = false
-			log.Printf("PS MessageDrop %v\n",sp)
+			log.Printf("PS MessageDrop %v\n", sp)
 		}
 	}
 	s.smu.RUnlock()
@@ -164,7 +163,7 @@ func (s *synerexServerInfo) SelectSupply(c context.Context, tg *api.Target) (r *
 		SenderId: tg.SenderId,
 		TargetId: tg.TargetId,
 		Type:     tg.Type,
-		MbusId: id,   // mbus id is a message id for select.
+		MbusId:   id, // mbus id is a message id for select.
 	}
 	ch <- dm // send select message
 
@@ -176,14 +175,14 @@ func (s *synerexServerInfo) SelectSupply(c context.Context, tg *api.Target) (r *
 	tb := <-tch // got confirm!
 
 	s.wmu.Lock() // remove waitChannel
-	delete(s.waitConfirms[tg.Type],sxutil.IDType(id))
+	delete(s.waitConfirms[tg.Type], sxutil.IDType(id))
 	s.wmu.Unlock()
 
 	if tb.TargetId == id {
 		if tb.MbusId == id {
-			r = &api.ConfirmResponse{Ok: true, Err: "", MbusId:id}
+			r = &api.ConfirmResponse{Ok: true, Err: "", MbusId: id}
 			return r, nil
-		}else{
+		} else {
 			r = &api.ConfirmResponse{Ok: true, Err: "no mbus id"}
 			return r, nil
 		}
@@ -223,7 +222,7 @@ func demandServerFunc(ch chan *api.Demand, stream api.Synerex_SubscribeDemandSer
 	for {
 		select {
 		case dm := <-ch: // may block until receiving info
-			if  dm.TargetId != 0{ // select Supply!
+			if dm.TargetId != 0 { // select Supply!
 				if sxutil.IDType(dm.TargetId) != id {
 					continue
 				}
@@ -268,7 +267,7 @@ func (s *synerexServerInfo) SubscribeDemand(ch *api.Channel, stream api.Synerex_
 	_, ok := s.demandMap[ch.Type][idt]
 	s.dmu.RUnlock()
 	if ok { // check the availability of duplicated client ID
-		return errors.New(fmt.Sprintf("duplicated SubscribeDemand ClientID %d",idt))
+		return errors.New(fmt.Sprintf("duplicated SubscribeDemand ClientID %d", idt))
 	}
 
 	// It is better to logging here.
@@ -280,9 +279,9 @@ func (s *synerexServerInfo) SubscribeDemand(ch *api.Channel, stream api.Synerex_
 	tp := ch.GetType()
 	s.dmu.Lock()
 	s.demandChans[tp] = append(s.demandChans[tp], subCh)
-	s.demandMap[tp][idt]= subCh // mapping from clientID to channel
+	s.demandMap[tp][idt] = subCh // mapping from clientID to channel
 	s.dmu.Unlock()
-	demandServerFunc(subCh, stream,idt) // infinite go routine?
+	demandServerFunc(subCh, stream, idt) // infinite go routine?
 	// if this returns, stream might be closed.
 	// we should remove channel
 	s.dmu.Lock()
@@ -315,7 +314,7 @@ func (s *synerexServerInfo) SubscribeSupply(ch *api.Channel, stream api.Synerex_
 	_, ok := s.supplyMap[tp][idt]
 	s.smu.RUnlock()
 	if ok { // check the availability of duplicated client ID
-		return errors.New(fmt.Sprintf("duplicated SubscribeSupply for ClientID %v",idt))
+		return errors.New(fmt.Sprintf("duplicated SubscribeSupply for ClientID %v", idt))
 	}
 
 	subCh := make(chan *api.Supply, MessageChannelBufferSize)
@@ -349,8 +348,8 @@ func mbusServerFunc(ch chan *api.MbusMsg, stream api.Synerex_SubscribeMbusServer
 				return nil // grace close
 			}
 			if sxutil.IDType(msg.GetSenderId()) != id { // do not send msg from myself
-				tgt :=sxutil.IDType(msg.GetTargetId())
-				if  tgt == 0 ||tgt == id { // =0 broadcast , = tgt unicast
+				tgt := sxutil.IDType(msg.GetTargetId())
+				if tgt == 0 || tgt == id { // =0 broadcast , = tgt unicast
 					err := stream.Send(msg)
 					if err != nil {
 						//				log.Printf("Error mBus Error %v", err)
@@ -362,7 +361,6 @@ func mbusServerFunc(ch chan *api.MbusMsg, stream api.Synerex_SubscribeMbusServer
 	}
 }
 
-
 func removeMbusChannelFromSlice(sl []chan *api.MbusMsg, c chan *api.MbusMsg) []chan *api.MbusMsg {
 	for i, ch := range sl {
 		if ch == c {
@@ -372,19 +370,19 @@ func removeMbusChannelFromSlice(sl []chan *api.MbusMsg, c chan *api.MbusMsg) []c
 	log.Printf("Cant find channel %v in removeMbusChannel", c)
 	return sl
 }
-func  (s *synerexServerInfo) SubscribeMbus(mb *api.Mbus,stream  api.Synerex_SubscribeMbusServer) error{
+func (s *synerexServerInfo) SubscribeMbus(mb *api.Mbus, stream api.Synerex_SubscribeMbusServer) error {
 
 	mbusCh := make(chan *api.MbusMsg, MessageChannelBufferSize) // make channel for each mbus
 	id := sxutil.IDType(mb.GetClientId())
 	mbid := mb.MbusId
 	s.mmu.Lock()
 	chans := s.mbusChans[mbid]
-	s.mbusChans[mbid] = append(chans,mbusCh)
+	s.mbusChans[mbid] = append(chans, mbusCh)
 	mm, ok := s.mbusMap[id]
 	if ok {
-		mm[mbid]= mbusCh
-	}else{
-		mm = make(map[uint64]chan *api.MbusMsg )
+		mm[mbid] = mbusCh
+	} else {
+		mm = make(map[uint64]chan *api.MbusMsg)
 		mm[mbid] = mbusCh
 		s.mbusMap[id] = mm
 	}
@@ -394,14 +392,14 @@ func  (s *synerexServerInfo) SubscribeMbus(mb *api.Mbus,stream  api.Synerex_Subs
 
 	s.mmu.Lock()
 	s.mbusChans[mbid] = removeMbusChannelFromSlice(s.mbusChans[mbid], mbusCh)
-	delete(s.mbusMap,id)
-//	log.Printf("Remove Mbus Stream Channel %v", ch)
+	delete(s.mbusMap, id)
+	//	log.Printf("Remove Mbus Stream Channel %v", ch)
 	s.mmu.Unlock()
 
 	return err
 }
 
-func  (s *synerexServerInfo) SendMsg(c context.Context,msg *api.MbusMsg) (r *api.Response, err error) {
+func (s *synerexServerInfo) SendMsg(c context.Context, msg *api.MbusMsg) (r *api.Response, err error) {
 	okFlag := true
 	okMsg := ""
 	s.mmu.RLock()
@@ -410,10 +408,10 @@ func  (s *synerexServerInfo) SendMsg(c context.Context,msg *api.MbusMsg) (r *api
 		ch := chs[i]
 		if len(ch) < MessageChannelBufferSize { // run under not blocking state.
 			ch <- msg
-		}else{
-			okMsg = fmt.Sprintf("MBus MessageDrop %v",msg)
+		} else {
+			okMsg = fmt.Sprintf("MBus MessageDrop %v", msg)
 			okFlag = false
-			log.Printf("Mbus MessageDrop %v\n",msg)
+			log.Printf("Mbus MessageDrop %v\n", msg)
 		}
 	}
 	s.mmu.RUnlock()
@@ -421,24 +419,22 @@ func  (s *synerexServerInfo) SendMsg(c context.Context,msg *api.MbusMsg) (r *api
 	return r, nil
 }
 
-
-
-func (s *synerexServerInfo) CloseMbus(c context.Context,mb  *api.Mbus) (r *api.Response, err error) {
+func (s *synerexServerInfo) CloseMbus(c context.Context, mb *api.Mbus) (r *api.Response, err error) {
 	okFlag := true
 	okMsg := ""
 	s.mmu.RLock()
 	chs := s.mbusChans[mb.GetMbusId()] // get channel slice from mbus_id
-	cmsg := &api.MbusMsg{  // this is close message
+	cmsg := &api.MbusMsg{              // this is close message
 		MsgId: 0,
 	}
 	for i := range chs {
 		ch := chs[i]
 		if len(ch) < MessageChannelBufferSize { // run under not blocking state.
 			ch <- cmsg
-		}else{
-			okMsg = fmt.Sprintf("MBusClose MessageDrop %v",cmsg)
+		} else {
+			okMsg = fmt.Sprintf("MBusClose MessageDrop %v", cmsg)
 			okFlag = false
-			log.Printf("MBusClose MessageDrop %v\n",cmsg)
+			log.Printf("MBusClose MessageDrop %v\n", cmsg)
 		}
 	}
 	s.mmu.RUnlock()
@@ -449,7 +445,7 @@ func (s *synerexServerInfo) CloseMbus(c context.Context,mb  *api.Mbus) (r *api.R
 func newServerInfo() *synerexServerInfo {
 	var ms synerexServerInfo
 	s := &ms
-	for i :=0; i < int(api.ChannelType_END); i++{
+	for i := 0; i < int(api.ChannelType_END); i++ {
 		s.demandMap[i] = make(map[sxutil.IDType]chan *api.Demand)
 		s.supplyMap[i] = make(map[sxutil.IDType]chan *api.Supply)
 		s.waitConfirms[i] = make(map[sxutil.IDType]chan *api.Target)
@@ -459,7 +455,6 @@ func newServerInfo() *synerexServerInfo {
 
 	return s
 }
-
 
 // synerex ID system
 var (
@@ -479,8 +474,8 @@ func idToNode(id uint64) string {
 	if str, ok = nodeMap[nodeNum]; !ok {
 		str = sxutil.GetNodeName(nodeNum)
 	}
-	rs := strings.Replace(str,"Provider","",-1)
-	rs2 := strings.Replace(rs, "Server", "",-1)
+	rs := strings.Replace(str, "Provider", "", -1)
+	rs2 := strings.Replace(rs, "Server", "", -1)
 	return rs2 + ":" + strconv.Itoa(nodeNum)
 }
 
@@ -499,7 +494,7 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 			srcId = dm.SenderId
 			tgtId = dm.TargetId
 			mid = dm.Id
-//			args = "Type:" + strconv.Itoa(int(dm.Type)) + ":" + strconv.FormatUint(dm.Id, 16) + ":" + idToNode(dm.SenderId) + "->" + strconv.FormatUint(dm.TargetId, 16)
+			//			args = "Type:" + strconv.Itoa(int(dm.Type)) + ":" + strconv.FormatUint(dm.Id, 16) + ":" + idToNode(dm.SenderId) + "->" + strconv.FormatUint(dm.TargetId, 16)
 			args = idToNode(dm.SenderId) + "->" + idToNode(dm.TargetId)
 			// Supply
 		case "RegisterSupply", "ProposeSupply":
@@ -508,7 +503,7 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 			srcId = sp.SenderId
 			tgtId = sp.TargetId
 			mid = sp.Id
-//			args = "Type:" + strconv.Itoa(int(sp.Type)) + ":" + strconv.FormatUint(sp.Id, 16) + ":" + idToNode(sp.SenderId) + "->" + strconv.FormatUint(sp.TargetId, 16)
+			//			args = "Type:" + strconv.Itoa(int(sp.Type)) + ":" + strconv.FormatUint(sp.Id, 16) + ":" + idToNode(sp.SenderId) + "->" + strconv.FormatUint(sp.TargetId, 16)
 			args = idToNode(sp.SenderId) + "->" + idToNode(sp.TargetId)
 			// Target
 		case "SelectSupply", "Confirm", "SelectDemand":
@@ -518,7 +513,7 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 			srcId = tg.SenderId
 			tgtId = tg.TargetId
 			args = idToNode(tg.SenderId) + "->" + idToNode(tg.TargetId)
-//			args = "Type:" + strconv.Itoa(int(tg.Type)) + ":" + strconv.FormatUint(tg.Id, 16) + ":" + idToNode(tg.Id) + "->" + strconv.FormatUint(tg.TargetId, 16)
+			//			args = "Type:" + strconv.Itoa(int(tg.Type)) + ":" + strconv.FormatUint(tg.Id, 16) + ":" + idToNode(tg.Id) + "->" + strconv.FormatUint(tg.TargetId, 16)
 		case "SendMsg":
 			msg := req.(*api.MbusMsg)
 			msgType = int(msg.MsgType)
@@ -532,10 +527,10 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 		//		monitorapi.SendMes(&monitorapi.Mes{Message:method+":"+args, Args:""})
 
 		dstId := s.messageStore.getSrcId(tgtId)
-		meth := strings.Replace(method, "Propose", "P",1)
-		met2 := strings.Replace(meth, "Register", "R",1)
-		met3 := strings.Replace(met2, "Supply", "S",1)
-		met4 := strings.Replace(met3, "Demand", "D",1)
+		meth := strings.Replace(method, "Propose", "P", 1)
+		met2 := strings.Replace(meth, "Register", "R", 1)
+		met3 := strings.Replace(met2, "Supply", "S", 1)
+		met4 := strings.Replace(met3, "Demand", "D", 1)
 		// it seems here to stuck.
 		go monitorapi.SendMessage(met4, msgType, srcId, dstId, args)
 
@@ -555,7 +550,7 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 				fields["error"] = err
 				logger.WithFields(fields).Error("Failed")
 			} else {
-//				logger.WithFields(fields).Info("Succeeded")
+				//				logger.WithFields(fields).Info("Succeeded")
 			}
 		}(time.Now())
 
