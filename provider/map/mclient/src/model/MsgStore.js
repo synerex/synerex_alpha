@@ -14,13 +14,15 @@ export default class MsgStore {
     clear(){
         this.bus = {};
         this.taxi = {};
+        this.busTrace = {};
     }
 
     addVehicle(store, ms){
         if( store[ms.id] === undefined) store[ms.id]=[]
-        if(store[ms.id].length > 50) store[ms.id].pop()
+        if(store[ms.id].length > 1000) store[ms.id].pop()
         store[ms.id].unshift([ms.lat, ms.lon,ms.angle, ms.speed])
     }
+
 
     // message store also should have the maximum number of messages
     addPosition(mes){ // get JSON string

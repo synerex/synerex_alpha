@@ -17,6 +17,7 @@ class App extends Component {
         this.state = {
             store: this.mstore,
             bus: true,
+            busTrace: true,
             taxi: true
         }
         socket.on('connect', () => { console.log("Socket.IO Connected!") });
@@ -29,6 +30,7 @@ class App extends Component {
         this.selArg =  {
             store:this.state.store,
             bus: this.state.bus,
+            busTrace: this.state.busTrace,
             taxi: this.state.taxi
         };
     }
@@ -57,6 +59,14 @@ class App extends Component {
         });
         this.selArg.bus = this.state.bus;
     }
+    showBusTrace(){
+        this.setState({
+            busTrace:!this.state.busTrace
+        });
+        this.selArg.busTrace = this.state.busTrace;
+    }
+
+
     showTaxi(){
         this.setState({
             taxi:!this.state.taxi
@@ -74,6 +84,7 @@ class App extends Component {
         const content = <SelectContent component={this.selComp}  args={this.selArg}/>;
         const sidebar = <SideBar clearLogs={() => this.clearLogs()}
         showBus={()=>this.showBus()}
+        showBusTrace={()=>this.showBusTrace()}
         showTaxi={()=>this.showTaxi()}
         resetView={()=>this.resetView()}
         />;
