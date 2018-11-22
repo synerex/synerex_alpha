@@ -31,12 +31,15 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 }
 
 func subscribeMBus(client *sxutil.SMServiceClient) {
-	log.Printf("SubscribeMBus:%d", client.MbusID)
+	go func() {
+		ctx := context.Background() // 必要？
+		client.SubscribeMbus(ctx, msgCallback)
+		// comes here if channel closed
+		log.Printf("SubscribeMBus:%d", client.MbusID)
 
-	// ここは goroutine!
-	ctx := context.Background() // 必要？
-	client.SubscribeMbus(ctx, msgCallback)
-	// comes here if channel closed
+	}()
+
+	sendMsg(client, "json")
 }
 
 func sendMsg(client *sxutil.SMServiceClient, msg string) {
@@ -61,10 +64,6 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		log.Println("after SelectSupply")
 
 		go subscribeMBus(clt)
-
-		//time.Sleep(time.Second * 5)
-		// send Msg
-		sendMsg(clt, "json")
 	}
 
 }
