@@ -450,6 +450,7 @@ func newServerInfo() *synerexServerInfo {
 		s.supplyMap[i] = make(map[sxutil.IDType]chan *api.Supply)
 		s.waitConfirms[i] = make(map[sxutil.IDType]chan *api.Target)
 	}
+	s.mbusChans = make(map[uint64][]chan *api.MbusMsg)
 	s.mbusMap = make(map[sxutil.IDType]map[uint64]chan *api.MbusMsg)
 	s.messageStore = CreateLocalMessageStore()
 
