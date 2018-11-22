@@ -380,7 +380,7 @@ func (s *synerexServerInfo) SubscribeMbus(mb *api.Mbus, stream api.Synerex_Subsc
 	s.mbusChans[mbid] = append(chans, mbusCh)
 	mm, ok := s.mbusMap[id]
 	if ok {
-		mm[mbid] = mbusCh
+		//		mm[mbid] = mbusCh
 	} else {
 		mm = make(map[uint64]chan *api.MbusMsg)
 		mm[mbid] = mbusCh
@@ -400,6 +400,16 @@ func (s *synerexServerInfo) SubscribeMbus(mb *api.Mbus, stream api.Synerex_Subsc
 }
 
 func (s *synerexServerInfo) SendMsg(c context.Context, msg *api.MbusMsg) (r *api.Response, err error) {
+	// FIXME: wait until all subscriber is comming
+	for {
+		chans, ok := s.mbusChans[msg.GetMbusId()]
+		if ok && len(chans) == 2 {
+			log.Printf("##### All subscriber comming!! [MbusID: %d]\n", msg.GetMbusId())
+			break
+		}
+		log.Printf("##### Another Subscriber wating... [MbusId: %d, len(chans): %d]\n", msg.GetMbusId(), len(chans))
+		time.Sleep(1 * time.Second)
+	}
 	okFlag := true
 	okMsg := ""
 	s.mmu.RLock()

@@ -357,10 +357,12 @@ func (clt *SMServiceClient) SubscribeMbus(ctx context.Context, mbcb func(*SMServ
 }
 
 func (clt *SMServiceClient) SendMsg(ctx context.Context, msg *api.MbusMsg) error {
-	msg.SenderId = uint64(clt.ClientID)
 	if clt.MbusID == 0 {
 		return errors.New("No Mbus opened!")
 	}
+	msg.MsgId = GenerateIntID()
+	msg.SenderId = uint64(clt.ClientID)
+	msg.MbusId = uint64(clt.MbusID)
 	_, err := clt.Client.SendMsg(ctx, msg)
 
 	return err
