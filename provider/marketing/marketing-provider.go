@@ -11,6 +11,7 @@ import (
 	"sync"
 
 	pb "github.com/synerex/synerex_alpha/api"
+	"github.com/synerex/synerex_alpha/provider/marketing/data"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 )
@@ -21,24 +22,6 @@ var (
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
 )
-
-type Request struct {
-	Command  string    `json:"command"`
-	Contents []Content `json:"contents"`
-}
-
-type Content struct {
-	Type   string `json:"type"`
-	Data   string `json:"data"`
-	Period int    `json:"period"`
-}
-
-type Result struct {
-	Command string `json:"command"`
-	Results []struct {
-		Data string `json:"data"`
-	}
-}
 
 func init() {
 	idlist = make([]uint64, 10)
@@ -51,7 +34,7 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 	log.Println("JSON:" + jsonStr)
 
 	jsonBytes := ([]byte)(jsonStr)
-	data := new(Result)
+	data := new(mkdata.Result)
 
 	if err := json.Unmarshal(jsonBytes, data); err != nil {
 		log.Fatalf("fail to unmarshal: %v", err)
@@ -87,8 +70,8 @@ func sendMsg(client *sxutil.SMServiceClient, msg string) {
 func sendAdMsg(client *sxutil.SMServiceClient) {
 	var url = "url"
 
-	content := Content{Type: "AD", Data: url, Period: 0}
-	request := Request{Command: "CONTENTS", Contents: []Content{content}}
+	content := mkdata.Content{Type: "AD", Data: url, Period: 0}
+	request := mkdata.Request{Command: "CONTENTS", Contents: []mkdata.Content{content}}
 
 	jsonBytes, err := json.Marshal(request)
 	if err != nil {
@@ -102,8 +85,8 @@ func sendAdMsg(client *sxutil.SMServiceClient) {
 func sendEnqMsg(client *sxutil.SMServiceClient) {
 	var enq = "json:enq"
 
-	content := Content{Type: "ENQ", Data: enq, Period: 0}
-	request := Request{Command: "CONTENTS", Contents: []Content{content}}
+	content := mkdata.Content{Type: "ENQ", Data: enq, Period: 0}
+	request := mkdata.Request{Command: "CONTENTS", Contents: []mkdata.Content{content}}
 
 	jsonBytes, err := json.Marshal(request)
 	if err != nil {
