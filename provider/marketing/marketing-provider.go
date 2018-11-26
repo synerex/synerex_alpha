@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -21,6 +22,24 @@ var (
 	dmMap      map[uint64]*sxutil.DemandOpts
 )
 
+type Request struct {
+	Command  string    `json:"command"`
+	Contents []Content `json:"contents"`
+}
+
+type Content struct {
+	Type   string `json:"type"`
+	Data   string `json:"data"`
+	Period int    `json:"period"`
+}
+
+type Result struct {
+	Command string `json:"command"`
+	Results []struct {
+		Data string `json:"data"`
+	}
+}
+
 func init() {
 	idlist = make([]uint64, 10)
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
@@ -28,6 +47,22 @@ func init() {
 
 func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 	log.Println("Got Mbus Msg callback")
+	jsonStr := msg.ArgJson
+	log.Println("JSON:" + jsonStr)
+
+	jsonBytes := ([]byte)(jsonStr)
+	data := new(Result)
+
+	if err := json.Unmarshal(jsonBytes, data); err != nil {
+		log.Fatalf("fail to unmarshal: %v", err)
+		return
+	}
+
+	// save data
+
+	if data.Command == "RESULTS" {
+		sendEnqMsg(clt)
+	}
 }
 
 func subscribeMBus(client *sxutil.SMServiceClient) {
@@ -38,8 +73,6 @@ func subscribeMBus(client *sxutil.SMServiceClient) {
 		log.Printf("SubscribeMBus:%d", client.MbusID)
 
 	}()
-
-	sendMsg(client, "json")
 }
 
 func sendMsg(client *sxutil.SMServiceClient, msg string) {
@@ -51,6 +84,36 @@ func sendMsg(client *sxutil.SMServiceClient, msg string) {
 	client.SendMsg(ctx, m)
 }
 
+func sendAdMsg(client *sxutil.SMServiceClient) {
+	var url = "url"
+
+	content := Content{Type: "AD", Data: url, Period: 0}
+	request := Request{Command: "CONTENTS", Contents: []Content{content}}
+
+	jsonBytes, err := json.Marshal(request)
+	if err != nil {
+		log.Fatalf("fail to marshal: %v", err)
+		return
+	}
+
+	sendMsg(client, string(jsonBytes))
+}
+
+func sendEnqMsg(client *sxutil.SMServiceClient) {
+	var enq = "json:enq"
+
+	content := Content{Type: "ENQ", Data: enq, Period: 0}
+	request := Request{Command: "CONTENTS", Contents: []Content{content}}
+
+	jsonBytes, err := json.Marshal(request)
+	if err != nil {
+		log.Fatalf("fail to marshal: %v", err)
+		return
+	}
+
+	sendMsg(client, string(jsonBytes))
+}
+
 // callback for each Supply
 func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	// check if supply is match with my demand.
@@ -59,11 +122,11 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	// choice is supply for me? or not.
 	if clt.IsSupplyTarget(sp, idlist) {
 		// always select Supply
-		log.Println("before SelectSupply")
 		clt.SelectSupply(sp)
-		log.Println("after SelectSupply")
 
 		go subscribeMBus(clt)
+
+		sendAdMsg(clt)
 	}
 
 }
