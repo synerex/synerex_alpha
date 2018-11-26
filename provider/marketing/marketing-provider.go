@@ -21,6 +21,7 @@ var (
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
+	send       bool
 )
 
 func init() {
@@ -43,8 +44,9 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 
 	// save data
 
-	if data.Command == "RESULTS" {
+	if data.Command == "RESULTS" && !send {
 		sendEnqMsg(clt)
+		send = true
 	}
 }
 

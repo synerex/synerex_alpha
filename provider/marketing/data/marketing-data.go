@@ -13,7 +13,5 @@ type Content struct {
 
 type Result struct {
 	Command string `json:"command"`
-	Results []struct {
-		Data string `json:"data"`
-	}
+	Results string `json:"results"`
 }
