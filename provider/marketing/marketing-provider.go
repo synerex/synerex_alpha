@@ -22,11 +22,13 @@ var (
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
 	send       bool
+	wg         sync.WaitGroup
 )
 
 func init() {
 	idlist = make([]uint64, 10)
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
+	wg = sync.WaitGroup{} // for syncing other goroutines
 }
 
 func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
@@ -99,6 +101,12 @@ func sendEnqMsg(client *sxutil.SMServiceClient) {
 	sendMsg(client, string(jsonBytes))
 }
 
+func processMBus(clt *sxutil.SMServiceClient) {
+	go subscribeMBus(clt)
+
+	sendAdMsg(clt)
+}
+
 // callback for each Supply
 func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	// check if supply is match with my demand.
@@ -109,9 +117,8 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		// always select Supply
 		clt.SelectSupply(sp)
 
-		go subscribeMBus(clt)
-
-		sendAdMsg(clt)
+		wg.Add(1)
+		go processMBus(clt)
 	}
 
 }
@@ -138,7 +145,6 @@ func main() {
 	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
 
 	var opts []grpc.DialOption
-	wg := sync.WaitGroup{} // for syncing other goroutines
 
 	opts = append(opts, grpc.WithInsecure()) // only for draft version
 	conn, err := grpc.Dial(*serverAddr, opts...)
