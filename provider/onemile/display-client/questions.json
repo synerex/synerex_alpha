@@ -1,342 +1,338 @@
 {
-  "questions": {
-    "form": {
-      "name": "formName",
-      "action": "URI",
-      "method": "POST"
+  "questions": [
+    {
+      "label": "年齢",
+      "type": "select",
+      "name": "age",
+      "multiple": "false",
+      "option": [
+        {
+          "value": "0",
+          "text": "10歳未満"
+        },
+        {
+          "value": "10",
+          "text": "10代"
+        },
+        {
+          "value": "20",
+          "text": "20代"
+        },
+        {
+          "value": "30",
+          "text": "30代"
+        },
+        {
+          "value": "40",
+          "text": "40代"
+        },
+        {
+          "value": "50",
+          "text": "50代"
+        },
+        {
+          "value": "60",
+          "text": "60代"
+        },
+        {
+          "value": "70",
+          "text": "70代"
+        },
+        {
+          "value": "80",
+          "text": "80代"
+        },
+        {
+          "value": "90",
+          "text": "上記以外"
+        }
+      ]
     },
-    "input": [
-      {
-        "label": "年齢",
-        "type": "select",
-        "name": "age",
-        "option": [
-          {
-            "value": "0",
-            "text": "10歳未満"
-          },
-          {
-            "value": "10",
-            "text": "10代"
-          },
-          {
-            "value": "20",
-            "text": "20代"
-          },
-          {
-            "value": "30",
-            "text": "30代"
-          },
-          {
-            "value": "40",
-            "text": "40代"
-          },
-          {
-            "value": "50",
-            "text": "50代"
-          },
-          {
-            "value": "60",
-            "text": "60代"
-          },
-          {
-            "value": "70",
-            "text": "70代"
-          },
-          {
-            "value": "80",
-            "text": "80代"
-          },
-          {
-            "value": "90",
-            "text": "上記以外"
-          }
-        ]
-      },
-      {
-        "label": "性別",
-        "type": "select",
-        "name": "sex",
-        "option": [
-          {
-            "value": "0",
-            "text": "女性"
-          },
-          {
-            "value": "1",
-            "text": "男性"
-          }
-        ]
-      },
-      {
-        "label": "職業",
-        "type": "select",
-        "name": "occupation",
-        "option": [
-          {
-            "value": "0",
-            "text": "会社員"
-          },
-          {
-            "value": "1",
-            "text": "公務員"
-          },
-          {
-            "value": "2",
-            "text": "自営業"
-          },
-          {
-            "value": "3",
-            "text": "学生"
-          },
-          {
-            "value": "4",
-            "text": "主婦"
-          },
-          {
-            "value": "5",
-            "text": "アルバイト/パート"
-          },
-          {
-            "value": "6",
-            "text": "無職"
-          },
-          {
-            "value": "7",
-            "text": "その他"
-          }
-        ]
-      },
-      {
-        "label": "普段の交通手段を教えてください（複数回答可能）",
-        "type": "checkbox",
-        "name": "transportation",
-        "option": [
-          {
-            "value": "1",
-            "text": "自動車（自分で運転する）"
-          },
-          {
-            "value": "2",
-            "text": "自動車（送迎してもらう）"
-          },
-          {
-            "value": "3",
-            "text": "オートバイ/原付"
-          },
-          {
-            "value": "4",
-            "text": "JR"
-          },
-          {
-            "value": "5",
-            "text": "えこたんバス"
-          },
-          {
-            "value": "6",
-            "text": "自転車"
-          },
-          {
-            "value": "7",
-            "text": "徒歩"
-          },
-          {
-            "value": "8",
-            "text": "タクシー"
-          }
-        ]
-      },
-      {
-        "label": "自動運転によってタクシー運賃が安くなれば",
-        "type": "range",
-        "name": "fiveGrade1",
-        "max": "5",
-        "maxText": "利用頻度が高くなる",
-        "min": "1",
-        "minText": "あまり変わらない",
-        "option": [
-          {
-            "value": "2",
-            "text": "2"
-          },
-          {
-            "value": "3",
-            "text": "3"
-          },
-          {
-            "value": "4",
-            "text": "4"
-          }
-        ]
-      },
-      {
-        "label": "移動中に広告を見たりアンケートに答えることで利用料が安くなれば",
-        "type": "range",
-        "name": "fiveGrade2",
-        "max": "5",
-        "maxText": "積極的に使う",
-        "min": "1",
-        "minText": "受け入れない",
-        "option": [
-          {
-            "value": "2",
-            "text": "2"
-          },
-          {
-            "value": "3",
-            "text": "3"
-          },
-          {
-            "value": "4",
-            "text": "4"
-          }
-        ]
-      },
-      {
-        "label": "宅配などのモノの移動と一緒に移動することによって利用料が安くなれば",
-        "type": "range",
-        "name": "fiveGrade3",
-        "max": "5",
-        "maxText": "時間を要しても受け入れる",
-        "min": "1",
-        "minText": "受け入れない",
-        "option": [
-          {
-            "value": "2",
-            "text": "2"
-          },
-          {
-            "value": "3",
-            "text": "3"
-          },
-          {
-            "value": "4",
-            "text": "4"
-          }
-        ]
-      },
-      {
-        "label": "バスなどの公共交通機関への乗り継ぎについて",
-        "type": "range",
-        "name": "fiveGrade4",
-        "max": "5",
-        "maxText": "便利なので積極的に利用する",
-        "min": "1",
-        "minText": "不便なので利用しない",
-        "option": [
-          {
-            "value": "2",
-            "text": "2"
-          },
-          {
-            "value": "3",
-            "text": "3"
-          },
-          {
-            "value": "4",
-            "text": "4"
-          }
-        ]
-      },
-      {
-        "label": "アプリの操作について",
-        "type": "range",
-        "name": "fiveGrade5",
-        "max": "5",
-        "maxText": "使いやすかった",
-        "min": "1",
-        "minText": "操作に迷った",
-        "option": [
-          {
-            "value": "2",
-            "text": "2"
-          },
-          {
-            "value": "3",
-            "text": "3"
-          },
-          {
-            "value": "4",
-            "text": "4"
-          }
-        ]
-      },
-      {
-        "label": "アプリのデザインについて",
-        "type": "range",
-        "name": "fiveGrade6",
-        "max": "5",
-        "maxText": "見やすかった",
-        "min": "1",
-        "minText": "操作に違和感があった",
-        "option": [
-          {
-            "value": "2",
-            "text": "2"
-          },
-          {
-            "value": "3",
-            "text": "3"
-          },
-          {
-            "value": "4",
-            "text": "4"
-          }
-        ]
-      },
-      {
-        "label": "ご感想",
-        "type": "textarea",
-        "name": "thoughts",
-        "placeholder": "研究のためにご感想をお寄せください。"
-      },
-      {
-        "label": "本日の相見駅までのサービスが何円であれば利用しますか？",
-        "type": "select",
-        "name": "cost",
-        "option": [
-          {
-            "value": "100",
-            "text": "100円"
-          },
-          {
-            "value": "200",
-            "text": "200円"
-          },
-          {
-            "value": "300",
-            "text": "300円"
-          },
-          {
-            "value": "400",
-            "text": "400円"
-          },
-          {
-            "value": "500",
-            "text": "500円"
-          },
-          {
-            "value": "600",
-            "text": "600円"
-          },
-          {
-            "value": "700",
-            "text": "700円"
-          },
-          {
-            "value": "800",
-            "text": "800円"
-          },
-          {
-            "value": "900",
-            "text": "900円"
-          },
-          {
-            "value": "1000",
-            "text": "1000円"
-          }
-        ]
-      }
-    ]
-  }
+    {
+      "label": "性別",
+      "type": "select",
+      "name": "sex",
+      "multiple": "false",
+      "option": [
+        {
+          "value": "0",
+          "text": "女性"
+        },
+        {
+          "value": "1",
+          "text": "男性"
+        }
+      ]
+    },
+    {
+      "label": "職業",
+      "type": "select",
+      "name": "occupation",
+      "multiple": "false",
+      "option": [
+        {
+          "value": "0",
+          "text": "会社員"
+        },
+        {
+          "value": "1",
+          "text": "公務員"
+        },
+        {
+          "value": "2",
+          "text": "自営業"
+        },
+        {
+          "value": "3",
+          "text": "学生"
+        },
+        {
+          "value": "4",
+          "text": "主婦"
+        },
+        {
+          "value": "5",
+          "text": "アルバイト/パート"
+        },
+        {
+          "value": "6",
+          "text": "無職"
+        },
+        {
+          "value": "7",
+          "text": "その他"
+        }
+      ]
+    },
+    {
+      "label": "普段の交通手段を教えてください（複数回答可能）",
+      "type": "checkbox",
+      "name": "transportation",
+      "option": [
+        {
+          "value": "1",
+          "text": "自動車（自分で運転する）"
+        },
+        {
+          "value": "2",
+          "text": "自動車（送迎してもらう）"
+        },
+        {
+          "value": "3",
+          "text": "オートバイ/原付"
+        },
+        {
+          "value": "4",
+          "text": "JR"
+        },
+        {
+          "value": "5",
+          "text": "えこたんバス"
+        },
+        {
+          "value": "6",
+          "text": "自転車"
+        },
+        {
+          "value": "7",
+          "text": "徒歩"
+        },
+        {
+          "value": "8",
+          "text": "タクシー"
+        }
+      ]
+    },
+    {
+      "label": "自動運転によってタクシー運賃が安くなれば",
+      "type": "range",
+      "name": "fiveGrade1",
+      "max": "5",
+      "maxText": "利用頻度が高くなる",
+      "min": "1",
+      "minText": "あまり変わらない",
+      "option": [
+        {
+          "value": "2",
+          "text": "2"
+        },
+        {
+          "value": "3",
+          "text": "3"
+        },
+        {
+          "value": "4",
+          "text": "4"
+        }
+      ]
+    },
+    {
+      "label": "移動中に広告を見たりアンケートに答えることで利用料が安くなれば",
+      "type": "range",
+      "name": "fiveGrade2",
+      "max": "5",
+      "maxText": "積極的に使う",
+      "min": "1",
+      "minText": "受け入れない",
+      "option": [
+        {
+          "value": "2",
+          "text": "2"
+        },
+        {
+          "value": "3",
+          "text": "3"
+        },
+        {
+          "value": "4",
+          "text": "4"
+        }
+      ]
+    },
+    {
+      "label": "宅配などのモノの移動と一緒に移動することによって利用料が安くなれば",
+      "type": "range",
+      "name": "fiveGrade3",
+      "max": "5",
+      "maxText": "時間を要しても受け入れる",
+      "min": "1",
+      "minText": "受け入れない",
+      "option": [
+        {
+          "value": "2",
+          "text": "2"
+        },
+        {
+          "value": "3",
+          "text": "3"
+        },
+        {
+          "value": "4",
+          "text": "4"
+        }
+      ]
+    },
+    {
+      "label": "バスなどの公共交通機関への乗り継ぎについて",
+      "type": "range",
+      "name": "fiveGrade4",
+      "max": "5",
+      "maxText": "便利なので積極的に利用する",
+      "min": "1",
+      "minText": "不便なので利用しない",
+      "option": [
+        {
+          "value": "2",
+          "text": "2"
+        },
+        {
+          "value": "3",
+          "text": "3"
+        },
+        {
+          "value": "4",
+          "text": "4"
+        }
+      ]
+    },
+    {
+      "label": "アプリの操作について",
+      "type": "range",
+      "name": "fiveGrade5",
+      "max": "5",
+      "maxText": "使いやすかった",
+      "min": "1",
+      "minText": "操作に迷った",
+      "option": [
+        {
+          "value": "2",
+          "text": "2"
+        },
+        {
+          "value": "3",
+          "text": "3"
+        },
+        {
+          "value": "4",
+          "text": "4"
+        }
+      ]
+    },
+    {
+      "label": "アプリのデザインについて",
+      "type": "range",
+      "name": "fiveGrade6",
+      "max": "5",
+      "maxText": "見やすかった",
+      "min": "1",
+      "minText": "操作に違和感があった",
+      "option": [
+        {
+          "value": "2",
+          "text": "2"
+        },
+        {
+          "value": "3",
+          "text": "3"
+        },
+        {
+          "value": "4",
+          "text": "4"
+        }
+      ]
+    },
+    {
+      "label": "ご感想",
+      "type": "textarea",
+      "name": "thoughts",
+      "placeholder": "研究のためにご感想をお寄せください。"
+    },
+    {
+      "label": "本日の相見駅までのサービスが何円であれば利用しますか？",
+      "type": "select",
+      "name": "cost",
+      "option": [
+        {
+          "value": "100",
+          "text": "100円"
+        },
+        {
+          "value": "200",
+          "text": "200円"
+        },
+        {
+          "value": "300",
+          "text": "300円"
+        },
+        {
+          "value": "400",
+          "text": "400円"
+        },
+        {
+          "value": "500",
+          "text": "500円"
+        },
+        {
+          "value": "600",
+          "text": "600円"
+        },
+        {
+          "value": "700",
+          "text": "700円"
+        },
+        {
+          "value": "800",
+          "text": "800円"
+        },
+        {
+          "value": "900",
+          "text": "900円"
+        },
+        {
+          "value": "1000",
+          "text": "1000円"
+        }
+      ]
+    }
+  ]
 }
