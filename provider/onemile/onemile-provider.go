@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/mtfelian/golang-socketio"
 	"github.com/synerex/synerex_alpha/api"
@@ -22,6 +23,7 @@ var (
 	client api.SynerexClient
 	port   = flag.Int("port", 7777, "OneMile Provider Listening Port")
 	ioserv *gosocketio.Server
+	wg     = sync.WaitGroup{} // for syncing other goroutines
 )
 
 // display
@@ -64,13 +66,16 @@ func subscribeMarketing(client *sxutil.SMServiceClient) {
 	ctx := context.Background()
 	client.SubscribeDemand(ctx, func(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		if dm.GetDemandName() == "" {
-			log.Printf("Receive SelectSupply [id: %s, name: %s]\n", dm.GetId(), dm.GetDemandName())
+			log.Printf("Receive SelectSupply [id: %d, name: %s]\n", dm.GetId(), dm.GetDemandName())
 			clt.Confirm(sxutil.IDType(dm.GetId()))
+
+			clt.SubscribeMbus(context.Background(), func(clt *sxutil.SMServiceClient, msg *api.MbusMsg) {
+			})
 		} else {
-			log.Printf("Receive RegisterDemand [id: %s, name: %s]\n", dm.GetId(), dm.GetDemandName())
+			log.Printf("Receive RegisterDemand [id: %d, name: %s]\n", dm.GetId(), dm.GetDemandName())
 			sp := &sxutil.SupplyOpts{
 				Target: dm.GetId(),
-				Name:   "onemile-provider has a display for advertising and enqueting",
+				Name:   "a display for advertising and enqueting",
 			}
 			clt.ProposeSupply(sp)
 		}
@@ -107,7 +112,7 @@ func runSocketIOServer() {
 	serveMux.Handle("/socket.io/", ioserv)
 	serveMux.Handle("/", http.FileServer(http.Dir("./display-client")))
 
-	log.Printf("Starting OneMile Provider %s on port %d", version, *port)
+	log.Printf("Starting OneMile Socket.IO Server %s on port %d", version, *port)
 	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", *port), serveMux)
 	if err != nil {
 		log.Fatal(err)
@@ -120,10 +125,14 @@ func main() {
 	// register onemile-provider
 	registerOneMileProvider()
 
+	wg.Add(1)
 	// subscribe marketing channel
 	mktClient := createSMServiceClient(api.ChannelType_MARKETING_SERVICE, "")
-	subscribeMarketing(mktClient)
+	go subscribeMarketing(mktClient)
 
+	wg.Add(1)
 	// start Websocket Server
-	runSocketIOServer()
+	go runSocketIOServer()
+
+	wg.Wait()
 }
