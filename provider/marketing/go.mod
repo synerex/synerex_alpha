@@ -2,6 +2,7 @@ module marketing-provider
 
 require (
 	github.com/synerex/synerex_alpha/api v0.0.0
+	github.com/synerex/synerex_alpha/provider/marketing/data v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
 	google.golang.org/grpc v1.16.0
 )
@@ -15,5 +16,6 @@ replace (
 	github.com/synerex/synerex_alpha/api/ptransit => ../../api/ptransit
 	github.com/synerex/synerex_alpha/api/rideshare => ../../api/rideshare
 	github.com/synerex/synerex_alpha/nodeapi => ../../nodeapi
+	github.com/synerex/synerex_alpha/provider/marketing/data => ./data
 	github.com/synerex/synerex_alpha/sxutil => ../../sxutil
 )
