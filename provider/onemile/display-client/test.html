@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>OneMile-Display-Client</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script>
+      $(function() {
+          var socket = null;
+
+          $("#connect").click(function() {
+              socket = io({transports: ["websocket"]});
+
+              socket.on("display", function(data) {
+    		      console.log("受信メッセージ: " + data)		  
+              });
+          });
+          $("#disconnect").click(function() {
+        	  socket.close()
+          });
+          $("#register").click(function() {
+              if (socket && socket.connected) {
+                  var data = {taxi: $("#taxi").val(), disp: $("#disp").val()};
+                  socket.emit("register", data);
+                  console.log("送信メッセージ: " + data);
+              }
+          });
+          $('#depart').click(function() {
+        	  if (socket && socket.connected) {
+            	  var data = {taxi: $("#taxi").val()};
+            	  socket.emit("depart", data)
+            	  console.log("送信メッセージ: " + data);
+        	  }
+          });
+      });
+    </script>
+  </head>
+  <body>
+    <h3>サーバ接続</h3>
+    <input type="button" id="connect" value="接続"></input>
+    <input type="button" id="disconnect" value="切断"></input>
+
+    <h3>搭載車両登録</h3>
+    タクシー: <input id="taxi" type="text" value="01" style="width: 30px"/>
+    ディスプレイ: <input id="disp" type="text" value="03" style="width: 30px"/>
+    <input type="button" id="register" value="登録"></input>
+    
+    <h3>発車</h3>
+    <input type="button" id="depart" value="発車"></input>
+  </body>
+</html>
