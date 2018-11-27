@@ -22,8 +22,9 @@ var (
 
 	client api.SynerexClient
 	port   = flag.Int("port", 7777, "OneMile Provider Listening Port")
+	disp   = flag.Int("disp", 1, "Number of Onemile-Display-Client")
 	ioserv *gosocketio.Server
-	wg     = sync.WaitGroup{} // for syncing other goroutines
+	dispWg sync.WaitGroup
 )
 
 // display
@@ -37,7 +38,7 @@ type display struct {
 var dispMap = make(map[string]*display)
 
 // register OnemileProvider to NodeServer
-func registerOneMileProvider() {
+func registerOnemileProvider() {
 	sxutil.RegisterNodeName(*nodesrv, "OneMileProvider", false)
 	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
 	go sxutil.HandleSigInt()
@@ -64,6 +65,9 @@ func createSMServiceClient(ch api.ChannelType, arg string) *sxutil.SMServiceClie
 
 // subscribe marketing channel
 func subscribeMarketing(client *sxutil.SMServiceClient) {
+	// wait until completing display registration
+	dispWg.Wait()
+
 	ctx := context.Background()
 	seen := make(map[string]struct{})
 
@@ -127,6 +131,7 @@ func runSocketIOServer() {
 		if _, ok := dispMap[taxi]; !ok {
 			dispMap[taxi] = &display{dispId: disp, channel: c, wg: sync.WaitGroup{}}
 			log.Printf("Register display [taxi: %s => display: %v]\n", taxi, dispMap[taxi])
+			dispWg.Done()
 		}
 	})
 
@@ -153,8 +158,13 @@ func runSocketIOServer() {
 func main() {
 	flag.Parse()
 
+	// set number of display
+	dispWg.Add(*disp)
+
 	// register onemile-provider
-	registerOneMileProvider()
+	registerOnemileProvider()
+
+	var wg sync.WaitGroup
 
 	wg.Add(1)
 	// subscribe marketing channel
