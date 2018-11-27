@@ -118,35 +118,35 @@
         "multiple": "true",
         "options": [
           {
-            "value": "1",
+            "value": "0",
             "text": "自動車（自分で運転する）"
           },
           {
-            "value": "2",
+            "value": "1",
             "text": "自動車（送迎してもらう）"
           },
           {
-            "value": "3",
+            "value": "2",
             "text": "オートバイ/原付"
           },
           {
-            "value": "4",
+            "value": "3",
             "text": "JR"
           },
           {
-            "value": "5",
+            "value": "4",
             "text": "えこたんバス"
           },
           {
-            "value": "6",
+            "value": "5",
             "text": "自転車"
           },
           {
-            "value": "7",
+            "value": "6",
             "text": "徒歩"
           },
           {
-            "value": "8",
+            "value": "7",
             "text": "タクシー"
           }
         ]
