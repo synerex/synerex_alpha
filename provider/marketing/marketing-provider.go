@@ -76,8 +76,16 @@ func sendMsg(client *sxutil.SMServiceClient, msg string) {
 func sendAdMsg(client *sxutil.SMServiceClient) {
 	var url = "http://www.yahoo.co.jp/"
 
-	content := mkdata.Content{Type: "AD", Data: url, Period: 0}
-	request := mkdata.Request{Command: "CONTENTS", Contents: []mkdata.Content{content}}
+	request := map[string]interface{}{
+		"command": "CONTENTS",
+		"contents": []interface{}{
+			map[string]interface{}{
+				"type":   "AD",
+				"data":   url,
+				"period": 0,
+			},
+		},
+	}
 
 	jsonBytes, err := json.Marshal(request)
 	if err != nil {
@@ -89,11 +97,20 @@ func sendAdMsg(client *sxutil.SMServiceClient) {
 }
 
 func sendEnqMsg(client *sxutil.SMServiceClient) {
-	var enq = "{\"questions\":[{\"label\":\"年齢\",\"type\":\"select\",\"name\":\"age\",\"option\":{\"multiple\":\"false\",\"options\":[{\"value\":\"0\",\"text\":\"10歳未満\"},{\"value\":\"10\",\"text\":\"10代\"},{\"value\":\"20\",\"text\":\"20代\"},{\"value\":\"30\",\"text\":\"30代\"},{\"value\":\"40\",\"text\":\"40代\"},{\"value\":\"50\",\"text\":\"50代\"},{\"value\":\"60\",\"text\":\"60代\"},{\"value\":\"70\",\"text\":\"70代\"},{\"value\":\"80\",\"text\":\"80代\"},{\"value\":\"90\",\"text\":\"上記以外\"}]}}]}"
+	var enq_json = []byte(`{"questions":[{"label":"年齢","type":"select","name":"age","option":{"multiple":"false","options":[{"value":"0","text":"10歳未満"},{"value":"10","text":"10代"},{"value":"20","text":"20代"},{"value":"30","text":"30代"},{"value":"40","text":"40代"},{"value":"50","text":"50代"},{"value":"60","text":"60代"},{"value":"70","text":"70代"},{"value":"80","text":"80代"},{"value":"90","text":"上記以外"}]}}]}`)
+	var enq interface{}
+	err := json.Unmarshal(enq_json, &enq)
 
-	content := mkdata.Content{Type: "ENQ", Data: enq, Period: 0}
-	request := mkdata.Request{Command: "CONTENTS", Contents: []mkdata.Content{content}}
-
+	request := map[string]interface{}{
+		"command": "CONTENTS",
+		"contents": []interface{}{
+			map[string]interface{}{
+				"type":   "ENQ",
+				"data":   enq,
+				"period": 0,
+			},
+		},
+	}
 	jsonBytes, err := json.Marshal(request)
 	if err != nil {
 		log.Fatalf("fail to marshal: %v", err)
