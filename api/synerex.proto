@@ -85,6 +85,7 @@ message Supply{
         ptransit.PTService arg_PTService = 14;
         routing.RoutingService arg_RoutingService = 15;
         marketing.MarketingService arg_MarketingService = 16;
+        ptransit.PTgtfs arg_PTgtfs = 17;
     }
 }
 
@@ -106,6 +107,7 @@ message Demand {
         ptransit.PTService arg_PTService = 14;
         routing.RoutingService arg_RoutingService = 15;
         marketing.MarketingService arg_MarketingService = 16;
+        ptransit.PTgtfs arg_PTgtfs = 17;
     }
 }
 

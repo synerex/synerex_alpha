@@ -22,4 +22,12 @@ message PTService
     api.common.Time next_arraival_timetable_time = 11;
     api.common.Time past_departure_time = 12;
     google.protobuf.Duration delay_time = 13;
+    int32 vehicle_type = 14;
 }
+
+message PTgtfs
+{ // location information for bus/train stations from GTFS
+    string gtfs_name = 1;
+    bytes gtfs = 2;
+}
+
