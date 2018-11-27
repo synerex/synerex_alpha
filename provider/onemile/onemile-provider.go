@@ -28,14 +28,15 @@ var (
 
 // display
 type display struct {
-	dispId string // display id
-	chanId string // channel id
+	dispId  string              // display id
+	channel *gosocketio.Channel // Socket.IO channel
+	wg      sync.WaitGroup      //
 }
 
 // taxi/display mapping
 var dispMap = make(map[string]*display)
 
-// register OneMileProvider to NodeServer
+// register OnemileProvider to NodeServer
 func registerOneMileProvider() {
 	sxutil.RegisterNodeName(*nodesrv, "OneMileProvider", false)
 	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
@@ -68,12 +69,20 @@ func subscribeMarketing(client *sxutil.SMServiceClient) {
 
 	client.SubscribeDemand(ctx, func(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		if dm.GetDemandName() == "" {
+			// Confirm
 			log.Printf("Receive SelectSupply [id: %d, name: %s]\n", dm.GetId(), dm.GetDemandName())
 			clt.Confirm(sxutil.IDType(dm.GetId()))
 
+			// SubscribeMbus
 			clt.SubscribeMbus(context.Background(), func(clt *sxutil.SMServiceClient, msg *api.MbusMsg) {
+				// emit display event for each display
+				for taxi := range dispMap {
+					dispMap[taxi].wg.Add(1)
+					go emitEvent(taxi, "display", msg.ArgJson)
+				}
 			})
 		} else {
+			// ProposeSupply
 			if _, ok := seen[dm.GetDemandName()]; !ok {
 				seen[dm.GetDemandName()] = struct{}{}
 				log.Printf("Receive RegisterDemand [id: %d, name: %s]\n", dm.GetId(), dm.GetDemandName())
@@ -87,7 +96,16 @@ func subscribeMarketing(client *sxutil.SMServiceClient) {
 	})
 }
 
-// run Socket.IO server for OneMile-Display-Client
+// emit an event for a display
+func emitEvent(taxi string, name string, payload interface{}) {
+	// wait unti a taxi will depart
+	dispMap[taxi].wg.Wait()
+	// emit event
+	dispMap[taxi].channel.Emit(name, payload)
+	log.Printf("Emit [taxi: %s, name: %s, json: %s]\n", taxi, name, payload)
+}
+
+// run Socket.IO server for Onemile-Display-Client
 func runSocketIOServer() {
 	ioserv := gosocketio.NewServer()
 
@@ -106,18 +124,26 @@ func runSocketIOServer() {
 		taxi := data.(map[string]interface{})["taxi"].(string)
 		disp := data.(map[string]interface{})["disp"].(string)
 
-		_, ok := dispMap[taxi]
-		if !ok {
-			dispMap[taxi] = &display{dispId: disp, chanId: c.Id()}
+		if _, ok := dispMap[taxi]; !ok {
+			dispMap[taxi] = &display{dispId: disp, channel: c, wg: sync.WaitGroup{}}
 			log.Printf("Register display [taxi: %s => display: %v]\n", taxi, dispMap[taxi])
 		}
+	})
+
+	// for DEBUG (enurate taxi departure)
+	ioserv.On("depart", func(c *gosocketio.Channel, data interface{}) {
+		log.Printf("Receive depart from %s [%v]\n", c.Id(), data)
+
+		taxi := data.(map[string]interface{})["taxi"].(string)
+
+		dispMap[taxi].wg.Done()
 	})
 
 	serveMux := http.NewServeMux()
 	serveMux.Handle("/socket.io/", ioserv)
 	serveMux.Handle("/", http.FileServer(http.Dir("./display-client")))
 
-	log.Printf("Starting OneMile Socket.IO Server %s on port %d", version, *port)
+	log.Printf("Starting Socket.IO Server %s on port %d", version, *port)
 	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", *port), serveMux)
 	if err != nil {
 		log.Fatal(err)
