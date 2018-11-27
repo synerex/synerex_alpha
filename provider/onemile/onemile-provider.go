@@ -64,6 +64,8 @@ func createSMServiceClient(ch api.ChannelType, arg string) *sxutil.SMServiceClie
 // subscribe marketing channel
 func subscribeMarketing(client *sxutil.SMServiceClient) {
 	ctx := context.Background()
+	seen := make(map[string]struct{})
+
 	client.SubscribeDemand(ctx, func(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		if dm.GetDemandName() == "" {
 			log.Printf("Receive SelectSupply [id: %d, name: %s]\n", dm.GetId(), dm.GetDemandName())
@@ -72,12 +74,15 @@ func subscribeMarketing(client *sxutil.SMServiceClient) {
 			clt.SubscribeMbus(context.Background(), func(clt *sxutil.SMServiceClient, msg *api.MbusMsg) {
 			})
 		} else {
-			log.Printf("Receive RegisterDemand [id: %d, name: %s]\n", dm.GetId(), dm.GetDemandName())
-			sp := &sxutil.SupplyOpts{
-				Target: dm.GetId(),
-				Name:   "a display for advertising and enqueting",
+			if _, ok := seen[dm.GetDemandName()]; !ok {
+				seen[dm.GetDemandName()] = struct{}{}
+				log.Printf("Receive RegisterDemand [id: %d, name: %s]\n", dm.GetId(), dm.GetDemandName())
+				sp := &sxutil.SupplyOpts{
+					Target: dm.GetId(),
+					Name:   "a display for advertising and enqueting",
+				}
+				clt.ProposeSupply(sp)
 			}
-			clt.ProposeSupply(sp)
 		}
 	})
 }
