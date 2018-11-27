@@ -8,7 +8,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"sync"
+	"time"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/provider/marketing/data"
@@ -161,7 +163,10 @@ func main() {
 	wg.Add(1)
 	go subscribeSupply(sclient)
 
-	addDemand(sclient, "Kota-City citizen")
+	for {
+		addDemand(sclient, "Kota-City citizen")
+		time.Sleep(time.Second * time.Duration(10+rand.Int()%10))
+	}
 
 	wg.Wait()
 
