@@ -43,10 +43,14 @@
           $("#register").click(function() {
         	  emit("register", {taxi: $("#taxi").val(), disp: $("#disp").val()});
           });
-          // 発車
+          // 出発
           $("#depart").click(function() {
         	  emit("depart", {taxi: $("#taxi").val()});
           });
+          // 到着
+          $("#arrive").click(function() {
+        	  emit("arrive", {taxi: $("#taxi").val()});
+          })
           // 完了
           $("#complete").click(function() {
         	  emit("complete", {command: "RESULTS", results: null});
@@ -69,8 +73,9 @@
     ディスプレイ: <input id="disp" type="text" style="width: 30px"/>
     <input type="button" id="register" value="登録"></input>
     
-    <h3>発車</h3>
-    <input type="button" id="depart" value="発車"></input>
+    <h3>発着</h3>
+    <input type="button" id="depart" value="出発(乗車)"></input>
+    <input type="button" id="arrive" value="到着(降車)"></input>
     
     <h3>広告・アンケート</h3>
     <input type="button" id="complete" value="完了"></input>

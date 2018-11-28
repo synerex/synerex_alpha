@@ -32,7 +32,7 @@ var (
 type display struct {
 	dispId  string              // display id
 	channel *gosocketio.Channel // Socket.IO channel
-	wg      sync.WaitGroup      //
+	wg      sync.WaitGroup      // for synchronization to display ad and enquate
 }
 
 // taxi/display mapping
@@ -150,13 +150,16 @@ func runSocketIOServer(client *sxutil.SMServiceClient) {
 		client.SendMsg(context.Background(), &api.MbusMsg{ArgJson: string(bytes)})
 	})
 
-	// for DEBUG (simulate departure of taxi)
+	// for DEBUG (simulate departure or arrive of taxi)
 	ioserv.On("depart", func(c *gosocketio.Channel, data interface{}) {
 		log.Printf("Receive depart from %s [%v]\n", c.Id(), data)
 
 		taxi := data.(map[string]interface{})["taxi"].(string)
 
 		dispMap[taxi].wg.Done()
+	})
+	ioserv.On("arrive", func(c *gosocketio.Channel, data interface{}) {
+		log.Printf("Receive arrive from %s [%v]\n", c.Id(), data)
 	})
 
 	serveMux := http.NewServeMux()
