@@ -21,7 +21,7 @@ var (
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 
 	client api.SynerexClient
-	port   = flag.Int("port", 7777, "OneMile Provider Listening Port")
+	port   = flag.Int("port", 7777, "Onemile Provider Listening Port")
 	disp   = flag.Int("disp", 1, "Number of Onemile-Display-Client")
 	ioserv *gosocketio.Server
 	dispWg sync.WaitGroup
@@ -39,7 +39,7 @@ var dispMap = make(map[string]*display)
 
 // register OnemileProvider to NodeServer
 func registerOnemileProvider() {
-	sxutil.RegisterNodeName(*nodesrv, "OneMileProvider", false)
+	sxutil.RegisterNodeName(*nodesrv, "OnemileProvider", false)
 	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
 	go sxutil.HandleSigInt()
 }
