@@ -1,6 +1,6 @@
 // JSONを読み込む
 $.getJSON('../questions.json', (data) => {
-    let questions = data.questions;
+    const questions = data.questions;
     const div = [];
 
     // ForEach文
