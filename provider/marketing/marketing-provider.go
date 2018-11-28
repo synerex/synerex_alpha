@@ -13,7 +13,6 @@ import (
 	"time"
 
 	pb "github.com/synerex/synerex_alpha/api"
-	"github.com/synerex/synerex_alpha/provider/marketing/data"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 )
@@ -39,18 +38,21 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 	log.Println("JSON:" + jsonStr)
 
 	jsonBytes := ([]byte)(jsonStr)
-	data := new(mkdata.Result)
+	var data map[string]interface{}
 
-	if err := json.Unmarshal(jsonBytes, data); err != nil {
+	if err := json.Unmarshal(jsonBytes, &data); err != nil {
 		log.Fatalf("fail to unmarshal: %v", err)
 		return
 	}
 
 	// save data
-
-	if data.Command == "RESULTS" && !send {
-		sendEnqMsg(clt)
-		send = true
+	if data["command"] == "RESULTS" {
+		if send {
+			sendAdMsg(clt)
+		} else {
+			sendEnqMsg(clt)
+		}
+		send = !send
 	}
 }
 
