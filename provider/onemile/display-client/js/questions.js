@@ -1,10 +1,10 @@
 // JSONを読み込む
-$.getJSON('../questions.json', function (data) {
+$.getJSON('../questions.json', (data) => {
     let questions = data.questions;
     const div = [];
 
     // ForEach文
-    Object.keys(questions).forEach(function (key) {
+    Object.keys(questions).forEach((key) => {
 
         // Typeで場合分け
         switch (questions[key].type) {
@@ -101,6 +101,16 @@ $.getJSON('../questions.json', function (data) {
     }
 
     // <form>の最下部にbuttonを追加
-    $('form#questions').append('<button type=button class="btn btn-primary btn-lg btn-block" onClick="alert(\'button was pushed!\');">送信する</button>');
+    $('form#questions').append('<button type="button" id="submitJson" class="btn btn-primary btn-lg btn-block">送信</button>');
+
+    // JSON形式で送信
+    $('button#submitJson').on('click', () => {
+        const json = $('form#questions').serializeArray();
+        Object.keys(json).forEach((key) => {
+            console.log(json[key]);
+        });
+        alert('ありがとうございました！');
+        $('form#questions')[0].reset();
+    });
 
 });
