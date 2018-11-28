@@ -15,9 +15,19 @@
     	  if (!results[2]) return '';
     	  return decodeURIComponent(results[2].replace(/\+/g, " "));
       }
+      
       $(function() {
           var socket = null;
 
+          // イベント送信
+          function emit(name, data) {
+        	  if (socket && socket.connected) {
+        		  socket.emit(name, data);
+        		  console.log("送信メッセージ(" + name + "): " + data);
+        	  }
+          }
+
+          // 接続・切断
           $("#connect").click(function() {
               socket = io({transports: ["websocket"]});
 
@@ -28,22 +38,21 @@
           $("#disconnect").click(function() {
         	  socket.close()
           });
+          
+          // 搭載車両登録
           $("#register").click(function() {
-              if (socket && socket.connected) {
-                  var data = {taxi: $("#taxi").val(), disp: $("#disp").val()};
-                  socket.emit("register", data);
-                  console.log("送信メッセージ: " + data);
-              }
+        	  emit("register", {taxi: $("#taxi").val(), disp: $("#disp").val()});
           });
-          $('#depart').click(function() {
-        	  if (socket && socket.connected) {
-            	  var data = {taxi: $("#taxi").val()};
-            	  socket.emit("depart", data)
-            	  console.log("送信メッセージ: " + data);
-        	  }
+          // 発車
+          $("#depart").click(function() {
+        	  emit("depart", {taxi: $("#taxi").val()});
+          });
+          // 完了
+          $("#complete").click(function() {
+        	  emit("complete", {command: "RESULTS", results: null});
           });
           
-          // ID設定 (あれば)
+          // タクシー・ディスプレイ設定 (あれば)
           var taxi = q("taxi"), disp = q("disp");
           if (taxi) $("#taxi").val(taxi);
           if (disp) $("#disp").val(disp);
@@ -62,5 +71,8 @@
     
     <h3>発車</h3>
     <input type="button" id="depart" value="発車"></input>
+    
+    <h3>広告・アンケート</h3>
+    <input type="button" id="complete" value="完了"></input>
   </body>
 </html>
