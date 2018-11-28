@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -110,7 +111,7 @@ func emitEvent(taxi string, name string, payload interface{}) {
 }
 
 // run Socket.IO server for Onemile-Display-Client
-func runSocketIOServer() {
+func runSocketIOServer(client *sxutil.SMServiceClient) {
 	ioserv := gosocketio.NewServer()
 
 	ioserv.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
@@ -135,7 +136,21 @@ func runSocketIOServer() {
 		}
 	})
 
-	// for DEBUG (enurate taxi departure)
+	// complete ad and enquate
+	ioserv.On("complete", func(c *gosocketio.Channel, data interface{}) {
+		log.Printf("Receive complete from %s [%v]\n", c.Id(), data)
+
+		// marshal json
+		bytes, err := json.Marshal(data)
+		if err != nil {
+			log.Printf("Marshal error: %s\n", err)
+		}
+
+		// send results via Mbus
+		client.SendMsg(context.Background(), &api.MbusMsg{ArgJson: string(bytes)})
+	})
+
+	// for DEBUG (simulate departure of taxi)
 	ioserv.On("depart", func(c *gosocketio.Channel, data interface{}) {
 		log.Printf("Receive depart from %s [%v]\n", c.Id(), data)
 
@@ -173,7 +188,7 @@ func main() {
 
 	wg.Add(1)
 	// start Websocket Server
-	go runSocketIOServer()
+	go runSocketIOServer(mktClient)
 
 	wg.Wait()
 }
