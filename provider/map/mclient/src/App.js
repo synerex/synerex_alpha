@@ -18,7 +18,8 @@ class App extends Component {
             store: this.mstore,
             bus: true,
             busTrace: true,
-            taxi: true
+            taxi: true,
+            train: true
         }
         socket.on('connect', () => { console.log("Socket.IO Connected!") });
         socket.on('event', this.getEvent.bind(this));
@@ -31,7 +32,8 @@ class App extends Component {
             store:this.state.store,
             bus: this.state.bus,
             busTrace: this.state.busTrace,
-            taxi: this.state.taxi
+            taxi: this.state.taxi,
+            train: this.state.train
         };
     }
 
@@ -73,6 +75,12 @@ class App extends Component {
         });
         this.selArg.taxi = this.state.taxi;
     }
+    showTrain(){
+        this.selArg.train = !this.state.train
+        this.setState({
+            train:this.selArg.train
+        });
+    }
 
     componentDidMount(){
 //        this.interval = setInterval(() => this.addDemo(), 5000);
@@ -86,7 +94,9 @@ class App extends Component {
         showBus={()=>this.showBus()}
         showBusTrace={()=>this.showBusTrace()}
         showTaxi={()=>this.showTaxi()}
+        showTrain={()=>this.showTrain()}
         resetView={()=>this.resetView()}
+
         />;
         return (
             <div>

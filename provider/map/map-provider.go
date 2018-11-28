@@ -100,7 +100,7 @@ func supplyRideCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	flt := sp.GetArg_Fleet()
 	if flt != nil { // get Fleet supplu
 		mm := &MapMarker{
-			mtype: int32(api.ChannelType_RIDE_SHARE),
+			mtype: int32(0),
 			id:    flt.VehicleId,
 			lat:   flt.Coord.Lat,
 			lon:   flt.Coord.Lon,
@@ -123,7 +123,7 @@ func supplyPTCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	pt := sp.GetArg_PTService()
 	if pt != nil { // get Fleet supplu
 		mm := &MapMarker{
-			mtype: int32(api.ChannelType_PT_SERVICE),
+			mtype: pt.VehicleType, // depends on type of GTFS: 1 for Subway, 2, for Rail, 3 for bus
 			id:    pt.VehicleId,
 			lat:   float32(pt.CurrentLocation.GetPoint().Latitude),
 			lon:   float32(pt.CurrentLocation.GetPoint().Longitude),

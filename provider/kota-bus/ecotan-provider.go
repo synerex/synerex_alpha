@@ -95,6 +95,7 @@ func convertDocor2PTService(msg *string) (service *ptransit.PTService, argJson s
 		Angle: float32(angle),
 		Speed: int32(speed),
 		CurrentLocation: place,
+		VehicleType: 3, // bus number = 3 (for GTFS.Route.Type)
 	}
 
 //	log.Printf("msg:%v",*service)

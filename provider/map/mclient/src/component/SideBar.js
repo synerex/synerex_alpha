@@ -61,6 +61,13 @@ export default class SideBar extends Component {
                             </span>
                             </a>
                         </li>
+                        <li>
+                            <a href="#" onClick={()=>{this.props.showTrain()}}>
+                                <i className="fa fa-th"></i> <span>Show Train</span>
+                                <span className="pull-right-container">
+                            </span>
+                            </a>
+                        </li>
 
                     </ul>
                 </section>

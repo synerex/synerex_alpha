@@ -51,7 +51,7 @@ func pointDistance(p1 *common.Point, lat2 float32, lon2 float32) float32{
 	return float32(d)
 }
 
-func getClosestPoints(pts gtfs.ShapePoints, lat float32, lon float32 ) (int, float32 ){
+func getClosestPoints(pts gtfs.ShapePoints, lat float32, lon float32,  indx int) (int, float32 ){
 	dist := float32(math.MaxFloat32)
 	di := -1
 	p := &common.Point{
@@ -60,15 +60,15 @@ func getClosestPoints(pts gtfs.ShapePoints, lat float32, lon float32 ) (int, flo
 	}
 	dists := []float32{}
 	idx  :=[]int{}
-	for i, pt := range (pts) {
+	for i, pt := range (pts[indx:]) {
 		d := pointDistance(p, pt.Lat, pt.Lon)
 		if d < dist {
-			di = i
+			di = i+indx
 			dist = d
 		}
 		if d < 15 { //less than 5m
 			dists = append(dists,d)
-			idx = append(idx,i)
+			idx = append(idx,i+indx)
 		}
 	}
 	if len(idx) ==0{
@@ -76,23 +76,23 @@ func getClosestPoints(pts gtfs.ShapePoints, lat float32, lon float32 ) (int, flo
 		idx = append(idx,di)
 		fmt.Printf("Distance stop!")
 	}
-	fmt.Printf	("Got nearest %d %v %v\n",len(idx),idx,dists)
+//	fmt.Printf	("Got nearest %d %v %v\n",len(idx),idx,dists)
 	return di, dist
 }
 
-func getLatLonFromRatio(shp *gtfs.Shape, from_stop *gtfs.Stop,to_stop *gtfs.Stop, ratio float32) (float32, float32){
+func getLatLonFromRatio(shp *gtfs.Shape, from_stop *gtfs.Stop,to_stop *gtfs.Stop, ratio float32,shape_idx int) (float32, float32, int){
 	// try to findout nearest point from shp.
 	if ratio < 0.001 {
 //		fmt.Printf("small ratio %f\n",ratio)
-		return from_stop.Lat, from_stop.Lon
+		return from_stop.Lat, from_stop.Lon, shape_idx
 	}
 	if ratio > 0.999 {
 //		fmt.Printf("large ratio %f\n",ratio)
-		return to_stop.Lat, to_stop.Lon
+		return to_stop.Lat, to_stop.Lon, shape_idx
 	}
 
-	c1,d1 := getClosestPoints(shp.Points, from_stop.Lat, from_stop.Lon )
-	c2,d2 := getClosestPoints(shp.Points, to_stop.Lat, to_stop.Lon )
+	c1,d1 := getClosestPoints(shp.Points, from_stop.Lat, from_stop.Lon ,shape_idx)
+	c2,d2 := getClosestPoints(shp.Points, to_stop.Lat, to_stop.Lon ,c1)
 
 	if c1 == -1 || c2 ==- 1{
 		fmt.Printf("Umm. failuer")
@@ -102,19 +102,20 @@ func getLatLonFromRatio(shp *gtfs.Shape, from_stop *gtfs.Stop,to_stop *gtfs.Stop
 		fmt.Printf("Distance %f, %s\n", d2, to_stop.Name)
 	}
 
-
-
 	var totalDist float32
 	totalDist = 0
+
+
 	if c1 < c2 {// ok order
+//		fmt.Printf("C1:%d, C2:%d \n",c1, c2)
 		for i := c1; i <c2; i++ {
 			pt := shp.Points[i]
 			pt2 := shp.Points[i+1]
 			totalDist += pointDistance(&common.Point{Latitude:float64(pt.Lat),Longitude:float64(pt.Lon)},
 							pt2.Lat, pt2.Lon)
 		}
-//		fmt.Printf("Dist:%f, Ratio %f \n",distance, ratio)
 		ratioDist := totalDist * ratio // we need to step this.
+		fmt.Printf("Dist:%f, Ratio: %f /  %f \n",totalDist,ratioDist,  ratio)
 		var distance  float32
 		distance = 0
 		for i := c1; i <c2; i++ {
@@ -122,47 +123,47 @@ func getLatLonFromRatio(shp *gtfs.Shape, from_stop *gtfs.Stop,to_stop *gtfs.Stop
 			pt2 := shp.Points[i+1]
 			diff := pointDistance(&common.Point{Latitude:float64(pt.Lat),Longitude:float64(pt.Lon)},
 				pt2.Lat, pt2.Lon)
-			if distance + diff > ratioDist { // now We came here!
+			if distance + diff >= ratioDist { // now We came here!
 				restDist := ratioDist - distance
-				ptRatio := restDist / ratioDist // get ratio of pt -pt2
+				ptRatio := restDist / totalDist // get ratio of pt -pt2
 				fmt.Printf("lat,lon dist %.1f , %.1f, total %.1f ratio %.3f\n",restDist, distance, totalDist, ptRatio)
-				return (pt.Lat*(1-ptRatio)+pt2.Lat*ptRatio), (pt.Lon *(1-ptRatio)+ pt2.Lon*ptRatio)
+				return (pt.Lat*(1-ptRatio)+pt2.Lat*ptRatio), (pt.Lon *(1-ptRatio)+ pt2.Lon*ptRatio), c1
 			}
 			distance += diff
 		}
-		return	to_stop.Lat, to_stop.Lon
+		return	to_stop.Lat, to_stop.Lon, c2
 	}else{
 		fmt.Printf("Reverse order ")
 		fmt.Printf("Find closest index len:%d, %d, %.1f  -> %d, %.1f\n",len(shp.Points), c1,d1, c2, d2)
 	}
 
-	return 0,0
+	return 0,0,0
 }
 
 
 
 //   st[ix-1].Departure_time __ bus(t) __   st[ix].Arrival_time
 // return bus location with index and time.
-func locWithTime(feed *gtfsparser.Feed, trip_id string,tp *gtfs.Trip, ix int,  t gtfs.Time) (rix int, lat float32, lon float32){
-	if ix < 0 {return ix, 0, 0} // just for error check
+func locWithTime(feed *gtfsparser.Feed, trip_id string,tp *gtfs.Trip, ix int,  t gtfs.Time, shape_idx int) (nexit_index int, lat float32, lon float32, shape_index int ){
+	if ix < 0 {return ix, 0, 0, shape_idx} // just for error check
 	st := tp.StopTimes
 	if ix == 0 && t.Minus(st[0].Arrival_time) <= 0 { // before start
-		return 0, st[0].Stop.Lat, st[0].Stop.Lon
+		return 0, st[0].Stop.Lat, st[0].Stop.Lon, shape_idx
 	}
 
 	if ix >= len(st) {
 		fmt.Printf("Index Error %d at %s\n",ix, trip_id)
-		return -1, 0, 0
+		return -1, 0, 0, 0
 	}
 	for ; t.Minus(st[ix].Arrival_time) >= 0;  { // arrived current dest.
 		ix ++
 		if len(st)==ix	{ // it was final station.
-			return -1, st[ix-1].Stop.Lat, st[ix-1].Stop.Lon
+			return -1, st[ix-1].Stop.Lat, st[ix-1].Stop.Lon, shape_idx
 		}
 	}
 	//
-	duration := st[ix].Arrival_time.Minus(st[ix-1].Departure_time)
-	dt := t.Minus(st[ix-1].Departure_time)
+	duration := st[ix].Arrival_time.Minus(st[ix-1].Departure_time) // total time for next station
+	dt := t.Minus(st[ix-1].Departure_time)  // time already past from last stoptime
 
 	shape_id := tp.Route.Id
 	shapes , ok := feed.Shapes[shape_id]
@@ -170,14 +171,14 @@ func locWithTime(feed *gtfsparser.Feed, trip_id string,tp *gtfs.Trip, ix int,  t
 		fmt.Printf("Can't find shape from shape_id %s\n", shape_id)
 	}
 	ratio := float32(dt)/float32(duration)
-//	if shape_id == "111001" {
-//		fmt.Printf("Get Lonlat %d  time: %d, duration:%d  ratio:%f\n", ix, dt, duration, ratio)
-//	}
-	lat, lon = getLatLonFromRatio(shapes,st[ix-1].Stop, st[ix].Stop, ratio)
+	if trip_id == "1020" {
+		fmt.Printf("Get trip %s, Lonlat %d  time: %d, duration:%d  ratio:%f\n",trip_id, ix, dt, duration, ratio)
+	}
+	lat, lon ,shape_idx = getLatLonFromRatio(shapes,st[ix-1].Stop, st[ix].Stop, ratio, shape_idx)
 
 	// we should use shape index. but just use interpolated..
 
-	return ix, lat, lon
+	return ix, lat, lon, shape_idx
 
 }
 func deg2rad(deg float32) float64 {
@@ -228,6 +229,7 @@ func supplyPTransitFeed(clt *sxutil.SMServiceClient, feed *gtfsparser.Feed){
 	lastLat := make(map[string]float32)
 	lastLon := make(map[string]float32)
 	lastAng := make(map[string]float32)
+	shape_idx := make(map[string]int)
 	for {
 		t := gtfs.Time{
 			Hour: int8(now.Hour()),
@@ -239,33 +241,43 @@ func supplyPTransitFeed(clt *sxutil.SMServiceClient, feed *gtfsparser.Feed){
 				continue
 			}
 			rid , _ := strconv.ParseInt(feed.Trips[k].Route.Id,10,32)
-			if rid != 111001 {
-				continue
+			trip_id , _ := strconv.ParseInt(feed.Trips[k].Id,10,32)
+			if trip_id == 0 { // for Kota
+				trip_id = rid
 			}
-			st ,lat, lon:=	locWithTime(feed, k, v, tripStatus[k], t)
+			st ,lat, lon, current_shape_idx:=	locWithTime(feed, k, v, tripStatus[k], t, shape_idx[k])
+			if st < 0 {
+				shape_idx[k] = 0
+			}
+			shape_idx[k] = current_shape_idx
 			tripStatus[k] = st
-			fmt.Printf("%d:st %d: %s \n",rid, st, feed.Trips[k].StopTimes[st].Stop.Name)
+//			fmt.Printf("%d:st %d: %s \n",rid, st, feed.Trips[k].StopTimes[st].Stop.Name)
 			if st > 0 {
 				var angle float32
-				if lastLat[k] == lat && lastLon[k] == lat {
+				if math.Abs(float64(lastLat[k]-lat)) < 0.00001 && math.Abs(float64(lastLon[k]- lat)) > 0.00001 {
 					angle = lastAng[k]
+//					fmt.Printf("SameAngle : %.2f  ==",angle)
 				} else {
 					angle = calcAngle(lastLat[k], lastLon[k], lat, lon)
 				}
-				fmt.Printf("%s: %s, %d: %d, (%.4f,%.4f)-(%.4f,%.4f) angle:%.2f\n",now.Format("15:04:05"), k,rid, st, lastLat[k], lastLon[k],lat, lon, angle)
+				fmt.Printf("%s: %s, %d: %d, (%.4f,%.4f)-(%.4f,%.4f) angle:%.2f\n",now.Format("15:04:05"), k,trip_id, st, lastLat[k], lastLon[k],lat, lon, angle)
+
 
 				place := common.NewPlace().WithPoint(&common.Point{
 					Latitude: float64(lat),
 					Longitude: float64(lon),
 				})
 				pts := &ptransit.PTService{
-					VehicleId: int32(rid),
+					VehicleId: int32(trip_id),
 					Angle: float32(angle),
 					Speed: int32(0.0),
 					CurrentLocation: place,
+					VehicleType: int32( feed.Trips[k].Route.Type),
 				}
 				lastLat[k]=lat
 				lastLon[k]=lon
+				lastAng[k] = angle
+
 				smo := sxutil.SupplyOpts{
 					Name:  "GTFS Supply",
 					PTService: pts,
@@ -277,6 +289,7 @@ func supplyPTransitFeed(clt *sxutil.SMServiceClient, feed *gtfsparser.Feed){
 				if lat != 0.0 {
 					lastLat[k] = lat
 					lastLon[k] = lon
+//					lastAng[k] = angle
 //					fmt.Printf("%s: %s, %d: %d, (%.4f,%.4f)-\n",now.Format("15:04:05"), k,rid, st, lastLat[k], lastLon[k])
 				}
 			}
@@ -284,7 +297,7 @@ func supplyPTransitFeed(clt *sxutil.SMServiceClient, feed *gtfsparser.Feed){
 		time.Sleep(time.Millisecond * 500)
 		now = now.Add(time.Second * 10)
 		ct++
-		if ct > 5000 {
+		if ct > 8000 {
 			break
 		}
 	}

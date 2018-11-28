@@ -14,6 +14,7 @@ export default class MsgStore {
     clear(){
         this.bus = {};
         this.taxi = {};
+        this.train = {};
         this.busTrace = {};
     }
 
@@ -27,18 +28,22 @@ export default class MsgStore {
     // message store also should have the maximum number of messages
     addPosition(mes){ // get JSON string
         const ms =  JSON.parse(mes);
-        if( ms.mtype == 1){
+        if( ms.mtype == 0){
             this.addVehicle(this.taxi,ms);
-        }else{
+        }else if(ms.mtype ==3){
             this.addVehicle(this.bus,ms);
+        }else if(ms.mtype==2){
+            this.addVehicle(this.train,ms);
         }
     }
 
     getVehicle(mtype){
-        if (mtype===1){
+        if (mtype===0){
             return this.taxi
-        }else{
+        }else if (mtype ==3){
             return this.bus
+        }else if( mtype == 2){
+            return this.train
         }
     }
 
