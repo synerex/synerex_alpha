@@ -2,10 +2,19 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>OneMile-Display-Client</title>
+    <title>Onemile-Display-Client</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
     <script>
+      // クエリ文字列の取得
+      function q(name, url) {
+    	  if (!url) url = window.location.href;
+    	  name = name.replace(/[\[\]]/g, "\\$&");
+    	  var results = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)").exec(url);
+    	  if (!results) return null;
+    	  if (!results[2]) return '';
+    	  return decodeURIComponent(results[2].replace(/\+/g, " "));
+      }
       $(function() {
           var socket = null;
 
@@ -33,6 +42,11 @@
             	  console.log("送信メッセージ: " + data);
         	  }
           });
+          
+          // ID設定 (あれば)
+          var taxi = q("taxi"), disp = q("disp");
+          if (taxi) $("#taxi").val(taxi);
+          if (disp) $("#disp").val(disp);
       });
     </script>
   </head>
@@ -42,8 +56,8 @@
     <input type="button" id="disconnect" value="切断"></input>
 
     <h3>搭載車両登録</h3>
-    タクシー: <input id="taxi" type="text" value="01" style="width: 30px"/>
-    ディスプレイ: <input id="disp" type="text" value="03" style="width: 30px"/>
+    タクシー: <input id="taxi" type="text" style="width: 30px"/>
+    ディスプレイ: <input id="disp" type="text" style="width: 30px"/>
     <input type="button" id="register" value="登録"></input>
     
     <h3>発車</h3>
