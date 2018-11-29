@@ -64,15 +64,30 @@ func createSMServiceClient(ch api.ChannelType, arg string) *sxutil.SMServiceClie
 	return sxutil.NewSMServiceClient(client, ch, arg)
 }
 
+// TODO: 乗車シーケンス
+// subscribe rideshare channel
+func subscribeRideShare(rdClient, rtClient *sxutil.SMServiceClient) {
+	ctx := context.Background()
+	rdClient.SubscribeDemand(ctx, func(clt *sxutil.SMServiceClient, dm *api.Demand) {
+		if dm.GetDemandName() == "" {
+			// Confirm
+			// TODO: 迎車処理 (routing-providerからのSelectSupply受信〜乗車まで)
+		} else {
+			// ProposeSupply
+			// TODO: 経路取得 (routing-providerからのRegisterDemand受信〜ProposeSupplyまで)
+		}
+	})
+}
+
 // subscribe marketing channel
-func subscribeMarketing(client *sxutil.SMServiceClient) {
+func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 	// wait until completing display registration
 	dispWg.Wait()
 
 	ctx := context.Background()
 	seen := make(map[string]struct{})
 
-	client.SubscribeDemand(ctx, func(clt *sxutil.SMServiceClient, dm *api.Demand) {
+	mktClient.SubscribeDemand(ctx, func(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		if dm.GetDemandName() == "" {
 			// Confirm
 			log.Printf("Receive SelectSupply [id: %d, name: %s]\n", dm.GetId(), dm.GetDemandName())
@@ -107,8 +122,8 @@ func subscribeMarketing(client *sxutil.SMServiceClient) {
 	})
 }
 
-// run Socket.IO server for Onemile-Display-Client
-func runSocketIOServer(client *sxutil.SMServiceClient) {
+// run Socket.IO server for Onemile-Client and Onemile-Display-Client
+func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 	ioserv := gosocketio.NewServer()
 
 	ioserv.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
@@ -119,7 +134,18 @@ func runSocketIOServer(client *sxutil.SMServiceClient) {
 		log.Printf("Disconnected from %s as %s\n", c.IP(), c.Id())
 	})
 
-	// register taxi and display mapping
+	// TODO: 位置情報報告 (定期的に)
+	// [Rideshare]
+	ioserv.On("xxxxx", func(c *gosocketio.Channel, data interface{}) {
+	})
+
+	// TODO: 移動処理 (乗車〜降車まで)
+	ioserv.On("xxxxx", func(c *gosocketio.Channel, data interface{}) {
+	})
+	ioserv.On("xxxxx", func(c *gosocketio.Channel, data interface{}) {
+	})
+
+	// [Marketing] register taxi and display mapping
 	ioserv.On("register", func(c *gosocketio.Channel, data interface{}) {
 		log.Printf("Receive register from %s [%v]\n", c.Id(), data)
 
@@ -133,7 +159,7 @@ func runSocketIOServer(client *sxutil.SMServiceClient) {
 		}
 	})
 
-	// complete ad and enquate
+	// [Marketing] complete ad and enquate
 	ioserv.On("complete", func(c *gosocketio.Channel, data interface{}) {
 		log.Printf("Receive complete from %s [%v]\n", c.Id(), data)
 
@@ -144,10 +170,10 @@ func runSocketIOServer(client *sxutil.SMServiceClient) {
 		}
 
 		// send results via Mbus
-		client.SendMsg(context.Background(), &api.MbusMsg{ArgJson: string(bytes)})
+		mktClient.SendMsg(context.Background(), &api.MbusMsg{ArgJson: string(bytes)})
 	})
 
-	// for DEBUG (simulate departure or arrive of taxi)
+	// [DEBUG] (simulate departure or arrive of taxi)
 	ioserv.On("depart", func(c *gosocketio.Channel, data interface{}) {
 		log.Printf("Receive depart from %s [%v]\n", c.Id(), data)
 
@@ -182,13 +208,19 @@ func main() {
 	var wg sync.WaitGroup
 
 	wg.Add(1)
+	// subscribe rideshare channel
+	rdClient := createSMServiceClient(api.ChannelType_RIDE_SHARE, "")
+	rtClient := createSMServiceClient(api.ChannelType_ROUTING_SERVICE, "")
+	go subscribeRideShare(rdClient, rtClient)
+
+	wg.Add(1)
 	// subscribe marketing channel
 	mktClient := createSMServiceClient(api.ChannelType_MARKETING_SERVICE, "")
 	go subscribeMarketing(mktClient)
 
 	wg.Add(1)
 	// start Websocket Server
-	go runSocketIOServer(mktClient)
+	go runSocketIOServer(rdClient, mktClient)
 
 	wg.Wait()
 }
