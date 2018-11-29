@@ -83,7 +83,13 @@ func subscribeMarketing(client *sxutil.SMServiceClient) {
 				// emit display event for each display
 				for taxi := range dispMap {
 					dispMap[taxi].wg.Add(1)
-					go emitEvent(taxi, "display", msg.ArgJson)
+					go func(taxi, name string, payload interface{}) {
+						// wait unti a taxi will depart
+						dispMap[taxi].wg.Wait()
+						// emit event
+						dispMap[taxi].channel.Emit(name, payload)
+						log.Printf("Emit [taxi: %s, name: %s, json: %s]\n", taxi, name, payload)
+					}(taxi, "display", msg.ArgJson)
 				}
 			})
 		} else {
@@ -99,15 +105,6 @@ func subscribeMarketing(client *sxutil.SMServiceClient) {
 			}
 		}
 	})
-}
-
-// emit an event for a display
-func emitEvent(taxi string, name string, payload interface{}) {
-	// wait unti a taxi will depart
-	dispMap[taxi].wg.Wait()
-	// emit event
-	dispMap[taxi].channel.Emit(name, payload)
-	log.Printf("Emit [taxi: %s, name: %s, json: %s]\n", taxi, name, payload)
 }
 
 // run Socket.IO server for Onemile-Display-Client
