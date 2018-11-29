@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Onemile-Display-Client</title>
+    <title>Onemile-Display-Client Test Page</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
     <script>
@@ -31,7 +31,7 @@
           $("#connect").click(function() {
               socket = io({transports: ["websocket"]});
 
-              socket.on("display", function(data) {
+              socket.on("disp_start", function(data) {
     		      console.log("受信メッセージ: " + data)		  
               });
           });
@@ -41,7 +41,7 @@
           
           // 搭載車両登録
           $("#register").click(function() {
-        	  emit("register", {taxi: $("#taxi").val(), disp: $("#disp").val()});
+        	  emit("disp_register", {taxi: $("#taxi").val(), disp: $("#disp").val()});
           });
           // 出発
           $("#depart").click(function() {
@@ -53,7 +53,7 @@
           })
           // 完了
           $("#complete").click(function() {
-        	  emit("complete", {command: "RESULTS", results: null});
+        	  emit("disp_complete", {command: "RESULTS", results: null});
           });
           
           // タクシー・ディスプレイ設定 (あれば)

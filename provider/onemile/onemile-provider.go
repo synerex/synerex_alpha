@@ -104,7 +104,7 @@ func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 						// emit event
 						dispMap[taxi].channel.Emit(name, payload)
 						log.Printf("Emit [taxi: %s, name: %s, json: %s]\n", taxi, name, payload)
-					}(taxi, "display", msg.ArgJson)
+					}(taxi, "disp_start", msg.ArgJson)
 				}
 			})
 		} else {
@@ -146,8 +146,8 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 	})
 
 	// [Marketing] register taxi and display mapping
-	ioserv.On("register", func(c *gosocketio.Channel, data interface{}) {
-		log.Printf("Receive register from %s [%v]\n", c.Id(), data)
+	ioserv.On("disp_register", func(c *gosocketio.Channel, data interface{}) {
+		log.Printf("Receive dissp_register from %s [%v]\n", c.Id(), data)
 
 		taxi := data.(map[string]interface{})["taxi"].(string)
 		disp := data.(map[string]interface{})["disp"].(string)
@@ -160,8 +160,8 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 	})
 
 	// [Marketing] complete ad and enquate
-	ioserv.On("complete", func(c *gosocketio.Channel, data interface{}) {
-		log.Printf("Receive complete from %s [%v]\n", c.Id(), data)
+	ioserv.On("disp_complete", func(c *gosocketio.Channel, data interface{}) {
+		log.Printf("Receive disp_complete from %s [%v]\n", c.Id(), data)
 
 		// marshal json
 		bytes, err := json.Marshal(data)
