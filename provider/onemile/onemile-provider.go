@@ -147,7 +147,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 	// [Marketing] register taxi and display mapping
 	ioserv.On("disp_register", func(c *gosocketio.Channel, data interface{}) {
-		log.Printf("Receive dissp_register from %s [%v]\n", c.Id(), data)
+		log.Printf("Receive disp_register from %s [%v]\n", c.Id(), data)
 
 		taxi := data.(map[string]interface{})["taxi"].(string)
 		disp := data.(map[string]interface{})["disp"].(string)
@@ -173,7 +173,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 		mktClient.SendMsg(context.Background(), &api.MbusMsg{ArgJson: string(bytes)})
 	})
 
-	// [DEBUG] (simulate departure or arrive of taxi)
+	// [DEBUG] (simulate departure or arrive of taxi in disp-test.html)
 	ioserv.On("depart", func(c *gosocketio.Channel, data interface{}) {
 		log.Printf("Receive depart from %s [%v]\n", c.Id(), data)
 
