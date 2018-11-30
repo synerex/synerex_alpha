@@ -46,6 +46,11 @@
         	  }
           });
           
+          // 位置情報報告
+          $("#update").click(function() {
+        	 emit("clt_update_position", {"latlng": [parseFloat($("#lat").val()), parseFloat($("#lng").val())]});
+          });
+          
           // 出発
           $("#depart").click(function() {
         	  emit("depart", {taxi: $("#taxi").val()});
@@ -74,6 +79,13 @@
     </ul>
     <input type="button" id="login" value="ログイン"></input>
     <input type="button" id="logout" value="ログアウト"></input>
+    
+    <h3>位置情報報告</h3>
+	<ul>
+	<li><span class="c1">緯度(y)</span><span class="c2"><input id="lat" type="text" style="width: 120px" /></span>
+	<li><span class="c1">経度(x)</span><span class="c2"><input id="lng" type="text" style="width: 120px" /></span>
+	</ul>    
+    <input type="button" id="update" value="更新"></input>
     
     <h3>発着</h3>
     <input type="button" id="depart" value="出発"></input>
