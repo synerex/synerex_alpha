@@ -8,7 +8,6 @@ function q(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-// Socket接続
 $(() => {
     var socket = null;
 
@@ -16,7 +15,7 @@ $(() => {
     function emit(name, data) {
         if (socket && socket.connected) {
             socket.emit(name, data);
-            console.log("送信メッセージ(" + name + "): " + data);
+            console.log("送信メッセージ(" + name + "): ", data);
         }
     }
 
@@ -25,7 +24,7 @@ $(() => {
         socket = io({ transports: ["websocket"] });
 
         socket.on("disp_start", function (data) {
-            console.log("受信メッセージ: " + data)
+            console.log("受信メッセージ: ", data)
 
             // StringからJSONにパースする
             data = JSON.parse(data);
@@ -36,18 +35,26 @@ $(() => {
             switch (contents.type) {
                 case 'AD':
                     console.log('case "AD" is called');
-                    const ad = contents;
+                    const ad = data.contents;
                     console.dir(ad);
-                    $('#ad-area').children('img').attr('src', ad.data);
-                    emit("disp_complete", { command: "RESULTS", results: null });
+                    Object.keys(ad).forEach((key) => {
+                        $('#ad-area').children('img').attr('src', ad[key].data);
+                        console.log(`AD is ${ad[key].data}`);
+                        emit("disp_complete", { command: "RESULTS", results: null });
+                        console.log('ForEach end')
+                    });
 
                     break;
 
                 case 'ENQ':
                     console.log('case "ENQ" is called');
-                    const questions = contents;
+                    const questions = data.contents[0].data.questions;
+                    console.dir(questions);
 
                     const div = [];
+
+                    // 広告の表示を終了する
+                    $('#ad-area').children('img').attr('src', '');
 
                     // ForEach文
                     Object.keys(questions).forEach((key) => {
@@ -141,7 +148,7 @@ $(() => {
 
                     });
 
-                    // <form>に<div>を追加
+                    // 配列divに格納したinputを<form>に追加
                     for (let value of div) {
                         $('form#questions').append(value);
                     }
@@ -155,6 +162,7 @@ $(() => {
                         Object.keys(json).forEach((key) => {
                             console.log(json[key]);
                         });
+                        // emit("disp_complete", { command: "RESULTS", results: {} });
                         alert('ありがとうございました！');
                         $('form#questions')[0].reset();
                     });
@@ -178,6 +186,11 @@ $(() => {
     $("#register").click(function () {
         emit("disp_register", { taxi: $("#taxi").val(), disp: $("#disp").val() });
     });
+    // 完了
+    $("#complete").click(function () {
+        emit("disp_complete", { command: "RESULTS", results: null });
+    });
+
     // 出発
     $("#depart").click(function () {
         emit("depart", { taxi: $("#taxi").val() });
@@ -186,14 +199,9 @@ $(() => {
     $("#arrive").click(function () {
         emit("arrive", { taxi: $("#taxi").val() });
     })
-    // 完了
-    $("#complete").click(function () {
-        emit("disp_complete", { command: "RESULTS", results: null });
-    });
 
     // タクシー・ディスプレイ設定 (あれば)
     var taxi = q("taxi"), disp = q("disp");
     if (taxi) $("#taxi").val(taxi);
     if (disp) $("#disp").val(disp);
-
 });
