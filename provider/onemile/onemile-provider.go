@@ -34,7 +34,8 @@ type vehicle struct {
 	VehicleId   string     `json:"vehicle_id"`   // unique id
 	VehicleType string     `json:"vehicle_type"` // [onemile | bus | train | ...]
 	Status      string     `json:"status"`       // [pickup | free | ride]
-	Coord       [2]float64 `json:"coord"`        // current position (lat/lon)
+	Coord       [2]float64 `json:"coord"`        // current position (lon/lat)
+	sockId      string     `json:"-"`            // Socket.IO socket id
 }
 
 // managed vehicles by onemile-provider
@@ -107,7 +108,7 @@ func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 
 			// SubscribeMbus
 			clt.SubscribeMbus(context.Background(), func(clt *sxutil.SMServiceClient, msg *api.MbusMsg) {
-				// emit display event for each display
+				// emit start event for each display
 				for taxi := range dispMap {
 					dispMap[taxi].wg.Add(1)
 					go func(taxi, name string, payload interface{}) {
@@ -153,6 +154,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			vehicleId := "unknown"
 			if v, ok := vehicleMap[taxi]; ok {
 				vehicleId = v.VehicleId
+				v.sockId = so.Id()
 			}
 
 			ret := map[string]interface{}{
@@ -165,11 +167,23 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 				},
 			}
 
-			log.Printf("Ack [taxi: %s, name: %s, payload: %v]\n", taxi, "clt_login_res", ret)
+			log.Printf("Ack [taxi: %s, name: %s, payload: %v]\n", taxi, "clt_login", ret)
 			return ret
 		})
 
-		// TODO: 位置情報報告 (定期的に)
+		// [Client] update position
+		so.On("clt_update_position", func(data interface{}) {
+			log.Printf("Receive clt_update_position from %s [%v]\n", so.Id(), data)
+			for k, v := range vehicleMap {
+				if v.sockId == so.Id() {
+					v.Coord[0] = data.(map[string]interface{})["latlng"].([]interface{})[0].(float64)
+					v.Coord[1] = data.(map[string]interface{})["latlng"].([]interface{})[1].(float64)
+					log.Printf("Update position [taxi: %s, coord:[%f, %f]\n", k, v.Coord[0], v.Coord[1])
+				}
+			}
+		})
+
+		// TODO: 車位置アップデート
 		so.On("xxxxx", func(data interface{}) interface{} {
 			return nil
 		})
@@ -223,6 +237,11 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 		})
 	})
 
+	ioserv.On("disconnection", func(so socketio.Socket) {
+		log.Printf("Disconnected from %s as %s\n", so.Request().RemoteAddr, so.Id())
+
+	})
+
 	ioserv.On("error", func(so socketio.Socket, err error) {
 		log.Printf("Websocket error: %s\n", err)
 	})
@@ -244,7 +263,7 @@ func main() {
 	// init vehicles
 	for i := 0; i < *n; i++ {
 		var id = fmt.Sprintf("%02d", i+1)
-		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}}
+		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}, ""}
 	}
 
 	// set number of display
