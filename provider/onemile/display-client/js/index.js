@@ -8,7 +8,6 @@ function q(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-// Socket接続
 $(() => {
     var socket = null;
 
@@ -16,7 +15,7 @@ $(() => {
     function emit(name, data) {
         if (socket && socket.connected) {
             socket.emit(name, data);
-            console.log("送信メッセージ(" + name + "): " + data);
+            console.log("送信メッセージ(" + name + "): ", data);
         }
     }
 
@@ -25,7 +24,8 @@ $(() => {
         socket = io({ transports: ["websocket"] });
 
         socket.on("disp_start", function (data) {
-            console.log("受信メッセージ: " + data)
+            console.log("受信メッセージ: ", data)
+
 
             // StringからJSONにパースする
             data = JSON.parse(data);
@@ -178,6 +178,11 @@ $(() => {
     $("#register").click(function () {
         emit("disp_register", { taxi: $("#taxi").val(), disp: $("#disp").val() });
     });
+    // 完了
+    $("#complete").click(function () {
+        emit("disp_complete", { command: "RESULTS", results: null });
+    });
+
     // 出発
     $("#depart").click(function () {
         emit("depart", { taxi: $("#taxi").val() });
@@ -186,14 +191,9 @@ $(() => {
     $("#arrive").click(function () {
         emit("arrive", { taxi: $("#taxi").val() });
     })
-    // 完了
-    $("#complete").click(function () {
-        emit("disp_complete", { command: "RESULTS", results: null });
-    });
 
     // タクシー・ディスプレイ設定 (あれば)
     var taxi = q("taxi"), disp = q("disp");
     if (taxi) $("#taxi").val(taxi);
     if (disp) $("#disp").val(disp);
-
 });
