@@ -40,9 +40,9 @@ $(() => {
                     Object.keys(ad).forEach((key) => {
                         $('#ad-area').children('img').attr('src', ad[key].data);
                         console.log(`AD is ${ad[key].data}`);
-                        emit("disp_complete", { command: "RESULTS", results: null });
                         console.log('ForEach end')
                     });
+                    emit("disp_complete", { command: "RESULTS", results: null });
 
                     break;
 
