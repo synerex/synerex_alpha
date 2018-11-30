@@ -11,9 +11,32 @@
 
 <body>
     <div class="container">
-        <form id="questions" class="form-group"></form>
+
+        <div id="connection-area">
+            <h3>サーバ接続</h3>
+            <input type="button" id="connect" value="接続"></input>
+            <input type="button" id="disconnect" value="切断"></input>
+
+            <h3>搭載車両登録</h3>
+            タクシー: <input id="taxi" type="text" style="width: 30px" />
+            ディスプレイ: <input id="disp" type="text" style="width: 30px" />
+            <input type="button" id="register" value="登録"></input>
+
+            <h3>発着</h3>
+            <input type="button" id="depart" value="出発"></input>
+            <input type="button" id="arrive" value="到着"></input>
+        </div>
+
+        <div id="ad-area">
+            <img>
+        </div>
+
+        <div id="question-area">
+            <form id="questions" class="form-group"></form>
+        </div>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/questions.js"></script>
 </body>

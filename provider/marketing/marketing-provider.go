@@ -76,7 +76,7 @@ func sendMsg(client *sxutil.SMServiceClient, msg string) {
 }
 
 func sendAdMsg(client *sxutil.SMServiceClient) {
-	var url = "http://www.yahoo.co.jp/"
+	var url = "http://www.town.kota.lg.jp/images/content/28198/20151216-085825.jpg"
 
 	request := map[string]interface{}{
 		"command": "CONTENTS",
