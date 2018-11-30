@@ -18,15 +18,27 @@ import (
 var (
 	version = "0.01"
 
-	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
+	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
+	client     api.SynerexClient
 
-	client api.SynerexClient
 	port   = flag.Int("port", 7777, "Onemile Provider Listening Port")
-	disp   = flag.Int("disp", 1, "Number of Onemile-Display-Client")
 	ioserv *gosocketio.Server
+
+	n      = flag.Int("n", 1, "Number of taxi (or display)")
 	dispWg sync.WaitGroup
 )
+
+// vehicle
+type vehicle struct {
+	VehicleId   string     `json:"vehicle_id"`   // unique id
+	VehicleType string     `json:"vehicle_type"` // [onemile | bus | train | ...]
+	Status      string     `json:"status"`       // [pickup | free | ride]
+	Coord       [2]float64 `json:"coord"`        // current position (lat/lon)
+}
+
+// managed vehicles by onemile-provider
+var vehicleMap = make(map[string]*vehicle)
 
 // display
 type display struct {
@@ -103,7 +115,7 @@ func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 						dispMap[taxi].wg.Wait()
 						// emit event
 						dispMap[taxi].channel.Emit(name, payload)
-						log.Printf("Emit [taxi: %s, name: %s, json: %s]\n", taxi, name, payload)
+						log.Printf("Emit [taxi: %s, name: %s, payload: %s]\n", taxi, name, payload)
 					}(taxi, "disp_start", msg.ArgJson)
 				}
 			})
@@ -132,6 +144,29 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 	ioserv.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		log.Printf("Disconnected from %s as %s\n", c.IP(), c.Id())
+	})
+
+	// TODO: ログイン
+	ioserv.On("clt_login", func(c *gosocketio.Channel, data interface{}) {
+		log.Printf("Receive clt_login from %s [%v]\n", c.Id(), data)
+
+		taxi := data.(map[string]interface{})["device_id"].(string)
+
+		if v, ok := vehicleMap[taxi]; ok {
+			ret := map[string]interface{}{
+				"act":  "clt_login",
+				"code": 0,
+				"results": map[string]interface{}{
+					"provider_id": "onemile-provider",
+					"vehicle_id":  v.VehicleId,
+					"token":       "1234567890",
+				},
+			}
+
+			// TODO: use Socket.IO Acknowledgement
+			c.Emit("clt_login_res", ret)
+			log.Printf("Emit [taxi: %s, name: %s, payload: %v]\n", taxi, "clt_login_res", ret)
+		}
 	})
 
 	// TODO: 位置情報報告 (定期的に)
@@ -199,8 +234,14 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 func main() {
 	flag.Parse()
 
+	// init vehicles
+	for i := 0; i < *n; i++ {
+		var id = fmt.Sprintf("%02d", i+1)
+		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}}
+	}
+
 	// set number of display
-	dispWg.Add(*disp)
+	dispWg.Add(*n)
 
 	// register onemile-provider
 	registerOnemileProvider()

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Onemile-Client Test Page</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script>
+      // クエリ文字列の取得
+      function q(name, url) {
+    	  if (!url) url = window.location.href;
+    	  name = name.replace(/[\[\]]/g, "\\$&");
+    	  var results = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)").exec(url);
+    	  if (!results) return null;
+    	  if (!results[2]) return '';
+    	  return decodeURIComponent(results[2].replace(/\+/g, " "));
+      }
+      
+      $(function() {
+	      var socket = null;
+
+          // イベント送信
+          function emit(name, data) {
+        	  if (socket) {
+          		  socket.emit(name, data);
+           		  console.log("送信メッセージ(" + name + "): " + JSON.stringify(data));
+        	  }
+          }
+
+          // ログイン・ログアウト
+          $("#login").click(function() {
+              if (!socket) {
+                  socket = io({transports: ["websocket"]});
+                  
+                  socket.on("clt_login_res", function(data) {
+                	  console.log("受信メッセージ: " + JSON.stringify(data))
+                  });
+              }
+              
+        	  emit("clt_login", {username: $("#user").val(), password: $("#passwd").val(), device_id: $("#taxi").val()})
+          });
+          $("#logout").click(function() {
+        	  if (socket) {
+                  socket.close();
+                  socket = null;
+        	  }
+          });
+          
+          // 出発
+          $("#depart").click(function() {
+        	  emit("depart", {taxi: $("#taxi").val()});
+          });
+          // 到着
+          $("#arrive").click(function() {
+        	  emit("arrive", {taxi: $("#taxi").val()});
+          })
+          
+          // タクシー設定 (あれば)
+          $("#taxi").val(q("taxi") ? q("taxi") : "")
+      });
+    </script>
+    <style>
+    ul { list-style: none; padding-left: 0px; }
+    .c1 { float: left; }
+    .c2 { display: block; margin-left: 85px; }
+    </style>
+  </head>
+  <body>
+    <h3>ログイン</h3>
+    <ul>
+    <li><span class="c1">ユーザ名</span><span class="c2"><input id="user" type="text" value="anonymous" style="width: 120px"/></span>
+    <li><span class="c1">パスワード</span><span class="c2"><input id="passwd" type="text" value="" style="width: 120px"/></span>
+    <li><span class="c1">タクシー</span><span class="c2"><input id="taxi" type="text" value="" style="width: 30px"/></span>
+    </ul>
+    <input type="button" id="login" value="ログイン"></input>
+    <input type="button" id="logout" value="ログアウト"></input>
+    
+    <h3>発着</h3>
+    <input type="button" id="depart" value="出発"></input>
+    <input type="button" id="arrive" value="到着"></input>
+    
+  </body>
+</html>
