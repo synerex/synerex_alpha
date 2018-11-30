@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/mtfelian/golang-socketio"
+	socketio "github.com/googollee/go-socket.io"
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
@@ -23,7 +23,7 @@ var (
 	client     api.SynerexClient
 
 	port   = flag.Int("port", 7777, "Onemile Provider Listening Port")
-	ioserv *gosocketio.Server
+	ioserv *socketio.Server
 
 	n      = flag.Int("n", 1, "Number of taxi (or display)")
 	dispWg sync.WaitGroup
@@ -42,9 +42,9 @@ var vehicleMap = make(map[string]*vehicle)
 
 // display
 type display struct {
-	dispId  string              // display id
-	channel *gosocketio.Channel // Socket.IO channel
-	wg      sync.WaitGroup      // for synchronization to display ad and enquate
+	dispId string          // display id
+	socket socketio.Socket // Socket.IO socket
+	wg     sync.WaitGroup  // for synchronization to display ad and enquate
 }
 
 // taxi/display mapping
@@ -114,7 +114,7 @@ func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 						// wait unti a taxi will depart
 						dispMap[taxi].wg.Wait()
 						// emit event
-						dispMap[taxi].channel.Emit(name, payload)
+						dispMap[taxi].socket.Emit(name, payload)
 						log.Printf("Emit [taxi: %s, name: %s, payload: %s]\n", taxi, name, payload)
 					}(taxi, "disp_start", msg.ArgJson)
 				}
@@ -136,88 +136,95 @@ func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 
 // run Socket.IO server for Onemile-Client and Onemile-Display-Client
 func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
-	ioserv := gosocketio.NewServer()
+	ioserv, e := socketio.NewServer(nil)
+	if e != nil {
+		log.Fatal(e)
+	}
 
-	ioserv.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
-		log.Printf("Connected from %s as %s\n", c.IP(), c.Id())
-	})
+	ioserv.On("connection", func(so socketio.Socket) {
+		log.Printf("Connected from %s as %s\n", so.Request().RemoteAddr, so.Id())
 
-	ioserv.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
-		log.Printf("Disconnected from %s as %s\n", c.IP(), c.Id())
-	})
+		// [Client] login
+		so.On("clt_login", func(data interface{}) interface{} {
+			log.Printf("Receive clt_login from %s [%v]\n", so.Id(), data)
 
-	// TODO: ログイン
-	ioserv.On("clt_login", func(c *gosocketio.Channel, data interface{}) {
-		log.Printf("Receive clt_login from %s [%v]\n", c.Id(), data)
+			taxi := data.(map[string]interface{})["device_id"].(string)
 
-		taxi := data.(map[string]interface{})["device_id"].(string)
+			vehicleId := "unknown"
+			if v, ok := vehicleMap[taxi]; ok {
+				vehicleId = v.VehicleId
+			}
 
-		if v, ok := vehicleMap[taxi]; ok {
 			ret := map[string]interface{}{
 				"act":  "clt_login",
 				"code": 0,
 				"results": map[string]interface{}{
 					"provider_id": "onemile-provider",
-					"vehicle_id":  v.VehicleId,
+					"vehicle_id":  vehicleId,
 					"token":       "1234567890",
 				},
 			}
 
-			// TODO: use Socket.IO Acknowledgement
-			c.Emit("clt_login_res", ret)
-			log.Printf("Emit [taxi: %s, name: %s, payload: %v]\n", taxi, "clt_login_res", ret)
-		}
+			log.Printf("Ack [taxi: %s, name: %s, payload: %v]\n", taxi, "clt_login_res", ret)
+			return ret
+		})
+
+		// TODO: 位置情報報告 (定期的に)
+		so.On("xxxxx", func(data interface{}) interface{} {
+			return nil
+		})
+
+		// TODO: 移動処理 (乗車〜降車まで)
+		so.On("xxxxx", func(data interface{}) interface{} {
+			return nil
+		})
+		so.On("xxxxx", func(data interface{}) interface{} {
+			return nil
+		})
+
+		// [Display] register taxi and display mapping
+		so.On("disp_register", func(data interface{}) {
+			log.Printf("Receive disp_register from %s [%v]\n", so.Id(), data)
+
+			taxi := data.(map[string]interface{})["taxi"].(string)
+			disp := data.(map[string]interface{})["disp"].(string)
+
+			if _, ok := dispMap[taxi]; !ok {
+				dispMap[taxi] = &display{dispId: disp, socket: so, wg: sync.WaitGroup{}}
+				log.Printf("Register display [taxi: %s => display: %v]\n", taxi, dispMap[taxi])
+				dispWg.Done()
+			}
+		})
+
+		// [Display] complete ad and enquate
+		so.On("disp_complete", func(data interface{}) {
+			log.Printf("Receive disp_complete from %s [%v]\n", so.Id(), data)
+
+			// marshal json
+			bytes, err := json.Marshal(data)
+			if err != nil {
+				log.Printf("Marshal error: %s\n", err)
+			}
+
+			// send results via Mbus
+			mktClient.SendMsg(context.Background(), &api.MbusMsg{ArgJson: string(bytes)})
+		})
+
+		// [DEBUG] (simulate departure or arrive of taxi in disp-test.html)
+		so.On("depart", func(data interface{}) {
+			log.Printf("Receive depart from %s [%v]\n", so.Id(), data)
+
+			taxi := data.(map[string]interface{})["taxi"].(string)
+
+			dispMap[taxi].wg.Done()
+		})
+		so.On("arrive", func(data interface{}) {
+			log.Printf("Receive arrive from %s [%v]\n", so.Id(), data)
+		})
 	})
 
-	// TODO: 位置情報報告 (定期的に)
-	// [Rideshare]
-	ioserv.On("xxxxx", func(c *gosocketio.Channel, data interface{}) {
-	})
-
-	// TODO: 移動処理 (乗車〜降車まで)
-	ioserv.On("xxxxx", func(c *gosocketio.Channel, data interface{}) {
-	})
-	ioserv.On("xxxxx", func(c *gosocketio.Channel, data interface{}) {
-	})
-
-	// [Marketing] register taxi and display mapping
-	ioserv.On("disp_register", func(c *gosocketio.Channel, data interface{}) {
-		log.Printf("Receive disp_register from %s [%v]\n", c.Id(), data)
-
-		taxi := data.(map[string]interface{})["taxi"].(string)
-		disp := data.(map[string]interface{})["disp"].(string)
-
-		if _, ok := dispMap[taxi]; !ok {
-			dispMap[taxi] = &display{dispId: disp, channel: c, wg: sync.WaitGroup{}}
-			log.Printf("Register display [taxi: %s => display: %v]\n", taxi, dispMap[taxi])
-			dispWg.Done()
-		}
-	})
-
-	// [Marketing] complete ad and enquate
-	ioserv.On("disp_complete", func(c *gosocketio.Channel, data interface{}) {
-		log.Printf("Receive disp_complete from %s [%v]\n", c.Id(), data)
-
-		// marshal json
-		bytes, err := json.Marshal(data)
-		if err != nil {
-			log.Printf("Marshal error: %s\n", err)
-		}
-
-		// send results via Mbus
-		mktClient.SendMsg(context.Background(), &api.MbusMsg{ArgJson: string(bytes)})
-	})
-
-	// [DEBUG] (simulate departure or arrive of taxi in disp-test.html)
-	ioserv.On("depart", func(c *gosocketio.Channel, data interface{}) {
-		log.Printf("Receive depart from %s [%v]\n", c.Id(), data)
-
-		taxi := data.(map[string]interface{})["taxi"].(string)
-
-		dispMap[taxi].wg.Done()
-	})
-	ioserv.On("arrive", func(c *gosocketio.Channel, data interface{}) {
-		log.Printf("Receive arrive from %s [%v]\n", c.Id(), data)
+	ioserv.On("error", func(so socketio.Socket, err error) {
+		log.Printf("Websocket error: %s\n", err)
 	})
 
 	serveMux := http.NewServeMux()
