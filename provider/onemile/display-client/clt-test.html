@@ -23,7 +23,7 @@
           function emit(name, data) {
         	  if (socket) {
           		  socket.emit(name, data);
-           		  console.log("送信メッセージ(" + name + "): " + JSON.stringify(data));
+           		  console.log("送信メッセージ(" + name + "): ", data);
         	  }
           }
 
@@ -33,10 +33,10 @@
                   socket = io({transports: ["websocket"]});
                   
                   socket.on("clt_login_res", function(data) {
-                	  console.log("受信メッセージ: " + JSON.stringify(data))
+                	  console.log("受信メッセージ: ", data)
                   });
               }
-              
+              // TODO: use Socket.IO Acknowledgement
         	  emit("clt_login", {username: $("#user").val(), password: $("#passwd").val(), device_id: $("#taxi").val()})
           });
           $("#logout").click(function() {
