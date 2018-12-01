@@ -157,13 +157,14 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 		log.Printf("Connected from %s as %s\n", so.Request().RemoteAddr, so.Id())
 
 		// [Client] login
-		so.On("clt_login", func(data interface{}) interface{} {
+		so.On("clt_login", func(data interface{}) (ret interface{}) {
 			log.Printf("Receive clt_login from %s [%v]\n", so.Id(), data)
 
 			defer func() {
 				if err := recover(); err != nil {
 					log.Printf("panic clt_login: %s\n", err)
 					printStackTrace(2)
+					ret = map[string]interface{}{"panic": err.(error).Error()}
 				}
 			}()
 
@@ -175,7 +176,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 				v.sockId = so.Id()
 			}
 
-			ret := map[string]interface{}{
+			ret = map[string]interface{}{
 				"act":  "clt_login",
 				"code": 0,
 				"results": map[string]interface{}{
