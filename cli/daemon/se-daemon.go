@@ -136,6 +136,16 @@ func (sesrv *SynerexService) Start(s service.Service) error {
 }
 
 // assetsFileHandler for static Data
+func githubHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("Got github pulse!")
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		return
+	}
+
+//	http.ServeContent(w, r, file, fi.ModTime(), f)
+}
+
+// assetsFileHandler for static Data
 func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		return
@@ -635,6 +645,8 @@ func (sesrv *SynerexService) run() error {
 
 	serveMux.Handle("/socket.io/", server)
 	serveMux.HandleFunc("/", assetsFileHandler)
+	// for GitHub auto development
+	serveMux.Handle( "/github/", githubHandler)
 
 	logger.Info("Starting Synerex Engine daemon on port ", port)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
