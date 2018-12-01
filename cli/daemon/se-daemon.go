@@ -176,8 +176,11 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		fmt.Printf("UnMarshaled WebHook: %v\n",d)
-		status = 200
+		logger.Infof("UnMarshaled WebHook from:",d.Repository.Name)
+		logger.Infof("Pusher    :",d.Pusher)
+		logger.Infof("Committer :",d.Head_commit.Committer.Name)
+		logger.Infof("URL       :",d.Head_commit.Url)
+ 		status = 200
 		if d.Ref == "refs/heads/"+githubBranch {
 			fmt.Println("Now staring rebuild and rerun.")
 			githubPullAndRun()
