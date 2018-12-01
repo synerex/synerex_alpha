@@ -187,6 +187,45 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 
 // for github end.
 
+
+func pullGithub() {
+
+	var cmd *exec.Cmd
+
+	runArgs := []string{"pull"}
+	cmd = exec.Command("git", runArgs...)
+
+	pipe, err := cmd.StderrPipe()
+	if err != nil {
+		logger.Infof("Error for getting stdout pipe %s\n", cmd.Args[0])
+		return
+	}
+	err = cmd.Start()
+	if err != nil {
+		logger.Infof("Error for executing %s %v\n", cmd.Args[0], err)
+		return
+	}
+	logger.Infof("Starting %s..\n", cmd.Args[0])
+
+	reader := bufio.NewReader(pipe)
+	for {
+		line, _, err := reader.ReadLine()
+		if err == io.EOF {
+			logger.Infof("Command [%s] EOF\n", "git")
+			break
+		} else if err != nil {
+			logger.Infof("Err %v\n", err)
+		}
+		logger.Infof("[%s]:%s", "git", string(line))
+	}
+	logger.Infof("[%s]:Now ending...", "git")
+
+	cmd.Wait()
+
+	logger.Infof("Command [%s] closed\n", "git")
+}
+
+
 // compile and rerun..
 func githubPullAndRun (){
 	//first get
@@ -206,6 +245,9 @@ func githubPullAndRun (){
 
 	// then build and rerun
 	cleanAll()
+
+	// we need to pull!
+	pullGithub()
 
 	buildAll() // sometime it fails.. umm we need to fix it.
 
