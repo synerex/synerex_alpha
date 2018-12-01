@@ -227,6 +227,13 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 		so.On("disp_register", func(data interface{}) {
 			log.Printf("Receive disp_register from %s [%v]\n", so.Id(), data)
 
+			defer func() {
+				if err := recover(); err != nil {
+					log.Printf("panic disp_register: %s\n", err)
+					printStackTrace(2)
+				}
+			}()
+
 			taxi := data.(map[string]interface{})["taxi"].(string)
 			disp := data.(map[string]interface{})["disp"].(string)
 
@@ -241,6 +248,13 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 		so.On("disp_complete", func(data interface{}) {
 			log.Printf("Receive disp_complete from %s [%v]\n", so.Id(), data)
 
+			defer func() {
+				if err := recover(); err != nil {
+					log.Printf("panic disp_complete: %s\n", err)
+					printStackTrace(2)
+				}
+			}()
+
 			// marshal json
 			bytes, err := json.Marshal(data)
 			if err != nil {
@@ -254,6 +268,13 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 		// [DEBUG] (simulate departure or arrive of taxi in disp-test.html)
 		so.On("depart", func(data interface{}) {
 			log.Printf("Receive depart from %s [%v]\n", so.Id(), data)
+
+			defer func() {
+				if err := recover(); err != nil {
+					log.Printf("panic depart: %s\n", err)
+					printStackTrace(2)
+				}
+			}()
 
 			taxi := data.(map[string]interface{})["taxi"].(string)
 
