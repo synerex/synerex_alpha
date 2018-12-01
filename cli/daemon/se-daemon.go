@@ -3,6 +3,8 @@ package main
 // Daemon code for Synergic Exchange
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -138,20 +140,57 @@ func init() {
 	}
 }
 
+
+// for Structures for Github json.
+type commiter struct {
+	Name string
+}
+type headCommit struct {
+	Url       string
+	Timestamp string
+	Committer commiter
+}
+type pusher struct {
+	Name string
+}
+type repository struct {
+	Name string
+}
+type data struct {
+	Ref         string
+	Head_commit headCommit
+	Pusher      pusher
+	Repository  repository
+}
+
+func githubHandler(w http.ResponseWriter, r *http.Request) {
+	status := 400
+	if r.Method == http.MethodPost {
+		fmt.Println("Got Request\n%v\n",r.Body)
+		bufbody := new(bytes.Buffer)
+		bufbody.ReadFrom(r.Body)
+		buf := bufbody.Bytes()
+		var d data
+		err := json.Unmarshal(buf, &d)
+		if err != nil {
+			return
+		}
+		fmt.Printf("UnMarshaled %v\n",d)
+		status = 200
+		if d.Ref == "refs/heads/"+githubBranch {
+			fmt.Println("Now staring rebuild and rerun.")
+		}
+	}
+	w.WriteHeader(status)
+}
+
+// for github end.
+
 func (sesrv *SynerexService) Start(s service.Service) error {
 	go sesrv.run()
 	return nil
 }
 
-// assetsFileHandler for static Data
-func githubHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("Got github pulse!")
-	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		return
-	}
-
-//	http.ServeContent(w, r, file, fi.ModTime(), f)
-}
 
 // assetsFileHandler for static Data
 func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
