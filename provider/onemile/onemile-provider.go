@@ -38,8 +38,27 @@ type vehicle struct {
 	VehicleId   string          `json:"vehicle_id"`   // unique id
 	VehicleType string          `json:"vehicle_type"` // [onemile | bus | train | ...]
 	Status      string          `json:"status"`       // [pickup | free | ride]
-	Coord       [2]float64      `json:"coord"`        // current position (lon/lat)
+	Coord       [2]float64      `json:"coord"`        // current position (lat/lng)
 	socket      socketio.Socket `json:"-"`            // Socket.IO socket
+	mission     *mission        `json:"-"`            // assigned mission
+}
+
+// mission
+type mission struct {
+	MissionId string   `json:"mission_id"` // mission id
+	Title     string   `json:"title"`      // mission title (option)
+	Detail    string   `json:"detail"`     // mission detail (option)
+	Events    []*event `json:"events"`     // events
+}
+
+// event
+type event struct {
+	EventId     string       `json:"event_id"`    // event id
+	EventType   string       `json:"event_type"`  // [pickup | ride]
+	StartTime   int64        `json:"start_time"`  // event start time (msec)
+	EndTime     int64        `json:"end_time"`    // event end time (msec)
+	Destination string       `json:"destination"` // destination (option)
+	Route       [][2]float64 `json:"route"`       // routing (lat/lng)
 }
 
 // managed vehicles by onemile-provider
@@ -54,6 +73,11 @@ type display struct {
 
 // taxi/display mapping
 var dispMap = make(map[string]*display)
+
+// utility function for converting time in milliseconds
+func toMillis(t time.Time) int64 {
+	return t.UnixNano() / int64(time.Millisecond)
+}
 
 // register OnemileProvider to NodeServer
 func registerOnemileProvider() {
@@ -348,7 +372,7 @@ func main() {
 	// init vehicles
 	for i := 0; i < *n; i++ {
 		var id = fmt.Sprintf("%02d", i+1)
-		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}, nil}
+		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}, nil, nil}
 	}
 
 	// set number of display
