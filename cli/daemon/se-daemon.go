@@ -246,7 +246,7 @@ func githubPullAndRun (){
 	handleStop(procs)
 
 	// then build and rerun
-	cleanAll()
+//	cleanAll() need not to clean all?
 
 	// we need to pull!
 	pullGithub()
