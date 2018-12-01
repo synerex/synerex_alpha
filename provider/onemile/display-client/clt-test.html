@@ -36,6 +36,10 @@
           $("#login").click(function() {
               if (!socket) {
                   socket = io({transports: ["websocket"]});
+                  
+                  socket.on("clt_vehicle_status", function(data) {
+                      console.log("受信メッセージ (clt_vehicle_status): ", data);
+                  });
               }
         	  emit("clt_login", {username: $("#user").val(), password: $("#passwd").val(), device_id: $("#taxi").val()})
           });

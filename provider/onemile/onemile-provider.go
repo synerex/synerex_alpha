@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"runtime"
 	"sync"
+	"time"
 
 	socketio "github.com/googollee/go-socket.io"
 	"github.com/synerex/synerex_alpha/api"
@@ -28,15 +29,17 @@ var (
 
 	n      = flag.Int("n", 1, "Number of taxi (or display)")
 	dispWg sync.WaitGroup
+
+	pitch = flag.Int("pitch", 2, "Pitch of vehicle status update (sec)")
 )
 
 // vehicle
 type vehicle struct {
-	VehicleId   string     `json:"vehicle_id"`   // unique id
-	VehicleType string     `json:"vehicle_type"` // [onemile | bus | train | ...]
-	Status      string     `json:"status"`       // [pickup | free | ride]
-	Coord       [2]float64 `json:"coord"`        // current position (lon/lat)
-	sockId      string     `json:"-"`            // Socket.IO socket id
+	VehicleId   string          `json:"vehicle_id"`   // unique id
+	VehicleType string          `json:"vehicle_type"` // [onemile | bus | train | ...]
+	Status      string          `json:"status"`       // [pickup | free | ride]
+	Coord       [2]float64      `json:"coord"`        // current position (lon/lat)
+	socket      socketio.Socket `json:"-"`            // Socket.IO socket
 }
 
 // managed vehicles by onemile-provider
@@ -173,7 +176,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			vehicleId := "unknown"
 			if v, ok := vehicleMap[taxi]; ok {
 				vehicleId = v.VehicleId
-				v.sockId = so.Id()
+				v.socket = so
 			}
 
 			ret = map[string]interface{}{
@@ -202,17 +205,12 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			}()
 
 			for k, v := range vehicleMap {
-				if v.sockId == so.Id() {
+				if v.socket.Id() == so.Id() {
 					v.Coord[0] = data.(map[string]interface{})["latlng"].([]interface{})[0].(float64)
 					v.Coord[1] = data.(map[string]interface{})["latlng"].([]interface{})[1].(float64)
 					log.Printf("Update position [taxi: %s, coord:[%f, %f]\n", k, v.Coord[0], v.Coord[1])
 				}
 			}
-		})
-
-		// TODO: 車位置アップデート
-		so.On("xxxxx", func(data interface{}) interface{} {
-			return nil
 		})
 
 		// TODO: 移動処理 (乗車〜降車まで)
@@ -288,6 +286,13 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 	ioserv.On("disconnection", func(so socketio.Socket) {
 		log.Printf("Disconnected from %s as %s\n", so.Request().RemoteAddr, so.Id())
 
+		// deregister socket in vehicleMap
+		for k, v := range vehicleMap {
+			if v.socket != nil && v.socket.Id() == so.Id() {
+				v.socket = nil
+				log.Printf("deregister socket: [taxi: %s]\n", k)
+			}
+		}
 	})
 
 	ioserv.On("error", func(so socketio.Socket, err error) {
@@ -305,13 +310,45 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 	}
 }
 
+// send each vehicle status to all vehicles
+func sendVehicleStatus(pitch int) {
+	for {
+		time.Sleep(time.Second * time.Duration(pitch))
+
+		// all vehicle status
+		m := map[string]interface{}{"vehicles": []interface{}{}}
+
+		// add each vehicle status
+		for _, v := range vehicleMap {
+			stat := map[string]interface{}{
+				"vehicle_id":   v.VehicleId,
+				"provider_id":  "onemile-provider",
+				"vehicle_type": v.VehicleType,
+				"status":       v.Status,
+				"coord":        v.Coord,
+			}
+			m["vehicles"] = append(m["vehicles"].([]interface{}), stat)
+		}
+
+		log.Printf("clt_vehicle_status: %v\n", m)
+
+		// broadcast to all vehicles
+		for k, v := range vehicleMap {
+			if v.socket != nil {
+				v.socket.Emit("clt_vehicle_status", m)
+				log.Printf("emit clt_vehicle_status: [taxi: %s]\n", k)
+			}
+		}
+	}
+}
+
 func main() {
 	flag.Parse()
 
 	// init vehicles
 	for i := 0; i < *n; i++ {
 		var id = fmt.Sprintf("%02d", i+1)
-		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}, ""}
+		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}, nil}
 	}
 
 	// set number of display
@@ -336,6 +373,10 @@ func main() {
 	wg.Add(1)
 	// start Websocket Server
 	go runSocketIOServer(rdClient, mktClient)
+
+	wg.Add(1)
+	// send each vehicle status to all vehicles
+	go sendVehicleStatus(*pitch)
 
 	wg.Wait()
 }
