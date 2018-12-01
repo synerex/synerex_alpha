@@ -3,6 +3,8 @@ package main
 // Daemon code for Synergic Exchange
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -22,7 +24,7 @@ import (
 	"github.com/kardianos/service"
 )
 
-var version = "0.03"
+var version = "0.04"
 var logger service.Logger
 var errlog *log.Logger
 var port = 9995
@@ -34,6 +36,8 @@ var server *gosocketio.Server = nil
 
 var providerMap map[string]*exec.Cmd
 var providerMutex sync.RWMutex
+
+var githubBranch string
 
 type SynerexService struct {
 }
@@ -127,13 +131,147 @@ func init() {
 			BinName: "ecotan-provider",
 			GoFiles: []string{"ecotan-provider.go"},
 		},
+		{
+			CmdName: "Onemile",
+			SrcDir: "provider/onemile",
+			BinName: "onemile-provider",
+			GoFiles: []string{"onemile-provider.go"},
+		},
 	}
 }
+
+
+// for Structures for Github json.
+type committer struct {
+	Name string
+}
+type headCommit struct {
+	Url       string
+	Timestamp string
+	Committer committer
+}
+type pusher struct {
+	Name string
+}
+type repository struct {
+	Name string
+}
+type data struct {
+	Ref         string
+	Head_commit headCommit
+	Pusher      pusher
+	Repository  repository
+}
+
+
+func githubHandler(w http.ResponseWriter, r *http.Request) {
+	status := 400
+	if r.Method == http.MethodPost {
+		bufbody := new(bytes.Buffer)
+		bufbody.ReadFrom(r.Body)
+		buf := bufbody.Bytes()
+		var d data
+		err := json.Unmarshal(buf, &d)
+		if err != nil {
+			return
+		}
+		logger.Infof("UnMarshaled WebHook from:%s",d.Repository.Name)
+		logger.Infof("Pusher    :%s",d.Pusher)
+		logger.Infof("Committer :%s",d.Head_commit.Committer.Name)
+		logger.Infof("URL       :%s",d.Head_commit.Url)
+ 		status = 200
+		if d.Ref == "refs/heads/"+githubBranch {
+			fmt.Println("Now staring rebuild and rerun.")
+			githubPullAndRun()
+		}
+	}
+	w.WriteHeader(status)
+}
+// for github end.
+
+
+func pullGithub() {
+
+	var cmd *exec.Cmd
+
+	runArgs := []string{"pull"}
+	cmd = exec.Command("git", runArgs...)
+
+	pipe, err := cmd.StderrPipe()
+	if err != nil {
+		logger.Infof("Error for getting stdout pipe %s\n", cmd.Args[0])
+		return
+	}
+	err = cmd.Start()
+	if err != nil {
+		logger.Infof("Error for executing %s %v\n", cmd.Args[0], err)
+		return
+	}
+	logger.Infof("Starting %s..\n", cmd.Args[0])
+
+	reader := bufio.NewReader(pipe)
+	for {
+		line, _, err := reader.ReadLine()
+		if err == io.EOF {
+			logger.Infof("Command [%s] EOF\n", "git")
+			break
+		} else if err != nil {
+			logger.Infof("Err %v\n", err)
+		}
+		logger.Infof("[%s]:%s", "git", string(line))
+	}
+	logger.Infof("[%s]:Now ending...", "git")
+
+	cmd.Wait()
+
+	logger.Infof("Command [%s] closed\n", "git")
+}
+
+
+// compile and rerun..
+func githubPullAndRun (){
+	//first get
+	//
+	var procs []string
+	i := 0
+
+	providerMutex.RLock()
+	for key, _ := range providerMap {
+		procs[i] = key
+		i+=1
+	}
+	providerMutex.RUnlock()
+
+	// stop running processes
+	handleStop(procs)
+
+	// then build and rerun
+//	cleanAll() need not to clean all?
+
+	// we need to pull!
+	pullGithub()
+
+	buildAll() // sometime it fails.. umm we need to fix it.
+
+	handleRun("NodeIDServer")
+	handleRun("MonitorServer")
+	handleRun("SynerexServer")
+
+	for _, proc := range procs{
+		if proc != "NodeIDServer" && proc != "MonitorServer" && proc !="SynerexServer"{
+			handleRun(proc)
+		}
+	}
+
+
+}
+
 
 func (sesrv *SynerexService) Start(s service.Service) error {
 	go sesrv.run()
 	return nil
 }
+
 
 // assetsFileHandler for static Data
 func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
@@ -455,6 +593,7 @@ func handleBuild(target []string) []string {
 	return resp
 
 }
+
 func handleClean(target []string) []string {
 	resp := make([]string, len(target))
 	for i, proc := range target {
@@ -467,6 +606,20 @@ func handleClean(target []string) []string {
 	}
 	return resp
 }
+
+func handleRuns(target []string) []string { // we need to think order of servers...
+	resp := make([]string, len(target))
+	for i, proc := range target {
+		if proc == "All" || proc == "all" {
+			resp[i]="-"
+		} else {
+			resp[i] = handleRun(proc)
+		}
+	}
+	return resp
+}
+
+
 
 func handleRun(target string) string {
 	for _, sc := range cmdArray {
@@ -635,6 +788,8 @@ func (sesrv *SynerexService) run() error {
 
 	serveMux.Handle("/socket.io/", server)
 	serveMux.HandleFunc("/", assetsFileHandler)
+	// for GitHub auto development
+	serveMux.HandleFunc( "/github/", githubHandler)
 
 	logger.Info("Starting Synerex Engine daemon on port ", port)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
@@ -703,6 +858,12 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 			// just build all codes for simplicity
 			cleanAll()
 			return "Clean all binaries", nil
+		case "github": // check
+			if 	len(os.Args) > 2 {
+				githubBranch = os.Args[2]
+			}
+			fmt.Println("Accept Github Webhook for branch "+githubBranch)
+//			return "Accept Github Webhook for branch "+githubBranch, nil
 		default:
 			return usage, nil
 		}
