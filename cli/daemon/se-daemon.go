@@ -727,6 +727,7 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 			if 	len(os.Args) > 2 {
 				githubBranch = os.Args[2]
 			}
+			fmt.Println("Accept Github Webhook for branch "+githubBranch)
 //			return "Accept Github Webhook for branch "+githubBranch, nil
 		default:
 			return usage, nil
