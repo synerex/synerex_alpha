@@ -163,6 +163,7 @@ type data struct {
 	Repository  repository
 }
 
+
 func githubHandler(w http.ResponseWriter, r *http.Request) {
 	status := 400
 	if r.Method == http.MethodPost {
@@ -185,6 +186,42 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // for github end.
+
+// compile and rerun..
+func githubPullAndRun (){
+	//first get
+	//
+	var procs []string
+	i := 0
+
+	providerMutex.RLock()
+	for key, _ := range providerMap {
+		procs[i] = key
+		i+=1
+	}
+	providerMutex.RUnlock()
+
+	// stop running processes
+	handleStop(procs)
+
+	// then build and rerun
+	cleanAll()
+
+	buildAll() // sometime it fails.. umm we need to fix it.
+
+	handleRun("nodeserv")
+	handleRun("monitor")
+	handleRun("synerex")
+
+	for _, proc := range procs{
+		if proc != "nodeserv" && proc != "monitor" && proc !="synerex"{
+			handleRun(proc)
+		}
+	}
+
+
+}
+
 
 func (sesrv *SynerexService) Start(s service.Service) error {
 	go sesrv.run()
@@ -512,6 +549,7 @@ func handleBuild(target []string) []string {
 	return resp
 
 }
+
 func handleClean(target []string) []string {
 	resp := make([]string, len(target))
 	for i, proc := range target {
@@ -524,6 +562,20 @@ func handleClean(target []string) []string {
 	}
 	return resp
 }
+
+func handleRuns(target []string) []string { // we need to think order of servers...
+	resp := make([]string, len(target))
+	for i, proc := range target {
+		if proc == "All" || proc == "all" {
+			resp[i]="-"
+		} else {
+			resp[i] = handleRun(proc)
+		}
+	}
+	return resp
+}
+
+
 
 func handleRun(target string) string {
 	for _, sc := range cmdArray {
