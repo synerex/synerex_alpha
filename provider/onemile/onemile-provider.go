@@ -49,6 +49,7 @@ type mission struct {
 	Title     string   `json:"title"`      // mission title (option)
 	Detail    string   `json:"detail"`     // mission detail (option)
 	Events    []*event `json:"events"`     // events
+	Accepted  bool     `json:"-"`          // mission accepted by client?
 }
 
 // event
@@ -59,6 +60,7 @@ type event struct {
 	EndTime     int64        `json:"end_time"`    // event end time (msec)
 	Destination string       `json:"destination"` // destination (option)
 	Route       [][2]float64 `json:"route"`       // routing (lat/lng)
+	Status      string       `json:"-"`           // [none | start | end]
 }
 
 // managed vehicles by onemile-provider
@@ -229,12 +231,39 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			}()
 
 			for k, v := range vehicleMap {
-				if v.socket.Id() == so.Id() {
+				if v.socket != nil && v.socket.Id() == so.Id() {
 					v.Coord[0] = data.(map[string]interface{})["latlng"].([]interface{})[0].(float64)
 					v.Coord[1] = data.(map[string]interface{})["latlng"].([]interface{})[1].(float64)
 					log.Printf("Update position [taxi: %s, coord:[%f, %f]\n", k, v.Coord[0], v.Coord[1])
 				}
 			}
+		})
+
+		// [Client] accept mission
+		so.On("clt_accept_mission", func(data interface{}) interface{} {
+			log.Printf("Receive clt_accept_mission from %s [%v]\n", so.Id(), data)
+
+			defer func() {
+				if err := recover(); err != nil {
+					log.Printf("panic clt_accept_mission: %s\n", err)
+					printStackTrace(2)
+				}
+			}()
+
+			for k, v := range vehicleMap {
+				if v.socket != nil && v.socket.Id() == so.Id() {
+					missionId := data.(map[string]interface{})["mission_id"].(string)
+
+					if v.mission.MissionId == missionId {
+						v.mission.Accepted = true
+						log.Printf("Mission accepted: [taxi: %s, missionId: %s]\n", k, missionId)
+
+						return map[string]interface{}{"code": 0}
+					}
+				}
+			}
+
+			return map[string]interface{}{"code": 1}
 		})
 
 		// TODO: 移動処理 (乗車〜降車まで)
