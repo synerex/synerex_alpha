@@ -142,13 +142,13 @@ func init() {
 
 
 // for Structures for Github json.
-type commiter struct {
+type committer struct {
 	Name string
 }
 type headCommit struct {
 	Url       string
 	Timestamp string
-	Committer commiter
+	Committer committer
 }
 type pusher struct {
 	Name string
@@ -167,7 +167,6 @@ type data struct {
 func githubHandler(w http.ResponseWriter, r *http.Request) {
 	status := 400
 	if r.Method == http.MethodPost {
-//		fmt.Println("Got Request\n%v\n",r.Body)
 		bufbody := new(bytes.Buffer)
 		bufbody.ReadFrom(r.Body)
 		buf := bufbody.Bytes()
@@ -188,7 +187,6 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(status)
 }
-
 // for github end.
 
 
