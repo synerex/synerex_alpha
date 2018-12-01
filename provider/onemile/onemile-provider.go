@@ -334,6 +334,16 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 	}
 }
 
+// utility function for emitting event to client
+func emitToClient(taxi, name string, payload interface{}) {
+	for k, v := range vehicleMap {
+		if taxi == k && v.socket != nil {
+			v.socket.Emit(name, payload)
+			log.Printf("emit %s: [taxi: %s, payload: %v]\n", name, k, payload)
+		}
+	}
+}
+
 // send each vehicle status to all vehicles
 func sendVehicleStatus(pitch int) {
 	for {
@@ -357,11 +367,8 @@ func sendVehicleStatus(pitch int) {
 		log.Printf("clt_vehicle_status: %v\n", m)
 
 		// broadcast to all vehicles
-		for k, v := range vehicleMap {
-			if v.socket != nil {
-				v.socket.Emit("clt_vehicle_status", m)
-				log.Printf("emit clt_vehicle_status: [taxi: %s]\n", k)
-			}
+		for k, _ := range vehicleMap {
+			emitToClient(k, "clt_vehicle_status", m)
 		}
 	}
 }
