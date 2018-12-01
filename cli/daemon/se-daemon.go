@@ -167,7 +167,7 @@ type data struct {
 func githubHandler(w http.ResponseWriter, r *http.Request) {
 	status := 400
 	if r.Method == http.MethodPost {
-		fmt.Println("Got Request\n%v\n",r.Body)
+//		fmt.Println("Got Request\n%v\n",r.Body)
 		bufbody := new(bytes.Buffer)
 		bufbody.ReadFrom(r.Body)
 		buf := bufbody.Bytes()
@@ -176,10 +176,11 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		fmt.Printf("UnMarshaled %v\n",d)
+		fmt.Printf("UnMarshaled WebHook: %v\n",d)
 		status = 200
 		if d.Ref == "refs/heads/"+githubBranch {
 			fmt.Println("Now staring rebuild and rerun.")
+			githubPullAndRun()
 		}
 	}
 	w.WriteHeader(status)
