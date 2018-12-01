@@ -175,10 +175,10 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		logger.Infof("UnMarshaled WebHook from:",d.Repository.Name)
-		logger.Infof("Pusher    :",d.Pusher)
-		logger.Infof("Committer :",d.Head_commit.Committer.Name)
-		logger.Infof("URL       :",d.Head_commit.Url)
+		logger.Infof("UnMarshaled WebHook from:%s",d.Repository.Name)
+		logger.Infof("Pusher    :%s",d.Pusher)
+		logger.Infof("Committer :%s",d.Head_commit.Committer.Name)
+		logger.Infof("URL       :%s",d.Head_commit.Url)
  		status = 200
 		if d.Ref == "refs/heads/"+githubBranch {
 			fmt.Println("Now staring rebuild and rerun.")
@@ -253,12 +253,12 @@ func githubPullAndRun (){
 
 	buildAll() // sometime it fails.. umm we need to fix it.
 
-	handleRun("nodeserv")
-	handleRun("monitor")
-	handleRun("synerex")
+	handleRun("NodeIDServer")
+	handleRun("MonitorServer")
+	handleRun("SynerexServer")
 
 	for _, proc := range procs{
-		if proc != "nodeserv" && proc != "monitor" && proc !="synerex"{
+		if proc != "NodeIDServer" && proc != "MonitorServer" && proc !="SynerexServer"{
 			handleRun(proc)
 		}
 	}
