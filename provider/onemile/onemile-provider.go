@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime"
 	"sync"
 
 	socketio "github.com/googollee/go-socket.io"
@@ -135,6 +136,16 @@ func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 	})
 }
 
+func printStackTrace(skip int) {
+	for depth := skip; ; depth++ {
+		_, file, line, ok := runtime.Caller(depth)
+		if !ok {
+			break
+		}
+		log.Printf("====> %d: %v:%d\n", depth, file, line)
+	}
+}
+
 // run Socket.IO server for Onemile-Client and Onemile-Display-Client
 func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 	ioserv, e := socketio.NewServer(nil)
@@ -148,6 +159,13 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 		// [Client] login
 		so.On("clt_login", func(data interface{}) interface{} {
 			log.Printf("Receive clt_login from %s [%v]\n", so.Id(), data)
+
+			defer func() {
+				if err := recover(); err != nil {
+					log.Printf("panic clt_login: %s\n", err)
+					printStackTrace(2)
+				}
+			}()
 
 			taxi := data.(map[string]interface{})["device_id"].(string)
 
@@ -174,6 +192,14 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 		// [Client] update position
 		so.On("clt_update_position", func(data interface{}) {
 			log.Printf("Receive clt_update_position from %s [%v]\n", so.Id(), data)
+
+			defer func() {
+				if err := recover(); err != nil {
+					log.Printf("panic clt_update_position: %s\n", err)
+					printStackTrace(2)
+				}
+			}()
+
 			for k, v := range vehicleMap {
 				if v.sockId == so.Id() {
 					v.Coord[0] = data.(map[string]interface{})["latlng"].([]interface{})[0].(float64)
