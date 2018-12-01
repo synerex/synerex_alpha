@@ -22,7 +22,7 @@ import (
 	"github.com/kardianos/service"
 )
 
-var version = "0.03"
+var version = "0.04"
 var logger service.Logger
 var errlog *log.Logger
 var port = 9995
@@ -34,6 +34,8 @@ var server *gosocketio.Server = nil
 
 var providerMap map[string]*exec.Cmd
 var providerMutex sync.RWMutex
+
+var githubBranch string
 
 type SynerexService struct {
 }
@@ -126,6 +128,12 @@ func init() {
 			SrcDir: "provider/kota-bus",
 			BinName: "ecotan-provider",
 			GoFiles: []string{"ecotan-provider.go"},
+		},
+		{
+			CmdName: "Onemile",
+			SrcDir: "provider/onemile",
+			BinName: "onemile-provider",
+			GoFiles: []string{"onemile-provider.go"},
 		},
 	}
 }
@@ -646,7 +654,7 @@ func (sesrv *SynerexService) run() error {
 	serveMux.Handle("/socket.io/", server)
 	serveMux.HandleFunc("/", assetsFileHandler)
 	// for GitHub auto development
-	serveMux.Handle( "/github/", githubHandler)
+	serveMux.HandleFunc( "/github/", githubHandler)
 
 	logger.Info("Starting Synerex Engine daemon on port ", port)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
@@ -715,6 +723,11 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 			// just build all codes for simplicity
 			cleanAll()
 			return "Clean all binaries", nil
+		case "github": // check
+			if 	len(os.Args) > 2 {
+				githubBranch = os.Args[2]
+			}
+			return "Accept Github Webhook for branch "+githubBranch, nil
 		default:
 			return usage, nil
 		}
