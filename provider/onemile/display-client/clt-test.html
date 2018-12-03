@@ -81,7 +81,7 @@
               } catch (e) {
                   alert(e);
               }
-          })
+          });
           
           // タクシー設定 (あれば)
           $("#taxi").val(q("taxi") ? q("taxi") : "")
@@ -91,31 +91,34 @@
     ul { list-style: none; padding-left: 0px; }
     .c1 { float: left; }
     .c2 { display: block; margin-left: 85px; }
+    #user, #passwd, #lat, #lng { width: 120px; }
+    #taxi { width: 30px; }
+    #mission_id, #event_id { width: 50px; }
     </style>
   </head>
   <body>
     <h3>ユーザ認証</h3>
     <ul>
-    <li><span class="c1">ユーザ名</span><span class="c2"><input id="user" type="text" value="anonymous" style="width: 120px"/></span>
-    <li><span class="c1">パスワード</span><span class="c2"><input id="passwd" type="text" value="" style="width: 120px"/></span>
-    <li><span class="c1">タクシー</span><span class="c2"><input id="taxi" type="text" value="" style="width: 30px"/></span>
+    <li><span class="c1">ユーザ名</span><span class="c2"><input id="user" type="text" value="anonymous"/></span>
+    <li><span class="c1">パスワード</span><span class="c2"><input id="passwd" type="text" value=""/></span>
+    <li><span class="c1">タクシー</span><span class="c2"><input id="taxi" type="text" value=""/></span>
     </ul>
     <input type="button" id="login" value="ログイン"/>
     <input type="button" id="logout" value="ログアウト"/>
     
     <h3>位置情報報告</h3>
 	<ul>
-	<li><span class="c1">緯度(y)</span><span class="c2"><input id="lat" type="text" style="width: 120px"/></span>
-	<li><span class="c1">経度(x)</span><span class="c2"><input id="lng" type="text" style="width: 120px"/></span>
+	<li><span class="c1">緯度(y)</span><span class="c2"><input id="lat" type="text"/></span>
+	<li><span class="c1">経度(x)</span><span class="c2"><input id="lng" type="text"/></span>
 	</ul>    
     <input type="button" id="update" value="更新"/>
     
     <h3>ミッション</h3>
     <ul>
 	<li><span class="c1">JSON</span><span class="c2"><textarea id="mission" cols="80" rows="10"></textarea></span>
-	<li><span class="c1"></span><span class="c2"><input type="button" id="register" value="登録"/></span>
-    <li><span class="c1">受入</span><span class="c2"><input id="mission_id" type="text" style="width: 50px"/><input type="button" id="accept" value="受入"/></span>
-	<li><span class="c1">イベント</span><span class="c2"><input id="event_id" type="text" style="width: 50px"/><input type="button" id="start" value="開始"/><input id="end" type="button" value="終了"/></span>
+	<li><span class="c1"></span><span class="c2"><input id="register" type="button" value="登録"/></span>
+    <li><span class="c1">受入</span><span class="c2"><input id="mission_id" type="text"/><input id="accept" type="button" value="受入"/></span>
+	<li><span class="c1">イベント</span><span class="c2"><input id="event_id" type="text"/><input id="start" type="button" value="開始"/><input id="end" type="button" value="終了"/></span>
     </ul>
     
   </body>
