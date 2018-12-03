@@ -288,8 +288,14 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 					if v.mission != nil && v.mission.MissionId == missionId {
 						for _, evt := range v.mission.Events {
 							if evt.EventId == eventId {
+								// update status
 								evt.Status = "start"
 								log.Printf("Event start: [tax: %s, missionId: %s, eventId: %s]\n", k, missionId, eventId)
+
+								// start display for marketing
+								if evt.EventType == "ride" {
+									dispMap[k].wg.Done()
+								}
 
 								return map[string]interface{}{"code": 0}
 							}
@@ -404,13 +410,14 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 		})
 
 		// [DEBUG] (register mission in clt-test.html)
-		so.On("clt_register_mission", func(data interface{}) {
+		so.On("clt_register_mission", func(data interface{}) (ret interface{}) {
 			log.Printf("Receive clt_register_mission from %s [%v]\n", so.Id(), data)
 
 			defer func() {
 				if err := recover(); err != nil {
 					log.Printf("panic clt_register_mission: %s\n", err)
 					printStackTrace(2)
+					ret = map[string]interface{}{"panic": err.(error).Error()}
 				}
 			}()
 
@@ -419,21 +426,27 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 					// convert to string
 					bytes, err := json.Marshal(data)
 					if err != nil {
-						log.Printf("[Marshal failed: %s\n", err)
-						return
+						log.Printf("Marshal failed: %s\n", err)
+						return map[string]interface{}{"code": 1}
 					}
 
 					// convert to mission
 					v.mission = &mission{}
 					err = json.Unmarshal(bytes, v.mission)
 					if err != nil {
-						log.Printf("[Unmarshal failed: %s\n", err)
-						return
+						log.Printf("Unmarshal failed: %s\n", err)
+						return map[string]interface{}{"code": 1}
 					}
 
+					emitToClient(k, "clt_request_mission", v.mission)
+
 					log.Printf("Mission registerd: [taxi: %s, mission: %#v]\n", k, v.mission)
+					return map[string]interface{}{"code": 0}
 				}
 			}
+
+			log.Printf("Mission ignored: [mission: %#v]\n", data)
+			return map[string]interface{}{"code": 1}
 		})
 	})
 
