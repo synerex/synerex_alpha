@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/synerex/synerex_alpha/api/routing"
 	"io"
 	"log"
 	"sync"
@@ -42,6 +43,7 @@ type DemandOpts struct {
 	Target uint64
 	Name   string
 	JSON   string
+	RoutingService *routing.RoutingService
 }
 
 // SupplyOpts is sender options for Supply
@@ -52,6 +54,7 @@ type SupplyOpts struct {
 	JSON      string
 	Fleet     *fleet.Fleet
 	PTService *ptransit.PTService
+	RoutingService *routing.RoutingService
 }
 
 func init() {
@@ -218,6 +221,25 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 		SupplyName: spo.Name,
 		ArgJson:    spo.JSON,
 	}
+
+	switch clt.MType {
+	case api.ChannelType_RIDE_SHARE:
+		spa := api.Supply_Arg_Fleet{
+			spo.Fleet,
+		}
+		sp.ArgOneof = &spa
+	case api.ChannelType_PT_SERVICE:
+		spa := api.Supply_Arg_PTService{
+			spo.PTService,
+		}
+		sp.ArgOneof = &spa
+	case api.ChannelType_ROUTING_SERVICE:
+		spa := api.Supply_Arg_RoutingService{
+			spo.RoutingService,
+		}
+		sp.ArgOneof = &spa
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	resp, err := clt.Client.ProposeSupply(ctx, sp)
@@ -230,11 +252,11 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 }
 
 // SelectSupply send select message to server
-func (clt *SMServiceClient) SelectSupply(sp *api.Supply) error {
+func (clt *SMServiceClient) SelectSupply(sp *api.Supply)  (uint64, error) {
 	tgt := &api.Target{
 		Id:       GenerateIntID(),
-		SenderId: uint64(clt.ClientID), // Should not use senderId! should use
-		TargetId: sp.SenderId,
+		SenderId: uint64(clt.ClientID),
+		TargetId: sp.Id,  /// Message Id of Supply (not SenderId),
 		Type:     sp.Type,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -242,7 +264,7 @@ func (clt *SMServiceClient) SelectSupply(sp *api.Supply) error {
 	resp, err := clt.Client.SelectSupply(ctx, tgt)
 	if err != nil {
 		log.Printf("%v.SelectSupply err %v", clt, err)
-		return err
+		return 0, err
 	}
 	log.Println("SelectSupply Response:", resp)
 	// if mbus is OK, start mbus!
@@ -251,14 +273,14 @@ func (clt *SMServiceClient) SelectSupply(sp *api.Supply) error {
 		//		clt.SubscribeMbus()
 	}
 
-	return nil
+	return	uint64(clt.MbusID), nil
 }
 
 // SelectDemand send select message to server
 func (clt *SMServiceClient) SelectDemand(dm *api.Demand) error {
 	tgt := &api.Target{
 		Id:       GenerateIntID(),
-		SenderId: uint64(dm.SenderId), // use senderId
+		SenderId: uint64(clt.ClientID),
 		TargetId: dm.Id,
 		Type:     dm.Type,
 	}
@@ -393,14 +415,24 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 		Ts:         ts,
 		ArgJson:    dmo.JSON,
 	}
+	switch clt.MType {
+	case api.ChannelType_ROUTING_SERVICE:
+		rsp := api.Demand_Arg_RoutingService{
+			dmo.RoutingService,
+		}
+		dm.ArgOneof = &rsp
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	resp, err := clt.Client.RegisterDemand(ctx, &dm)
+	_ , err := clt.Client.RegisterDemand(ctx, &dm)
+
+	//	resp, err := clt.Client.RegisterDemand(ctx, &dm)
 	if err != nil {
 		log.Printf("%v.RegisterDemand err %v", clt, err)
 		return 0
 	}
-	log.Println(resp)
+//	log.Println(resp)
 	dmo.ID = id // assign ID
 	return id
 }
@@ -429,16 +461,23 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 			smo.PTService,
 		}
 		dm.ArgOneof = &sp
+	case api.ChannelType_ROUTING_SERVICE:
+		sp := api.Supply_Arg_RoutingService{
+			smo.RoutingService,
+		}
+		dm.ArgOneof = &sp
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	resp, err := clt.Client.RegisterSupply(ctx, &dm)
+//	resp , err := clt.Client.RegisterSupply(ctx, &dm)
+
+	_, err := clt.Client.RegisterSupply(ctx, &dm)
 	if err != nil {
 		log.Printf("Error for sending:RegisterSupply to  Synerex Server as %v ", err)
 		return 0
 	}
-	log.Println("RegiterSupply:", smo, resp)
+//	log.Println("RegiterSupply:", smo, resp)
 	smo.ID = id // assign ID
 	return id
 }
