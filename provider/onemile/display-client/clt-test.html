@@ -82,6 +82,9 @@
                   alert(e);
               }
           });
+          $("#order").click(function() {
+              emit("clt_mission_event", {"mission_id": $("#mission_id").val(), "event_id": $("#event_id").val()});
+          });
           
           // タクシー設定 (あれば)
           $("#taxi").val(q("taxi") ? q("taxi") : "")
@@ -118,6 +121,7 @@
 	<li><span class="c1">JSON</span><span class="c2"><textarea id="mission" cols="80" rows="10"></textarea></span>
 	<li><span class="c1"></span><span class="c2"><input id="register" type="button" value="登録"/></span>
     <li><span class="c1">受入</span><span class="c2"><input id="mission_id" type="text"/><input id="accept" type="button" value="受入"/></span>
+	<li><span class="c1">指示</span><span class="c2"><input id="order" type="button" value="指示"/></span>
 	<li><span class="c1">イベント</span><span class="c2"><input id="event_id" type="text"/><input id="start" type="button" value="開始"/><input id="end" type="button" value="終了"/></span>
     </ul>
     
