@@ -23,7 +23,7 @@
           function emit(name, data, fn) {
         	  if (socket) {
           		  socket.emit(name, data, function(res) {
-          			  console.log("受信メッセージ(" + name + "): ", res);
+          			  console.log("ACK (" + name + "): ", res);
           			  if (typeof fn === "function") {
               			  fn(res);
           			  }
@@ -60,20 +60,24 @@
           
           // ミッション受入
           $("#accept").click(function() {
-        	 emit("clt_accept_mission", {"mission_id": $("#mission_id").val()}) 
+        	 emit("clt_accept_mission", {"mission_id": $("#mission_id").val()});
           });
           // イベント開始
           $("#start").click(function() {
-        	 emit("clt_start_mission_event", {"mission_id": $("#mission_id").val(), "event_id": $("#event_id").val()}) 
+        	 emit("clt_start_mission_event", {"mission_id": $("#mission_id").val(), "event_id": $("#event_id").val()}); 
           });
           // イベント終了
           $("#end").click(function() {
-        	 emit("clt_end_mission_event", {"mission_id": $("#mission_id").val(), "event_id": $("#event_id").val()}) 
+        	 emit("clt_end_mission_event", {"mission_id": $("#mission_id").val(), "event_id": $("#event_id").val()});
           });
           
           // [DEBUG] ミッション登録
           $("#register").click(function() {
-        	  emit("clt_register_mission", JSON.parse($("#mission").val().replace(/\r?\n/g, "\n")))
+              try {
+                  emit("clt_register_mission", JSON.parse($("#mission").val().replace(/\r?\n/g, "\n")));
+              } catch (e) {
+                  alert(e);
+              }
           })
           
           // タクシー設定 (あれば)
