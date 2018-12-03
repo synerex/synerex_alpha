@@ -365,10 +365,10 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 // utility function for emitting event to client
 func emitToClient(taxi, name string, payload interface{}) {
-	for k, v := range vehicleMap {
-		if taxi == k && v.socket != nil {
+	if v, ok := vehicleMap[taxi]; ok {
+		if v.socket != nil {
 			v.socket.Emit(name, payload)
-			log.Printf("emit %s: [taxi: %s, payload: %v]\n", name, k, payload)
+			log.Printf("emit %s: [taxi: %s, payload: %v]\n", name, taxi, payload)
 		}
 	}
 }
