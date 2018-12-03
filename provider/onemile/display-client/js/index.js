@@ -209,14 +209,21 @@ $(() => {
 
                         // JSON形式に整形する
                         const answers = [];
-
                         for (let key in hash) {
-                            const obj = {
-                                name: key,
-                                value: [
-                                    hash[key]
-                                ]
-                            };
+                            let obj = {};
+                            if (typeof hash[key] == 'object') {
+                                obj = {
+                                    name: key,
+                                    value: hash[key]
+                                };
+                            } else {
+                                obj = {
+                                    name: key,
+                                    value: [
+                                        hash[key]
+                                    ]
+                                };
+                            }
                             answers.push(obj);
                         }
 
