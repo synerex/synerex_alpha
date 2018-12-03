@@ -34,6 +34,10 @@ $(() => {
             switch (contents.type) {
                 case 'AD':
                     const ad = data.contents;
+
+                    // アンケートの表示を終了する
+                    $('form#questions').empty();
+
                     waiting();
 
                     // ループ処理を指定の秒数だけ待つための処理
@@ -71,50 +75,53 @@ $(() => {
                     $('#ad-area').children('img').attr('src', '');
 
                     // ForEach文
-                    Object.keys(questions).forEach((key) => {
+                    Object.keys(questions).forEach((i) => {
 
                         // Typeで場合分け
-                        switch (questions[key].type) {
+                        switch (questions[i].type) {
 
                             case "select":
 
-                                div[key] = $('<div></div>', { addClass: "form-group" });
-                                div[key].append('<label for="' + questions[key].name + '">' + questions[key].label + '</label>');
+                                div[i] = $('<div></div>', { addClass: "form-group" });
+                                div[i].append('<label for="' + questions[i].name + '">' + questions[i].label + '</label>');
 
                                 const select = $('<select></select>', {
-                                    name: questions[key].name,
-                                    id: questions[key].name,
+                                    name: questions[i].name,
+                                    id: questions[i].name,
                                     addClass: "form-control"
                                 });
 
-                                for (let value of questions[key].option.options) {
+                                for (let value of questions[i].option.options) {
                                     select.append('<option value="' + value.value + '">' + value.text + '</option>');
                                 }
 
-                                div[key].append(select);
+                                div[i].append(select);
                                 break;
 
                             case "checkbox":
 
-                                div[key] = $('<div></div>', { addClass: "form-group" });
-                                div[key].append('<p>' + questions[key].label + '</p>');
+                                div[i] = $('<div></div>', { addClass: "form-group" });
+                                div[i].append('<p>' + questions[i].label + '</p>');
 
-                                questions[key].option.options.forEach((value, index) => {
+                                // checkedされない場合のhidden checkbox
+                                div[i].append(`<input type="hidden" name="${questions[i].name}" id="${questions[i].name}_hidden" value="">`);
+
+                                questions[i].option.options.forEach((value, index) => {
                                     const divCheck = $('<div></div>', { addClass: "form-check" });
-                                    divCheck.append('<input class="form-check-input" type="checkbox" name="' + questions[key].name
-                                        + '" id="' + questions[key].name + index
+                                    divCheck.append('<input class="form-check-input" type="checkbox" name="' + questions[i].name
+                                        + '" id="' + questions[i].name + index
                                         + '" value="' + value.value
                                         + '">');
-                                    divCheck.append('<label class="form-check-label" for="' + questions[key].name + index + '">' + value.text + '</label>');
-                                    div[key].append(divCheck);
+                                    divCheck.append('<label class="form-check-label" for="' + questions[i].name + index + '">' + value.text + '</label>');
+                                    div[i].append(divCheck);
                                 });
 
                                 break;
 
                             case "range":
 
-                                div[key] = $('<div></div>', { addClass: "form-group" });
-                                div[key].append('<label>' + questions[key].label + '</label>');
+                                div[i] = $('<div></div>', { addClass: "form-group" });
+                                div[i].append('<label>' + questions[i].label + '</label>');
 
                                 const container = $('<div></div>', { addClass: "container" });
                                 const row = $('<div></div>', { addClass: "row" });
@@ -124,39 +131,39 @@ $(() => {
                                 col[1] = $('<div></div>', { addClass: "col" });
                                 col[2] = $('<div></div>', { addClass: "col" });
 
-                                col[0].append('<p class="text-right">' + questions[key].option.minText + '</p>');
+                                col[0].append('<p class="text-right">' + questions[i].option.minText + '</p>');
 
-                                col[1].append('<input class="custom-range" type="range" name="' + questions[key].name
-                                    + '" name="' + questions[key].name
-                                    + '" max="' + questions[key].option.max
-                                    + '" min="' + questions[key].option.min
+                                col[1].append('<input class="custom-range" type="range" name="' + questions[i].name
+                                    + '" name="' + questions[i].name
+                                    + '" max="' + questions[i].option.max
+                                    + '" min="' + questions[i].option.min
                                     + '">');
 
-                                col[2].append('<p>' + questions[key].option.maxText + '</p>');
+                                col[2].append('<p>' + questions[i].option.maxText + '</p>');
 
                                 for (let value of col) {
                                     row.append(value);
                                 }
 
                                 container.append(row);
-                                div[key].append(container);
+                                div[i].append(container);
 
                                 break;
 
                             case "textarea":
 
-                                div[key] = $('<div></div>', { addClass: "form-group" });
-                                div[key].append('<label for="' + questions[key].name + '">' + questions[key].label + '</label>');
-                                div[key].append('<textarea name="' + questions[key].name
-                                    + '" id="' + questions[key].name
+                                div[i] = $('<div></div>', { addClass: "form-group" });
+                                div[i].append('<label for="' + questions[i].name + '">' + questions[i].label + '</label>');
+                                div[i].append('<textarea name="' + questions[i].name
+                                    + '" id="' + questions[i].name
                                     + '" class="form-control'
-                                    + '" placeholder="' + questions[key].option.placeholder
+                                    + '" placeholder="' + questions[i].option.placeholder
                                     + '"></textarea>');
 
                                 break;
 
                             default:
-                                console.log(`switch文に case"${questions[key].type}" を追記してください。`);
+                                console.log(`switch文に case"${questions[i].type}" を追記してください。`);
                                 break;
                         }
 
