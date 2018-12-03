@@ -84,12 +84,12 @@ func sendAdMsg(client *sxutil.SMServiceClient) {
 			map[string]interface{}{
 				"type":   "AD",
 				"data":   url,
-				"period": 0,
+				"period": 10,
 			},
 			map[string]interface{}{
 				"type":   "AD",
 				"data":   "http://www.town.kota.lg.jp/images/content/28198/20151216-090405.jpg",
-				"period": 0,
+				"period": 10,
 			},
 		},
 	}

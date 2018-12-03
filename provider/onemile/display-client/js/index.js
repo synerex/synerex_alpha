@@ -28,29 +28,43 @@ $(() => {
 
             // StringからJSONにパースする
             data = JSON.parse(data);
-            console.dir(data);
 
             // 広告 or アンケート で場合分け
             const contents = data.contents[0];
             switch (contents.type) {
                 case 'AD':
-                    console.log('case "AD" is called');
                     const ad = data.contents;
-                    console.dir(ad);
-                    Object.keys(ad).forEach((key) => {
-                        $('#ad-area').children('img').attr('src', ad[key].data);
-                        console.log(`AD is ${ad[key].data}`);
-                        console.log('ForEach end')
-                    });
-                    emit("disp_complete", { command: "RESULTS", results: null });
+                    waiting();
+
+                    // ループ処理を指定の秒数だけ待つための処理
+                    function waiting() {
+
+                        // 全ての広告を表示したらループを終わる
+                        if (ad.length == 0) {
+                            emit("disp_complete", { command: "RESULTS", results: null });
+                            return;
+                        }
+
+                        // 配列の先頭の広告を読み込む
+                        const param = ad[0];
+
+                        // 広告を表示する
+                        $('#ad-area').children('img').attr('src', param.data);
+                        console.log(`広告表示中: ${param.data}`);
+
+                        // 表示し終わった広告を配列から取り除き、次に読み込む広告を先頭にする
+                        ad.shift();
+
+                        // 広告をperiod秒間表示してから次のループに移る
+                        setTimeout(() => {
+                            waiting();
+                        }, param.period * 1000);
+                    }
 
                     break;
 
                 case 'ENQ':
-                    console.log('case "ENQ" is called');
                     const questions = data.contents[0].data.questions;
-                    console.dir(questions);
-
                     const div = [];
 
                     // 広告の表示を終了する
@@ -172,9 +186,7 @@ $(() => {
                 default:
                     console.log('case "default" is called');
                     break;
-            }
-            // ここまで広告・アンケートの場合分け
-
+            } // ここまで広告・アンケートの場合分け
 
         });
     });
