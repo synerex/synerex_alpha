@@ -448,6 +448,35 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			log.Printf("Mission ignored: [mission: %#v]\n", data)
 			return map[string]interface{}{"code": 1}
 		})
+
+		// [DEBUG] (order first event in mission)
+		so.On("clt_mission_event", func(data interface{}) (ret interface{}) {
+			log.Printf("Receive clt_mission_event from %s [%v]\n", so.Id(), data)
+
+			defer func() {
+				if err := recover(); err != nil {
+					log.Printf("panic clt_mission_event: %s\n", err)
+					printStackTrace(2)
+					ret = map[string]interface{}{"panic": err.(error).Error()}
+				}
+			}()
+
+			missionId := data.(map[string]interface{})["mission_id"].(string)
+
+			for k, v := range vehicleMap {
+				if v.socket != nil && v.socket.Id() == so.Id() {
+					if v.mission.MissionId == missionId {
+						emitToClient(k, "clt_mission_event", v.mission.Events[0])
+
+						log.Printf("Event ordered: [taxi: %s, missionId: %s, eventId: %s]\n", k, missionId, v.mission.Events[0].EventId)
+						return map[string]interface{}{"code": 0}
+					}
+				}
+			}
+
+			log.Printf("Mission ignored: [missionId: %s]\n", missionId)
+			return map[string]interface{}{"code": 1}
+		})
 	})
 
 	ioserv.On("disconnection", func(so socketio.Socket) {
