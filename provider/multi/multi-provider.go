@@ -15,6 +15,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/synerex/synerex_alpha/api/fleet"
 	"log"
 	"strconv"
 	"sync"
@@ -71,15 +72,27 @@ func rideDemandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 
 	// we need to ask other provider for lowest ...
 
-	if dm.GetDemandName() == "" { // this is Select!
+	if dm.TargetId != 0 { // this is Select!
 		log.Println("getSelect!")
 		clt.Confirm(sxutil.IDType(dm.GetId()))
 	} else {
 		// select any ride share demand!
+
+		fleet := fleet.Fleet{
+			VehicleId: int32(10),
+			Angle:     float32(100),
+			Speed:     int32(20),
+			Status:    int32(0),
+			Coord: &fleet.Fleet_Coord{
+				Lat: float32(34.874364),
+				Lon: float32(137.1474168),
+			},
+		}
 		sp := &sxutil.SupplyOpts{
 			Target: dm.GetId(),
 			Name:   "RideShare by Taxi",
 			JSON:   `{"Price":` + strconv.Itoa(myPrice) + `,"Distance": 5200, "Arrival": 300, "Destination": 500, "Position":{"Latitude":36.6, "Longitude":135}}`,
+			Fleet: &fleet,
 		} // set TargetID as Demand.Id (User will check by them)
 
 		clt.ProposeSupply(sp)
