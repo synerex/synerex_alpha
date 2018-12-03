@@ -150,11 +150,13 @@ func (s *synerexServerInfo) ReserveSupply(c context.Context, tg *api.Target) (r 
 }
 
 func (s *synerexServerInfo) SelectSupply(c context.Context, tg *api.Target) (r *api.ConfirmResponse, e error) {
+	targetSender := s.messageStore.getSrcId(tg.GetTargetId()) // find source from Id
 	s.dmu.RLock()
-	ch, ok := s.demandMap[tg.Type][sxutil.IDType(tg.GetTargetId())]
+	ch, ok := s.demandMap[tg.Type][sxutil.IDType(targetSender)]
 	s.dmu.RUnlock()
 	if !ok {
 		r = &api.ConfirmResponse{Ok: false, Err: "Can't find demand target from SelectSupply"}
+		log.Printf("Can't find SelectSupply target ID %d, src %d", tg.GetTargetId(), targetSender)
 		e = errors.New("Cant find channel in SelectSupply")
 		return
 	}
@@ -223,11 +225,6 @@ func demandServerFunc(ch chan *api.Demand, stream api.Synerex_SubscribeDemandSer
 	for {
 		select {
 		case dm := <-ch: // may block until receiving info
-			if  dm.TargetId != 0{ // select Supply!
-				if sxutil.IDType(dm.TargetId) != id {
-					continue
-				}
-			}
 			err := stream.Send(dm)
 
 			if err != nil {
