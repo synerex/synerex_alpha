@@ -179,10 +179,47 @@ $(() => {
 
                     // JSON形式で送信
                     $('button#submitJson').on('click', () => {
-                        const answers = $('form#questions').serializeArray();
-                        Object.keys(answers).forEach((i) => {
-                            console.log(answers[i]);
+                        const serialized = $('form#questions').serializeArray();
+                        const hash = {};
+
+                        Object.keys(serialized).forEach((i) => {
+                            const key = serialized[i].name;
+                            const value = serialized[i].value;
+                            const array = [];
+
+                            // keyが重複するか判定する
+                            if (key in hash) {
+
+                                // 既に存在するkeyのvalueを配列に保存する
+                                for(let val of hash[key]) {
+                                    array.push(val);
+                                }
+
+                                // 新たに追加するvalueを配列に格納する
+                                array.push(value);
+
+                                // 全てのvalueを格納する
+                                hash[key] = array;
+
+                            } else {
+                                // keyが重複しないので普通にvalueを格納
+                                hash[key] = value;
+                            }
                         });
+
+                        // JSON形式に整形する
+                        const answers = [];
+
+                        for (let key in hash) {
+                            const obj = {
+                                name: key,
+                                value: [
+                                    hash[key]
+                                ]
+                            };
+                            answers.push(obj);
+                        }
+
                         emit("disp_complete", { command: "RESULTS", results: { answers } });
                         alert('ありがとうございました！');
                         $('form#questions')[0].reset();
