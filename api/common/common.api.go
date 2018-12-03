@@ -45,6 +45,31 @@ func deg2rad(deg float64) float64 {
 	return deg * math.Pi / 180.0
 }
 
+// direct calc distance using lon/lat
+func  DistanceLonLat(lon1 float64 ,lat1 float64 , lon2 float64 ,lat2 float64) float64 {
+	a := 6378137.000
+	b := 6356752.314
+	e := math.Sqrt((math.Pow(a, 2) - math.Pow(b, 2)) / math.Pow(a, 2))
+
+	x1 := deg2rad(lon1)
+	y1 := deg2rad(lat1)
+	x2 := deg2rad(lon2)
+	y2 := deg2rad(lat2)
+
+	dy := y1 - y2
+	dx := x1 - x2
+	uy := (y1 + y2) / 2.0
+
+	W := math.Sqrt(1 - math.Pow(e, 2)*math.Pow(math.Sin(uy), 2))
+	M := a * (1 - math.Pow(e, 2)) / math.Pow(W, 3)
+	N := a / W
+
+	d := math.Sqrt(math.Pow(dy*M, 2) + math.Pow(dx*N*math.Cos(uy), 2))
+
+	return d
+}
+
+
 // calculate distance using Hubeny formula.
 func (p1 *Point) Distance(p2 *Point) (float64, error) {
 	a := 6378137.000
@@ -111,4 +136,46 @@ func (t *Time) WithPeriods(periods []*Period) *Time {
 func (t *Time) WithOtherTime(other OtherTime) *Time {
 	t.Value = &Time_Other{other}
 	return t
+}
+
+
+//
+func (pt1 *Point ) AddPoint(pt2 *Point) *Point {
+	pt1.Latitude +=  pt2.Latitude
+	pt1.Longitude += pt2.Longitude
+	return pt1
+}
+
+func (pt1 *Point ) DividePoint(d float64) *Point {
+	pt1.Latitude = pt1.Longitude / d
+	pt1.Longitude = pt1.Longitude / d
+	return pt1
+}
+
+
+//
+func (p *Place)GetCentralPoint() *Point{
+	pt := p.GetPoint()
+	if pt != nil {
+		return pt
+	}
+	ars := p.GetAreas()
+	if ars == nil {
+		//  point format error
+		return nil
+	}
+	// Calc center of ar.
+	ar := ars.GetValues()
+	pt = new(Point)
+	n := 0
+	for _, a := range ar {
+		pts := a.GetPoints()
+		for _, p := range pts {
+			pt.AddPoint(p)
+			n += 1
+		}
+	}
+	pt.DividePoint(float64(n))
+
+	return pt
 }

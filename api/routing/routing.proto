@@ -12,10 +12,12 @@ import "common/common.proto";
 message RoutingService
 { // Routing Service
   int32 operator_id = 1;
-  api.common.Place depart_point = 4;
-  api.common.Place arrive_point = 5;
+  api.common.Place depart_place = 4;
+  api.common.Place arrive_place = 5;
   api.common.Time depart_time = 6;
   api.common.Time arrive_time = 7;
   google.protobuf.Duration amount_time = 8;
   google.protobuf.Duration delay_time = 13;
+  repeated api.common.Point points = 15;
 }
+
