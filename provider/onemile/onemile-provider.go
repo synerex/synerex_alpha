@@ -288,8 +288,14 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 					if v.mission != nil && v.mission.MissionId == missionId {
 						for _, evt := range v.mission.Events {
 							if evt.EventId == eventId {
+								// update status
 								evt.Status = "start"
 								log.Printf("Event start: [tax: %s, missionId: %s, eventId: %s]\n", k, missionId, eventId)
+
+								// start display for marketing
+								if evt.EventType == "ride" {
+									dispMap[k].wg.Done()
+								}
 
 								return map[string]interface{}{"code": 0}
 							}
