@@ -158,11 +158,11 @@ $(() => {
 
                     // JSON形式で送信
                     $('button#submitJson').on('click', () => {
-                        const json = $('form#questions').serializeArray();
-                        Object.keys(json).forEach((key) => {
-                            console.log(json[key]);
+                        const answers = $('form#questions').serializeArray();
+                        Object.keys(answers).forEach((i) => {
+                            console.log(answers[i]);
                         });
-                        // emit("disp_complete", { command: "RESULTS", results: {} });
+                        emit("disp_complete", { command: "RESULTS", results: { answers } });
                         alert('ありがとうございました！');
                         $('form#questions')[0].reset();
                     });
