@@ -43,6 +43,9 @@
                   socket.on("clt_request_mission", function(data) {
                       console.log("受信メッセージ (clt_request_mission): ", data);
                   });
+                  socket.on("clt_mission_event", function(data) {
+                      console.log("受信メッセージ (clt_mission_event): ", data);
+                  });
               }
         	  emit("clt_login", {username: $("#user").val(), password: $("#passwd").val(), device_id: $("#taxi").val()})
           });
