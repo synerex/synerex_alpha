@@ -2,59 +2,77 @@
   "answers": [
     {
       "name": "age",
-      "value": "20"
+      "value": [
+        "20"
+      ]
     },
     {
       "name": "sex",
-      "value": "1"
+      "value": [
+        "1"
+      ]
     },
     {
       "name": "occupation",
-      "value": "2"
+      "value": [
+        "2"
+      ]
     },
     {
       "name": "transportation",
-      "value": "4"
-    },
-    {
-      "name": "transportation",
-      "value": "6"
-    },
-    {
-      "name": "transportation",
-      "value": "7"
+      "value": [
+        "4",
+        "6",
+        "7"
+      ]
     },
     {
       "name": "fivegrade1",
-      "value": "3"
+      "value": [
+        "3"
+      ]
     },
     {
       "name": "fivegrade2",
-      "value": "4"
+      "value": [
+        "4"
+      ]
     },
     {
       "name": "fivegrade3",
-      "value": "4"
+      "value": [
+        "4"
+      ]
     },
     {
       "name": "fivegrade4",
-      "value": "3"
+      "value": [
+        "3"
+      ]
     },
     {
       "name": "fivegrade5",
-      "value": "4"
+      "value": [
+        "4"
+      ]
     },
     {
       "name": "fivegrade6",
-      "value": "4"
+      "value": [
+        "4"
+      ]
     },
     {
       "name": "thoughts",
-      "value": "先進的な実験で貴重な体験ができました。"
+      "value": [
+        "先進的な実験で貴重な体験ができました。"
+      ]
     },
     {
       "name": "cost",
-      "value": "500"
+      "value": [
+        "500"
+      ]
     }
   ]
 }
