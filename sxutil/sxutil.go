@@ -379,10 +379,12 @@ func (clt *SMServiceClient) SubscribeMbus(ctx context.Context, mbcb func(*SMServ
 }
 
 func (clt *SMServiceClient) SendMsg(ctx context.Context, msg *api.MbusMsg) error {
-	msg.SenderId = uint64(clt.ClientID)
 	if clt.MbusID == 0 {
 		return errors.New("No Mbus opened!")
 	}
+	msg.MsgId = GenerateIntID()
+	msg.SenderId = uint64(clt.ClientID)
+	msg.MbusId = uint64(clt.MbusID)
 	_, err := clt.Client.SendMsg(ctx, msg)
 
 	return err
@@ -498,6 +500,7 @@ func (clt *SMServiceClient) Confirm(id IDType) error {
 		log.Printf("%v Confirm Failier %v", clt, err)
 		return err
 	}
+	clt.MbusID = id
 	log.Println("Confirm Success:", resp)
 	return nil
 }

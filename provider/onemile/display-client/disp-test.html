@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Onemile-Display-Client Test Page</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script>
+      // クエリ文字列の取得
+      function q(name, url) {
+    	  if (!url) url = window.location.href;
+    	  name = name.replace(/[\[\]]/g, "\\$&");
+    	  var results = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)").exec(url);
+    	  if (!results) return null;
+    	  if (!results[2]) return '';
+    	  return decodeURIComponent(results[2].replace(/\+/g, " "));
+      }
+      
+      $(function() {
+          var socket = null;
+
+          // イベント送信
+          function emit(name, data) {
+        	  if (socket && socket.connected) {
+        		  socket.emit(name, data);
+        		  console.log("送信メッセージ(" + name + "): ", data);
+        	  }
+          }
+
+          // 接続・切断
+          $("#connect").click(function() {
+              socket = io({transports: ["websocket"]});
+
+              socket.on("disp_start", function(data) {
+    		      console.log("受信メッセージ: ", data)		  
+              });
+          });
+          $("#disconnect").click(function() {
+        	  socket.close()
+          });
+          
+          // 搭載車両登録
+          $("#register").click(function() {
+        	  emit("disp_register", {taxi: $("#taxi").val(), disp: $("#disp").val()});
+          });
+          // 完了
+          $("#complete").click(function() {
+        	  emit("disp_complete", {command: "RESULTS", results: null});
+          });
+
+          // 出発
+          $("#depart").click(function() {
+        	  emit("depart", {taxi: $("#taxi").val()});
+          });
+          // 到着
+          $("#arrive").click(function() {
+        	  emit("arrive", {taxi: $("#taxi").val()});
+          })
+          
+          // タクシー・ディスプレイ設定 (あれば)
+          var taxi = q("taxi"), disp = q("disp");
+          if (taxi) $("#taxi").val(taxi);
+          if (disp) $("#disp").val(disp);
+      });
+    </script>
+  </head>
+  <body>
+    <h3>サーバ接続</h3>
+    <input type="button" id="connect" value="接続"></input>
+    <input type="button" id="disconnect" value="切断"></input>
+
+    <h3>搭載車両登録</h3>
+    タクシー: <input id="taxi" type="text" style="width: 30px"/>
+    ディスプレイ: <input id="disp" type="text" style="width: 30px"/>
+    <input type="button" id="register" value="登録"></input>
+    
+    <h3>発着</h3>
+    <input type="button" id="depart" value="出発"></input>
+    <input type="button" id="arrive" value="到着"></input>
+    
+    <h3>広告・アンケート</h3>
+    <input type="button" id="complete" value="完了"></input>
+  </body>
+</html>
