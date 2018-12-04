@@ -41,6 +41,7 @@ type vehicle struct {
 	Coord       [2]float64      `json:"coord"`        // current position (lat/lng)
 	socket      socketio.Socket `json:"-"`            // Socket.IO socket
 	mission     *mission        `json:"-"`            // assigned mission
+	mu          sync.RWMutex    `json:"-"`            // mutex lock for vehicle read/write
 }
 
 // mission
@@ -579,7 +580,7 @@ func main() {
 	// init vehicles
 	for i := 0; i < *n; i++ {
 		var id = fmt.Sprintf("%02d", i+1)
-		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}, nil, nil}
+		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}, nil, nil, sync.RWMutex{}}
 	}
 
 	// set number of display
