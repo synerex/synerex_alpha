@@ -45,11 +45,11 @@ type vehicle struct {
 
 // mission
 type mission struct {
-	MissionId string   `json:"mission_id"` // mission id
-	Title     string   `json:"title"`      // mission title (option)
-	Detail    string   `json:"detail"`     // mission detail (option)
-	Events    []*event `json:"events"`     // events
-	Accepted  bool     `json:"-"`          // mission accepted by client?
+	MissionId string  `json:"mission_id"` // mission id
+	Title     string  `json:"title"`      // mission title (option)
+	Detail    string  `json:"detail"`     // mission detail (option)
+	Events    []event `json:"events"`     // events
+	Accepted  bool    `json:"-"`          // mission accepted by client?
 }
 
 // event
@@ -438,7 +438,8 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 						return map[string]interface{}{"code": 1}
 					}
 
-					emitToClient(k, "clt_request_mission", v.mission)
+					// don't use v.mission because field name will be unmatch for struct tag
+					emitToClient(k, "clt_request_mission", data)
 
 					log.Printf("Mission registerd: [taxi: %s, mission: %#v]\n", k, v.mission)
 					return map[string]interface{}{"code": 0}
