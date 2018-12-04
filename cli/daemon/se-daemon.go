@@ -159,7 +159,7 @@ func init() {
 			CmdName: "Routing",
 			SrcDir: "provider/routing",
 			BinName: "routing-provider",
-			GoFiles: []string{"routing-provider.go"},
+			GoFiles: []string{"routing-provider.go","timetable.go", "busTimetable.go"},
 		},
 	}
 }
