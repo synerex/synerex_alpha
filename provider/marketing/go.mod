@@ -15,6 +15,8 @@ replace (
 	github.com/synerex/synerex_alpha/api/library => ../../api/library
 	github.com/synerex/synerex_alpha/api/ptransit => ../../api/ptransit
 	github.com/synerex/synerex_alpha/api/rideshare => ../../api/rideshare
+	github.com/synerex/synerex_alpha/api/routing => ../../api/routing
+
 	github.com/synerex/synerex_alpha/nodeapi => ../../nodeapi
 	github.com/synerex/synerex_alpha/provider/marketing/data => ./data
 	github.com/synerex/synerex_alpha/sxutil => ../../sxutil
