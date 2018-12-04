@@ -8,6 +8,19 @@ function q(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
+// モーダルダイアログ
+$(() => {
+    $('#connection-area').dialog({
+        modal: true,
+        title: "初期設定",
+        buttons: {
+            "閉じる": function () {
+                $(this).dialog("close");
+            }
+        }
+    });
+});
+
 $(() => {
     var socket = null;
 
@@ -191,7 +204,7 @@ $(() => {
                             if (key in hash) {
 
                                 // 既に存在するkeyのvalueを配列に保存する
-                                for(let val of hash[key]) {
+                                for (let val of hash[key]) {
                                     array.push(val);
                                 }
 
@@ -208,7 +221,7 @@ $(() => {
                         });
 
                         // JSON形式に整形する
-                        const answers = [];
+                        let answers = [];
                         for (let key in hash) {
                             let obj = {};
                             if (typeof hash[key] == 'object') {
@@ -226,6 +239,7 @@ $(() => {
                             }
                             answers.push(obj);
                         }
+                        answers = JSON.stringify(answers);
 
                         emit("disp_complete", { command: "RESULTS", results: { answers } });
                         alert('ありがとうございました！');
