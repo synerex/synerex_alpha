@@ -84,12 +84,15 @@ func routingDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	if dm.TargetId != 0 { // check for my data
 
 		log.Printf("Got SelectSupply %d", dm.TargetId)
+		mu.Lock()
 		if _, ok := spMap[dm.TargetId]; ok {
 			log.Printf("Send Confirm ")
 			clt.Confirm(sxutil.IDType(dm.Id))
+			delete(spMap, dm.TargetId)
 		}else{
 			log.Printf("Can't find select spply ID")
 		}
+		mu.Unlock()
 		return
 	}
 
