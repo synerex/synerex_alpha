@@ -41,15 +41,16 @@ type vehicle struct {
 	Coord       [2]float64      `json:"coord"`        // current position (lat/lng)
 	socket      socketio.Socket `json:"-"`            // Socket.IO socket
 	mission     *mission        `json:"-"`            // assigned mission
+	mu          sync.RWMutex    `json:"-"`            // mutex lock for vehicle read/write
 }
 
 // mission
 type mission struct {
-	MissionId string   `json:"mission_id"` // mission id
-	Title     string   `json:"title"`      // mission title (option)
-	Detail    string   `json:"detail"`     // mission detail (option)
-	Events    []*event `json:"events"`     // events
-	Accepted  bool     `json:"-"`          // mission accepted by client?
+	MissionId string  `json:"mission_id"` // mission id
+	Title     string  `json:"title"`      // mission title (option)
+	Detail    string  `json:"detail"`     // mission detail (option)
+	Events    []event `json:"events"`     // events
+	Accepted  bool    `json:"-"`          // mission accepted by client?
 }
 
 // event
@@ -75,6 +76,34 @@ type display struct {
 
 // taxi/display mapping
 var dispMap = make(map[string]*display)
+
+// convert mission to map
+func (m *mission) toMap() map[string]interface{} {
+	return map[string]interface{}{
+		"mission_id": m.MissionId,
+		"title":      m.Title,
+		"detail":     m.Detail,
+		"events": func(events []event) []map[string]interface{} {
+			ret := make([]map[string]interface{}, len(events))
+			for _, evt := range events {
+				ret = append(ret, evt.toMap())
+			}
+			return ret
+		}(m.Events),
+	}
+}
+
+// convert event to map
+func (e event) toMap() map[string]interface{} {
+	return map[string]interface{}{
+		"event_id":    e.EventId,
+		"event_type":  e.EventType,
+		"start_time":  e.StartTime,
+		"end_time":    e.EndTime,
+		"destination": e.Destination,
+		"route":       e.Route,
+	}
+}
 
 // utility function for converting time in milliseconds
 func toMillis(t time.Time) int64 {
@@ -334,7 +363,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 								// emit next event
 								if i != len(v.mission.Events)-1 {
-									emitToClient(k, "clt_mission_event", v.mission.Events[i+1])
+									emitToClient(k, "clt_mission_event", v.mission.Events[i+1].toMap())
 								}
 
 								return map[string]interface{}{"code": 0}
@@ -438,7 +467,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 						return map[string]interface{}{"code": 1}
 					}
 
-					emitToClient(k, "clt_request_mission", v.mission)
+					emitToClient(k, "clt_request_mission", v.mission.toMap())
 
 					log.Printf("Mission registerd: [taxi: %s, mission: %#v]\n", k, v.mission)
 					return map[string]interface{}{"code": 0}
@@ -466,7 +495,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			for k, v := range vehicleMap {
 				if v.socket != nil && v.socket.Id() == so.Id() {
 					if v.mission.MissionId == missionId {
-						emitToClient(k, "clt_mission_event", v.mission.Events[0])
+						emitToClient(k, "clt_mission_event", v.mission.Events[0].toMap())
 
 						log.Printf("Event ordered: [taxi: %s, missionId: %s, eventId: %s]\n", k, missionId, v.mission.Events[0].EventId)
 						return map[string]interface{}{"code": 0}
@@ -551,7 +580,7 @@ func main() {
 	// init vehicles
 	for i := 0; i < *n; i++ {
 		var id = fmt.Sprintf("%02d", i+1)
-		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}, nil, nil}
+		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}, nil, nil, sync.RWMutex{}}
 	}
 
 	// set number of display
