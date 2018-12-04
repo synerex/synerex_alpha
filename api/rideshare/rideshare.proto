@@ -13,27 +13,38 @@ message RideShare {
     api.common.Time  depart_time = 3;
     api.common.Time  arrive_time = 4;
     uint32 num_adult = 5;
-    uint32 num_childe = 6;
+    uint32 num_child = 6;
     repeated Route routes = 7;
     uint32 amount_price = 8;
 }
 
 message Route {
     TrafficType traffic_type = 1;
-    string transport_name = 2;
-    string transport_line = 3;
-    api.common.Place depart_point = 4;
-    api.common.Place arrive_point = 5;
-    api.common.Time depart_time = 6;
-    api.common.Time arrive_time = 7;
-    google.protobuf.Duration amount_time = 8;
-    uint32 amount_price = 9;
-    uint32 amount_sheets = 10;
-    uint32 available_sheets = 11;
+    StatusType status_type = 2;
+    string transport_name = 3;
+    string transport_line = 4;
+    string destination = 5;
+    api.common.Place depart_point = 6;
+    api.common.Place arrive_point = 7;
+    api.common.Time depart_time = 8;
+    api.common.Time arrive_time = 9;
+    google.protobuf.Duration amount_time = 10;
+    uint32 amount_price = 11;
+    uint32 amount_sheets = 12;
+    uint32 available_sheets = 13;
+    repeated api.common.Point points = 15;
+
 }
 
 enum TrafficType {
     TAXI = 0;
     BUS = 1;
     TRAIN = 2;
+}
+
+enum StatusType {
+    FREE = 0;
+    PICKUP = 1;
+    RIDE = 2;
+    FULL = 3;
 }

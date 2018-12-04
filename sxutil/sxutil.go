@@ -57,6 +57,7 @@ type SupplyOpts struct {
 	Fleet     *fleet.Fleet
 	PTService *ptransit.PTService
 	RoutingService *routing.RoutingService
+	RideShare *rideshare.RideShare
 }
 
 func init() {

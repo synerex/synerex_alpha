@@ -120,15 +120,17 @@ func findClosestStation(pt0 *common.Point) int32{
 
 	for i, st := range stops{
 		pt := new(common.Point)
-		pt.Latitude = st.points[0]
-		pt.Longitude = st.points[1]
+		pt.Latitude = st.points[1]
+		pt.Longitude = st.points[0]
 		dt, _ := pt0.Distance(pt)
 		if dt < minDist {
 			minDist = dt
 			minIx = i
 		}
+//		log.Printf("%f, min %f",dt, minDist)
 	}
 	if minIx != -1{
+		log.Printf("find closest station from %v to %d",*pt0, stops[minIx].id)
 		return stops[minIx].id
 	}
 	return 0

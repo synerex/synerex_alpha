@@ -28,29 +28,29 @@ var busStops = []BusStop{
 //	{1,"横落郷前","13:37",34.86381,137.1724},
 //	{1,"横落児童館","13:37",34.86573,137.1744},
 //	{1,"町民会館・図書館","13:40",34.87212,137.1801},
-	{1,"町民会館南",0,"13:41",34.87101,137.1774},
+	{1,"町民会館南",10,"13:41",34.87101,137.1774},
 //	{1,"商工会館西","13:43",34.87124,137.1752},
 //	{1,"大草松山（医療団地内）","13:44",34.87389,137.174},
 //	{1,"菱池矢尻","13:46",34.87475,137.1722},
 //	{1,"こうた眼科クリニック","13:47",34.87669,137.1712},
-	{1,"幸田小学校",1,"13:47",34.87953,137.1719},
+	{1,"幸田小学校",11,"13:47",34.87953,137.1719},
 //	{1,"大草大正","13:48",34.88339,137.1723},
 //	{1,"高力熊谷","13:49",34.88707,137.1691},
 //	{1,"むらかみ整形外科","13:50",34.89168,137.1676},
 //	{1,"カメリアガーデン東","13:52",34.88844,137.1641},
-	{1,"ＪＲ相見駅",2,"13:53",34.88746,137.1606},
+	{1,"ＪＲ相見駅",12,"13:53",34.88746,137.1606},
 
-	{2,"ＪＲ相見駅",2,"14:10",34.88746,137.1606},
+	{2,"ＪＲ相見駅",12,"14:10",34.88746,137.1606},
 //	{2,"カメリアガーデン西","14:12",34.8885,137.164},
 //	{2,"むらかみ整形外科","14:14",34.89181,137.1677},
 //	{2,"高力熊谷","14:15",34.88729,137.1689},
 //	{2,"大草大正","14:16",34.88337,137.1724},
-	{2,"幸田小学校",1,"14:17",34.87925,137.1719},
+	{2,"幸田小学校",11,"14:17",34.87925,137.1719},
 //	{2,"こうた眼科クリニック","14:17",34.87702,137.1714},
 //	{2,"菱池矢尻","14:18",34.87475,137.1722},
 //	{2,"大草松山（医療団地内）","14:20",34.87389,137.174},
 //	{2,"商工会館西","14:21",34.87134,137.1751},
-	{2,"町民会館南",0,"14:23",34.87101,137.1774},
+	{2,"町民会館南",10,"14:23",34.87101,137.1774},
 //	{2,"町民会館・図書館","14:24",34.87212,137.1801},
 //	{2,"横落児童館","14:26",34.86574,137.1745},
 //	{2,"横落郷前","14:26",34.86368,137.1723},
@@ -73,6 +73,9 @@ func init (){
 		}
 		busStopTime = append(busStopTime, st)
 	}
+
+	fmt.Printf("stops: %v",busStopTime)
+
 }
 
 //
@@ -103,7 +106,7 @@ func getBusStopTimesByStation(fst int32, est int32) []StopTime{
 }
 
 
-func findClosestBusStop(pt0 *common.Point) int{
+func findClosestBusStop(pt0 *common.Point) int32{
 	minDist := 100000.0
 	minIx := -1
 
@@ -118,7 +121,7 @@ func findClosestBusStop(pt0 *common.Point) int{
 		}
 	}
 	if minIx != -1{
-		return busStops[minIx].id
+		return int32(busStops[minIx].id)
 	}
 	return 0
 }
@@ -136,10 +139,12 @@ func filterBusTrip(sts []StopTime, tripid int32)[]StopTime{
 
 func findDepartureBusTrip(stFrom int32, stTo int32, dmin int32) []StopTime{
 	var minTrip int32
-	minTime := int32(100000)
+	minTime := int32(100000000)
 
 	sts := getBusStopTimesByStation(stFrom, stTo)
+	log.Printf("Get Staions : %d  %d->%d  time:%d",len(sts), stFrom, stTo, dmin)
 	for _, st := range sts {
+
 		if st.stop_id == stFrom && dmin < st.departure_min {
 			if st.departure_min-dmin < minTime {
 				minTime = st.departure_min - dmin
@@ -187,18 +192,20 @@ func getBusStopPoint(stopid int32) *common.Point {
 
 func getBusRouteFromTime(from *common.Point,to *common.Point, departMin int32, arriveMin int32 ) *rideshare.Route {
 	var sts []StopTime
-	stFrom := findClosestStation(from)
-	stTo := findClosestStation(to)
+	stFrom := findClosestBusStop(from)
+	stTo := findClosestBusStop(to)
 
-	if stFrom == 0 || stTo == 0 {
-		log.Printf("Can't find proper station")
+	if stFrom == 0 || stTo == 0  || stFrom == stTo {
+		log.Printf("Can't find proper station %d, %d", stFrom, stTo)
 		return nil
 	}
 
 	if departMin > 0 { // find from departure
+	log.Printf("Departure %d", departMin)
 		sts = findDepartureBusTrip(stFrom, stTo, departMin)
 
 	}else if arriveMin > 0 { // find from arrival
+		log.Printf("Arrival")
 		sts = findArrivalBusTrip(stFrom, stTo, arriveMin)
 	}else {
 		log.Printf("Time not specified.")
@@ -233,7 +240,7 @@ func getBusRouteFromTime(from *common.Point,to *common.Point, departMin int32, a
 		return rt
 	}
 
-
+	log.Printf("Can't make bus stations %d", len(sts))
 	return nil
 	// now we have single trip.
 }
