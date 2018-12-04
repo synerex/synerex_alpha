@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"sync"
 	"time"
 
@@ -24,6 +25,8 @@ var (
 	dmMap      map[uint64]*sxutil.DemandOpts
 	send       bool
 	wg         sync.WaitGroup
+	layout     = "2006-01-02 15:04:05"
+	logFile    = "anslog.txt"
 )
 
 func init() {
@@ -53,6 +56,17 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 			sendEnqMsg(clt)
 		}
 		send = !send
+
+		if data["results"] != nil {
+			file, err := os.OpenFile("anslog.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer file.Close()
+			t := time.Now()
+			s, _ := json.Marshal(data["results"])
+			fmt.Fprintln(file, t.Format(layout)+" "+string(s))
+		}
 	}
 }
 
