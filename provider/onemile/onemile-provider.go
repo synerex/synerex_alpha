@@ -136,20 +136,6 @@ func createSMServiceClient(ch api.ChannelType, arg string) *sxutil.SMServiceClie
 	return sxutil.NewSMServiceClient(client, ch, arg)
 }
 
-// TODO: 乗車シーケンス
-// subscribe rideshare channel
-func subscribeRideShare(rdClient, rtClient *sxutil.SMServiceClient) {
-	ctx := context.Background()
-	rdClient.SubscribeDemand(ctx, func(clt *sxutil.SMServiceClient, dm *api.Demand) {
-		if dm.GetDemandName() == "" {
-			// Confirm
-			// TODO: 迎車処理 (routing-providerからのSelectSupply受信〜乗車まで)
-		} else {
-			// ProposeSupply
-			// TODO: 経路取得 (routing-providerからのRegisterDemand受信〜ProposeSupplyまで)
-		}
-	})
-}
 
 // subscribe marketing channel
 func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
@@ -580,7 +566,7 @@ func main() {
 	// init vehicles
 	for i := 0; i < *n; i++ {
 		var id = fmt.Sprintf("%02d", i+1)
-		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{0.0, 0.0}, nil, nil, sync.RWMutex{}}
+		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{34.87101, 137.1774}, nil, nil, sync.RWMutex{}}
 	}
 
 	// set number of display

@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/synerex/synerex_alpha/api/fleet"
 	"log"
 	"sync"
 	"time"
@@ -35,9 +36,8 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	// check if demand is match with my supply.
 	log.Println("Got ride share demand callback")
 
-	if dm.GetDemandName() == "" { // this is Select!
+	if dm.TargetId != 0 { // this is Select!
 		log.Println("getSelect!")
-
 
 		clt.Confirm(sxutil.IDType(dm.GetId()))
 
@@ -45,10 +45,23 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		// select any ride share demand!
 		// should check the type of ride..
 
+		// create dummy fleet
+		fleet := fleet.Fleet{
+			VehicleId: int32(10),
+			Angle:     float32(100),
+			Speed:     int32(20),
+			Status:    int32(0),
+			Coord: &fleet.Fleet_Coord{
+				Lat: float32(34.874364),
+				Lon: float32(137.1474168),
+			},
+		}
+
 		sp := &sxutil.SupplyOpts{
 			Target: dm.GetId(),
 			Name: "RideShare by Taxi",
 			JSON: `{"Price":`+strconv.Itoa(*price)+`,"Distance": 5200, "Arrival": 300, "Destination": 500, "Position":{"Latitude":36.6, "Longitude":135}}`,
+			Fleet: &fleet,
 		} // set TargetID as Demand.Id (User will check by them)
 
 		mu.Lock()

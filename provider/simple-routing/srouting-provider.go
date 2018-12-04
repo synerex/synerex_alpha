@@ -35,7 +35,7 @@ func init(){
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 }
 
-func getRoute(from *common.Place , to *common.Place, dt *common.Time) [][2]float64 {
+func getRoute(from *common.Place , to *common.Place) [][2]float64 {
 	RouteURL := "http://rt.synergic.mobi/api/route"
 	// currently we do not have good routing engine, so, just use
 	// main point.
@@ -84,12 +84,15 @@ func routingDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	if dm.TargetId != 0 { // check for my data
 
 		log.Printf("Got SelectSupply %d", dm.TargetId)
+		mu.Lock()
 		if _, ok := spMap[dm.TargetId]; ok {
 			log.Printf("Send Confirm ")
 			clt.Confirm(sxutil.IDType(dm.Id))
+			delete(spMap, dm.TargetId)
 		}else{
 			log.Printf("Can't find select spply ID")
 		}
+		mu.Unlock()
 		return
 	}
 
@@ -98,7 +101,7 @@ func routingDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		log.Println("Can't get routing service info")
 		return
 	}
-	points := getRoute(rt.GetDepartPlace(), rt.GetArrivePlace(), rt.GetDepartTime())
+	points := getRoute(rt.GetDepartPlace(), rt.GetArrivePlace())
 	dist := calcDistance(points)
 	durTime := time.Duration( int64( float64(time.Second) * dist / MeterPerSoconds ))
 	dp := ptypes.DurationProto(durTime)
@@ -114,14 +117,28 @@ func routingDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 		rt.Points =cpts
 		rt.AmountTime = dp
-		ts, err := ptypes.Timestamp(rt.DepartTime.GetTimestamp())
-		if err != nil {
-			log.Printf("Timestamp error")
+
+		if rt.DepartTime != nil {
+			ts, err := ptypes.Timestamp(rt.DepartTime.GetTimestamp())
+			if err != nil {
+				log.Printf("Timestamp error")
+			}
+			at := ts.Add(durTime)
+			tspb , _ := ptypes.TimestampProto(at)
+			arrive := common.NewTime().WithTimestamp(tspb)
+			rt.ArriveTime = arrive
+		}else if rt.ArriveTime != nil{
+			ts, err := ptypes.Timestamp(rt.ArriveTime.GetTimestamp())
+			if err != nil {
+				log.Printf("ArriveTime Timestamp error")
+			}
+			dt := ts.Add(-durTime)
+			fspb , _ := ptypes.TimestampProto(dt)
+			depart := common.NewTime().WithTimestamp(fspb)
+			rt.DepartTime = depart
+		}else {
+			log.Printf("No time specified!")
 		}
-		at := ts.Add(durTime)
-		tspb , _ := ptypes.TimestampProto(at)
-		arrive := common.NewTime().WithTimestamp(tspb)
-		rt.ArriveTime = arrive
 
 		spo := sxutil.SupplyOpts{
 			Target: dm.GetId(),
