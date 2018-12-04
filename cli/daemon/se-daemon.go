@@ -135,7 +135,7 @@ func init() {
 			CmdName: "Onemile",
 			SrcDir: "provider/onemile",
 			BinName: "onemile-provider",
-			GoFiles: []string{"onemile-provider.go"},
+			GoFiles: []string{"onemile-provider.go","onemile-routing.go"},
 		},
 		{
 			CmdName: "Marketing",
