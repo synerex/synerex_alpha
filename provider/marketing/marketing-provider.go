@@ -25,6 +25,7 @@ var (
 	dmMap      map[uint64]*sxutil.DemandOpts
 	done       bool
 	send       bool
+	res        bool
 	wg         sync.WaitGroup
 	layout     = "2006-01-02 15:04:05"
 	logFile    = "anslog.txt"
@@ -65,14 +66,19 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 		}
 
 		if done && !send {
-			done = true
+			send = true
 			sendEnqMsg(clt)
 		}
-		send = true
+		res = true
 
 	case data["command"] == "Done":
 		// Got Ad finish
 		done = true
+
+		if res && !send {
+			send = true
+			sendEnqMsg(clt)
+		}
 	}
 }
 
@@ -90,6 +96,7 @@ func sendMsg(client *sxutil.SMServiceClient, msg string) {
 	log.Printf("SendMsg:%d", client.MbusID)
 
 	done = false
+	res = false
 	m := new(pb.MbusMsg)
 	m.ArgJson = msg
 	ctx := context.Background() // 必要？
