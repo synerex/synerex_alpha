@@ -23,6 +23,8 @@ var (
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
+	done       bool
+	send       bool
 	wg         sync.WaitGroup
 	layout     = "2006-01-02 15:04:05"
 	logFile    = "anslog.txt"
@@ -47,10 +49,11 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 		return
 	}
 
-	// save data
-	if data["command"] == "RESULTS" {
-
+	switch {
+	case data["command"] == "RESULTS":
+		// save data
 		if data["results"] != nil {
+			log.Println("Save Ans Data")
 			file, err := os.OpenFile("anslog.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 			if err != nil {
 				log.Fatal(err)
@@ -59,11 +62,17 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 			t := time.Now()
 			s, _ := json.Marshal(data["results"])
 			fmt.Fprintln(file, t.Format(layout)+" "+string(s))
-		} else {
-			// Got Ad finish
-			log.Println("Send Enq Data")
+		}
+
+		if done && !send {
+			done = true
 			sendEnqMsg(clt)
 		}
+		send = true
+
+	case data["command"] == "Done":
+		// Got Ad finish
+		done = true
 	}
 }
 
@@ -80,6 +89,7 @@ func subscribeMBus(client *sxutil.SMServiceClient) {
 func sendMsg(client *sxutil.SMServiceClient, msg string) {
 	log.Printf("SendMsg:%d", client.MbusID)
 
+	done = false
 	m := new(pb.MbusMsg)
 	m.ArgJson = msg
 	ctx := context.Background() // 必要？
