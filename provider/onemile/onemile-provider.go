@@ -256,6 +256,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 			for k, v := range vehicleMap {
 				if v.socket != nil && v.socket.Id() == so.Id() {
+					// update vehicle coord
 					v.Coord[0] = data.(map[string]interface{})["latlng"].([]interface{})[0].(float64)
 					v.Coord[1] = data.(map[string]interface{})["latlng"].([]interface{})[1].(float64)
 					log.Printf("Update position [taxi: %s, coord:[%f, %f]\n", k, v.Coord[0], v.Coord[1])
@@ -321,6 +322,9 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 									dispMap[k].wg.Done()
 								}
 
+								// update vehicle status
+								v.Status = evt.EventType
+
 								return map[string]interface{}{"code": 0}
 							}
 						}
@@ -356,9 +360,12 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 								evt.Status = "end"
 								log.Printf("Event end: [tax: %s, missionId: %s, eventId: %s]\n", k, missionId, eventId)
 
-								// emit next event
 								if i != len(v.mission.Events)-1 {
+									// emit next event if any
 									emitToClient(k, "clt_mission_event", v.mission.Events[i+1].toMap())
+								} else {
+									// all event done
+									v.Status = "free"
 								}
 
 								return map[string]interface{}{"code": 0}
