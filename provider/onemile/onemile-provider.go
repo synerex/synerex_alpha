@@ -152,6 +152,10 @@ func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 
 			// SubscribeMbus
 			clt.SubscribeMbus(context.Background(), func(clt *sxutil.SMServiceClient, msg *api.MbusMsg) {
+				// wait until emitting all display
+				emit := sync.WaitGroup{}
+				emit.Add(*n)
+
 				// emit start event for each display
 				for taxi := range dispMap {
 					dispMap[taxi].wg.Add(1)
@@ -161,8 +165,13 @@ func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 						// emit event
 						dispMap[taxi].socket.Emit(name, payload)
 						log.Printf("Emit [taxi: %s, name: %s, payload: %s]\n", taxi, name, payload)
+						// count down emit
+						emit.Done()
 					}(taxi, "disp_start", msg.ArgJson)
 				}
+
+				// send Done msg (and receive next msg)
+				emit.Wait()
 				clt.SendMsg(context.Background(), &api.MbusMsg{ArgJson: `{"command": "Done"}`})
 			})
 		} else {
