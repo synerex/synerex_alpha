@@ -21,18 +21,44 @@
         </div>
     </div>
     <div id="connection-area" style="display:none;">
-        <h3>サーバ接続</h3>
-        <input type="button" id="connect" value="接続"></input>
-        <input type="button" id="disconnect" value="切断"></input>
+        <form>
+            <div class="form-group">
+                <label class="d-block">サーバー接続</label>
+                <input type="button" id="connect" value="接続" class="btn btn-primary">
+                <input type="button" id="disconnect" value="切断" class="btn btn-secondary">
+            </div>
 
-        <h3>搭載車両登録</h3>
-        タクシー: <input id="taxi" type="text" style="width: 30px" />
-        ディスプレイ: <input id="disp" type="text" style="width: 30px" />
-        <input type="button" id="register" value="登録"></input>
+            <div class="form-group">
+                <label>搭載車両登録</label>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="taxi">Taxi</label>
+                    </div>
+                    <select class="custom-select" id="taxi">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <label class="input-group-text" for="disp">Display</label>
+                    </div>
+                    <select class="custom-select" id="disp">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+                <input type="button" id="register" value="登録" class="btn btn-primary">
+            </div>
 
-        <h3>発着</h3>
-        <input type="button" id="depart" value="出発"></input>
-        <input type="button" id="arrive" value="到着"></input>
+            <div class="form-group">
+                <label class="d-block">発着</label>
+                <input type="button" id="depart" value="出発" class="btn btn-outline-primary">
+                <input type="button" id="arrive" value="到着" class="btn btn-outline-secondary">
+            </div>
+        </form>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
