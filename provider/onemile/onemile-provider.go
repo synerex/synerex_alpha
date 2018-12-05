@@ -136,7 +136,6 @@ func createSMServiceClient(ch api.ChannelType, arg string) *sxutil.SMServiceClie
 	return sxutil.NewSMServiceClient(client, ch, arg)
 }
 
-
 // subscribe marketing channel
 func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 	// wait until completing display registration
@@ -164,6 +163,7 @@ func subscribeMarketing(mktClient *sxutil.SMServiceClient) {
 						log.Printf("Emit [taxi: %s, name: %s, payload: %s]\n", taxi, name, payload)
 					}(taxi, "disp_start", msg.ArgJson)
 				}
+				clt.SendMsg(context.Background(), &api.MbusMsg{ArgJson: `{"command": "Done"}`})
 			})
 		} else {
 			// ProposeSupply
