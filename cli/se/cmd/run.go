@@ -62,7 +62,7 @@ var cmds =[...]cmdInfo{
 		CmdName: "Ecotan",
 	},
 	{Aliases: []string{"Onemile", "onemile", "OneMile" },
-		CmdName: "OneMile",
+		CmdName: "Onemile",
 	},
 	{Aliases: []string{"Routing", "routing" },
 		CmdName: "Routing",
