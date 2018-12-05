@@ -23,7 +23,6 @@ var (
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
-	send       bool
 	wg         sync.WaitGroup
 	layout     = "2006-01-02 15:04:05"
 	logFile    = "anslog.txt"
@@ -50,12 +49,6 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 
 	// save data
 	if data["command"] == "RESULTS" {
-		if send {
-			sendAdMsg(clt)
-		} else {
-			sendEnqMsg(clt)
-		}
-		send = !send
 
 		if data["results"] != nil {
 			file, err := os.OpenFile("anslog.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
@@ -66,6 +59,10 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 			t := time.Now()
 			s, _ := json.Marshal(data["results"])
 			fmt.Fprintln(file, t.Format(layout)+" "+string(s))
+		} else {
+			// Got Ad finish
+			log.Println("Send Enq Data")
+			sendEnqMsg(clt)
 		}
 	}
 }
@@ -157,8 +154,7 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		// always select Supply
 		clt.SelectSupply(sp)
 
-		wg.Add(1)
-		go processMBus(clt)
+		processMBus(clt)
 	}
 
 }
