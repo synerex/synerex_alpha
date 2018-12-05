@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/synerex/synerex_alpha/api/rideshare"
 	"github.com/synerex/synerex_alpha/api/routing"
 	"io"
 	"log"
@@ -44,6 +45,7 @@ type DemandOpts struct {
 	Name   string
 	JSON   string
 	RoutingService *routing.RoutingService
+	RideShare *rideshare.RideShare
 }
 
 // SupplyOpts is sender options for Supply
@@ -55,6 +57,7 @@ type SupplyOpts struct {
 	Fleet     *fleet.Fleet
 	PTService *ptransit.PTService
 	RoutingService *routing.RoutingService
+	RideShare *rideshare.RideShare
 }
 
 func init() {
@@ -423,6 +426,13 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 			dmo.RoutingService,
 		}
 		dm.ArgOneof = &rsp
+	case api.ChannelType_RIDE_SHARE:
+		if dmo.RideShare != nil{
+			rsp := api.Demand_Arg_RideShare{
+				dmo.RideShare,
+			}
+			dm.ArgOneof = &rsp
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

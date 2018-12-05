@@ -135,7 +135,31 @@ func init() {
 			CmdName: "Onemile",
 			SrcDir: "provider/onemile",
 			BinName: "onemile-provider",
-			GoFiles: []string{"onemile-provider.go"},
+			GoFiles: []string{"onemile-provider.go","onemile-routing.go"},
+		},
+		{
+			CmdName: "Marketing",
+			SrcDir: "provider/marketing",
+			BinName: "marketing-provider",
+			GoFiles: []string{"marketing-provider.go"},
+		},
+		{
+			CmdName: "PTransit",
+			SrcDir: "provider/gtfs-ptransit",
+			BinName: "ptransit-provider",
+			GoFiles: []string{"ptransit-provider.go"},
+		},
+		{
+			CmdName: "SimpleRouting",
+			SrcDir: "provider/simple-routing",
+			BinName: "srouting-provider",
+			GoFiles: []string{"srouting-provider.go"},
+		},
+		{
+			CmdName: "Routing",
+			SrcDir: "provider/routing",
+			BinName: "routing-provider",
+			GoFiles: []string{"routing-provider.go","timetable.go", "busTimetable.go"},
 		},
 	}
 }

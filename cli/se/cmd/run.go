@@ -58,6 +58,21 @@ var cmds =[...]cmdInfo{
 	{Aliases: []string{"Fleet", "fleet" },
 		CmdName: "Fleet",
 	},
+	{Aliases: []string{"Ecotan", "ecotan"},
+		CmdName: "Ecotan",
+	},
+	{Aliases: []string{"Onemile", "onemile", "OneMile" },
+		CmdName: "OneMile",
+	},
+	{Aliases: []string{"Routing", "routing" },
+		CmdName: "Routing",
+	},
+	{Aliases: []string{"Marketing", "marketing", "market" },
+		CmdName: "Marketing",
+	},
+	{Aliases: []string{"SimpleRouting", "srouting", "sroute" },
+		CmdName: "SimpleRouting",
+	},
 }
 
 
