@@ -256,10 +256,16 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 			for k, v := range vehicleMap {
 				if v.socket != nil && v.socket.Id() == so.Id() {
+					// lock vehicle
+					v.mu.Lock()
+					defer v.mu.Unlock()
+
 					// update vehicle coord
 					v.Coord[0] = data.(map[string]interface{})["latlng"].([]interface{})[0].(float64)
 					v.Coord[1] = data.(map[string]interface{})["latlng"].([]interface{})[1].(float64)
 					log.Printf("Update position [taxi: %s, coord:[%f, %f]\n", k, v.Coord[0], v.Coord[1])
+
+					return
 				}
 			}
 		})
@@ -281,6 +287,10 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			for k, v := range vehicleMap {
 				if v.socket != nil && v.socket.Id() == so.Id() {
 					if v.mission != nil && v.mission.MissionId == missionId {
+						// lock vehicle
+						v.mu.Lock()
+						defer v.mu.Unlock()
+
 						v.mission.Accepted = true
 						log.Printf("Mission accepted: [taxi: %s, missionId: %s]\n", k, missionId)
 
@@ -313,6 +323,10 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 					if v.mission != nil && v.mission.MissionId == missionId {
 						for _, evt := range v.mission.Events {
 							if evt.EventId == eventId {
+								// lock vehicle
+								v.mu.Lock()
+								defer v.mu.Unlock()
+
 								// update status
 								evt.Status = "start"
 								log.Printf("Event start: [tax: %s, missionId: %s, eventId: %s]\n", k, missionId, eventId)
@@ -356,6 +370,10 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 					if v.mission != nil && v.mission.MissionId == missionId {
 						for i, evt := range v.mission.Events {
 							if evt.EventId == eventId {
+								// lock vehicle
+								v.mu.Lock()
+								defer v.mu.Unlock()
+
 								// update status
 								evt.Status = "end"
 								log.Printf("Event end: [tax: %s, missionId: %s, eventId: %s]\n", k, missionId, eventId)
@@ -461,6 +479,10 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 						return map[string]interface{}{"code": 1}
 					}
 
+					// lock vehicle
+					v.mu.Lock()
+					defer v.mu.Unlock()
+
 					// convert to mission
 					v.mission = &mission{}
 					err = json.Unmarshal(bytes, v.mission)
@@ -497,6 +519,10 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			for k, v := range vehicleMap {
 				if v.socket != nil && v.socket.Id() == so.Id() {
 					if v.mission.MissionId == missionId {
+						// lock vehicle
+						v.mu.RLock()
+						defer v.mu.RUnlock()
+
 						emitToClient(k, "clt_mission_event", v.mission.Events[0].toMap())
 
 						log.Printf("Event ordered: [taxi: %s, missionId: %s, eventId: %s]\n", k, missionId, v.mission.Events[0].EventId)
@@ -557,6 +583,7 @@ func sendVehicleStatus(pitch int) {
 
 		// add each vehicle status
 		for _, v := range vehicleMap {
+			v.mu.RLock()
 			stat := map[string]interface{}{
 				"vehicle_id":   v.VehicleId,
 				"provider_id":  "onemile-provider",
@@ -564,6 +591,8 @@ func sendVehicleStatus(pitch int) {
 				"status":       v.Status,
 				"coord":        v.Coord,
 			}
+			v.mu.RUnlock()
+
 			m["vehicles"] = append(m["vehicles"].([]interface{}), stat)
 		}
 
