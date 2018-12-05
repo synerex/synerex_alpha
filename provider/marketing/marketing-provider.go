@@ -40,7 +40,6 @@ func init() {
 func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 	log.Println("Got Mbus Msg callback")
 	jsonStr := msg.ArgJson
-	log.Println("JSON:" + jsonStr)
 
 	jsonBytes := ([]byte)(jsonStr)
 	var data map[string]interface{}
