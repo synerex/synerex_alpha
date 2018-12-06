@@ -9,7 +9,7 @@
         "options": [
           {
             "value": "0",
-            "text": "10歳未満"
+            "text": "10代未満"
           },
           {
             "value": "10",
@@ -111,7 +111,7 @@
       }
     },
     {
-      "label": "普段の交通手段を教えてください（複数回答可能）",
+      "label": "ご自宅から駅までの交通手段を教えてください（複数回答可能）",
       "type": "checkbox",
       "name": "transportation",
       "option": {
@@ -153,14 +153,14 @@
       }
     },
     {
-      "label": "自動運転によってタクシー運賃が安くなれば",
+      "label": "コミュニティバスへの乗り換えがスマートな モビリティが実現した場合に利用しますか？",
       "type": "range",
       "name": "fiveGrade1",
       "option": {
         "max": "5",
-        "maxText": "利用頻度が高くなる",
+        "maxText": "利用する",
         "min": "1",
-        "minText": "あまり変わらない",
+        "minText": "利用しない",
         "options": [
           {
             "value": "2",
@@ -185,7 +185,7 @@
         "max": "5",
         "maxText": "積極的に使う",
         "min": "1",
-        "minText": "受け入れない",
+        "minText": "使わない",
         "options": [
           {
             "value": "2",
@@ -208,34 +208,9 @@
       "name": "fiveGrade3",
       "option": {
         "max": "5",
-        "maxText": "時間を要しても受け入れる",
+        "maxText": "時間を要しても使う",
         "min": "1",
-        "minText": "受け入れない",
-        "options": [
-          {
-            "value": "2",
-            "text": "2"
-          },
-          {
-            "value": "3",
-            "text": "3"
-          },
-          {
-            "value": "4",
-            "text": "4"
-          }
-        ]
-      }
-    },
-    {
-      "label": "バスなどの公共交通機関への乗り継ぎについて",
-      "type": "range",
-      "name": "fiveGrade4",
-      "option": {
-        "max": "5",
-        "maxText": "便利なので積極的に利用する",
-        "min": "1",
-        "minText": "不便なので利用しない",
+        "minText": "使わない",
         "options": [
           {
             "value": "2",
@@ -255,12 +230,12 @@
     {
       "label": "アプリの操作について",
       "type": "range",
-      "name": "fiveGrade5",
+      "name": "fiveGrade4",
       "option": {
         "max": "5",
-        "maxText": "使いやすかった",
+        "maxText": "使いやすい",
         "min": "1",
-        "minText": "操作に迷った",
+        "minText": "使いにくい",
         "options": [
           {
             "value": "2",
@@ -278,41 +253,7 @@
       }
     },
     {
-      "label": "アプリのデザインについて",
-      "type": "range",
-      "name": "fiveGrade6",
-      "option": {
-        "max": "5",
-        "maxText": "見やすかった",
-        "min": "1",
-        "minText": "操作に違和感があった",
-        "options": [
-          {
-            "value": "2",
-            "text": "2"
-          },
-          {
-            "value": "3",
-            "text": "3"
-          },
-          {
-            "value": "4",
-            "text": "4"
-          }
-        ]
-      }
-    },
-    {
-      "label": "ご感想",
-      "type": "textarea",
-      "name": "thoughts",
-      "option": {
-        "placeholder": "研究のためにご感想をお寄せください。",
-        "options": []
-      }
-    },
-    {
-      "label": "本日の相見駅までのサービスが何円であれば利用しますか？",
+      "label": "お買い物や通院など、自宅からJR駅までスマートなモビリティ・サービスを利用する場合、片道が何円であれば利用しますか？",
       "type": "select",
       "name": "cost",
       "option": {
@@ -359,6 +300,15 @@
             "text": "1000円"
           }
         ]
+      }
+    },
+    {
+      "label": "ご感想",
+      "type": "textarea",
+      "name": "thoughts",
+      "option": {
+        "placeholder": "研究のためにご感想をお寄せください。",
+        "options": []
       }
     }
   ]

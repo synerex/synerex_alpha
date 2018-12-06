@@ -1,0 +1,24 @@
+.box {
+    width: 100vw;
+    height: auto;
+    min-height: 100vh;
+
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-image: url();
+
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+
+    /* 左右中央寄せ */
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+
+    /* 上下中央寄せ */
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
