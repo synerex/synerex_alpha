@@ -65,6 +65,8 @@ export default class WorldView extends React.Component {
     }
 
     onAnimate(){
+        const namesMap = [0,1,0,0,0,2,3,0];
+
         if(!this.visible) return;
         if( this.controls){
             this.controls.update();
@@ -102,7 +104,7 @@ export default class WorldView extends React.Component {
 //                const dstIx =  this.store.getNodeIndex(ms.getDstNodeID())
                 let gm = new THREE.Geometry();
                 let tm = 10-i*tmspan;
-                let cv = this.getCoreVector(ms.getChType(),tm-tmspan/2);
+                let cv = this.getCoreVector(namesMap[ms.getChType()],tm-tmspan/2);
 //                console.log("Link Message", ms.getMsgType(), ms.obj);
                 let fromNodept = new THREE.Vector3(lpw * Math.cos(Math.PI*2/this.ndCount*srcIx), tm,lpw * Math.sin(Math.PI*2/this.ndCount*srcIx));
                 gm.vertices.push(fromNodept,  cv);
@@ -218,7 +220,9 @@ export default class WorldView extends React.Component {
         let innerLoopGeom = new THREE.Geometry();
         const lpw = this.lpw;
         const cpw = this.cpw;
-        const names = ["Lib","RideShare","Ad","PublicTransit"];
+        const names = ["other","RideShare","Routing","Marketing"];
+
+
 
         // core lines
         for (let i = 0; i < this.coreCount; i++){
