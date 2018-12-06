@@ -9,10 +9,13 @@
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css" integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU"
+        crossorigin="anonymous">
     <title>Onemile Display Client</title>
 </head>
 
 <body>
+    <div><button type="button" id="debug" class="btn btn-outline-light btn-sm"><i class="fas fa-wrench"></i></button></div>
     <div id="ad-area" class="box"></div>
     <div id="question-area">
         <div class="container">
@@ -26,7 +29,6 @@
                 <input type="button" id="connect" value="接続" class="btn btn-primary">
                 <input type="button" id="disconnect" value="切断" class="btn btn-secondary">
             </div>
-
             <div class="form-group">
                 <label>搭載車両登録</label>
                 <div class="input-group mb-3">
@@ -51,7 +53,6 @@
                 </div>
                 <input type="button" id="register" value="登録" class="btn btn-primary">
             </div>
-
             <div class="form-group">
                 <label class="d-block">発着</label>
                 <input type="button" id="depart" value="出発" class="btn btn-outline-primary">
@@ -61,8 +62,8 @@
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
-    <script src="js/jquery-ui.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery-ui.min.js"></script>
     <script src="js/index.js"></script>
 </body>
 
