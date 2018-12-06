@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/synerex/synerex_alpha/api/fleet"
 	"log"
 	"net/http"
 	"runtime"
+	"strconv"
 	"sync"
 	"time"
 
@@ -39,6 +41,7 @@ type vehicle struct {
 	VehicleType string          `json:"vehicle_type"` // [onemile | bus | train | ...]
 	Status      string          `json:"status"`       // [pickup | free | ride]
 	Coord       [2]float64      `json:"coord"`        // current position (lat/lng)
+	Angle		float32			`json:"angle"`			// current angle
 	socket      socketio.Socket `json:"-"`            // Socket.IO socket
 	mission     *mission        `json:"-"`            // assigned mission
 	mu          sync.RWMutex    `json:"-"`            // mutex lock for vehicle read/write
@@ -261,9 +264,30 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 					defer v.mu.Unlock()
 
 					// update vehicle coord
+					log.Println("Got Event:",data)
+
 					v.Coord[0] = data.(map[string]interface{})["latlng"].([]interface{})[0].(float64)
 					v.Coord[1] = data.(map[string]interface{})["latlng"].([]interface{})[1].(float64)
 					log.Printf("Update position [taxi: %s, coord:[%f, %f]\n", k, v.Coord[0], v.Coord[1])
+
+
+					// we should send this to server.
+					f_coord := &fleet.Fleet_Coord{
+						Lat:float32(v.Coord[0]),
+						Lon:float32(v.Coord[1]),
+					}
+					vid , _ :=strconv.Atoi(k)
+					flt := &fleet.Fleet{
+						VehicleId: int32(vid+1000),
+						Status: 0,
+						Coord:f_coord,
+					}
+					spo := &sxutil.SupplyOpts{
+						Name:"SupplyFromOnemile",
+						JSON:"{OnemileFleet}",
+						Fleet: flt,
+					}
+					rdClient.RegisterSupply(spo)
 
 					return
 				}
@@ -596,12 +620,51 @@ func sendVehicleStatus(pitch int) {
 			m["vehicles"] = append(m["vehicles"].([]interface{}), stat)
 		}
 
-		log.Printf("clt_vehicle_status: %v\n", m)
+//		log.Printf("clt_vehicle_status: %v\n", m)
 
-		// broadcast to all vehicles
-		for k, _ := range vehicleMap {
+		// broadcast to all vehicles :
+		for k, v := range vehicleMap {
+
+			// also check the status of the mission/events.
+			if  v.mission != nil && v.mission.Accepted {
+				evs := v.mission.Events
+				for _, ev := range evs{
+					if ev.Status == "none" { // not started?
+						tm := time.Now()
+						evtm := ev.StartTime/1000
+						evns := (ev.StartTime%1000)*1000
+						log.Println(tm , "is after? ", time.Unix(evtm, evns))
+						if tm.After(time.Unix(evtm,evns)){
+
+							ms := map[string]interface{}{
+								"mission_id":v.mission.MissionId,
+								"event_id":ev.EventId,
+								"event_type":ev.EventType,
+								"start_time":ev.StartTime,
+								"end_time": ev.EndTime,
+								"destination":ev.Destination,
+								"route" : ev.Route,
+							}
+							// we should start
+							emitToClient(k, "clt_mission_evt", ms)
+
+							ev.Status = "start"
+						}
+					}
+				}
+
+			}
+
+
 			emitToClient(k, "clt_vehicle_status", m)
+
+
+
 		}
+
+		// check for mission start.
+
+
 	}
 }
 
@@ -611,7 +674,7 @@ func main() {
 	// init vehicles
 	for i := 0; i < *n; i++ {
 		var id = fmt.Sprintf("%02d", i+1)
-		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{34.87101, 137.1774}, nil, nil, sync.RWMutex{}}
+		vehicleMap[id] = &vehicle{"vehicle" + id, "onemile", "free", [2]float64{34.87101, 137.1774}, 0.0,nil, nil, sync.RWMutex{}}
 	}
 
 	// set number of display
