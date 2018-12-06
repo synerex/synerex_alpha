@@ -45,8 +45,8 @@ func rideshareToMission(share *rideshare.RideShare) *mission{
 */
 		rts := make([][2]float64, len(r.Points))
 		for i, p := range r.Points {
-			rts[i][0]=p.GetLongitude()
-			rts[i][1]=p.GetLatitude()
+			rts[i][0]=p.GetLatitude()
+			rts[i][1]=p.GetLongitude()
 		}
 
 		ev := event{
