@@ -43,8 +43,8 @@ func SendMes(mes *Mes){
 }
 
 
-func SendMessage(msgType string, chType int, src uint64, dst uint64, arg string){
-	mes := &Mes{Msgtype:msgType, Chtype:int32(chType),Src: src,Dst: dst,Args:arg}
+func SendMessage(msgType string, chType int, id uint64, src uint64, dst uint64,tgt uint64, arg string){
+	mes := &Mes{Msgtype:msgType, Chtype:int32(chType),Id: id, Src: src,Dst: dst,Tgt:tgt, Args:arg}
 	resp, err := monitorClt.SendReport(context.Background(),mes )
 
 	if err != nil {
@@ -57,7 +57,7 @@ func SendMessage(msgType string, chType int, src uint64, dst uint64, arg string)
 }
 
 func (m *Mes)GetJson() string {
-	s := fmt.Sprintf("{\"msgType\":\"%s\",\"chType\":%d,\"src\":%d,\"dst\":%d,\"arg\":\"%s\"}",
-						m.Msgtype,m.Chtype, m.Src, m.Dst, m.Args)
+	s := fmt.Sprintf("{\"msgType\":\"%s\",\"chType\":%d,\"id\":%d,\"src\":%d,\"dst\":%d,\"tgt\":%d,\"arg\":\"%s\"}",
+						m.Msgtype,m.Chtype,m.Id%1000000, m.Src, m.Dst, m.Tgt%1000000, m.Args)
 	return s
 }

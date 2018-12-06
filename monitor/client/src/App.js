@@ -42,9 +42,11 @@ class App extends Component {
         lg.push({
             msgType: obj.msgType,
             chType: obj.chType,
+            id:obj.id,
             src: obj.src,
             dst: obj.dst,
             arg: obj.arg,
+            tgt: obj.tgt,
             value: value,
             time: now.toLocaleString()
         })

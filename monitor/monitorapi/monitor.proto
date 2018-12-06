@@ -14,6 +14,8 @@ message Mes{
     string args = 5;
     string from_id = 6;
     string to_id = 7;
+    uint64  id = 8;
+    uint64  tgt = 9;
 }
 
 
