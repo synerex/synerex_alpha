@@ -26,6 +26,7 @@ var (
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	dmMap 	map[uint64]*sxutil.DemandOpts
 	mu		sync.RWMutex
+	to = flag.String( "to", "Nagoya", "Assign Destination")
 )
 
 func init(){
@@ -58,7 +59,7 @@ func getPoint() *common.Point {
 
 	ppt.Longitude = rt.Point[0]
 	ppt.Latitude = rt.Point[1]
-
+	log.Printf("Point %v",ppt)
 	return ppt
 }
 
@@ -99,9 +100,21 @@ func subscribeRideshareSupply(client *sxutil.SMServiceClient) {
 
 func registerRideshareDemand(clt *sxutil.SMServiceClient){
 	pt1 := getPoint()
-	pt2 := new(common.Point)
-	pt2.Longitude = 136.881638
-	pt2.Latitude = 35.170694
+	var pt2 *common.Point
+	if( *to == "Nagoya") {
+		pt2 = new(common.Point)
+		pt2.Longitude = 136.881638
+		pt2.Latitude = 35.170694
+	}else if (*to == "Aimi") {
+		pt2 = new(common.Point)
+		pt2.Longitude = 137.1606
+		pt2.Latitude = 34.88746
+	}else {
+		pt2 = getPoint()
+	}
+	if pt2 == nil {
+		log.Printf("Nil!! error")
+	}
 
 	tm := time.Now().In(time.Local)
 	tsp,_ := ptypes.TimestampProto(tm)
@@ -111,12 +124,15 @@ func registerRideshareDemand(clt *sxutil.SMServiceClient){
 		DepartTime: common.NewTime().WithTimestamp(tsp),
 		ArrivePoint: common.NewPlace().WithPoint(pt2),
 	}
+	rs.Routes = []*rideshare.Route{}
 
 	dmo := sxutil.DemandOpts{
 		Name: "RideshareDemand",
 		JSON: "{from, to}",
 		RideShare: &rs,
 	}
+	log.Printf("Type: %d %v",clt.MType,dmo.RideShare)
+	//log.Printf("Type: %d %v",clt.MType,dmo)
 	id :=clt.RegisterDemand(&dmo)
 	mu.Lock()
 	dmMap[id] = &dmo  // save demand
@@ -138,6 +154,7 @@ func main() {
 	wg := sync.WaitGroup{} // for syncing other goroutines
 
 	opts = append(opts, grpc.WithInsecure())
+	opts = append(opts, grpc.WithBlock())  // this option try to wait until server will ready.
 	conn, err := grpc.Dial(*serverAddr, opts...)
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
@@ -158,7 +175,7 @@ func main() {
 		time.Sleep(10*time.Second)
 //	}
 
-	wg.Wait()
+//	wg.Wait()
 
 	sxutil.CallDeferFunctions() // cleanup!
 
