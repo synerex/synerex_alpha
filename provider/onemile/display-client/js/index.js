@@ -66,7 +66,9 @@ $(() => {
                         const param = ad[0];
 
                         // 広告を表示する
-                        $('#ad-area').children('img').attr('src', param.data);
+                        // $('#ad-area').children('img').attr('src', param.data);
+                        $('.box').css('background-image', `url("${param.data}")`);
+                        $('#ad-area').addClass('box');
                         console.log(`広告表示中: ${param.data}`);
 
                         // 表示し終わった広告を配列から取り除き、次に読み込む広告を先頭にする
@@ -85,7 +87,8 @@ $(() => {
                     const div = [];
 
                     // 広告の表示を終了する
-                    $('#ad-area').children('img').attr('src', '');
+                    // $('#ad-area').children('img').attr('src', '');
+                    $('#ad-area').removeClass('box');
 
                     // ForEach文
                     Object.keys(questions).forEach((i) => {
@@ -190,6 +193,9 @@ $(() => {
 
                     // <form>の最下部にbuttonを追加
                     $('form#questions').append('<button type="button" id="submitJson" class="btn btn-primary btn-lg btn-block">送信</button>');
+
+                    // <form>の上下にpaddingを追加
+                    $('form#questions').css('padding', '30px 0');
 
                     // JSON形式で送信
                     $('button#submitJson').on('click', () => {
