@@ -227,10 +227,12 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 
 	switch clt.MType {
 	case api.ChannelType_RIDE_SHARE:
-		spa := api.Supply_Arg_Fleet{
-			spo.Fleet,
+		if spo.RideShare != nil {
+			sp.WithRideShare(spo.RideShare)
 		}
-		sp.ArgOneof = &spa
+		if spo.Fleet != nil {
+			sp.WithFleet(spo.Fleet)
+		}
 	case api.ChannelType_PT_SERVICE:
 		spa := api.Supply_Arg_PTService{
 			spo.PTService,
@@ -313,7 +315,7 @@ func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMSe
 			if err == io.EOF {
 				log.Print("End Supply subscribe OK")
 			} else {
-				log.Printf("%v SMServiceClient SubscribeSupply error %v", clt, err)
+				log.Printf("%v SMServiceClient SubscribeSupply error [%v]", clt, err)
 			}
 			break
 		}
@@ -339,7 +341,7 @@ func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMSe
 			if err == io.EOF {
 				log.Print("End Demand subscribe OK")
 			} else {
-				log.Printf("%v SMServiceClient SubscribeDemand error %v", clt, err)
+				log.Printf("%v SMServiceClient SubscribeDemand error [%v]", clt, err)
 			}
 			break
 		}
@@ -428,15 +430,25 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 		dm.ArgOneof = &rsp
 	case api.ChannelType_RIDE_SHARE:
 		if dmo.RideShare != nil{
-			rsp := api.Demand_Arg_RideShare{
-				dmo.RideShare,
-			}
-			dm.ArgOneof = &rsp
+			dm.WithRideShare(dmo.RideShare)
+//			rsp := api.Demand_Arg_RideShare{
+//				dmo.RideShare,
+//			}
+//			dm.ArgOneof = &rsp
+		}else{
+			log.Printf("Rideshare info is nil")
 		}
+
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
+	log.Printf("Now RegisterDemand with %v",dm)
+	log.Printf("Arg %v",dm.ArgOneof)
+	log.Printf("Arg %v",dm.GetArg_RideShare())
+
+
 	_ , err := clt.Client.RegisterDemand(ctx, &dm)
 
 	//	resp, err := clt.Client.RegisterDemand(ctx, &dm)

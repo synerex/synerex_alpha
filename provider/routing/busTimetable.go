@@ -137,11 +137,13 @@ func filterBusTrip(sts []StopTime, tripid int32)[]StopTime{
 	return rst
 }
 
+// Filter bus trip for departure time.
 func findDepartureBusTrip(stFrom int32, stTo int32, dmin int32) []StopTime{
 	var minTrip int32
 	minTime := int32(100000000)
 
 	sts := getBusStopTimesByStation(stFrom, stTo)
+
 	log.Printf("Get Staions : %d  %d->%d  time:%d",len(sts), stFrom, stTo, dmin)
 	for _, st := range sts {
 
