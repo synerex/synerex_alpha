@@ -118,7 +118,37 @@
     
     <h3>ミッション</h3>
     <ul>
-	<li><span class="c1">JSON</span><span class="c2"><textarea id="mission" cols="80" rows="10"></textarea></span>
+	<li><span class="c1">JSON</span><span class="c2"><textarea id="mission" cols="80" rows="10">
+{
+  "mission_id": "mis01",
+  "title": "お迎えと移動",
+  "detail": "幸田町から相見駅まで",
+  "events": [
+    {
+      "event_id": "evt0",
+      "event_type": "pickup",
+      "start_time": 1533085200000,
+      "end_time": 1533085200000,
+      "destination": "幸田町",
+      "route": [
+         [34.8588555, 137.1344911],
+         [34.8645306, 137.1608109]
+      ]
+    },
+    {
+      "event_id": "evt1",
+      "event_type": "ride",
+      "start_time": 1533085200000,
+      "end_time": 1533085200000,
+      "destination": "相見駅",
+      "route": [
+         [34.8645306, 137.1608109],
+         [34.8663880, 137.1281164]
+      ]
+    }
+  ]
+}
+</textarea></span>
 	<li><span class="c1"></span><span class="c2"><input id="register" type="button" value="登録"/></span>
     <li><span class="c1">受入</span><span class="c2"><input id="mission_id" type="text"/><input id="accept" type="button" value="受入"/></span>
 	<li><span class="c1">指示</span><span class="c2"><input id="order" type="button" value="指示"/></span>
