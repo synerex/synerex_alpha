@@ -101,7 +101,7 @@ $(() => {
                                 const select = $('<select></select>', {
                                     name: questions[i].name,
                                     id: questions[i].name,
-                                    addClass: "form-control"
+                                    addClass: "form-control form-control-lg"
                                 });
 
                                 for (let value of questions[i].option.options) {
@@ -150,6 +150,7 @@ $(() => {
                                     + '" name="' + questions[i].name
                                     + '" max="' + questions[i].option.max
                                     + '" min="' + questions[i].option.min
+                                    + '" step="' + 0.1
                                     + '">');
 
                                 col[2].append('<p>' + questions[i].option.maxText + '</p>');
