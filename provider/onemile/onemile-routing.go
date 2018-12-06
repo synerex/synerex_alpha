@@ -1,18 +1,17 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/common"
 	"github.com/synerex/synerex_alpha/api/rideshare"
-	"github.com/synerex/synerex_alpha/sxutil"
 	"github.com/synerex/synerex_alpha/api/routing"
-	"time"
-
-	"context"
+	"github.com/synerex/synerex_alpha/sxutil"
 	"log"
 	"sync"
+	"time"
 )
 
 var (
@@ -20,7 +19,7 @@ var (
 	cltRide, cltRoute *sxutil.SMServiceClient
 	routingMap = make(map[uint64]chan *routing.RoutingService)
 	routingMu sync.RWMutex
-	supplyMap = make(map[uint64]chan *rideshare.RideShare)
+	supplyMap = make(map[uint64]chan uint64)
 	supplyMu sync.RWMutex
 	statusStr = []string{"free","pickup","ride","full"}
 )
@@ -76,25 +75,43 @@ func onemileHandleRoutingSupply(clt  *sxutil.SMServiceClient, sp *api.Supply) {
 }
 
 
+/*
+func onemileHandleRideShareSupply(clt  *sxutil.SMServiceClient, sp *api.Supply) {
+	log.Println("Got ProposeSupply", *sp)
+
+	if sp.TargetId != 0 { // select supply!
+		// SelectSupply.
+//		log.Printf("Got ProposeSupply from %d -> %d, ", sp.SenderId, sp.TargetId%1000000)
+	}
+
+	// ignore other rideshare supply
+}
+*/
+
+
+
+
 func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	if dm.TargetId != 0 { // select supply!
 		// SelectSupply.
+//		log.Println("Got Select Supply!?",*dm)
+		log.Printf("Got SelectSupply from %d -> %d, ", dm.SenderId, dm.TargetId%1000000)
 		supplyMu.Lock()
 		spch, ok := supplyMap[dm.GetTargetId()]
 		if ok {
-			delete(supplyMap,dm.GetTargetId())
-			spch <- dm.GetArg_RideShare()
-			clt.Confirm(sxutil.IDType(dm.GetId()))
-		}else{
-			log.Printf("Can't find select id")
+			delete(supplyMap, dm.GetTargetId())
+			spch <- dm.GetId()
+			log.Printf("Now prepare for Confirm")
+		} else {
+			log.Printf("RideShare SelectSupply: Can't find select id %d ",dm.TargetId)
 		}
 		supplyMu.Unlock()
-
 	} else {
 		// First we need to check the distance of dx,dy:
 		// 0. Find Nearest free car.
 		// 1. send RoutingDemand to Simple-routing
 		// 2. recv RoutingSupply, then send ProposeSupply to RideShare.
+		log.Println("Got Demand",*dm)
 
 
 		originRideShare := dm.GetArg_RideShare()
@@ -270,43 +287,55 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			Target: dm.GetId(),
 			RideShare: rideShareSvc,
 			Name: "FromOneMile!",
-			JSON: "{routes}",
+			JSON: "{2routes}",
 		}
 
-		log.Printf("Now Propose Supply %v",*spo)
+		// start
+		log.Println("Now Propose Supply :",*spo)
 		psid := clt.ProposeSupply(spo)
 		log.Printf("Propose Supply ID: %d",psid)
 
-		rxch := make(chan *rideshare.RideShare)
+		rxch := make(chan uint64)
 		supplyMu.Lock()
 		supplyMap[psid] = rxch
 		supplyMu.Unlock()
-		var rdsh *rideshare.RideShare
-		select { // wait for select supply
-		case <-time.After(300 *time.Second):
-			log.Printf("Onemile Propose Supply Timeout! 300 seconds %d",psid)
-		//should  remvove!
-			return
-		case rdsh = <- rxch:
-			log.Printf("Got SelectSupply for Onemile!")
-		}
-		// now get selectSupply
-		// check car availability
-		selVc.mu.Lock()
-		if selVc.Status == "free" {
-			selVc.Status = "pickup"
-		// now we need to add event!
-			ms := rideshareToMission(rdsh)
-			selVc.mission = ms
-		}
-		selVc.mu.Unlock()
 
+		go proposeSupplyForRouting(psid,rxch, selVc,rideShareSvc)
+	}
+}
+
+func proposeSupplyForRouting(psid uint64, rxch chan uint64 , selVc *vehicle, rs *rideshare.RideShare){
+	var cfid uint64
+	select { // wait for select supply
+	case <-time.After(300 *time.Second):
+		log.Printf("Onemile Propose Supply Timeout! 300 seconds %d",psid)
+		//should  remvove!
+		return
+	case cfid = <- rxch:
+		log.Printf("Got SelectSupply for Onemile!")
+	}
+	// now get selectSupply
+	// check car availability
+	selVc.mu.Lock()
+	if selVc.Status == "free" {
+		log.Printf("Now Book a vehicle! [%s] by %d",selVc.VehicleId, cfid)
+		cltRide.Confirm(sxutil.IDType(cfid))
+
+		selVc.Status = "pickup"
+		// now we need to add event!
+		ms := rideshareToMission(rs)
+		selVc.mission = ms
 		if selVc.socket != nil {
 			selVc.socket.Emit("clt_request_mission", selVc.mission.toMap())
-			log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
+//			log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
 		}
-		// start
+		log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
+	}else{
+		// not confirm! sorry
+		log.Printf("Cannot book a vehicle! [%s]",selVc.VehicleId)
 	}
+	selVc.mu.Unlock()
+
 }
 
 func subscribeRouting(rtClient *sxutil.SMServiceClient){
@@ -314,12 +343,22 @@ func subscribeRouting(rtClient *sxutil.SMServiceClient){
 	rtClient.SubscribeSupply(ctx, onemileHandleRoutingSupply) // this is on "onemile-routing.go"
 	log.Printf("Server closed... on Onemile Routing SubscribeSupply")
 }
+/*
+func subscribeRideShareDemand(rdSpClient *sxutil.SMServiceClient){
+	ctx := context.Background()
+	rdSpClient.SubscribeSupply(ctx, onemileHandleRideShareSupply)
+	log.Printf("Server closed... on Onemile RideShare SubscribeSupply")
+}
+*/
 
 // Main Entry point of onemile-routing.go
 // subscribe rideshare channel
-func subscribeRideShare(rdClient, rtClient *sxutil.SMServiceClient) {
+func subscribeRideShare(rdClient, rtClient  *sxutil.SMServiceClient) {
 	cltRide = rdClient
 	cltRoute = rtClient
+
+//	go subscribeRideShareDemand(rdSpClient)
+
 	go subscribeRouting(rtClient)
 	ctx := context.Background()
 	rdClient.SubscribeDemand(ctx, onemileHandleRideShareDemand) // this is on "onemile-routing.go"

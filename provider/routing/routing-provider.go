@@ -117,7 +117,7 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 				RideShare: &rdSh,
 			}
 			spch := make(chan uint64)
-			spid :=	clt.ProposeSupply(&spo)
+			spid :=	clt.ProposeSupply(&spo) // rideshare Demand
 			supplyMap[spid] = spch
 			select {
 			case <-time.After(30 * time.Second):
@@ -128,10 +128,13 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 				log.Printf("Select from Kota: %d",id)
 				// now we need to selectSupply for OneMile.
 
-				mbusid, mberr := clt.SelectSupply(rssp)
+				mbusid, mberr := supplyClient.SelectSupply(rssp)
+				log.Printf("SelectSupply to  %d",mbusid)
 				if mberr == nil {
 					log.Printf("SelectSupply Success! and MbusID=%d", mbusid)
-					clt.Confirm(sxutil.IDType(mbusid))
+					clt.Confirm(sxutil.IDType(id))
+					log.Printf("Finally confirm %d ", id)
+
 				}else{
 					log.Printf("%v error:",mberr)
 				}
@@ -326,7 +329,7 @@ func rideshareDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		// which select ?
 		supplyMu.Lock()
 		if ch, ok := supplyMap[dm.TargetId]; ok {
-			log.Printf("Send Confirm !")
+			log.Printf("Send Confirm ! to %d", dm.TargetId)
 			 // we should start contract with them..
 			delete(supplyMap, dm.TargetId)
 			ch<- dm.GetId() // confirm
