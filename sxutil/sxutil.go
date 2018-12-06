@@ -252,7 +252,7 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 		log.Printf("%v.ProposeSupply err %v", clt, err)
 		return 0 // should check...
 	}
-	log.Println("ProposeSupply Response:", resp)
+	log.Println("ProposeSupply Response:", resp, ":PID ",pid)
 	return pid
 }
 
@@ -319,7 +319,7 @@ func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMSe
 			}
 			break
 		}
-		log.Printf("Receive Message %v", *sp)
+		log.Println("Receive SS:", *sp)
 		// call Callback!
 		spcb(clt, sp)
 	}
@@ -345,7 +345,7 @@ func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMSe
 			}
 			break
 		}
-		log.Printf("Receive Message %v", *dm)
+		log.Println("Receive SD:",*dm)
 		// call Callback!
 		dmcb(clt, dm)
 	}

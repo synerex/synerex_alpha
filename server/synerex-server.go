@@ -167,29 +167,46 @@ func (s *synerexServerInfo) SelectSupply(c context.Context, tg *api.Target) (r *
 		Type:     tg.Type,
 		MbusId:   id, // mbus id is a message id for select.
 	}
-	ch <- dm // send select message
+	//
+	args :=  idToNode(tg.SenderId)+"->"+idToNode(tg.TargetId)
+	go monitorapi.SendMessage("ServSelSupply", int(tg.Type), dm.Id, tg.SenderId, tg.TargetId ,tg.TargetId, args)
+
+
 
 	tch := make(chan *api.Target)
 	s.wmu.Lock()
 	s.waitConfirms[tg.Type][sxutil.IDType(id)] = tch
 	s.wmu.Unlock()
+
+	ch <- dm // send select message
+
 	// wait for confim...
-	tb := <-tch // got confirm!
+	select {
 
-	s.wmu.Lock() // remove waitChannel
-	delete(s.waitConfirms[tg.Type], sxutil.IDType(id))
-	s.wmu.Unlock()
+	case tb := <-tch: // got confirm!
+		s.wmu.Lock() // remove waitChannel
+		delete(s.waitConfirms[tg.Type], sxutil.IDType(id))
+		s.wmu.Unlock()
+		args :=  idToNode(tg.SenderId)+"->"+idToNode(tg.TargetId)
+		go monitorapi.SendMessage("gotConfirm", int(tg.Type), dm.Id, tb.SenderId, tb.TargetId ,tb.TargetId,args)
 
-	if tb.TargetId == id {
-		if tb.MbusId == id {
-			r = &api.ConfirmResponse{Ok: true, Err: "", MbusId: id}
-			return r, nil
-		} else {
-			r = &api.ConfirmResponse{Ok: true, Err: "no mbus id"}
-			return r, nil
+		if tb.TargetId == id {
+			if tb.MbusId == id {
+				r = &api.ConfirmResponse{Ok: true, Err: "", MbusId: id}
+				return r, nil
+			} else {
+				r = &api.ConfirmResponse{Ok: true, Err: "no mbus id"}
+				return r, nil
+			}
 		}
+
+	case <- time.After(30*time.Second):// timeout!
+		args :=  idToNode(tg.SenderId)+"->"+idToNode(tg.TargetId)
+		go monitorapi.SendMessage("notConfirm", int(tg.Type), dm.Id, tg.SenderId, tg.TargetId ,tg.TargetId,args)
+		r = &api.ConfirmResponse{Ok: false, Err: "waitConfirm Timeout!"}
+
 	}
-	r = &api.ConfirmResponse{Ok: false, Err: "should not happen"}
+
 	return r, errors.New("Should not happen")
 
 }
@@ -210,6 +227,7 @@ func (s *synerexServerInfo) Confirm(c context.Context, tg *api.Target) (r *api.R
 	s.wmu.RLock()
 	ch, ok := s.waitConfirms[tg.Type][sxutil.IDType(tg.TargetId)]
 	s.wmu.RUnlock()
+	go monitorapi.SendMessage("ServConfirm", int(tg.Type), tg.Id, tg.SenderId, 0 ,tg.TargetId, "ConfirmTo")
 	if !ok {
 		r = &api.Response{Ok: false, Err: "Can't find channel"}
 		return r, errors.New("can't find channels for Confirm")
@@ -269,7 +287,7 @@ func (s *synerexServerInfo) SubscribeDemand(ch *api.Channel, stream api.Synerex_
 
 	// It is better to logging here.
 	//	monitorapi.SendMes(&monitorapi.Mes{Message:"Subscribe Demand", Args: fmt.Sprintf("Type:%d,From: %x  %s",ch.Type,ch.ClientId, ch.ArgJson )})
-	monitorapi.SendMessage("SubscribeDemand", int(ch.Type), ch.ClientId, 0, ch.ArgJson)
+	monitorapi.SendMessage("SubscribeDemand", int(ch.Type), 0, ch.ClientId, 0,0, ch.ArgJson)
 
 	subCh := make(chan *api.Demand, MessageChannelBufferSize)
 	// We should think about thread safe coding.
@@ -317,7 +335,7 @@ func (s *synerexServerInfo) SubscribeSupply(ch *api.Channel, stream api.Synerex_
 	subCh := make(chan *api.Supply, MessageChannelBufferSize)
 
 	//	monitorapi.SendMes(&monitorapi.Mes{Message:"Subscribe Supply", Args: fmt.Sprintf("Type:%d, From: %x %s",ch.Type,ch.ClientId,ch.ArgJson )})
-	monitorapi.SendMessage("SubscribeSupply", int(ch.Type), ch.ClientId, 0, ch.ArgJson)
+	monitorapi.SendMessage("SubscribeSupply", int(ch.Type),0, ch.ClientId, 0,0, ch.ArgJson)
 
 	s.smu.Lock()
 	s.supplyChans[tp] = append(s.supplyChans[tp], subCh)
@@ -476,7 +494,7 @@ var (
 )
 
 func idToNode(id uint64) string {
-	nodeNum := int(int64(id) & nodeMask >> nodeShift)
+	nodeNum := int(int64(id) & nodeMask >> nodeShift)  // snowflake node ID:
 	var ok bool
 	var str string
 	if str, ok = nodeMap[nodeNum]; !ok {
@@ -540,7 +558,7 @@ func unaryServerInterceptor(logger *logrus.Logger, s *synerexServerInfo) grpc.Un
 		met3 := strings.Replace(met2, "Supply", "S", 1)
 		met4 := strings.Replace(met3, "Demand", "D", 1)
 		// it seems here to stuck.
-		go monitorapi.SendMessage(met4, msgType, srcId, dstId, args)
+		go monitorapi.SendMessage(met4, msgType,mid, srcId, dstId,tgtId, args)
 
 		// register for messageStore
 		s.messageStore.AddMessage(method, msgType, mid, srcId, dstId, args)
@@ -640,6 +658,8 @@ func main() {
 
 	grpcServer := prepareGrpcServer(s, opts...)
 	log.Printf("Start Synergic Exchange Server, connection waiting at port :%d ...", *port)
-	grpcServer.Serve(lis)
+	serr := grpcServer.Serve(lis)
+	log.Printf("Should not arrive here.. server closed. %v",serr)
+
 
 }

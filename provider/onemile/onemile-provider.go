@@ -624,8 +624,8 @@ func main() {
 
 	wg.Add(1)
 	// subscribe rideshare channel
-	rdClient := createSMServiceClient(api.ChannelType_RIDE_SHARE, "")
-	rtClient := createSMServiceClient(api.ChannelType_ROUTING_SERVICE, "")
+	rdClient := createSMServiceClient(api.ChannelType_RIDE_SHARE, "{Onemile:RideShareDM}")
+	rtClient := createSMServiceClient(api.ChannelType_ROUTING_SERVICE, "{Onemile:Routing}")
 	go subscribeRideShare(rdClient, rtClient)
 
 	wg.Add(1)

@@ -75,7 +75,9 @@ func message(serv *gosocketio.Server) {
 
 // SendReport send a monitor Message to each Socket.IO clients
 func (s *monitorInfo) SendReport(ctx context.Context, m *monitorpb.Mes) (*monitorpb.Response, error) {
+	log.Printf("BC: %s",m.GetJson())
 	s.serv.BroadcastToAll("event", m.GetJson())
+
 	// broadcast always success (?)
 	return &monitorpb.Response{Ok: true}, nil
 }

@@ -74,10 +74,12 @@ func supplyRideshareCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 			delete(dmMap, sp.TargetId)
 
 			// send select! (required?!)
-			log.Printf("Send SelectSupply %d", sp.Id)
+			log.Printf("KT Send SelectSupply %d", sp.Id)
 			id, err := clt.SelectSupply(sp)
 			if err == nil {
 				log.Printf("SelectSupply Success! and MbusID=%d", id)
+			}else {
+				log.Println("KT SelectSupply:Err?", err)
 			}
 
 		}
@@ -172,10 +174,10 @@ func main() {
 //	for {
 		log.Printf("Sending Demand!")
 		registerRideshareDemand(sclient)
-		time.Sleep(10*time.Second)
+//		time.Sleep(10*time.Second)
 //	}
 
-//	wg.Wait()
+	wg.Wait()
 
 	sxutil.CallDeferFunctions() // cleanup!
 
