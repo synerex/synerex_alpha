@@ -130,8 +130,8 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 				mbusid, mberr := clt.SelectSupply(rssp)
 				if mberr == nil {
-					log.Printf("SelectSupply Success! and MbusID=%d", id)
-					clt.Confirm(sxutil.IDType(id))
+					log.Printf("SelectSupply Success! and MbusID=%d", mbusid)
+					clt.Confirm(sxutil.IDType(mbusid))
 				}else{
 					log.Printf("%v error:",mberr)
 				}
