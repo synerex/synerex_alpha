@@ -63,6 +63,18 @@ $(() => {
                     // アンケートの表示を終了する
                     $('form#questions').empty();
 
+                    // タブレット・スマートフォンで画像全体を表示するための処理
+                    // ビューポートの高さの1%値を算出
+                    let vh = window.innerHeight * 0.01;
+                    // カスタム変数--vhの値をドキュメントルートに設定
+                    document.documentElement.style.setProperty('--vh', `${vh}px`);
+                    // リサイズに対応させる
+                    window.addEventListener('resize', () => {
+                        let vh = window.innerHeight * 0.01;
+                        document.documentElement.style.setProperty('--vh', `${vh}px`);
+                    });
+
+
                     waiting();
 
                     // ループ処理を指定の秒数だけ待つための処理
