@@ -105,15 +105,24 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			}
 			avTime, _ := ptypes.Timestamp(rs.ArriveTime.GetTimestamp())
 			avTime.Add(TrainTrainsitTime) //
-			route := getTrainRouteFromTime(aimiPt,apt, int32(avTime.Minute()+ avTime.Hour()*60), 0)
+				route := getTrainRouteFromTime(aimiPt,apt, int32(avTime.Minute()+ avTime.Hour()*60), 0)
+				var rdSh rideshare.RideShare
 
-			// now we found 2 routes( for onemile, and train)
-			rdSh := rideshare.RideShare{
-				Routes: []*rideshare.Route{rs.Routes[1],route},
+			if(route == nil) {
+
+				// now we found 2 routes( for onemile, and train)
+				rdSh = rideshare.RideShare{
+					Routes: []*rideshare.Route{rs.Routes[0], rs.Routes[1]}, ///route},
+				}
+			}else{
+				rdSh = rideshare.RideShare{
+					Routes: []*rideshare.Route{rs.Routes[1],route},
+				}
+
 			}
 			spo := sxutil.SupplyOpts{
 				Target: dm.GetId(),
-				JSON:"{SPOPT}",
+				JSON:"{SPOPT0}",
 				RideShare: &rdSh,
 			}
 			spch := make(chan uint64)
@@ -171,13 +180,23 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			}
 
 			// now we found 2 routes( for onemile, and train)
-			rdSh := rideshare.RideShare{
-				Routes: []*rideshare.Route{route, rs.Routes[1]},
+			var rdSh *rideshare.RideShare
+			if rs.Routes[1]== nil{
+				log.Println("rs.Route", rs.Routes)
+				rdSh = &rideshare.RideShare{
+					Routes: []*rideshare.Route{route},
+				}
+
+			}else {
+				log.Println("routes:", route, rs.Routes[1])
+				rdSh = &rideshare.RideShare{
+					Routes: []*rideshare.Route{route, rs.Routes[1]},
+				}
 			}
 			spo := sxutil.SupplyOpts{
 				Target: dm.GetId(),
 				JSON:"{SPOPT}",
-				RideShare: &rdSh,
+				RideShare: rdSh,
 			}
 			spch := make(chan uint64)
 			spid :=	clt.ProposeSupply(&spo)

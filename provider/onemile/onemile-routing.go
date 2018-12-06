@@ -31,6 +31,18 @@ func rideshareToMission(share *rideshare.RideShare) *mission{
 	mst.Detail = "XXから相見駅"
 	evs := make([]event,0)
 	for j, r := range share.Routes{
+//		rts := make([][2]float64, len(r.Points))
+/*		log.Println(j,":Size=", len(r.Points))
+		rts := "["
+		for i, p := range r.Points {
+			rts += strconv.FormatFloat(p.GetLongitude(),'f',-1,64)+","
+			rts += strconv.FormatFloat(p.GetLatitude(),'f',-1,64)+"]"
+			if i+1 != len(r.Points){
+				rts+=","
+			}
+		}
+		rts+="]"
+*/
 		rts := make([][2]float64, len(r.Points))
 		for i, p := range r.Points {
 			rts[i][0]=p.GetLongitude()
@@ -42,7 +54,9 @@ func rideshareToMission(share *rideshare.RideShare) *mission{
 			EventType: statusStr[int(r.StatusType)],
 			StartTime: r.GetDepartTime().GetTimestamp().GetSeconds()*1000,
 			EndTime: r.GetArriveTime().GetTimestamp().GetSeconds()*1000,
+			Destination: r.GetArrivePoint().String(),
 			Route:rts,
+			Status: "none",
 		}
 		evs = append(evs,ev)
 	}
@@ -263,6 +277,7 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			DepartTime: rs0.DepartTime,
 			ArrivePoint: rs0.ArrivePlace,
 			ArriveTime: rs0.ArriveTime,
+			Points: rs0.Points,
 		}
 
 		rsRoute1 := &rideshare.Route{
@@ -273,6 +288,7 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			DepartTime: rs1.DepartTime,
 			ArrivePoint: rs1.ArrivePlace,
 			ArriveTime: rs1.ArriveTime,
+			Points: rs1.Points,
 		}
 
 		rideShareSvc := &rideshare.RideShare{
@@ -282,6 +298,7 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			ArriveTime: rs1.ArriveTime,
 			Routes: []*rideshare.Route{rsRoute0, rsRoute1},
 		}
+
 
 		spo := &sxutil.SupplyOpts{
 			Target: dm.GetId(),
@@ -330,6 +347,9 @@ func proposeSupplyForRouting(psid uint64, rxch chan uint64 , selVc *vehicle, rs 
 //			log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
 		}
 		log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
+//		log.Println(selVc.mission)
+//		buf,_ := json.Marshal(selVc.mission)
+//		log.Println(string(buf))
 	}else{
 		// not confirm! sorry
 		log.Printf("Cannot book a vehicle! [%s]",selVc.VehicleId)
