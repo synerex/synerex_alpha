@@ -184,7 +184,7 @@ func (s *srvNodeInfo) KeepAlive(ctx context.Context, nu *nodepb.NodeUpdate) (nr 
 	r := nu.Secret
 	ni,ok := s.nodeMap[nid]
 	if !ok  {
-		fmt.Printf("Can't find node... It's killed")
+		fmt.Printf("Can't find node... It's killed %d", nid)
 		return &nodepb.Response{Ok: false, Err: "Killed at Nodeserv"}, e
 	}
 	if r != ni.secret {

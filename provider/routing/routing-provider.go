@@ -20,15 +20,18 @@ var (
 	nodesrv                                = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	supplyMap        map[uint64]chan uint64 // for confirm
 	supplyMu		sync.Mutex
-	rideShareMap      map[uint64]chan *rideshare.RideShare// subChannels
+	rideShareMap      map[uint64]chan *api.Supply // subChannels
 	rideShareMu       sync.RWMutex
 	TrainTrainsitTime  = 5 * time.Minute //  5 min
 	BusTrainsitTime    = 2 * time.Minute // 2 min
 
+	demandClient *sxutil.SMServiceClient
+	supplyClient *sxutil.SMServiceClient
+
 )
 
 func init(){
-	rideShareMap = make(map[uint64]chan *rideshare.RideShare )//
+	rideShareMap = make(map[uint64]chan *api.Supply )//
 	supplyMap = make(map[uint64]chan uint64)
 }
 
@@ -55,7 +58,8 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 	rsInfo := dm.GetArg_RideShare()
 	if rsInfo == nil {
-		log.Printf("Demand is not for RideShare!")
+		log.Printf("Demand is not for RideShare! [%v]", dm)
+		return
 	}
 	var dp,ap *common.Place
 	dp = rsInfo.DepartPoint
@@ -81,17 +85,22 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	if at == nil {// departure time only
 		if ddist < adist { // to aimi station (end is Nagoya)
 			// onemile -> aimi ->
-			ch := make(chan *rideshare.RideShare)
+			ch := make(chan *api.Supply)
 			rideShareMu.Lock()
 			id  := getOnemileRoute(clt, dpt, aimiPt, dt, nil)
+			//
+			log.Printf("TrainAndOneMile Now set channel ID %d",id)
 			rideShareMap[id]= ch
 			rideShareMu.Unlock()
 			var rs *rideshare.RideShare
+			var rssp *api.Supply
+			log.Printf("Wait for onemile reply! %v", dpt)
 			select {
 			case <-time.After(30 *time.Second ):
 				log.Printf("Timeout 30 seconds for getting OneMileRoute")
 				return
-			case rs = <-ch:
+			case rssp = <-ch:
+				rs = rssp.GetArg_RideShare()
 				log.Printf("Get OnemleRoute")
 			}
 			avTime, _ := ptypes.Timestamp(rs.ArriveTime.GetTimestamp())
@@ -115,7 +124,18 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 				log.Printf("Timeout 30sec")
 				return
 			case id:= <-spch: // receive SelectSupply!
-				clt.Confirm(sxutil.IDType(id))
+				//
+				log.Printf("Select from Kota: %d",id)
+				// now we need to selectSupply for OneMile.
+
+				mbusid, mberr := clt.SelectSupply(rssp)
+				if mberr == nil {
+					log.Printf("SelectSupply Success! and MbusID=%d", id)
+					clt.Confirm(sxutil.IDType(id))
+				}else{
+					log.Printf("%v error:",mberr)
+				}
+
 			}
 
 
@@ -131,17 +151,19 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			arTimePro , _ := ptypes.TimestampProto(arTime)
 			arTTime := common.NewTime().WithTimestamp(arTimePro)
 
-			rdch := make(chan *rideshare.RideShare)
+			rdch := make(chan *api.Supply)
 			rideShareMu.Lock()
 			id := getOnemileRoute(clt, aimiPt, apt, arTTime, nil)
 			rideShareMap[id]= rdch
 			rideShareMu.Unlock()
 			var rs *rideshare.RideShare
+			var rssp *api.Supply
 			select {
 			case <-time.After(30 *time.Second ):
 				log.Printf("Timeout 30 seconds for getting OneMileRoute")
 				return
-			case rs = <-rdch:
+			case rssp = <-rdch:
+				rs = rssp.GetArg_RideShare()
 				log.Printf("Get OnemileRoute")
 			}
 
@@ -223,7 +245,7 @@ func  trainAndBusAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			dTimePro , _ := ptypes.TimestampProto(dpTime)
 			oneMileArriveTime :=common.NewTime().WithTimestamp(dTimePro)
 
-			ch := make(chan *rideshare.RideShare)
+			ch := make(chan *api.Supply)
 			rideShareMu.Lock()
 			id  := getOnemileRoute(clt, dpt, aimiPt, dt, oneMileArriveTime)
 			rideShareMap[id]= ch
@@ -242,7 +264,7 @@ func  trainAndBusAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			arTimePro , _ := ptypes.TimestampProto(arTime)
 			arTTime := common.NewTime().WithTimestamp(arTimePro)
 
-			rdch := make(chan *rideshare.RideShare)
+			rdch := make(chan *api.Supply)
 			rideShareMu.Lock()
 			id := getOnemileRoute(clt, aimiPt, apt, arTTime, nil)
 			rideShareMap[id]= rdch
@@ -263,7 +285,7 @@ func rideshareSupplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	if sp.TargetId == 0{
 		log.Printf("Should not come here...")
 	}
-
+	log.Printf("Got RideShare Supply from (may from Onemile) %v",*sp)
 	rt := sp.GetArg_RideShare()
 	if rt != nil { // get Routing supplu
 		rideShareMu.RLock()
@@ -272,12 +294,16 @@ func rideshareSupplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 			delete(rideShareMap, sp.TargetId)
 
 			log.Printf("Send SelectSupply %d", sp.Id)
-			ch <- sp.GetArg_RideShare()
-			id, err := clt.SelectSupply(sp)
-			if err == nil {
-				log.Printf("SelectSupply Success! and MbusID=%d", id)
-			}
+			ch <- sp // .GetArg_RideShare()
+			// we have to wait for Select by User.
 
+//			id, err := clt.SelectSupply(sp)
+//			if err == nil {
+//				log.Printf("SelectSupply Success! and MbusID=%d", id)
+//			}
+
+		}else{
+			log.Printf("Supply Calback: Can't find report channel for %d",sp.TargetId)
 		}
 		rideShareMu.RUnlock()
 	}else{
@@ -288,7 +314,7 @@ func rideshareSupplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 // callback for each Demand
 func rideshareDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	// check if demand is match with my supply.
-	log.Println("Got rideshare demand callback on Routing")
+	log.Println("Got rideshare demand callback on Routing:",dm)
 
 	// we need to start a new "Multiple Routing Suggestion".
 	// for each Demand, we start go routine for that!
@@ -310,8 +336,9 @@ func rideshareDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		supplyMu.Unlock()
 
 	}else { // not SelectSupply
+		log.Println("No target as :",dm)
 		if sxutil.IDType(dm.SenderId) == clt.ClientID {
-
+			log.Println("From me ",dm)
 		}else { // not Demand From me.
 			// select any ride share demand!
 			// should check the type of ride..
@@ -323,7 +350,7 @@ func rideshareDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			//  currently we do not consider walk.
 
 			go trainAndOnemile(clt, dm)
-			go trainAndBusAndOnemile(clt, dm)
+//			go trainAndBusAndOnemile(clt, dm)
 		}
 	}
 }
@@ -332,15 +359,16 @@ func rideshareDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 func subscribeRideshareDemand(client *sxutil.SMServiceClient) {
 	// goroutine!
 	ctx := context.Background() //
-	client.SubscribeDemand(ctx, rideshareDemandCallback)
+	err :=	client.SubscribeDemand(ctx, rideshareDemandCallback)
 	// comes here if channel closed
-	log.Printf("Server closed... on Routing provider")
+	log.Printf("Server closed... on Routing provider %v", err)
 }
 
 // wait for rideshare demand.
 func subscribeRideshareSupply(client *sxutil.SMServiceClient) {
 	// goroutine!
 	ctx := context.Background() //
+	log.Printf("Now supporting rideshare Supply")
 	client.SubscribeSupply(ctx, rideshareSupplyCallback)
 	// comes here if channel closed
 	log.Printf("SupplyServer closed... on Routing provider")
@@ -367,14 +395,22 @@ func main() {
 	}
 
 	client := api.NewSynerexClient(conn)
-	argJson := fmt.Sprintf("{Client:Routing}")
+	argJson := fmt.Sprintf("{Client:Routing:RSDM}")
 	sclient := sxutil.NewSMServiceClient(client, api.ChannelType_RIDE_SHARE,argJson)
 
 	wg.Add(1)
+	demandClient = sclient
+
+	argJson2 := fmt.Sprintf("{Client:Routing:RSSP}")
+	sclient2 := sxutil.NewSMServiceClient(client, api.ChannelType_RIDE_SHARE,argJson2)
+
+	supplyClient = sclient2
+
 	go subscribeRideshareDemand(sclient)
 
-	go subscribeRideshareSupply(sclient)
+	wg.Add(1)
 
+	go subscribeRideshareSupply(sclient2)
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!

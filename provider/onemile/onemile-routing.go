@@ -97,9 +97,13 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		// 2. recv RoutingSupply, then send ProposeSupply to RideShare.
 
 
-		rs := dm.GetArg_RideShare()
-		fpt := 	rs.DepartPoint.GetCentralPoint()
-		tpt := rs.ArrivePoint.GetCentralPoint()
+		originRideShare := dm.GetArg_RideShare()
+		if( originRideShare == nil){
+			log.Printf("Got nil rideshare! [%v]",dm)
+			return
+		}
+		fpt := 	originRideShare.DepartPoint.GetCentralPoint()
+		tpt := originRideShare.ArrivePoint.GetCentralPoint()
 		dist,_ := fpt.Distance(tpt)
 		log.Printf("Onemile Get Demand for distance %f: %s", dist, dm.ArgJson)
 		if dist >= MaxDistance {
@@ -171,29 +175,36 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			DepartPlace: common.NewPlace().WithPoint(fpt),
 			ArrivePlace: common.NewPlace().WithPoint(tpt),
 		}
-		if rs.DepartTime != nil {
+		if originRideShare.DepartTime != nil {
 			// we should check the deadline.
-			depart , _ := ptypes.Timestamp(rs.DepartTime.GetTimestamp())
-			arrive , _ := ptypes.Timestamp(rs0.ArriveTime.GetTimestamp())
-			if arrive.After(depart) {// we cant make it... umm
-//				selVc.Status = "free"
-				return
-			}
 			// we should consider the time difference (if we have wide gap)
 //			log.Printf("Now we have a duration %.1f mins", depart.Sub(arrive).Minutes())
 
-			rt.DepartTime = rs.DepartTime
-		}else if rs.ArriveTime != nil {
-			rt.ArriveTime = rs.ArriveTime
+			rt.DepartTime = rs0.ArriveTime
+
+//			rt.DepartTime = originRideShare.DepartTime
+		}else if originRideShare.ArriveTime != nil {
+
+			depart , _ := ptypes.Timestamp(originRideShare.DepartTime.GetTimestamp())
+			oneDepart , _ := ptypes.Timestamp(rs0.ArriveTime.GetTimestamp())
+			if depart.After(oneDepart) {// we cant make it... umm
+			//				selVc.Status = "free"
+				log.Printf("Onemile can't support this deadline %v -> %v ",depart, oneDepart)
+				return
+			}
+
+			rt.ArriveTime = originRideShare.ArriveTime
 		}
 
 		dmo := sxutil.DemandOpts{
 			Name: "Routing Demand",
-			JSON: "{from, to}",
+			JSON: "{2ndOnemile Route}",
 			RoutingService: rt,
 		}
 
-		r1id :=clt.RegisterDemand(&dmo)
+		log.Printf("Now Register Routing Demand for ride")
+
+		r1id :=cltRoute.RegisterDemand(&dmo)
 		r1ch := make(chan *routing.RoutingService)
 		routingMu.Lock()
 		routingMap[r1id] = r1ch  // save demand
@@ -215,12 +226,13 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 		depart2 , _ := ptypes.Timestamp(rs1.DepartTime.GetTimestamp())
 		arrive2 , _ := ptypes.Timestamp(rs0.ArriveTime.GetTimestamp())
-		if arrive2.After(depart2) {// we cant make it... umm
-			log.Printf("Umm. sorry we can't mak it..")
+//		if depart2.After(arrive2) {// we cant make it... umm
+//			log.Printf("Umm. sorry we can't mak it..Arrive %v, 2ndDepart %v",arrive2, depart2)
 //			selVc.Status = "free"
-			return
-		}
+//			return
+//		}
 		// we should consider the time difference (if we have wide gap)
+		log.Printf(" 1st route Arrive %v, 2nd route Depart %v",arrive2, depart2)
 		log.Printf("Now we have a duration %.1f mins for wait", depart2.Sub(arrive2).Minutes())
 
 		// now we have to keep the vehicle to be confirmed.
@@ -257,19 +269,26 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		spo := &sxutil.SupplyOpts{
 			Target: dm.GetId(),
 			RideShare: rideShareSvc,
+			Name: "FromOneMile!",
+			JSON: "{routes}",
 		}
 
+		log.Printf("Now Propose Supply %v",*spo)
 		psid := clt.ProposeSupply(spo)
+		log.Printf("Propose Supply ID: %d",psid)
+
 		rxch := make(chan *rideshare.RideShare)
 		supplyMu.Lock()
 		supplyMap[psid] = rxch
 		supplyMu.Unlock()
 		var rdsh *rideshare.RideShare
 		select { // wait for select supply
-		case <-time.After(30 *time.Second):
-			log.Printf("Timeout! 30 seconds")
+		case <-time.After(300 *time.Second):
+			log.Printf("Onemile Propose Supply Timeout! 300 seconds %d",psid)
+		//should  remvove!
 			return
 		case rdsh = <- rxch:
+			log.Printf("Got SelectSupply for Onemile!")
 		}
 		// now get selectSupply
 		// check car availability
@@ -286,7 +305,7 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			selVc.socket.Emit("clt_request_mission", selVc.mission.toMap())
 			log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
 		}
-
+		// start
 	}
 }
 
