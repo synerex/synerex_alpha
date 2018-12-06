@@ -10,14 +10,23 @@ function q(name, url) {
 
 // モーダルダイアログ
 $(() => {
+    // ページが読み込まれたら表示
     $('#connection-area').dialog({
         modal: true,
-        title: "初期設定",
-        buttons: {
-            "閉じる": function () {
-                $(this).dialog("close");
+        title: "初期設定"
+    });
+
+    // DEBUGボタンを押したら表示
+    $('#debug').on('click', () => {
+        $('#connection-area').dialog({
+            modal: true,
+            title: "デバッグ",
+            buttons: {
+                "閉じる": function () {
+                    $(this).dialog("close");
+                }
             }
-        }
+        });
     });
 });
 
@@ -41,6 +50,9 @@ $(() => {
 
             // StringからJSONにパースする
             data = JSON.parse(data);
+
+            // モーダルダイアログを非表示
+            $('#connection-area').dialog("close");
 
             // 広告 or アンケート で場合分け
             const contents = data.contents[0];
