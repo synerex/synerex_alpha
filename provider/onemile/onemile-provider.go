@@ -85,8 +85,8 @@ func (m *mission) toMap() map[string]interface{} {
 		"detail":     m.Detail,
 		"events": func(events []event) []map[string]interface{} {
 			ret := make([]map[string]interface{}, len(events))
-			for _, evt := range events {
-				ret = append(ret, evt.toMap())
+			for i, evt := range events {
+				ret[i] = evt.toMap()
 			}
 			return ret
 		}(m.Events),
