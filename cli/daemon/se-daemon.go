@@ -13,12 +13,12 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
 
-	"github.com/google/gops/agent"
 	"github.com/mtfelian/golang-socketio"
 
 	"github.com/kardianos/service"
@@ -753,6 +753,16 @@ func interfaceToString(target interface{}) []string {
 	return resp
 }
 
+type debugLogger struct {}
+func (d debugLogger) Write(p []byte) (n int, err error){
+	s:= string(p)
+	if strings.Contains(s, "multiple response.WriteHeader"){
+		debug.PrintStack()
+	}
+	return os.Stderr.Write(p)
+}
+
+
 func (sesrv *SynerexService) run() error {
 	logger.Info("Starting.. Synergic Engine:" + version)
 	currentRoot, err := getRegisteredDir()
@@ -816,7 +826,17 @@ func (sesrv *SynerexService) run() error {
 	serveMux.HandleFunc( "/github/", githubHandler)
 
 	logger.Info("Starting Synerex Engine daemon on port ", port)
-	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
+
+	hLogger := log.New(debugLogger{}, "", 0)
+
+	server := &http.Server{
+		Addr: fmt.Sprintf(":%d", port),
+		Handler: serveMux,
+		ErrorLog: hLogger,
+	}
+	err = server.ListenAndServe()
+
+//	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -903,9 +923,9 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 func main() {
 	// add gops agent.
 	//	fmt.Println("Start gops agent")
-	if gerr := agent.Listen(agent.Options{}); gerr != nil {
-		log.Fatal(gerr)
-	}
+//	if gerr := agent.Listen(agent.Options{}); gerr != nil {
+//		log.Fatal(gerr)
+	//}
 
 	serv := &SynerexService{}
 
