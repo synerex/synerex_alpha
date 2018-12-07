@@ -3,91 +3,90 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
+	"sync"
+	"time"
+
 	"github.com/golang/protobuf/ptypes"
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/common"
 	"github.com/synerex/synerex_alpha/api/rideshare"
 	"github.com/synerex/synerex_alpha/api/routing"
 	"github.com/synerex/synerex_alpha/sxutil"
-	"log"
-	"sync"
-	"time"
 )
 
 var (
-	MaxDistance = 10000.0 // 10 km for max distance for onemile mobility
+	MaxDistance       = 10000.0 // 10 km for max distance for onemile mobility
 	cltRide, cltRoute *sxutil.SMServiceClient
-	routingMap = make(map[uint64]chan *routing.RoutingService)
-	routingMu sync.RWMutex
-	supplyMap = make(map[uint64]chan uint64)
-	supplyMu sync.RWMutex
-	statusStr = []string{"free","pickup","ride","full"}
+	routingMap        = make(map[uint64]chan *routing.RoutingService)
+	routingMu         sync.RWMutex
+	supplyMap         = make(map[uint64]chan uint64)
+	supplyMu          sync.RWMutex
+	statusStr         = []string{"free", "pickup", "ride", "full"}
 )
 
-func rideshareToMission(share *rideshare.RideShare) *mission{
+func rideshareToMission(share *rideshare.RideShare) *mission {
 	mst := &mission{}
 	mst.MissionId = "mis01"
 	mst.Title = "お迎え"
 	mst.Detail = "XXから相見駅"
-	evs := make([]event,0)
-	for j, r := range share.Routes{
-//		rts := make([][2]float64, len(r.Points))
-/*		log.Println(j,":Size=", len(r.Points))
-		rts := "["
-		for i, p := range r.Points {
-			rts += strconv.FormatFloat(p.GetLongitude(),'f',-1,64)+","
-			rts += strconv.FormatFloat(p.GetLatitude(),'f',-1,64)+"]"
-			if i+1 != len(r.Points){
-				rts+=","
-			}
-		}
-		rts+="]"
-*/
+	evs := make([]event, 0)
+	for j, r := range share.Routes {
+		//		rts := make([][2]float64, len(r.Points))
+		/*		log.Println(j,":Size=", len(r.Points))
+				rts := "["
+				for i, p := range r.Points {
+					rts += strconv.FormatFloat(p.GetLongitude(),'f',-1,64)+","
+					rts += strconv.FormatFloat(p.GetLatitude(),'f',-1,64)+"]"
+					if i+1 != len(r.Points){
+						rts+=","
+					}
+				}
+				rts+="]"
+		*/
 		rts := make([][2]float64, len(r.Points))
 		for i, p := range r.Points {
-			rts[i][0]=p.GetLatitude()
-			rts[i][1]=p.GetLongitude()
+			rts[i][0] = p.GetLatitude()
+			rts[i][1] = p.GetLongitude()
 		}
 
 		ev := event{
-			EventId: fmt.Sprintf("evt%02d",j+1),
-			EventType: statusStr[int(r.StatusType)],
-			StartTime: r.GetDepartTime().GetTimestamp().GetSeconds()*1000,
-			EndTime: r.GetArriveTime().GetTimestamp().GetSeconds()*1000,
+			EventId:     fmt.Sprintf("evt%02d", j+1),
+			EventType:   statusStr[int(r.StatusType)],
+			StartTime:   r.GetDepartTime().GetTimestamp().GetSeconds() * 1000,
+			EndTime:     r.GetArriveTime().GetTimestamp().GetSeconds() * 1000,
 			Destination: r.GetArrivePoint().String(),
-			Route:rts,
-			Status: "none",
+			Route:       rts,
+			Status:      "none",
 		}
-		evs = append(evs,ev)
+		evs = append(evs, ev)
 	}
 	mst.Events = evs
 
 	return mst
 }
 
-
-func onemileHandleRoutingSupply(clt  *sxutil.SMServiceClient, sp *api.Supply) {
+func onemileHandleRoutingSupply(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	rs := sp.GetArg_RoutingService()
 	if rs == nil {
-		log.Printf("Unknown Routing Supply %v",sp)
+		log.Printf("Unknown Routing Supply %v", sp)
 		return
 	}
 
 	if sp.TargetId != 0 { // ProposeSupply!
 		routingMu.Lock()
-		ch, ok :=routingMap[sp.TargetId]
+		ch, ok := routingMap[sp.TargetId]
 		if ok {
-			delete(routingMap,sp.TargetId)
+			delete(routingMap, sp.TargetId)
 			ch <- rs
-		}else{
+		} else {
 			log.Printf("Can't find TargetID %d in mapSize %d", sp.TargetId, len(routingMap))
 		}
 		routingMu.Unlock()
-	}else{
-		log.Printf("No target Routing Supply %v",sp)
+	} else {
+		log.Printf("No target Routing Supply %v", sp)
 	}
 }
-
 
 /*
 func onemileHandleRideShareSupply(clt  *sxutil.SMServiceClient, sp *api.Supply) {
@@ -102,13 +101,10 @@ func onemileHandleRideShareSupply(clt  *sxutil.SMServiceClient, sp *api.Supply) 
 }
 */
 
-
-
-
 func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	if dm.TargetId != 0 { // select supply!
 		// SelectSupply.
-//		log.Println("Got Select Supply!?",*dm)
+		//		log.Println("Got Select Supply!?",*dm)
 		log.Printf("Got SelectSupply from %d -> %d, ", dm.SenderId, dm.TargetId%1000000)
 		supplyMu.Lock()
 		spch, ok := supplyMap[dm.GetTargetId()]
@@ -117,7 +113,7 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			spch <- dm.GetId()
 			log.Printf("Now prepare for Confirm")
 		} else {
-			log.Printf("RideShare SelectSupply: Can't find select id %d ",dm.TargetId)
+			log.Printf("RideShare SelectSupply: Can't find select id %d ", dm.TargetId)
 		}
 		supplyMu.Unlock()
 	} else {
@@ -125,17 +121,16 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		// 0. Find Nearest free car.
 		// 1. send RoutingDemand to Simple-routing
 		// 2. recv RoutingSupply, then send ProposeSupply to RideShare.
-		log.Println("Got Demand",*dm)
-
+		log.Println("Got Demand", *dm)
 
 		originRideShare := dm.GetArg_RideShare()
-		if( originRideShare == nil){
-			log.Printf("Got nil rideshare! [%v]",dm)
+		if originRideShare == nil {
+			log.Printf("Got nil rideshare! [%v]", dm)
 			return
 		}
-		fpt := 	originRideShare.DepartPoint.GetCentralPoint()
+		fpt := originRideShare.DepartPoint.GetCentralPoint()
 		tpt := originRideShare.ArrivePoint.GetCentralPoint()
-		dist,_ := fpt.Distance(tpt)
+		dist, _ := fpt.Distance(tpt)
 		log.Printf("Onemile Get Demand for distance %f: %s", dist, dm.ArgJson)
 		if dist >= MaxDistance {
 			log.Printf("Onemile ignores long distance demand")
@@ -148,15 +143,15 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		minDist := MaxDistance
 		var selVc *vehicle
 		var selPt *common.Point
-		for _,v := range vehicleMap {
+		for _, v := range vehicleMap {
 			if v.Status != "free" {
 				continue
 			}
 			npt := new(common.Point)
 			npt.Latitude = v.Coord[0]
 			npt.Longitude = v.Coord[1]
-			dt,_ := fpt.Distance(npt)
-			log.Printf("Dist %f, %f",dt, minDist)
+			dt, _ := fpt.Distance(npt)
+			log.Printf("Dist %f, %f", dt, minDist)
 			if dt < minDist {
 				minDist = dt
 				selVc = v
@@ -172,14 +167,14 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		rt0 := &routing.RoutingService{
 			DepartPlace: common.NewPlace().WithPoint(selPt),
 			ArrivePlace: common.NewPlace().WithPoint(fpt),
-			DepartTime: common.NewTime().WithTimestamp(ptypes.TimestampNow()),
+			DepartTime:  common.NewTime().WithTimestamp(ptypes.TimestampNow()),
 		}
 		route_dmo := sxutil.DemandOpts{
-			Name: "Routing Demand",
-			JSON: "{from, to}",
+			Name:           "Routing Demand",
+			JSON:           "{from, to}",
 			RoutingService: rt0,
 		}
-//		selVc.Status = "waitSelect0" // now we book the vehicle
+		//		selVc.Status = "waitSelect0" // now we book the vehicle
 
 		r0id := cltRoute.RegisterDemand(&route_dmo)
 		r0ch := make(chan *routing.RoutingService)
@@ -188,12 +183,12 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		routingMu.Unlock()
 		var rs0 *routing.RoutingService
 		select {
-		case <-time.After(30 *time.Second):
+		case <-time.After(30 * time.Second):
 			log.Printf("OneMile Routing Timeout")
 			routingMu.Lock()
 			delete(routingMap, r0id) // remove ID
 			routingMu.Unlock()
-//			selVc.Status = "free"
+			//			selVc.Status = "free"
 			return
 		case rs0 = <-r0ch:
 			log.Printf("Got RoutingService Result")
@@ -209,18 +204,18 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		if originRideShare.DepartTime != nil {
 			// we should check the deadline.
 			// we should consider the time difference (if we have wide gap)
-//			log.Printf("Now we have a duration %.1f mins", depart.Sub(arrive).Minutes())
+			//			log.Printf("Now we have a duration %.1f mins", depart.Sub(arrive).Minutes())
 
 			rt.DepartTime = rs0.ArriveTime
 
-//			rt.DepartTime = originRideShare.DepartTime
-		}else if originRideShare.ArriveTime != nil {
+			//			rt.DepartTime = originRideShare.DepartTime
+		} else if originRideShare.ArriveTime != nil {
 
-			depart , _ := ptypes.Timestamp(originRideShare.DepartTime.GetTimestamp())
-			oneDepart , _ := ptypes.Timestamp(rs0.ArriveTime.GetTimestamp())
-			if depart.After(oneDepart) {// we cant make it... umm
-			//				selVc.Status = "free"
-				log.Printf("Onemile can't support this deadline %v -> %v ",depart, oneDepart)
+			depart, _ := ptypes.Timestamp(originRideShare.DepartTime.GetTimestamp())
+			oneDepart, _ := ptypes.Timestamp(rs0.ArriveTime.GetTimestamp())
+			if depart.After(oneDepart) { // we cant make it... umm
+				//				selVc.Status = "free"
+				log.Printf("Onemile can't support this deadline %v -> %v ", depart, oneDepart)
 				return
 			}
 
@@ -228,26 +223,26 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		}
 
 		dmo := sxutil.DemandOpts{
-			Name: "Routing Demand",
-			JSON: "{2ndOnemile Route}",
+			Name:           "Routing Demand",
+			JSON:           "{2ndOnemile Route}",
 			RoutingService: rt,
 		}
 
 		log.Printf("Now Register Routing Demand for ride")
 
-		r1id :=cltRoute.RegisterDemand(&dmo)
+		r1id := cltRoute.RegisterDemand(&dmo)
 		r1ch := make(chan *routing.RoutingService)
 		routingMu.Lock()
-		routingMap[r1id] = r1ch  // save demand
+		routingMap[r1id] = r1ch // save demand
 		routingMu.Unlock()
 		var rs1 *routing.RoutingService
 		select {
-		case <-time.After(30 *time.Second):
+		case <-time.After(30 * time.Second):
 			log.Printf("OneMile Routing 2nd Timeout")
 			routingMu.Lock()
 			delete(routingMap, r1id) // remove ID
 			routingMu.Unlock()
-//			selVc.Status = "free"
+			//			selVc.Status = "free"
 			return
 		case rs1 = <-r1ch:
 			log.Printf("Got RoutingService 2ndResult")
@@ -255,87 +250,86 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 		// we should check the integrity of 2 routes.
 
-		depart2 , _ := ptypes.Timestamp(rs1.DepartTime.GetTimestamp())
-		arrive2 , _ := ptypes.Timestamp(rs0.ArriveTime.GetTimestamp())
-//		if depart2.After(arrive2) {// we cant make it... umm
-//			log.Printf("Umm. sorry we can't mak it..Arrive %v, 2ndDepart %v",arrive2, depart2)
-//			selVc.Status = "free"
-//			return
-//		}
+		depart2, _ := ptypes.Timestamp(rs1.DepartTime.GetTimestamp())
+		arrive2, _ := ptypes.Timestamp(rs0.ArriveTime.GetTimestamp())
+		//		if depart2.After(arrive2) {// we cant make it... umm
+		//			log.Printf("Umm. sorry we can't mak it..Arrive %v, 2ndDepart %v",arrive2, depart2)
+		//			selVc.Status = "free"
+		//			return
+		//		}
 		// we should consider the time difference (if we have wide gap)
-		log.Printf(" 1st route Arrive %v, 2nd route Depart %v",arrive2, depart2)
+		log.Printf(" 1st route Arrive %v, 2nd route Depart %v", arrive2, depart2)
 		log.Printf("Now we have a duration %.1f mins for wait", depart2.Sub(arrive2).Minutes())
 
 		// now we have to keep the vehicle to be confirmed.
-//		selVc.Status = "waitSelect"
+		//		selVc.Status = "waitSelect"
 
 		rsRoute0 := &rideshare.Route{
-			TrafficType: rideshare.TrafficType_TAXI,
-			StatusType: rideshare.StatusType_PICKUP,
-			TransportName :"Onemile",
-			DepartPoint: rs0.DepartPlace,
-			DepartTime: rs0.DepartTime,
-			ArrivePoint: rs0.ArrivePlace,
-			ArriveTime: rs0.ArriveTime,
-			Points: rs0.Points,
+			TrafficType:   rideshare.TrafficType_TAXI,
+			StatusType:    rideshare.StatusType_PICKUP,
+			TransportName: "Onemile",
+			DepartPoint:   rs0.DepartPlace,
+			DepartTime:    rs0.DepartTime,
+			ArrivePoint:   rs0.ArrivePlace,
+			ArriveTime:    rs0.ArriveTime,
+			Points:        rs0.Points,
 		}
 
 		rsRoute1 := &rideshare.Route{
-			TrafficType: rideshare.TrafficType_TAXI,
-			StatusType: rideshare.StatusType_RIDE,
-			TransportName :"Onemile",
-			DepartPoint: rs1.DepartPlace,
-			DepartTime: rs1.DepartTime,
-			ArrivePoint: rs1.ArrivePlace,
-			ArriveTime: rs1.ArriveTime,
-			Points: rs1.Points,
+			TrafficType:   rideshare.TrafficType_TAXI,
+			StatusType:    rideshare.StatusType_RIDE,
+			TransportName: "Onemile",
+			DepartPoint:   rs1.DepartPlace,
+			DepartTime:    rs1.DepartTime,
+			ArrivePoint:   rs1.ArrivePlace,
+			ArriveTime:    rs1.ArriveTime,
+			Points:        rs1.Points,
 		}
 
 		rideShareSvc := &rideshare.RideShare{
 			DepartPoint: rs1.DepartPlace,
-			DepartTime: rs1.DepartTime,
+			DepartTime:  rs1.DepartTime,
 			ArrivePoint: rs1.ArrivePlace,
-			ArriveTime: rs1.ArriveTime,
-			Routes: []*rideshare.Route{rsRoute0, rsRoute1},
+			ArriveTime:  rs1.ArriveTime,
+			Routes:      []*rideshare.Route{rsRoute0, rsRoute1},
 		}
 
-
 		spo := &sxutil.SupplyOpts{
-			Target: dm.GetId(),
+			Target:    dm.GetId(),
 			RideShare: rideShareSvc,
-			Name: "FromOneMile!",
-			JSON: "{2routes}",
+			Name:      "FromOneMile!",
+			JSON:      "{2routes}",
 		}
 
 		// start
-		log.Println("Now Propose Supply :",*spo)
+		log.Println("Now Propose Supply :", *spo)
 		psid := clt.ProposeSupply(spo)
-		log.Printf("Propose Supply ID: %d",psid)
+		log.Printf("Propose Supply ID: %d", psid)
 
 		rxch := make(chan uint64)
 		supplyMu.Lock()
 		supplyMap[psid] = rxch
 		supplyMu.Unlock()
 
-		go proposeSupplyForRouting(psid,rxch, selVc,rideShareSvc)
+		go proposeSupplyForRouting(psid, rxch, selVc, rideShareSvc)
 	}
 }
 
-func proposeSupplyForRouting(psid uint64, rxch chan uint64 , selVc *vehicle, rs *rideshare.RideShare){
+func proposeSupplyForRouting(psid uint64, rxch chan uint64, selVc *vehicle, rs *rideshare.RideShare) {
 	var cfid uint64
 	select { // wait for select supply
-	case <-time.After(300 *time.Second):
-		log.Printf("Onemile Propose Supply Timeout! 300 seconds %d",psid)
+	case <-time.After(300 * time.Second):
+		log.Printf("Onemile Propose Supply Timeout! 300 seconds %d", psid)
 		//should  remvove!
 		return
-	case cfid = <- rxch:
+	case cfid = <-rxch:
 		log.Printf("Got SelectSupply for Onemile!")
 	}
 	// now get selectSupply
 	// check car availability
 	selVc.mu.Lock()
 	if selVc.Status == "free" {
-		log.Printf("Now Book a vehicle! [%s] by %d",selVc.VehicleId, cfid)
+		log.Printf("Now Book a vehicle! [%s] by %d", selVc.VehicleId, cfid)
 		cltRide.Confirm(sxutil.IDType(cfid))
 
 		selVc.Status = "pickup"
@@ -344,25 +338,26 @@ func proposeSupplyForRouting(psid uint64, rxch chan uint64 , selVc *vehicle, rs 
 		selVc.mission = ms
 		if selVc.socket != nil {
 			selVc.socket.Emit("clt_request_mission", selVc.mission.toMap())
-//			log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
+			//			log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
 		}
 		log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
-//		log.Println(selVc.mission)
-//		buf,_ := json.Marshal(selVc.mission)
-//		log.Println(string(buf))
-	}else{
+		//		log.Println(selVc.mission)
+		//		buf,_ := json.Marshal(selVc.mission)
+		//		log.Println(string(buf))
+	} else {
 		// not confirm! sorry
-		log.Printf("Cannot book a vehicle! [%s]",selVc.VehicleId)
+		log.Printf("Cannot book a vehicle! [%s]", selVc.VehicleId)
 	}
 	selVc.mu.Unlock()
 
 }
 
-func subscribeRouting(rtClient *sxutil.SMServiceClient){
+func subscribeRouting(rtClient *sxutil.SMServiceClient) {
 	ctx := context.Background()
 	rtClient.SubscribeSupply(ctx, onemileHandleRoutingSupply) // this is on "onemile-routing.go"
 	log.Printf("Server closed... on Onemile Routing SubscribeSupply")
 }
+
 /*
 func subscribeRideShareDemand(rdSpClient *sxutil.SMServiceClient){
 	ctx := context.Background()
@@ -373,16 +368,15 @@ func subscribeRideShareDemand(rdSpClient *sxutil.SMServiceClient){
 
 // Main Entry point of onemile-routing.go
 // subscribe rideshare channel
-func subscribeRideShare(rdClient, rtClient  *sxutil.SMServiceClient) {
+func subscribeRideShare(rdClient, rtClient *sxutil.SMServiceClient) {
 	cltRide = rdClient
 	cltRoute = rtClient
 
-//	go subscribeRideShareDemand(rdSpClient)
+	//	go subscribeRideShareDemand(rdSpClient)
 
 	go subscribeRouting(rtClient)
 	ctx := context.Background()
 	rdClient.SubscribeDemand(ctx, onemileHandleRideShareDemand) // this is on "onemile-routing.go"
-
 
 	log.Printf("Server closed... on Onemile RideShare SubscribeDemand")
 }
