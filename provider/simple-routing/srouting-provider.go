@@ -43,7 +43,7 @@ func getRoute(from *common.Place , to *common.Place) [][2]float64 {
 	tpt := to.GetCentralPoint()
 	log.Println("Route:",fpt.Longitude,fpt.Latitude, tpt.Longitude, tpt.Latitude)
 
-	qstr := fmt.Sprintf("?from=%.6f,%.6f&to=%.6f,%.6f",fpt.Latitude,fpt.Longitude, tpt.Latitude, tpt.Longitude)
+	qstr := fmt.Sprintf("?from=%.6f,%.6f&to=%.6f,%.6f",fpt.Longitude,fpt.Latitude, tpt.Longitude, tpt.Latitude)
 	url := RouteURL+qstr
 	resp, _ := http.Get(url)
 	defer resp.Body.Close()
