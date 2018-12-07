@@ -103,6 +103,7 @@ func GetNodeName(n int) string {
 	ni, err := nsv_clt.QueryNode(context.Background(), &nodeapi.NodeID{NodeId: int32(n)})
 	if err != nil {
 			log.Printf("Error on QueryNode %v", err)
+			return "None:-1"
 	}
 
 	rs := strings.Replace( ni.NodeName,"Provider","",-1)
