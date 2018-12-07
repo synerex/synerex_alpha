@@ -126,13 +126,6 @@ func RegisterNodeName(nodesrv string, nm string, isServ bool) error { // registe
 	var ee error
 	nid, ee = clt.RegisterNode(context.Background(), &nif)
 
-	nupd = &nodeapi.NodeUpdate{
-		NodeId:      nid.NodeId,
-		Secret:      nid.Secret,
-		UpdateCount: 0,
-		NodeStatus:  0,
-		NodeArg:     "",
-	}
 	if ee != nil { // has error!
 		log.Println("Error on get NodeID", ee)
 		return ee
@@ -145,6 +138,14 @@ func RegisterNodeName(nodesrv string, nm string, isServ bool) error { // registe
 		} else {
 			fmt.Println("Successfully Initialize node ", nid.NodeId)
 		}
+	}
+
+	nupd = &nodeapi.NodeUpdate{
+		NodeId:      nid.NodeId,
+		Secret:      nid.Secret,
+		UpdateCount: 0,
+		NodeStatus:  0,
+		NodeArg:     "",
 	}
 	// start keepalive goroutine
 	go startKeepAlive()
@@ -249,7 +250,7 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 	defer cancel()
 	resp, err := clt.Client.ProposeSupply(ctx, sp)
 	if err != nil {
-		log.Printf("%v.ProposeSupply err %v", clt, err)
+		log.Printf("%v.ProposeSupply err %v, [%v]", clt, err, sp)
 		return 0 // should check...
 	}
 	log.Println("ProposeSupply Response:", resp, ":PID ",pid)
