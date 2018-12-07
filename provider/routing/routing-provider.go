@@ -109,7 +109,7 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 				var rdSh rideshare.RideShare
 
 			if(route == nil) {
-
+				log.Printf("Train route is nil..umm")
 				// now we found 2 routes( for onemile, and train)
 				rdSh = rideshare.RideShare{
 					Routes: []*rideshare.Route{rs.Routes[0], rs.Routes[1]}, ///route},
@@ -156,6 +156,7 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			dtTS := dt.GetTimestamp()
 			dtTime, _ := ptypes.Timestamp(dtTS)
 			route := getTrainRouteFromTime(dpt, aimiPt,int32(dtTime.Minute()+ dtTime.Hour()*60), 0)
+			log.Printf("Train route is ...%v",route)
 			arTM := route.ArriveTime
 			arTS := arTM.GetTimestamp()
 			arTime , _ := ptypes.Timestamp(arTS)
@@ -166,6 +167,8 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			rdch := make(chan *api.Supply)
 			rideShareMu.Lock()
 			id := getOnemileRoute(clt, aimiPt, apt, arTTime, nil)
+			log.Printf("TrainAndOneMile Reverse Now set channel ID %d",id)
+
 			rideShareMap[id]= rdch
 			rideShareMu.Unlock()
 			var rs *rideshare.RideShare
@@ -195,7 +198,7 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			}
 			spo := sxutil.SupplyOpts{
 				Target: dm.GetId(),
-				JSON:"{SPOPT}",
+				JSON:"{SPOPT1}",
 				RideShare: rdSh,
 			}
 			spch := make(chan uint64)
@@ -203,10 +206,18 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			supplyMap[spid] = spch
 			select {
 			case <-time.After(30 * time.Second):
-				log.Printf("Timeout 30sec")
+				log.Printf("TrainAndOnemile propose Timeout 30sec")
 				return
 			case id:= <-spch: // receive SelectSupply!
-				clt.Confirm(sxutil.IDType(id))
+				log.Printf("Select from Kota 2nd:%d",id)
+				mbusid, mberr := supplyClient.SelectSupply(rssp)
+				if mberr == nil {
+					log.Printf("Select Supply2nd Success and Mbus %d",mbusid)
+					clt.Confirm(sxutil.IDType(id))
+					log.Printf("finally confirm 2nd %d",id)
+				}else{
+					log.Printf("err %v",mberr)
+				}
 			}
 
 		}
@@ -223,7 +234,8 @@ func  trainAndBusAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 	rsInfo := dm.GetArg_RideShare()
 	if rsInfo == nil {
-		log.Printf("Demand is not for RideShare!")
+		log.Printf("Demand is not for RideShare! [%v]", dm)
+		return
 	}
 	var dp,ap *common.Place
 	dp = rsInfo.DepartPoint
@@ -245,7 +257,6 @@ func  trainAndBusAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	dt = rsInfo.DepartTime
 	at = rsInfo.ArriveTime
 
-
 	if at == nil {// departure time only
 		if ddist < adist { // to aimi station (end is Nagoya)
 			// onemile -> aimi ->
@@ -256,7 +267,10 @@ func  trainAndBusAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 			routeBus := getBusRouteFromTime(dpt, aimiPt,int32(dtTime.Minute()+ dtTime.Hour()*60), 0)
 			if routeBus == nil {
+				log.Println("Can'f find bus time...",dpt, "->", aimiPt)
 				return
+			}else{
+				log.Println("Got bus...",dpt, "->", aimiPt, routeBus)
 			}
 // now bus time is decided.
 //			lets ask Onemile to come with this bus.
@@ -269,10 +283,76 @@ func  trainAndBusAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 			ch := make(chan *api.Supply)
 			rideShareMu.Lock()
-			id  := getOnemileRoute(clt, dpt, aimiPt, dt, oneMileArriveTime)
+//			id  := getOnemileRoute(clt, dpt, aimiPt, dt, oneMileArriveTime)
+			id  := getOnemileRoute(clt, dpt, aimiPt, nil, oneMileArriveTime)
 			rideShareMap[id]= ch
 			rideShareMu.Unlock()
 			// select for rideShare.
+
+			var rs *rideshare.RideShare
+			var rssp *api.Supply
+			select {
+			case <-time.After(30 *time.Second ):
+				log.Printf("Timeout 30 seconds for getting OneMileRoute")
+				return
+			case rssp = <-ch:
+				rs = rssp.GetArg_RideShare()
+				log.Printf("Get OnemileRoute for BSTR")
+			}
+
+//			avTime, _ := ptypes.Timestamp(rs.ArriveTime.GetTimestamp())
+
+			avTime, _ := ptypes.Timestamp(routeBus.ArriveTime.GetTimestamp())
+
+
+			avTime.Add(TrainTrainsitTime) //
+			route := getTrainRouteFromTime(aimiPt,apt, int32(avTime.Minute()+ avTime.Hour()*60), 0)
+			var rdSh rideshare.RideShare
+
+			if(route == nil) {
+				log.Printf("Train route is nil..umm")
+				// now we found 2 routes( for onemile, and train)
+				rdSh = rideshare.RideShare{
+					Routes: []*rideshare.Route{rs.Routes[1], routeBus}, ///route},
+				}
+			}else{
+				rdSh = rideshare.RideShare{
+					Routes: []*rideshare.Route{rs.Routes[1],routeBus, route},
+				}
+
+			}
+			spo := sxutil.SupplyOpts{
+				Target: dm.GetId(),
+				JSON:"{SPOPT0}",
+				RideShare: &rdSh,
+			}
+			spch := make(chan uint64)
+			spid :=	clt.ProposeSupply(&spo) // rideshare Demand
+			supplyMap[spid] = spch
+			select {
+			case <-time.After(30 * time.Second):
+				log.Printf("Timeout 30sec")
+				return
+			case id:= <-spch: // receive SelectSupply!
+				//
+				log.Printf("Select from Kota: %d",id)
+				// now we need to selectSupply for OneMile.
+
+				mbusid, mberr := supplyClient.SelectSupply(rssp)
+				log.Printf("SelectSupply to  %d",mbusid)
+				if mberr == nil {
+					log.Printf("SelectSupply Success! and MbusID=%d", mbusid)
+					clt.Confirm(sxutil.IDType(id))
+					log.Printf("Finally confirm %d ", id)
+
+				}else{
+					log.Printf("%v error:",mberr)
+				}
+
+			}
+
+
+
 
 		}else{ // end is Kota So, Train -> Bus -> OneMile
 			//find Nagoya to Aimi train route
@@ -292,6 +372,28 @@ func  trainAndBusAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			rideShareMap[id]= rdch
 			rideShareMu.Unlock()
 
+			var rs *rideshare.RideShare
+			var rssp *api.Supply
+			select {
+			case <-time.After(30 *time.Second ):
+				log.Printf("Timeout 30 seconds for getting OneMileRoute")
+				return
+			case rssp = <-rdch:
+				rs = rssp.GetArg_RideShare()
+				log.Printf("Get OnemileRoute for BSTR")
+			}
+
+			//			avTime, _ := ptypes.Timestamp(rs.ArriveTime.GetTimestamp())
+
+			avTime, _ := ptypes.Timestamp(rs.ArriveTime.GetTimestamp())
+
+			routeBus := getBusRouteFromTime(dpt, aimiPt,int32(avTime.Minute()+ avTime.Hour()*60), 0)
+			if routeBus == nil {
+				log.Println("Can'f find bus time...",dpt, "->", aimiPt)
+				return
+			}else{
+				log.Println("Got bus...",dpt, "->", aimiPt, routeBus)
+			}
 		}
 
 	}else { // arrival time only...
@@ -325,7 +427,7 @@ func rideshareSupplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 //			}
 
 		}else{
-			log.Printf("Supply Calback: Can't find report channel for %d",sp.TargetId)
+			log.Printf("Supply Callback: Can't find report channel for %d",sp.TargetId)
 		}
 		rideShareMu.RUnlock()
 	}else{
