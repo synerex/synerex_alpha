@@ -221,6 +221,12 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			// get profile
 			log.Println("Got Client Profile:", data)
 
+			defer func() { // for error recovery
+				if err := recover(); err != nil {
+					log.Printf("Can't convert json data: %s\n", err)
+				}
+			}()
+
 			taxi := data.(map[string]interface{})["device_id"].(string)
 
 			if v, ok := vehicleMap[taxi]; ok {
