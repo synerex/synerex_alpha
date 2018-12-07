@@ -650,7 +650,7 @@ func rideshareDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			// train + onemile
 			// train + bus + onemile
 			//  currently we do not consider walk.
-
+			expSpecial(clt,dm)
 //			go trainAndOnemile(clt, dm)
 //			go trainAndBusAndOnemile(clt, dm)
 		}
