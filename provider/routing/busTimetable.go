@@ -166,7 +166,7 @@ func NewPoint(lon, lat float64) *common.Point {
 }*/
 
 func fromToPoint(spid [2]int) []*common.Point{
-	newLs := make([]*common.Point, spid[1]-spid[0])
+	newLs := make([]*common.Point, 0)
 	for i, lis := range lineShape{
 		if i>=spid[0] {
 			newLs = append(newLs,NewPoint(lis.lat, lis.lon))
@@ -206,9 +206,9 @@ func getBusRouteForExp(ftid [2]int , spid  [2]int ) *rideshare.Route {
 	rt.ArriveTime = common.NewTime().WithTimestamp(edTsp)
 	rt.AmountTime = ptypes.DurationProto(edTime.Sub(stTime))
 	rt.Points = fromToPoint(spid)
-	rt.AmountPrice = 750 // yen
+	rt.AmountPrice = 0 // yen
 	rt.AmountSheets = 1//
-	rt.AvailableSheets = 100//
+	rt.AvailableSheets = 30//
 	return rt
 
 }
