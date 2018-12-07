@@ -445,9 +445,9 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	log.Printf("Now RegisterDemand with %v",dm)
-	log.Printf("Arg %v",dm.ArgOneof)
-	log.Printf("Arg %v",dm.GetArg_RideShare())
+//	log.Printf("Now RegisterDemand with %v",dm)
+//	log.Printf("Arg %v",dm.ArgOneof)
+//	log.Printf("Arg %v",dm.GetArg_RideShare())
 
 
 	_ , err := clt.Client.RegisterDemand(ctx, &dm)
