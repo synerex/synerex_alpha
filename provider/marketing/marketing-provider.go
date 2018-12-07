@@ -103,7 +103,8 @@ func sendMsg(client *sxutil.SMServiceClient, msg string) {
 }
 
 func sendAdMsg(client *sxutil.SMServiceClient) {
-	var url = "http://www.town.kota.lg.jp/images/content/28198/20151216-085825.jpg"
+	var url = "img/20151216-092610.jpg"
+	var period = 10
 
 	request := map[string]interface{}{
 		"command": "CONTENTS",
@@ -111,12 +112,47 @@ func sendAdMsg(client *sxutil.SMServiceClient) {
 			map[string]interface{}{
 				"type":   "AD",
 				"data":   url,
-				"period": 10,
+				"period": period,
 			},
 			map[string]interface{}{
 				"type":   "AD",
-				"data":   "http://www.town.kota.lg.jp/images/content/28198/20151216-090405.jpg",
-				"period": 10,
+				"data":   "img/20151216-092920.jpg",
+				"period": period,
+			},
+			map[string]interface{}{
+				"type":   "AD",
+				"data":   "img/20151222-114801.jpg",
+				"period": period,
+			},
+			map[string]interface{}{
+				"type":   "AD",
+				"data":   "img/20160315-181937.jpg",
+				"period": period,
+			},
+			map[string]interface{}{
+				"type":   "AD",
+				"data":   "img/20160315-182035.jpg",
+				"period": period,
+			},
+			map[string]interface{}{
+				"type":   "AD",
+				"data":   "img/20160315-182129.jpg",
+				"period": period,
+			},
+			map[string]interface{}{
+				"type":   "AD",
+				"data":   "img/20160315-182203.jpg",
+				"period": period,
+			},
+			map[string]interface{}{
+				"type":   "AD",
+				"data":   "img/20160315-183639.jpg",
+				"period": period,
+			},
+			map[string]interface{}{
+				"type":   "AD",
+				"data":   "img/20170531-132015.jpg",
+				"period": period,
 			},
 		},
 	}
