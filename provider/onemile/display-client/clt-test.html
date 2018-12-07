@@ -85,6 +85,9 @@
           $("#order").click(function() {
               emit("clt_mission_event", {"mission_id": $("#mission_id").val()});
           });
+          $("#dump_vehicles").click(function() {
+              emit("clt_dump_vehicles", null)
+          });
           
           // タクシー設定 (あれば)
           $("#taxi").val(q("taxi") ? q("taxi") : "")
@@ -155,5 +158,9 @@
 	<li><span class="c1">イベント</span><span class="c2"><input id="event_id" type="text"/><input id="start" type="button" value="開始"/><input id="end" type="button" value="終了"/></span>
     </ul>
     
+    <h3>デバッグ</h3>
+    <ul>
+    <li><span class="c1">車両</span><span class="c2"><input id="dump_vehicles" type="button" value="Dump"/></span>
+    </ul>
   </body>
 </html>
