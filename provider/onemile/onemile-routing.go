@@ -304,7 +304,17 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		}
 
 		// start
-		log.Println("Now Propose Supply :", *spo)
+//		log.Println("Now Propose Supply :",*spo)
+		pcount := 0
+		for _, rt := range rideShareSvc.Routes {
+			pcount += len(rt.Points)
+		}
+
+		log.Println("Routes: ",len(rideShareSvc.Routes), ":",pcount," points")
+<<<<<<< HEAD
+
+=======
+>>>>>>> 2e7b0677430c6f22e1e5eba54a40979a8b5af465
 		psid := clt.ProposeSupply(spo)
 		log.Printf("Propose Supply ID: %d", psid)
 
@@ -349,6 +359,8 @@ func proposeSupplyForRouting(psid uint64, rxch chan uint64, selVc *vehicle, rs *
 	} else {
 		// not confirm! sorry
 		log.Printf("Cannot book a vehicle! [%s]", selVc.VehicleId)
+
+	}
 	}
 	selVc.mu.Unlock()
 
