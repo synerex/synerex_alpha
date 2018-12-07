@@ -357,7 +357,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 								// start display for marketing
 								if evt.EventType == "ride" {
-									dispMap[k].wg.Done()
+									//dispMap[k].wg.Done()
 								}
 
 								// update vehicle status
@@ -404,7 +404,9 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 								if i != len(v.mission.Events)-1 {
 									// emit next event if any
-									emitToClient(k, "clt_mission_event", v.mission.Events[i+1].toMap())
+									m := v.mission.Events[i+1].toMap()
+									m["mission_id"] = v.mission.MissionId
+									emitToClient(k, "clt_mission_event", m)
 								} else {
 									// all event done
 									v.Status = "free"
@@ -547,9 +549,9 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 						v.mu.RLock()
 						defer v.mu.RUnlock()
 
-						evt := v.mission.Events[0].toMap()
-						evt["mission_id"] = v.mission.MissionId
-						emitToClient(k, "clt_mission_event", evt)
+						m := v.mission.Events[0].toMap()
+						m["mission_id"] = v.mission.MissionId
+						emitToClient(k, "clt_mission_event", m)
 
 						log.Printf("Event ordered: [taxi: %s, missionId: %s, eventId: %s]\n", k, missionId, v.mission.Events[0].EventId)
 						return map[string]interface{}{"code": 0}
@@ -638,17 +640,10 @@ func sendVehicleStatus(pitch int) {
 						log.Println(tm, "is after? ", time.Unix(evtm, evns))
 						if tm.After(time.Unix(evtm, evns)) {
 
-							ms := map[string]interface{}{
-								"mission_id":  v.mission.MissionId,
-								"event_id":    ev.EventId,
-								"event_type":  ev.EventType,
-								"start_time":  ev.StartTime,
-								"end_time":    ev.EndTime,
-								"destination": ev.Destination,
-								"route":       ev.Route,
-							}
+							ms := ev.toMap()
+							ms["mission_id"] = v.mission.MissionId
 							// we should start
-							emitToClient(k, "clt_mission_evt", ms)
+							emitToClient(k, "clt_mission_event", ms)
 
 							ev.Status = "start"
 						}
