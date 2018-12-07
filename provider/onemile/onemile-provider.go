@@ -547,7 +547,9 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 						v.mu.RLock()
 						defer v.mu.RUnlock()
 
-						emitToClient(k, "clt_mission_event", v.mission.Events[0].toMap())
+						evt := v.mission.Events[0].toMap()
+						evt["mission_id"] = v.mission.MissionId
+						emitToClient(k, "clt_mission_event", evt)
 
 						log.Printf("Event ordered: [taxi: %s, missionId: %s, eventId: %s]\n", k, missionId, v.mission.Events[0].EventId)
 						return map[string]interface{}{"code": 0}
