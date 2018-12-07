@@ -339,6 +339,10 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 				}
 			}()
 
+			log.Println("clt_start_mission_event  data:",data)
+			msd := data.(map[string]interface{})
+			log.Println("msd",msd)
+
 			missionId := data.(map[string]interface{})["mission_id"].(string)
 			eventId := data.(map[string]interface{})["event_id"].(string)
 
