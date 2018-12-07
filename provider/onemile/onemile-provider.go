@@ -562,6 +562,10 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			log.Printf("Mission ignored: [missionId: %s]\n", missionId)
 			return map[string]interface{}{"code": 1}
 		})
+
+		// by Kawaguchi to set next event
+
+
 	})
 
 	ioserv.On("disconnection", func(so socketio.Socket) {
