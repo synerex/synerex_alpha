@@ -193,7 +193,7 @@ func getBusRouteForExp(ftid [2]int , spid  [2]int ) *rideshare.Route {
 	tid := ftid[1]
 	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
 	rt := new(rideshare.Route)
-	rt.TrafficType = rideshare.TrafficType_TRAIN
+	rt.TrafficType = rideshare.TrafficType_BUS
 	rt.TransportName = "えこたんバス"
 	rt.TransportLine = "北ルート"
 	rt.DepartPoint = common.NewPlace().WithPoint(getBusStopPoint(busStopTimes[fid]))
