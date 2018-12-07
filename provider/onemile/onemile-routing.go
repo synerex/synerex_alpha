@@ -23,11 +23,13 @@ var (
 	supplyMap         = make(map[uint64]chan uint64)
 	supplyMu          sync.RWMutex
 	statusStr         = []string{"free", "pickup", "ride", "full"}
+	missionCount      = 0
 )
 
 func rideshareToMission(share *rideshare.RideShare) *mission {
 	mst := &mission{}
-	mst.MissionId = "mis01"
+	missionCount++
+	mst.MissionId = fmt.Sprintf("mis%02d", missionCount)
 	mst.Title = "お迎え"
 	mst.Detail = "XXから相見駅"
 	evs := make([]event, 0)
@@ -55,7 +57,7 @@ func rideshareToMission(share *rideshare.RideShare) *mission {
 			EventType:   statusStr[int(r.StatusType)],
 			StartTime:   r.GetDepartTime().GetTimestamp().GetSeconds() * 1000,
 			EndTime:     r.GetArriveTime().GetTimestamp().GetSeconds() * 1000,
-			Destination: r.GetArrivePoint().String(),
+			Destination: r.GetArrivePoint().String(), // We need to use geocoder
 			Route:       rts,
 			Status:      "none",
 		}

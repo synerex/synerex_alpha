@@ -632,20 +632,19 @@ func sendVehicleStatus(pitch int) {
 			// also check the status of the mission/events.
 			if v.Mission != nil && v.Mission.Accepted {
 				evs := v.Mission.Events
-				for _, ev := range evs {
+				for i, ev := range evs {
 					if ev.Status == "none" { // not started?
 						tm := time.Now()
 						evtm := ev.StartTime / 1000
 						evns := (ev.StartTime % 1000) * 1000
-						log.Println(tm, "is after? ", time.Unix(evtm, evns))
+						//						log.Println(tm, "is after? ", time.Unix(evtm, evns))
 						if tm.After(time.Unix(evtm, evns)) {
-
 							ms := ev.toMap()
 							ms["mission_id"] = v.Mission.MissionId
 							// we should start
 							emitToClient(k, "clt_mission_event", ms)
 
-							ev.Status = "start"
+							v.Mission.Events[i].Status = "start"
 						}
 					}
 				}
