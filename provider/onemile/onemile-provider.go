@@ -361,7 +361,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 							// start display for marketing
 							if evt.EventType == "ride" {
-								dispClt := dispMap[k]
+								dispClt := dispMap[taxi]
 								if dispClt != nil {
 									dispClt.wg.Done()
 								}
@@ -573,10 +573,10 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 			// reset vehicle status:
 			for _, v := range vehicleMap {
-				v.mu.RLock()
-				v.mission = nil
+				v.mu.Lock()
+				v.Mission = nil
 				v.Status = "free"
-				v.mu.RUnlock()
+				v.mu.Unlock()
 			}
 
 			return map[string]interface{}{"code": 0}
