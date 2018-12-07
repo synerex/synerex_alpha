@@ -161,7 +161,7 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			}
 		}
 		if selVc == nil {
-			log.Printf("Can't find free onemile vehicle.")
+			log.Printf("Can't find free onemile vehicle.")//
 			return
 		}
 
@@ -217,8 +217,8 @@ func onemileHandleRideShareDemand(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			oneDepart, _ := ptypes.Timestamp(rs0.ArriveTime.GetTimestamp())
 			if depart.After(oneDepart) { // we cant make it... umm
 				//				selVc.Status = "free"
-				log.Printf("Onemile can't support this deadline %v -> %v ", depart, oneDepart)
-				return
+//				log.Printf("Onemile can't support this deadline %v -> %v ", depart, oneDepart)
+//				return
 			}
 
 			rt.ArriveTime = originRideShare.ArriveTime

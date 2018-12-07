@@ -432,9 +432,9 @@ func findCurrentPlace( mp *common.Point ) int {
 			ix = i
 		}
 	}
-	if dist < 5000 {
+//	if dist < 5000 {
 		return ix
-	}
+//	}
 	return -1
 }
 
@@ -480,7 +480,7 @@ func  expSpecial(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		log.Printf("Demand is not for RideShare! [%v]", dm)
 		return
 	}
-	
+
 	log.Println("Start checking!",rsInfo)
 	toStation, useTrain := checkTrainDest(rsInfo)
 
@@ -498,7 +498,7 @@ func  expSpecial(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	brt = getBusRoute(toStation, subj)
 	trt = getTrainRouteFromTimeExp(toStation)
 
-	log.Printf("We think this is person %d, toSta %b", subj, toStation )
+	log.Println("We think this is person ",subj," toSta ",  toStation )
 
 	if !toStation {
 		fpt = brt.GetArrivePoint().GetCentralPoint()
