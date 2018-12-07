@@ -10,6 +10,7 @@ require (
 	github.com/sirupsen/logrus v1.2.0 // indirect
 	github.com/synerex/synerex_alpha/api v0.0.0
 	github.com/synerex/synerex_alpha/api/common v0.0.0
+	github.com/synerex/synerex_alpha/api/fleet v0.0.0
 	github.com/synerex/synerex_alpha/api/rideshare v0.0.0
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
