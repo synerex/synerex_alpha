@@ -480,6 +480,8 @@ func  expSpecial(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		log.Printf("Demand is not for RideShare! [%v]", dm)
 		return
 	}
+	
+	log.Println("Start checking!",rsInfo)
 	toStation, useTrain := checkTrainDest(rsInfo)
 
 	var fpt, tpt *common.Point
@@ -495,6 +497,8 @@ func  expSpecial(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	}
 	brt = getBusRoute(toStation, subj)
 	trt = getTrainRouteFromTimeExp(toStation)
+
+	log.Printf("We think this is person %d, toSta %b", subj, toStation )
 
 	if !toStation {
 		fpt = brt.GetArrivePoint().GetCentralPoint()
