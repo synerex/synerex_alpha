@@ -584,7 +584,8 @@ func  expSpecial(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 func rideshareSupplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	if sp.TargetId == 0{
-		log.Printf("Should not come here...")
+//		log.Printf("Should not come here...")
+		return
 	}
 	log.Printf("Got RideShare Supply from (may from Onemile) %v",*sp)
 	rt := sp.GetArg_RideShare()
