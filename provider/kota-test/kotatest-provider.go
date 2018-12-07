@@ -27,6 +27,8 @@ var (
 	dmMap 	map[uint64]*sxutil.DemandOpts
 	mu		sync.RWMutex
 	to = flag.String( "to", "Nagoya", "Assign Destination")
+	from = flag.String( "from", "Lib", "Assign Source")
+	rev = flag.Bool( "rev", false, "is reverse" )
 )
 
 func init(){
@@ -71,13 +73,23 @@ func supplyRideshareCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 //			log.Printf("Supply: %v",sp)
 			log.Printf("dmo:%v",*dmo)
 
-			delete(dmMap, sp.TargetId)
+//			delete(dmMap, sp.TargetId)
 
 			// send select! (required?!)
 			log.Printf("KT Send SelectSupply %d", sp.Id)
 			id, err := clt.SelectSupply(sp)
 			if err == nil {
 				log.Printf("SelectSupply Success! and MbusID=%d", id)
+
+
+				log.Println("Finally, we got supply as ",*sp)
+				log.Println("Rideshare is  ",rt)
+				log.Println(" No of route is ", len(rt.Routes))
+				for _, r := range rt.Routes {
+					log.Println("RouteType:", r.TrafficType, r.TransportLine, r.GetTransportName())
+				}
+
+
 			}else {
 				log.Println("KT SelectSupply:Err?", err)
 			}
@@ -101,8 +113,15 @@ func subscribeRideshareSupply(client *sxutil.SMServiceClient) {
 
 
 func registerRideshareDemand(clt *sxutil.SMServiceClient){
-	pt1 := getPoint()
-	var pt2 *common.Point
+	var pt1,pt2 *common.Point
+	if (*from == "Lib"){
+		pt1 = new(common.Point)
+		pt1.Longitude = 137.1801
+		pt1.Latitude = 34.87212
+	}else{
+		pt1 = getPoint()
+	}
+
 	if( *to == "Nagoya") {
 		pt2 = new(common.Point)
 		pt2.Longitude = 136.881638
@@ -116,6 +135,12 @@ func registerRideshareDemand(clt *sxutil.SMServiceClient){
 	}
 	if pt2 == nil {
 		log.Printf("Nil!! error")
+	}
+
+	if *rev {
+		pt0 := pt1
+		pt1 = pt2
+		pt2 = pt0
 	}
 
 	tm := time.Now().In(time.Local)
