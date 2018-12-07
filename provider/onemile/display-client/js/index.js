@@ -32,6 +32,7 @@ $(() => {
 
 $(() => {
     var socket = null;
+    var device_id = "";
 
     // イベント送信
     function emit(name, data) {
@@ -272,7 +273,7 @@ $(() => {
                         }
                         answers = JSON.stringify(answers);
 
-                        emit("disp_complete", { command: "RESULTS", results: { answers } });
+                        emit("disp_complete", { command: "RESULTS", results: { answers }, device_id: device_id });
                         alert('ありがとうございました！');
                         $('form#questions')[0].reset();
                     });
@@ -292,7 +293,8 @@ $(() => {
 
     // 搭載車両登録
     $("#register").click(function () {
-        emit("disp_register", { taxi: $("#taxi").val(), disp: $("#disp").val() });
+        device_id = { taxi: $("#taxi").val(), disp: $("#disp").val() }
+        emit("disp_register",device_id);
     });
     // 完了
     $("#complete").click(function () {

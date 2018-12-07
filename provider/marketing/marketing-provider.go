@@ -54,6 +54,12 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 		// save data
 		if data["results"] != nil {
 			log.Println("Save Ans Data")
+			// should get vehicle ID from onemile provider.
+			device_id := ""
+			if data["device_id"] != nil{
+				device_id = deta["device_id"].(string)
+			}
+
 			file, err := os.OpenFile("anslog.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 			if err != nil {
 				log.Fatal(err)
@@ -61,7 +67,7 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 			defer file.Close()
 			t := time.Now()
 			s, _ := json.Marshal(data["results"])
-			fmt.Fprintln(file, t.Format(layout)+" "+string(s))
+			fmt.Fprintln(file, t.Format(layout)+" "+device_id+", "+string(s))
 		}
 
 		if done && !send {
@@ -223,6 +229,11 @@ func addDemand(sclient *sxutil.SMServiceClient, nm string) {
 	id := sclient.RegisterDemand(opts)
 	idlist = append(idlist, id)
 	dmMap[id] = opts
+	if len(idlist)>10{ // remove
+		rid := idlist[0]
+		idlist = idlist[1:]
+		delete(dmMap,rid)
+	}
 }
 
 func main() {
