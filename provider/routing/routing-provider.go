@@ -422,7 +422,7 @@ func findCurrentPlace( mp *common.Point ) int {
 		NewPoint(34.876837, 137.168259),
 	}
 
-	dist := 150000.0
+	dist := 50000.0
 
 	ix := -1
 	for i, p := range ldb {
@@ -461,7 +461,7 @@ func checkTrainDest (rsInfo *rideshare.RideShare) (bool, bool){
 	ddist , _ := aimiPt.Distance(dpt)
 	adist , _ := aimiPt.Distance(apt)
 
-	log.Printf("Dist Depart, ")
+	log.Println("Dist Depart ", ddist. adist)
 
 	useTrain := false
 	if math.Max(adist, ddist) > maxDist {
@@ -497,10 +497,14 @@ func  expSpecial(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		tpt = 	rsInfo.GetArrivePoint().GetCentralPoint()
 		subj = findCurrentPlace(tpt)
 	}
+	if subj < 0 || subj >2 {
+		log.Printf("Not usual result!:", subj)
+		return
+	}
+	log.Println("We think this is person ",subj," toSta ",  toStation )
 	brt = getBusRoute(toStation, subj)
 	trt = getTrainRouteFromTimeExp(toStation)
 
-	log.Println("We think this is person ",subj," toSta ",  toStation )
 
 	if !toStation {
 		fpt = brt.GetArrivePoint().GetCentralPoint()
