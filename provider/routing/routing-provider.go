@@ -422,7 +422,7 @@ func findCurrentPlace( mp *common.Point ) int {
 		NewPoint(34.876837, 137.168259),
 	}
 
-	dist := 10000.0
+	dist := 150000.0
 
 	ix := -1
 	for i, p := range ldb {
@@ -461,11 +461,13 @@ func checkTrainDest (rsInfo *rideshare.RideShare) (bool, bool){
 	ddist , _ := aimiPt.Distance(dpt)
 	adist , _ := aimiPt.Distance(apt)
 
+	log.Printf("Dist Depart, ")
+
 	useTrain := false
-	if math.Max(ddist, adist) > maxDist {
+	if math.Max(adist, ddist) > maxDist {
 		useTrain = true
 	}
-	if ddist > adist {
+	if adist > ddist {
 		return true, useTrain
 	}
 	return false, useTrain
