@@ -335,12 +335,12 @@ func proposeSupplyForRouting(psid uint64, rxch chan uint64, selVc *vehicle, rs *
 		selVc.Status = "pickup"
 		// now we need to add event!
 		ms := rideshareToMission(rs)
-		selVc.mission = ms
+		selVc.Mission = ms
 		if selVc.socket != nil {
-			selVc.socket.Emit("clt_request_mission", selVc.mission.toMap())
+			selVc.socket.Emit("clt_request_mission", selVc.Mission.toMap())
 			//			log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
 		}
-		log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.mission.toMap())
+		log.Printf("emit %s: [ payload: %#v]\n", "clt_request_mission", selVc.Mission.toMap())
 		//		log.Println(selVc.mission)
 		//		buf,_ := json.Marshal(selVc.mission)
 		//		log.Println(string(buf))
