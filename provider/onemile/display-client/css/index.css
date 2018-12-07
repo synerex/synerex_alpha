@@ -1,7 +1,6 @@
 .box {
-    width: 100vw;
-    height: auto;
-    min-height: 100vh;
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
 
     background-size: contain;
     background-repeat: no-repeat;
