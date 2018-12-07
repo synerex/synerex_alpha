@@ -11,6 +11,7 @@ import (
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 	"log"
+	"math"
 	"sync"
 	"time"
 )
@@ -230,6 +231,8 @@ func trainAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 }
 
 
+/*
+
 func  trainAndBusAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 	rsInfo := dm.GetArg_RideShare()
@@ -302,6 +305,7 @@ func  trainAndBusAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 //			avTime, _ := ptypes.Timestamp(rs.ArriveTime.GetTimestamp())
 
+//
 			avTime, _ := ptypes.Timestamp(routeBus.ArriveTime.GetTimestamp())
 
 
@@ -400,9 +404,182 @@ func  trainAndBusAndOnemile(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		log.Printf("arrival time.. is not yet implemented")
 	}
 
+}
+*/
+func NewPoint(lat, lon float64) *common.Point{
+	pt := new(common.Point)
+	pt.Latitude = lat
+	pt.Longitude = lon
+	return pt
+}
+
+
+// check which place
+func findCurrentPlace( mp *common.Point ) int {
+	ldb := []*common.Point{
+		NewPoint(34.892948, 137.188032),
+		NewPoint(34.8770639, 137.1892827),
+		NewPoint(34.876837, 137.168259),
+	}
+
+	dist := 10000.0
+
+	ix := -1
+	for i, p := range ldb {
+		d,_:= mp.Distance(p)
+		if d < dist {
+			dist = d
+			ix = i
+		}
+	}
+	if dist < 5000 {
+		return ix
+	}
+	return -1
+}
+
+
+
+
+// goto Nagoya?
+// check total distance
+// if there is no big distance than 15km we just use bus and onemile
+func checkTrainDest (rsInfo *rideshare.RideShare) (bool, bool){
+	const maxDist = 15000.0
+	var dp,ap *common.Place
+	dp = rsInfo.DepartPoint
+	dpt := dp.GetCentralPoint()
+	ap = rsInfo.ArrivePoint
+	apt := ap.GetCentralPoint()
+
+	// to Nagoya or from Nagoya
+	// find closest point to aimi station.
+	aimiPt := new(common.Point)   //
+	aimiPt.Latitude = 34.887573
+	aimiPt.Longitude = 137.160248
+
+	ddist , _ := aimiPt.Distance(dpt)
+	adist , _ := aimiPt.Distance(apt)
+
+	useTrain := false
+	if math.Max(ddist, adist) > maxDist {
+		useTrain = true
+	}
+	if ddist > adist {
+		return true, useTrain
+	}
+	return false, useTrain
+}
+
+// for each userID, we fix the route
+//
+func  expSpecial(clt *sxutil.SMServiceClient, dm *api.Demand) {
+	var rdSh rideshare.RideShare
+	rsInfo := dm.GetArg_RideShare()
+	if rsInfo == nil {
+		log.Printf("Demand is not for RideShare! [%v]", dm)
+		return
+	}
+	toStation, useTrain := checkTrainDest(rsInfo)
+
+	var fpt, tpt *common.Point
+	var brt ,trt  *rideshare.Route
+	var subj int
+	dptTime := rsInfo.DepartTime
+	if toStation { // to Aimi
+		fpt = 	rsInfo.GetDepartPoint().GetCentralPoint()
+		subj = findCurrentPlace(fpt)
+	}else{
+		tpt = 	rsInfo.GetArrivePoint().GetCentralPoint()
+		subj = findCurrentPlace(tpt)
+	}
+	brt = getBusRoute(toStation, subj)
+	trt = getTrainRouteFromTimeExp(toStation)
+
+	if !toStation {
+		arTM := brt.ArriveTime
+		arTS := arTM.GetTimestamp()
+		arTime , _ := ptypes.Timestamp(arTS)
+		arTime.Add(BusTrainsitTime) //
+		arTimePro , _ := ptypes.TimestampProto(arTime)
+		dptTime = common.NewTime().WithTimestamp(arTimePro)
+	}
+
+	ch := make(chan *api.Supply)
+	rideShareMu.Lock()
+	id  := getOnemileRoute(clt, fpt, tpt, dptTime, nil)
+	rideShareMap[id]= ch
+	rideShareMu.Unlock()
+
+	var rs *rideshare.RideShare
+	var rssp *api.Supply
+	select {
+	case <-time.After(30 *time.Second ):
+		log.Printf("Timeout 30 seconds for getting OneMileRoute")
+		return
+	case rssp = <-ch:
+		rs = rssp.GetArg_RideShare()
+		log.Printf("Get OnemileRoute for BSTR")
+	}
+
+	if useTrain {
+		if toStation {
+			rdSh = rideshare.RideShare{
+				Routes: []*rideshare.Route{rs.Routes[1],brt, trt },
+			}
+		}else{
+			rdSh = rideshare.RideShare{
+				Routes: []*rideshare.Route{ trt, brt, rs.Routes[1] },
+			}
+		}
+	}else{
+		if toStation {
+			rdSh = rideshare.RideShare{
+				Routes: []*rideshare.Route{rs.Routes[1],brt },
+			}
+		}else {
+			rdSh = rideshare.RideShare{
+				Routes: []*rideshare.Route{ brt, rs.Routes[1]},
+			}
+		}
+	}
+
+	spo := sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		JSON:"{SPOPT0}",
+		RideShare: &rdSh,
+	}
+
+	spch := make(chan uint64)
+	spid :=	clt.ProposeSupply(&spo) // rideshare Demand
+	supplyMap[spid] = spch
+	select {
+	case <-time.After(300 * time.Second):
+		log.Printf("Timeout 300sec")
+		return
+	case id:= <-spch: // receive SelectSupply!
+		//
+		log.Printf("Select from Kota: %d",id)
+		// now we need to selectSupply for OneMile.
+
+		mbusid, mberr := supplyClient.SelectSupply(rssp)
+		log.Printf("SelectSupply to  %d",mbusid)
+		if mberr == nil {
+			log.Printf("SelectSupply Success! and MbusID=%d", mbusid)
+			clt.Confirm(sxutil.IDType(id))
+			log.Printf("Finally confirm %d ", id)
+
+		}else{
+			log.Printf("%v error:",mberr)
+		}
+
+	}
+
 
 
 }
+
+
 
 
 func rideshareSupplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
@@ -431,7 +608,7 @@ func rideshareSupplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 		}
 		rideShareMu.RUnlock()
 	}else{
-		log.Printf("Cant check suply routing %v",*sp)
+		log.Printf("Routing:not for rideshare %v",*sp)
 	}
 }
 
@@ -473,7 +650,7 @@ func rideshareDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 			// train + bus + onemile
 			//  currently we do not consider walk.
 
-			go trainAndOnemile(clt, dm)
+//			go trainAndOnemile(clt, dm)
 //			go trainAndBusAndOnemile(clt, dm)
 		}
 	}

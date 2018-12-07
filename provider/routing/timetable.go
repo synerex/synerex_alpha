@@ -36,13 +36,13 @@ var stops = []Stop{
 }
 
 var stop_times = []StopTime{
-	{ 1000, 1150242, 12*60+34, 12*60+34, 1},
+/*	{ 1000, 1150242, 12*60+34, 12*60+34, 1},
 	{ 1000, 1141101,  13*60+12, 13*60+12, 2},
 	{ 1001, 1150242, 13*60+4, 13*60+4, 1},
 	{ 1001, 1141101,  13*60+42, 13*60+42, 2},
-	{ 1002, 1150242, 13*60+34, 13*60+34, 1},
+*/	{ 1002, 1150242, 13*60+34, 13*60+34, 1},
 	{ 1002, 1141101,  14*60+12, 14*60+12, 2},
-	{ 1003, 1150242, 14*60+4, 14*60+4, 1},
+/*	{ 1003, 1150242, 14*60+4, 14*60+4, 1},
 	{ 1003, 1141101,  14*60+42, 14*60+42, 2},
 	{ 1004, 1150242, 14*60+34, 14*60+34, 1},
 	{ 1004, 1141101,  15*60+12, 15*60+12, 2},
@@ -57,13 +57,14 @@ var stop_times = []StopTime{
 	{ 2001, 1150242,  13*60+41, 13*60+41, 2},
 	{ 2002, 1141101, 13*60+31, 12*60+31, 1},
 	{ 2002, 1150242,  14*60+11, 14*60+11, 2},
+*/
 	{ 2003, 1141101, 14*60+01, 14*60+01, 1},
 	{ 2003, 1150242,  14*60+41, 14*60+41, 2},
-	{ 2004, 1141101, 14*60+31, 14*60+31, 1},
+/*	{ 2004, 1141101, 14*60+31, 14*60+31, 1},
 	{ 2004, 1150242,  15*60+11, 15*60+11, 2},
 	{ 2005, 1141101, 15*60+01, 15*60+01, 1},
 	{ 2005, 1150242,  15*60+41, 15*60+41, 2},
-
+*/
 }
 
 var trips = []Trip{
@@ -253,4 +254,41 @@ func getTrainRouteFromTime(from *common.Point,to *common.Point, departMin int32,
 
 	return nil
 	// now we have single trip.
+}
+
+
+
+
+func getTrainRouteFromTimeExp(toStation bool) *rideshare.Route {
+	var stFrom, stTo int32
+	var sl int
+	if toStation {
+		stFrom =  stops[1].id
+		stTo = stops[0].id
+		sl = 2
+	}else{
+		stFrom = stops[0].id
+		stTo = stops[1].id
+		sl = 0
+	}
+
+		jst := time.FixedZone("Asia/Tokyo", 9*60*60)
+		rt := new(rideshare.Route)
+		rt.TrafficType = rideshare.TrafficType_TRAIN
+		rt.TransportName = "JR東海"
+		rt.TransportLine = "JR東海道線"
+		rt.DepartPoint = common.NewPlace().WithPoint(getStopPoint(stFrom))
+		rt.ArrivePoint = common.NewPlace().WithPoint(getStopPoint(stTo))
+		stTime := time.Date(2018,12,8,int(stop_times[sl].departure_min/60),int(stop_times[sl].departure_min%60),0,0,jst)
+		edTime := time.Date(2018,12,8,int(stop_times[sl+1].arrival_min/60),int(stop_times[sl+1].arrival_min%60),0,0,jst)
+		stTsp, _ := ptypes.TimestampProto(stTime)
+		rt.DepartTime = common.NewTime().WithTimestamp(stTsp)
+		edTsp, _ := ptypes.TimestampProto(edTime)
+		rt.ArriveTime = common.NewTime().WithTimestamp(edTsp)
+		rt.AmountTime = ptypes.DurationProto(edTime.Sub(stTime))
+		rt.AmountPrice = 760 // yen
+		rt.AmountSheets = 1//
+		rt.AvailableSheets = 100//
+		return rt
+
 }

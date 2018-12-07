@@ -57,7 +57,7 @@ func msgCallback(clt *sxutil.SMServiceClient, msg *pb.MbusMsg) {
 			// should get vehicle ID from onemile provider.
 			device_id := ""
 			if data["device_id"] != nil{
-				device_id = deta["device_id"].(string)
+				device_id = data["device_id"].(string)
 			}
 
 			file, err := os.OpenFile("anslog.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
