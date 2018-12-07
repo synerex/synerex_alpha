@@ -5,6 +5,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/synerex/synerex_alpha/api/common"
 	"github.com/synerex/synerex_alpha/api/rideshare"
+	"log"
 	"time"
 )
 
@@ -100,7 +101,7 @@ var lineShape = []ShapeLoc{
 
 var stopOrder = [][2]int{
 {3,14 },{3,14 },{9,14},
-{15,26},{15,26},{15,30},
+{15,26},{15,26},{15,29},
 }
 
 var shapeOrder =[][2]int{
@@ -191,6 +192,7 @@ func getBusStopPoint(bst BusStopTime) *common.Point{
 func getBusRouteForExp(ftid [2]int , spid  [2]int ) *rideshare.Route {
 	fid := ftid[0]
 	tid := ftid[1]
+	log.Printf("Now %d, %d :%v",fid, tid, ftid)
 	jst := time.FixedZone("Asia/Tokyo", 9*60*60)
 	rt := new(rideshare.Route)
 	rt.TrafficType = rideshare.TrafficType_BUS
@@ -199,7 +201,7 @@ func getBusRouteForExp(ftid [2]int , spid  [2]int ) *rideshare.Route {
 	rt.DepartPoint = common.NewPlace().WithPoint(getBusStopPoint(busStopTimes[fid]))
 	rt.ArrivePoint = common.NewPlace().WithPoint(getBusStopPoint(busStopTimes[tid]))
 	stTime := time.Date(2018,12,8,busStopTimes[fid].hour, busStopTimes[fid].min,0,0,jst)
-	edTime := time.Date(2018,12,8,busStopTimes[fid].hour, busStopTimes[fid].min,0,0,jst)
+	edTime := time.Date(2018,12,8,busStopTimes[tid].hour, busStopTimes[tid].min,0,0,jst)
 	stTsp, _ := ptypes.TimestampProto(stTime)
 	rt.DepartTime = common.NewTime().WithTimestamp(stTsp)
 	edTsp, _ := ptypes.TimestampProto(edTime)
