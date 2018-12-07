@@ -22,6 +22,9 @@
           // イベント送信
           function emit(name, data, fn) {
         	  if (socket) {
+        		  if (name != "clt_dump_vehicles" && !data.hasOwnProperty("device_id")) {
+        			  data.device_id = $("#taxi").val()
+        		  }
           		  socket.emit(name, data, function(res) {
           			  console.log("ACK (" + name + "): ", res);
           			  if (typeof fn === "function") {

@@ -56,7 +56,7 @@ type mission struct {
 	Title     string  `json:"title"`      // mission title (option)
 	Detail    string  `json:"detail"`     // mission detail (option)
 	Events    []event `json:"events"`     // events
-	Accepted  bool    `json:"-"`          // mission accepted by client?
+	Accepted  bool    `json:"accepted"`   // mission accepted by client?
 }
 
 // event
@@ -67,7 +67,7 @@ type event struct {
 	EndTime     int64        `json:"end_time"`    // event end time (msec)
 	Destination string       `json:"destination"` // destination (option)
 	Route       [][2]float64 `json:"route"`       // routing (lat/lng)
-	Status      string       `json:"-"`           // [none | start | end]
+	Status      string       `json:"status"`      // [none | start | end]
 }
 
 // managed vehicles by onemile-provider
@@ -261,40 +261,42 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 				}
 			}()
 
-			for k, v := range vehicleMap {
-				if v.socket != nil && v.socket.Id() == so.Id() {
-					// lock vehicle
-					v.mu.Lock()
-					defer v.mu.Unlock()
+			taxi := data.(map[string]interface{})["device_id"].(string)
 
-					// update vehicle coord
-					log.Println("Got Event:", data)
+			if v, ok := vehicleMap[taxi]; ok {
+				// lock vehicle
+				v.mu.Lock()
+				defer v.mu.Unlock()
 
-					v.Coord[0] = data.(map[string]interface{})["latlng"].([]interface{})[0].(float64)
-					v.Coord[1] = data.(map[string]interface{})["latlng"].([]interface{})[1].(float64)
-					log.Printf("Update position [taxi: %s, coord:[%f, %f]\n", k, v.Coord[0], v.Coord[1])
+				// update vehicle coord
+				log.Println("Got Event:", data)
 
-					// we should send this to server.
-					f_coord := &fleet.Fleet_Coord{
-						Lat: float32(v.Coord[0]),
-						Lon: float32(v.Coord[1]),
-					}
-					vid, _ := strconv.Atoi(k)
-					flt := &fleet.Fleet{
-						VehicleId: int32(vid + 1000),
-						Status:    0,
-						Coord:     f_coord,
-					}
-					spo := &sxutil.SupplyOpts{
-						Name:  "SupplyFromOnemile",
-						JSON:  "{OnemileFleet}",
-						Fleet: flt,
-					}
-					rdClient.RegisterSupply(spo)
+				v.Coord[0] = data.(map[string]interface{})["latlng"].([]interface{})[0].(float64)
+				v.Coord[1] = data.(map[string]interface{})["latlng"].([]interface{})[1].(float64)
+				log.Printf("Update position [taxi: %s, coord:[%f, %f]\n", taxi, v.Coord[0], v.Coord[1])
 
-					return
+				// we should send this to server.
+				f_coord := &fleet.Fleet_Coord{
+					Lat: float32(v.Coord[0]),
+					Lon: float32(v.Coord[1]),
 				}
+				vid, _ := strconv.Atoi(taxi)
+				flt := &fleet.Fleet{
+					VehicleId: int32(vid + 1000),
+					Status:    0,
+					Coord:     f_coord,
+				}
+				spo := &sxutil.SupplyOpts{
+					Name:  "SupplyFromOnemile",
+					JSON:  "{OnemileFleet}",
+					Fleet: flt,
+				}
+				rdClient.RegisterSupply(spo)
+
+				return
 			}
+
+			log.Println("Update ignored: [taxi: %s]\n", taxi)
 		})
 
 		// [Client] accept mission
@@ -309,24 +311,23 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 				}
 			}()
 
+			taxi := data.(map[string]interface{})["device_id"].(string)
 			missionId := data.(map[string]interface{})["mission_id"].(string)
 
-			for k, v := range vehicleMap {
-				if v.socket != nil && v.socket.Id() == so.Id() {
-					if v.Mission != nil && v.Mission.MissionId == missionId {
-						// lock vehicle
-						v.mu.Lock()
-						defer v.mu.Unlock()
+			if v, ok := vehicleMap[taxi]; ok {
+				if v.Mission != nil && v.Mission.MissionId == missionId {
+					// lock vehicle
+					v.mu.Lock()
+					defer v.mu.Unlock()
 
-						v.Mission.Accepted = true
-						log.Printf("Mission accepted: [taxi: %s, missionId: %s]\n", k, missionId)
+					v.Mission.Accepted = true
+					log.Printf("Mission accepted: [taxi: %s, missionId: %s]\n", taxi, missionId)
 
-						return map[string]interface{}{"code": 0}
-					}
+					return map[string]interface{}{"code": 0}
 				}
 			}
 
-			log.Printf("Mission ignored: [missionId: %s]\n", missionId)
+			log.Printf("Mission ignored: [taxi: %s, missionId: %s]\n", taxi, missionId)
 			return map[string]interface{}{"code": 1}
 		})
 
@@ -342,38 +343,37 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 				}
 			}()
 
+			taxi := data.(map[string]interface{})["device_id"].(string)
 			missionId := data.(map[string]interface{})["mission_id"].(string)
 			eventId := data.(map[string]interface{})["event_id"].(string)
 
-			for k, v := range vehicleMap {
-				if v.socket != nil && v.socket.Id() == so.Id() {
-					if v.Mission != nil && v.Mission.MissionId == missionId {
-						for _, evt := range v.Mission.Events {
-							if evt.EventId == eventId {
-								// lock vehicle
-								v.mu.Lock()
-								defer v.mu.Unlock()
+			if v, ok := vehicleMap[taxi]; ok {
+				if v.Mission != nil && v.Mission.MissionId == missionId {
+					for _, evt := range v.Mission.Events {
+						if evt.EventId == eventId {
+							// lock vehicle
+							v.mu.Lock()
+							defer v.mu.Unlock()
 
-								// update status
-								evt.Status = "start"
-								log.Printf("Event start: [tax: %s, missionId: %s, eventId: %s]\n", k, missionId, eventId)
+							// update status
+							evt.Status = "start"
+							log.Printf("Event start: [tax: %s, missionId: %s, eventId: %s]\n", taxi, missionId, eventId)
 
-								// start display for marketing
-								if evt.EventType == "ride" {
-									dispMap[k].wg.Done()
-								}
-
-								// update vehicle status
-								v.Status = evt.EventType
-
-								return map[string]interface{}{"code": 0}
+							// start display for marketing
+							if evt.EventType == "ride" {
+								dispMap[taxi].wg.Done()
 							}
+
+							// update vehicle status
+							v.Status = evt.EventType
+
+							return map[string]interface{}{"code": 0}
 						}
 					}
 				}
 			}
 
-			log.Printf("Event ignored: [missionId: %s, event_id: %s]\n", missionId, eventId)
+			log.Printf("Event ignored: [taxi: %s, missionId: %s, event_id: %s]\n", taxi, missionId, eventId)
 			return map[string]interface{}{"code": 1}
 		})
 
@@ -389,40 +389,39 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 				}
 			}()
 
+			taxi := data.(map[string]interface{})["device_id"].(string)
 			missionId := data.(map[string]interface{})["mission_id"].(string)
 			eventId := data.(map[string]interface{})["event_id"].(string)
 
-			for k, v := range vehicleMap {
-				if v.socket != nil && v.socket.Id() == so.Id() {
-					if v.Mission != nil && v.Mission.MissionId == missionId {
-						for i, evt := range v.Mission.Events {
-							if evt.EventId == eventId {
-								// lock vehicle
-								v.mu.Lock()
-								defer v.mu.Unlock()
+			if v, ok := vehicleMap[taxi]; ok {
+				if v.Mission != nil && v.Mission.MissionId == missionId {
+					for i, evt := range v.Mission.Events {
+						if evt.EventId == eventId {
+							// lock vehicle
+							v.mu.Lock()
+							defer v.mu.Unlock()
 
-								// update status
-								evt.Status = "end"
-								log.Printf("Event end: [tax: %s, missionId: %s, eventId: %s]\n", k, missionId, eventId)
+							// update status
+							evt.Status = "end"
+							log.Printf("Event end: [tax: %s, missionId: %s, eventId: %s]\n", taxi, missionId, eventId)
 
-								if i != len(v.Mission.Events)-1 {
-									// emit next event if any
-									m := v.Mission.Events[i+1].toMap()
-									m["mission_id"] = v.Mission.MissionId
-									emitToClient(k, "clt_mission_event", m)
-								} else {
-									// all event done
-									v.Status = "free"
-								}
-
-								return map[string]interface{}{"code": 0}
+							if i != len(v.Mission.Events)-1 {
+								// emit next event if any
+								m := v.Mission.Events[i+1].toMap()
+								m["mission_id"] = v.Mission.MissionId
+								emitToClient(taxi, "clt_mission_event", m)
+							} else {
+								// all event done
+								v.Status = "free"
 							}
+
+							return map[string]interface{}{"code": 0}
 						}
 					}
 				}
 			}
 
-			log.Printf("Event ignored: [missionId: %s, event_id: %s]\n", missionId, eventId)
+			log.Printf("Event ignored: [taxi: %s, missionId: %s, event_id: %s]\n", taxi, missionId, eventId)
 			return map[string]interface{}{"code": 1}
 		})
 
@@ -499,35 +498,35 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 				}
 			}()
 
-			for k, v := range vehicleMap {
-				if v.socket != nil && v.socket.Id() == so.Id() {
-					// convert to string
-					bytes, err := json.Marshal(data)
-					if err != nil {
-						log.Printf("Marshal failed: %s\n", err)
-						return map[string]interface{}{"code": 1}
-					}
+			taxi := data.(map[string]interface{})["device_id"].(string)
 
-					// lock vehicle
-					v.mu.Lock()
-					defer v.mu.Unlock()
-
-					// convert to mission
-					v.Mission = &mission{}
-					err = json.Unmarshal(bytes, v.Mission)
-					if err != nil {
-						log.Printf("Unmarshal failed: %s\n", err)
-						return map[string]interface{}{"code": 1}
-					}
-
-					emitToClient(k, "clt_request_mission", v.Mission.toMap())
-
-					log.Printf("Mission registerd: [taxi: %s, mission: %#v]\n", k, v.Mission)
-					return map[string]interface{}{"code": 0}
+			if v, ok := vehicleMap[taxi]; ok {
+				// convert to string
+				bytes, err := json.Marshal(data)
+				if err != nil {
+					log.Printf("Marshal failed: %s\n", err)
+					return map[string]interface{}{"code": 1}
 				}
+
+				// lock vehicle
+				v.mu.Lock()
+				defer v.mu.Unlock()
+
+				// convert to mission
+				v.Mission = &mission{}
+				err = json.Unmarshal(bytes, v.Mission)
+				if err != nil {
+					log.Printf("Unmarshal failed: %s\n", err)
+					return map[string]interface{}{"code": 1}
+				}
+
+				emitToClient(taxi, "clt_request_mission", v.Mission.toMap())
+
+				log.Printf("Mission registerd: [taxi: %s, mission: %#v]\n", taxi, v.Mission)
+				return map[string]interface{}{"code": 0}
 			}
 
-			log.Printf("Mission ignored: [mission: %#v]\n", data)
+			log.Printf("Mission ignored: [taxi: %s, mission: %#v]\n", taxi, data)
 			return map[string]interface{}{"code": 1}
 		})
 
@@ -543,26 +542,25 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 				}
 			}()
 
+			taxi := data.(map[string]interface{})["device_id"].(string)
 			missionId := data.(map[string]interface{})["mission_id"].(string)
 
-			for k, v := range vehicleMap {
-				if v.socket != nil && v.socket.Id() == so.Id() {
-					if v.Mission.MissionId == missionId {
-						// lock vehicle
-						v.mu.RLock()
-						defer v.mu.RUnlock()
+			if v, ok := vehicleMap[taxi]; ok {
+				if v.Mission.MissionId == missionId {
+					// lock vehicle
+					v.mu.RLock()
+					defer v.mu.RUnlock()
 
-						m := v.Mission.Events[0].toMap()
-						m["mission_id"] = v.Mission.MissionId
-						emitToClient(k, "clt_mission_event", m)
+					m := v.Mission.Events[0].toMap()
+					m["mission_id"] = v.Mission.MissionId
+					emitToClient(taxi, "clt_mission_event", m)
 
-						log.Printf("Event ordered: [taxi: %s, missionId: %s, eventId: %s]\n", k, missionId, v.Mission.Events[0].EventId)
-						return map[string]interface{}{"code": 0}
-					}
+					log.Printf("Event ordered: [taxi: %s, missionId: %s, eventId: %s]\n", taxi, missionId, v.Mission.Events[0].EventId)
+					return map[string]interface{}{"code": 0}
 				}
 			}
 
-			log.Printf("Mission ignored: [missionId: %s]\n", missionId)
+			log.Printf("Mission ignored: [taxi: %s, missionId: %s]\n", taxi, missionId)
 			return map[string]interface{}{"code": 1}
 		})
 
@@ -570,20 +568,12 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			log.Printf("Receive clt_dump_vehicles from %s [%v]\n", so.Id(), data)
 
 			bytes, _ := json.Marshal(vehicleMap)
-			log.Printf("VehiceMap: %s\n", string(bytes))
+			log.Printf("vehiceMap: %s\n", string(bytes))
 		})
 	})
 
 	ioserv.On("disconnection", func(so socketio.Socket) {
 		log.Printf("Disconnected from %s as %s\n", so.Request().RemoteAddr, so.Id())
-
-		// deregister socket in vehicleMap
-		for k, v := range vehicleMap {
-			if v.socket != nil && v.socket.Id() == so.Id() {
-				v.socket = nil
-				log.Printf("deregister socket: [taxi: %s]\n", k)
-			}
-		}
 	})
 
 	ioserv.On("error", func(so socketio.Socket, err error) {
