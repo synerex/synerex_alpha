@@ -446,6 +446,9 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 				dispMap[taxi] = &display{dispId: disp, socket: so, wg: sync.WaitGroup{}}
 				log.Printf("Register display [taxi: %s => display: %v]\n", taxi, dispMap[taxi])
 				dispWg.Done()
+			} else {
+				dispMap[taxi].socket = so
+				log.Printf("Update display [taxi: %s, display: %v]\n", taxi, dispMap[taxi])
 			}
 		})
 
