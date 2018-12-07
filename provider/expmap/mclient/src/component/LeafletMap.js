@@ -33,6 +33,10 @@ var largeTrainIcon = L.icon({
     iconUrl: "img/train_above.png", iconSize: [64, 128], iconAnchor: [32, 64]
 });
 
+var hamIcon = L.icon({
+    iconUrl: "img/hamham.png", iconSize: [128, 128], iconAnchor: [64, 100]
+});
+
 
 export default class LeafletMap extends Component {
     constructor(props) {
@@ -71,6 +75,24 @@ export default class LeafletMap extends Component {
                         rotationOrigin={(midVehicleIcon.options.iconAnchor[0] + 'px ' + midVehicleIcon.options.iconAnchor[1] + 'px')}
                         rotationAngle ={[vs[key][0][2]]}
                     />
+                )
+            });
+        }
+        if( this.props.ham){
+            let vs = this.props.store.getVehicle(1); // Car should be ..0
+
+            Object.keys(vs).forEach(function (key) {
+                ms.push(
+                    <RMarker
+                        position={[vs[key][0][0],vs[key][0][1]]}
+                        icon={hamIcon}
+                        rotationOrigin={(hamIcon.options.iconAnchor[0] + 'px ' + hamIcon.options.iconAnchor[1] + 'px')}
+                        rotationAngle ={[vs[key][0][2]]}
+                    ><Popup>
+                        User {vs[key][5]}
+                    </Popup>
+
+                    </RMarker>
                 )
             });
         }

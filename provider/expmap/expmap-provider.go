@@ -92,6 +92,7 @@ type MapMarker struct {
 	lon   float32 `json:"lon"`
 	angle float32 `json:"angle"`
 	speed int32   `json:"speed"`
+	text  string  `json:"text"`
 }
 
 func (m *MapMarker) GetJson() string {
@@ -103,15 +104,23 @@ func (m *MapMarker) GetJson() string {
 func supplyRideCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	flt := sp.GetArg_Fleet()
 	if flt != nil { // get Fleet supplu
+		vtype := 0
+		if sp.SupplyName == nil {
+			vtype =1
+		}
+		str :=":"
+		if flt.VehicleId > 10000{
+			str = fmt.Sprintf("%2d", flt.VehicleId%100)
+		}
 
-		
 		mm := &MapMarker{
-			mtype: int32(0),
+			mtype: int32(vtype),
 			id:    flt.VehicleId,
 			lat:   flt.Coord.Lat,
 			lon:   flt.Coord.Lon,
 			angle: flt.Angle,
 			speed: flt.Speed,
+			text: "No"+str,
 		}
 		mu.Lock()
 		ioserv.BroadcastToAll("event", mm.GetJson())
@@ -135,6 +144,7 @@ func supplyPTCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 			lon:   float32(pt.CurrentLocation.GetPoint().Longitude),
 			angle: pt.Angle,
 			speed: pt.Speed,
+			text: fmt.Sprintf("%d",VehicleId),
 		}
 		mu.Lock()
 		ioserv.BroadcastToAll("event", mm.GetJson())

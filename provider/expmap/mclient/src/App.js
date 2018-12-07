@@ -18,6 +18,7 @@ class App extends Component {
             store: this.mstore,
             bus: true,
             busTrace: true,
+            ham: true,
             taxi: true,
             train: true
         }
@@ -33,6 +34,7 @@ class App extends Component {
             bus: this.state.bus,
             busTrace: this.state.busTrace,
             taxi: this.state.taxi,
+            ham: this.state.ham,
             train: this.state.train
         };
     }

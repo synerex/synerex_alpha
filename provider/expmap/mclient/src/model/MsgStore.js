@@ -16,20 +16,23 @@ export default class MsgStore {
         this.taxi = {};
         this.train = {};
         this.busTrace = {};
+        this.ham = {};
     }
 
     addVehicle(store, ms){
         if( store[ms.id] === undefined) store[ms.id]=[]
         if(store[ms.id].length > 1000) store[ms.id].pop()
-        store[ms.id].unshift([ms.lat, ms.lon,ms.angle, ms.speed])
+        store[ms.id].unshift([ms.lat, ms.lon,ms.angle, ms.speed, ms.text])
     }
 
 
     // message store also should have the maximum number of messages
     addPosition(mes){ // get JSON string
         const ms =  JSON.parse(mes);
-        if( ms.mtype == 0){
-            this.addVehicle(this.taxi,ms);
+        if( ms.mtype == 0) {
+            this.addVehicle(this.taxi, ms);
+        }if( ms.mtype == 1){
+           this.addVehicle(this.ham,ms);
         }else if(ms.mtype ==3){
             this.addVehicle(this.bus,ms);
         }else if(ms.mtype==2){
@@ -44,6 +47,8 @@ export default class MsgStore {
             return this.bus
         }else if( mtype == 2){
             return this.train
+        }else if( mtype == 1){
+            return this.ham
         }
     }
 
