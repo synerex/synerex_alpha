@@ -357,7 +357,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 								// start display for marketing
 								if evt.EventType == "ride" {
-									//dispMap[k].wg.Done()
+									dispMap[k].wg.Done()
 								}
 
 								// update vehicle status
