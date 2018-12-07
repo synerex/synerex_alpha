@@ -357,11 +357,15 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 
 								// update status
 								evt.Status = "start"
-								log.Printf("Event start: [tax: %s, missionId: %s, eventId: %s]\n", k, missionId, eventId)
+								log.Printf("Event start: [taxi: %s, missionId: %s, eventId: %s]\n", k, missionId, eventId)
 
 								// start display for marketing
 								if evt.EventType == "ride" {
-									dispMap[k].wg.Done()
+									//
+									dispClt := dispMap[k]
+									if dispClt != nil {
+										dispClt.wg.Done()
+									}
 								}
 
 								// update vehicle status
@@ -568,7 +572,19 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 		})
 
 		// by Kawaguchi to set next event
+		so.On("clt_cancel_all", func(data interface{})(ret interface{}){
+			log.Printf("Receive clt_cancel_all from %s [%v]\n", so.Id(), data)
 
+			// reset vehicle status:
+			for _ , v := range vehicleMap {
+				v.mu.RLock()
+				v.mission = nil
+				v.Status = "free"
+				v.mu.RUnlock()
+			}
+
+			return map[string]interface{}{"code": 0}
+		})
 
 	})
 
