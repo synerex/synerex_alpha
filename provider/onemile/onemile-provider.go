@@ -216,6 +216,26 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 	ioserv.On("connection", func(so socketio.Socket) {
 		log.Printf("Connected from %s as %s\n", so.Request().RemoteAddr, so.Id())
 
+
+		so.On("clt_profile",func(data interface{}) {
+			// get profile
+			log.Println("Got Client Profile:", data)
+
+			taxi := data.(map[string]interface{})["device_id"].(string)
+
+			if v, ok := vehicleMap[taxi]; ok {
+				v.socket = so
+				log.Println("OneMile:Sock",so.Id(),"<-> VID:",v.VehicleId,":Taxi=", taxi)
+			}else{
+				log.Println("No Taxi for :",taxi)
+			}
+		})
+
+		qerr :=	so.Emit("clt_who_are_you","")
+		if qerr != nil{
+			log.Printf("Error on who are you %v",qerr)
+		}
+
 		// [Client] login
 		so.On("clt_login", func(data interface{}) (ret interface{}) {
 			log.Printf("Receive clt_login from %s [%v]\n", so.Id(), data)
@@ -234,6 +254,7 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			if v, ok := vehicleMap[taxi]; ok {
 				vehicleId = v.VehicleId
 				v.socket = so
+				log.Println("OneMile:Sock",so.Id(),"<-> VID:",v.VehicleId,":Taxi=", taxi)
 			}
 
 			ret = map[string]interface{}{
