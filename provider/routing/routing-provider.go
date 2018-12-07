@@ -497,12 +497,15 @@ func  expSpecial(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	trt = getTrainRouteFromTimeExp(toStation)
 
 	if !toStation {
+		fpt = brt.GetArrivePoint().GetCentralPoint()
 		arTM := brt.ArriveTime
 		arTS := arTM.GetTimestamp()
 		arTime , _ := ptypes.Timestamp(arTS)
 		arTime.Add(BusTrainsitTime) //
 		arTimePro , _ := ptypes.TimestampProto(arTime)
 		dptTime = common.NewTime().WithTimestamp(arTimePro)
+	}else{
+		tpt = brt.GetDepartPoint().GetCentralPoint()
 	}
 
 	ch := make(chan *api.Supply)
