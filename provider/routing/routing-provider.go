@@ -461,7 +461,7 @@ func checkTrainDest (rsInfo *rideshare.RideShare) (bool, bool){
 	ddist , _ := aimiPt.Distance(dpt)
 	adist , _ := aimiPt.Distance(apt)
 
-	log.Println("Dist Depart ", ddist. adist)
+	log.Println("Dist Depart ", ddist, adist)
 
 	useTrain := false
 	if math.Max(adist, ddist) > maxDist {
