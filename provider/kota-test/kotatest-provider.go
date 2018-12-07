@@ -114,10 +114,13 @@ func subscribeRideshareSupply(client *sxutil.SMServiceClient) {
 
 func registerRideshareDemand(clt *sxutil.SMServiceClient){
 	var pt1,pt2 *common.Point
-	if (*from == "Lib"){
-		pt1 = new(common.Point)
+	pt1 = new(common.Point)
+	if (*from == "Lib") {
 		pt1.Longitude = 137.1801
 		pt1.Latitude = 34.87212
+	}else if *from =="User1"{
+		pt1.Longitude = 137.188021
+		pt1.Latitude = 34.892948
 	}else{
 		pt1 = getPoint()
 	}
