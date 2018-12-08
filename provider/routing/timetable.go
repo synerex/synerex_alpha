@@ -245,7 +245,10 @@ func getTrainRouteFromTime(from *common.Point,to *common.Point, departMin int32,
 		edTsp, _ := ptypes.TimestampProto(edTime)
 		rt.ArriveTime = common.NewTime().WithTimestamp(edTsp)
 		rt.AmountTime = ptypes.DurationProto(edTime.Sub(stTime))
-		rt.Points = []*common.Points{getStopPoint(sts[fid].stop_id),getStopPoint(sts[tid].stop_id)}
+		pts := make([]*common.Point, 0)
+		pts = append(pts, getStopPoint(sts[fid].stop_id))
+		pts = append(pts, getStopPoint(sts[tid].stop_id))
+		rt.Points = pts
 		rt.AmountPrice = 760 // yen
 		rt.AmountSheets = 1//
 		rt.AvailableSheets = 100//
