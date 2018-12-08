@@ -293,7 +293,7 @@ func getTrainRouteFromTimeExp(toStation bool) *rideshare.Route {
 	pts := make([]*common.Point, 0)
 	pts = append(pts, getStopPoint(stFrom))
 	pts = append(pts, getStopPoint(stTo))
-
+		rt.Points = pts
 		rt.AmountPrice = 760 // yen
 		rt.AmountSheets = 1//
 		rt.AvailableSheets = 100//
