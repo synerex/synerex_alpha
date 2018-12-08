@@ -604,8 +604,10 @@ func runSocketIOServer(rdClient, mktClient *sxutil.SMServiceClient) {
 			// reset vehicle status:
 			for _, v := range vehicleMap {
 				v.mu.Lock()
-				v.Mission = nil
-				v.Status = "free"
+				if v.socket == so {
+					v.Mission = nil
+					v.Status = "free"
+				}
 				v.mu.Unlock()
 			}
 
