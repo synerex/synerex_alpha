@@ -10,8 +10,10 @@ import (
 	"github.com/synerex/synerex_alpha/api/common"
 	"github.com/synerex/synerex_alpha/api/ptransit"
 	"google.golang.org/grpc"
+	"hash/crc32"
 	"math"
 	"strconv"
+	"strings"
 
 	//	"github.com/synerex/synerex_alpha/api/common"
 	//	"github.com/synerex/synerex_alpha/api/ptransit"
@@ -91,6 +93,7 @@ func getLatLonFromRatio(shp *gtfs.Shape, from_stop *gtfs.Stop,to_stop *gtfs.Stop
 		return to_stop.Lat, to_stop.Lon, shape_idx
 	}
 
+
 	c1,d1 := getClosestPoints(shp.Points, from_stop.Lat, from_stop.Lon ,shape_idx)
 	c2,d2 := getClosestPoints(shp.Points, to_stop.Lat, to_stop.Lon ,c1)
 
@@ -165,7 +168,10 @@ func locWithTime(feed *gtfsparser.Feed, trip_id string,tp *gtfs.Trip, ix int,  t
 	duration := st[ix].Arrival_time.Minus(st[ix-1].Departure_time) // total time for next station
 	dt := t.Minus(st[ix-1].Departure_time)  // time already past from last stoptime
 
-	shape_id := tp.Route.Id
+//	shape_id := tp.Route.Id // shape_id shoud taken from tip!
+//	trip_id
+	shape_id := tp.Shape.Id
+
 	shapes , ok := feed.Shapes[shape_id]
 	if !ok {
 		fmt.Printf("Can't find shape from shape_id %s\n", shape_id)
@@ -211,6 +217,7 @@ func calcAngle(lat1 float32, lon1 float32, lat2 float32, lon2 float32) float32{
 
 }
 
+
 func supplyPTransitFeed(clt *sxutil.SMServiceClient, feed *gtfsparser.Feed){
 
 //	go subscribePTDemand(clt) // wait for demand to give "TimeTable Info"
@@ -237,14 +244,30 @@ func supplyPTransitFeed(clt *sxutil.SMServiceClient, feed *gtfsparser.Feed){
 			Second: int8(now.Second()),
 		}
 		for k,v := range(feed.Trips){
+			// we should filter calendar
+
+			if strings.Contains(feed.Trips[k].Id, "土日") {
+				continue
+			}
+
+
 			if tripStatus[k] < 0 {
 				continue
 			}
+
 			rid , _ := strconv.ParseInt(feed.Trips[k].Route.Id,10,32)
-			trip_id , _ := strconv.ParseInt(feed.Trips[k].Id,10,32)
-			if trip_id == 0 { // for Kota
+			trip_id , nerr := strconv.ParseInt(feed.Trips[k].Id,10,32)
+
+			if nerr != nil {
+
+				trip_id = int64(crc32.ChecksumIEEE([]byte(feed.Trips[k].Id)))
+				fmt.Printf("Convert:"+feed.Trips[k].Id+" -> %d \n", trip_id)
+			}
+			if trip_id == 0{
 				trip_id = rid
 			}
+
+
 			st ,lat, lon, current_shape_idx:=	locWithTime(feed, k, v, tripStatus[k], t, shape_idx[k])
 			if st < 0 {
 				shape_idx[k] = 0
@@ -267,6 +290,8 @@ func supplyPTransitFeed(clt *sxutil.SMServiceClient, feed *gtfsparser.Feed){
 					Latitude: float64(lat),
 					Longitude: float64(lon),
 				})
+
+
 				pts := &ptransit.PTService{
 					VehicleId: int32(trip_id),
 					Angle: float32(angle),
