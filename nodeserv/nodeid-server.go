@@ -173,6 +173,7 @@ func (s *srvNodeInfo) QueryNode(cx context.Context, nid *nodepb.NodeID) (ni *nod
 	n := nid.NodeId
 	eni, ok := s.nodeMap[n]
 	if !ok {
+		fmt.Println("QueryNode: Can't find Node ID:",n)
 		return nil, errors.New("Unregistered NodeID")
 	}
 	ni = &nodepb.NodeInfo{NodeName: eni.nodeName}
@@ -185,7 +186,15 @@ func (s *srvNodeInfo) KeepAlive(ctx context.Context, nu *nodepb.NodeUpdate) (nr 
 	ni,ok := s.nodeMap[nid]
 	if !ok  {
 		fmt.Println("Can't find node... It might be killed :", nid)
-		fmt.Println("") // debug workaround
+		pr, ok := peer.FromContext(ctx)
+		var ipaddr string
+		if ok {
+			ipaddr = pr.Addr.String()
+		} else {
+			ipaddr = "0.0.0.0"
+		}
+		fmt.Println("Client from :",ipaddr )
+		fmt.Println("" ) // debug workaround
 		return &nodepb.Response{Ok: false, Err: "Killed at Nodeserv"}, e
 	}
 	if r != ni.secret {
