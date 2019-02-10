@@ -66,18 +66,19 @@ func convertDocor2PTService(msg *string) (service *ptransit.PTService, argJson s
 		Longitude: lon,
 	})
 	vid,_ := strconv.Atoi(payloads[1][4:]) // scrape from "KOTAXX"
+	/*
 	human := payloads[4]
 	sdate := payloads[6]
 	time := payloads[7]
 	state,_ := strconv.ParseInt(payloads[5],10,32)
 	accuracy, _ := strconv.ParseFloat(payloads[10],32)
 	altitude, _ := strconv.ParseFloat(payloads[11],32)
-
+*/
 	angle,_ := strconv.ParseFloat(payloads[12],32)
 	speed,_ := strconv.ParseFloat(payloads[13], 32)
-
+/*
 	rpm,_ := strconv.ParseFloat(payloads[14], 32)
-//	odo,_ := strconv.ParseFloat(payloads[15], 32) // odometry from today's start
+//not work	odo,_ := strconv.ParseFloat(payloads[15], 32) // odometry from today's start
 	total_odm,_ := strconv.ParseFloat(payloads[16], 32) // odometry from car
 	pressure,_ := strconv.ParseFloat(payloads[21], 32)
 	temparature,_ := strconv.ParseFloat(payloads[22], 32)
@@ -102,11 +103,12 @@ func convertDocor2PTService(msg *string) (service *ptransit.PTService, argJson s
 	etc61 := payloads[61]
 	etc63 := payloads[63]
 	etc64 := payloads[64]
-
-	argJson = fmt.Sprintf("dt:%s,tm:%s,hm:%s,st:%d,pre:%.1f,temp:%.1f,hum:%.1f,alt:%.1f,rpm:%.1f,speed:%.1f,acc:%.1f,fuel:%.1f,ig:%d,odm:%.1f,sim:%s,st_time:%d,sat_time:%s,pos_tme:%s,etc3:%s,gps_speed:%.1f,e12:%s,e13:%s,e14:%s,person:%d,in:%d,out:%d,e60:%s,e61:%s,e63:%s,e64:%s",
-		sdate, time, human, state, pressure, temparature, humidity,altitude, rpm, gps_speed,accuracy,fuel,  ig_acc, total_odm,
-		sim, status_time, satellite_time,positioning_state, etc3, gps_speed,etc12, etc13, etc14, person_count, in_count, out_count,
-		etc60, etc61, etc63, etc64)
+*/
+//	argJson = fmt.Sprintf("dt:%s,tm:%s,hm:%s,st:%d,pre:%.1f,temp:%.1f,hum:%.1f,alt:%.1f,rpm:%.1f,speed:%.1f,acc:%.1f,fuel:%.1f,ig:%d,odm:%.1f,sim:%s,st_time:%d,sat_time:%s,pos_tme:%s,etc3:%s,gps_speed:%.1f,e12:%s,e13:%s,e14:%s,person:%d,in:%d,out:%d,e60:%s,e61:%s,e63:%s,e64:%s",
+//		sdate, time, human, state, pressure, temparature, humidity,altitude, rpm, gps_speed,accuracy,fuel,  ig_acc, total_odm,
+//		sim, status_time, satellite_time,positioning_state, etc3, gps_speed,etc12, etc13, etc14, person_count, in_count, out_count,
+//		etc60, etc61, etc63, etc64)
+	argJson = *msg
 
 	service = &ptransit.PTService{
 		VehicleId: int32(vid),
