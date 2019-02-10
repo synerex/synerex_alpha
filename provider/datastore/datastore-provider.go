@@ -77,7 +77,7 @@ func (fs *FileSystemDataStore)store(li *LocInfo){
 		}
 		fs.storeFile =file
 	}
-	fs.storeFile.WriteString("["+li.GetJson()+"],\n")
+	fs.storeFile.WriteString(li.argJson+"\n")
 }
 
 type LocInfo struct {
