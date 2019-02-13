@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -73,9 +74,60 @@ func main() {
 	}
 	submitButton.Click() // ログインクリック
 
+	schedule := page.FindByXPath("//*[@id='appIconMenuFrame']/div[2]/span[5]/a")
+	err = schedule.Click()
+
+	if err != nil {
+		println("Cant Click Schedule:", err.Error())
+	}
 	println("Done!")
 
+	pageContent, errPage = page.HTML() // get whole page again
+	if errPage != nil {
+		println("Error:", errPage.Error())
+	}
+
+	// by using goquery, to obtain Schedule
+	readerOfPage = strings.NewReader(pageContent)
+	pageDom, pErr = goquery.NewDocumentFromReader(readerOfPage)
+	if pErr != nil {
+		println("PrintErr:", pErr)
+	}
+
+	calendarDom := pageDom.Find("#redraw > table > tbody").Children()
+	rooms := make(map[string][]string, calendarDom.Length()) // 会議室
+	calendarDom.Each(func(i int, sel *goquery.Selection) {
+		if i == 0 { //  dates.
+
+			sel.Children().Each(func(j int, cc *goquery.Selection) {
+				// for each td
+				if j == 0 {
+					rooms["dates"] = []string{}
+				} else {
+					st := strings.Trim(cc.Text(), " ")
+					rooms["dates"] = append(rooms["dates"], st)
+					println("Dates", j, "[", st, "]")
+				}
+			})
+		} else { //rooms
+			rname := "none"
+			sel.Children().Each(func(j int, cc *goquery.Selection) {
+				if j == 0 {
+					rname = strings.Trim(cc.Children().First().First().Text(), " \n")
+					println("RoomName:", i, rname)
+					rooms[rname] = []string{}
+				} else {
+					st := strings.Trim(cc.Text(), " \n")
+					rooms[rname] = append(rooms[rname], st)
+					println("RoomState:", j, "[", st, "]")
+				}
+			})
+		}
+	})
+
 	time.Sleep(3 * time.Second)
+
+	fmt.Printf("%v", rooms)
 
 	//	if err := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[1]/div/table/tbody/tr/td/center/div/table/tbody/tr[2]/td[2]/div/div/table[2]/tbody/tr[2]/td/table/tbody/tr[7]/td/input").Click(); err != nil {
 	//		log.Fatalf("Failed to submit: %v", err)
