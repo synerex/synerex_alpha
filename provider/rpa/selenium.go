@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	// Chromeを指定する
+	// set to use Chrome
 	driver := agouti.ChromeDriver(agouti.Browser("chrome"))
 	if err := driver.Start(); err != nil {
 		log.Fatalf("Failed to start driver: %v", err)
@@ -23,15 +23,13 @@ func main() {
 		log.Fatalf("Failed to open new page: %v", err)
 	}
 
-	// Sample of サイボウズOffice
+	// sample of Cybozu Office
 	if err := page.Navigate("https://onlinedemo.cybozu.info/scripts/office10/ag.cgi?"); err != nil {
 		log.Fatalf("Failed to navigate: %v", err)
 	}
 
-	//	time.Sleep(3 * time.Second)
-
-	//
-	pageContent, errPage := page.HTML() // get whole page
+	// get whole page
+	pageContent, errPage := page.HTML()
 	if errPage != nil {
 		println("Error:", errPage.Error())
 	}
@@ -65,7 +63,6 @@ func main() {
 	if err != nil {
 		println("Select Error!", err.Error())
 	}
-	//	time.Sleep(3 * time.Second)
 
 	submitButton := page.FindByName("Submit")
 	_, e2 := submitButton.Count()
@@ -73,16 +70,16 @@ func main() {
 		println("Login Error!", e2.Error())
 	}
 	submitButton.Click() // ログインクリック
+	println("Logged in!")
 
-	schedule := page.FindByXPath("//*[@id='appIconMenuFrame']/div[2]/span[5]/a")
+	schedule := page.FindByXPath("//*[@id='appIconMenuFrame']/div[2]/span[4]/a")
 	err = schedule.Click()
-
 	if err != nil {
 		println("Cant Click Schedule:", err.Error())
 	}
-	println("Done!")
 
-	pageContent, errPage = page.HTML() // get whole page again
+	// get whole page again
+	pageContent, errPage = page.HTML()
 	if errPage != nil {
 		println("Error:", errPage.Error())
 	}
