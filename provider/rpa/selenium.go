@@ -94,8 +94,8 @@ func main() {
 	*/
 
 	// by using goquery, to obtain group lists
-	renderOfPage := strings.NewReader(pageContent)
-	pageDom, pErr = goquery.NewDocumentFromReader(renderOfPage)
+	readerOfPage = strings.NewReader(pageContent)
+	pageDom, pErr = goquery.NewDocumentFromReader(readerOfPage)
 	if pErr != nil {
 		println("PrintErr:", pErr)
 	}
