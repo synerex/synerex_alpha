@@ -72,16 +72,17 @@ func main() {
 	submitButton.Click() // ログインクリック
 	println("Logged in!")
 
-	schedule := page.FindByXPath("//*[@id='appIconMenuFrame']/div[2]/span[4]/a")
-	err = schedule.Click()
-	if err != nil {
-		println("Cant Click Schedule:", err.Error())
-	}
-
 	// get whole page again
 	pageContent, errPage = page.HTML()
 	if errPage != nil {
 		println("Error:", errPage.Error())
+	}
+
+	/* デモ版のレイアウトが頻繁に変更されるためコメントアウト
+	schedule := page.FindByXPath("//*[@id='appIconMenuFrame']/div[2]/span[4]/a")
+	err = schedule.Click()
+	if err != nil {
+		println("Cant Click Schedule:", err.Error())
 	}
 
 	// by using goquery, to obtain Schedule
@@ -89,6 +90,33 @@ func main() {
 	pageDom, pErr = goquery.NewDocumentFromReader(readerOfPage)
 	if pErr != nil {
 		println("PrintErr:", pErr)
+	}
+	*/
+
+	// by using goquery, to obtain group lists
+	renderOfPage := strings.NewReader(pageContent)
+	pageDom, pErr = goquery.NewDocumentFromReader(renderOfPage)
+	if pErr != nil {
+		println("PrintErr:", pErr)
+	}
+
+	groupDom := pageDom.Find("select[name='GID']").Children()
+	groups := make([]string, groupDom.Length())
+	groupDom.Each(func(i int, g *goquery.Selection) {
+		tx := g.Text()
+		groups[i] = tx
+		println(i, tx)
+	})
+
+	groupX := page.FindByName("GID")
+	_, err = groupX.Count()
+	if err != nil {
+		println("Can't find Path", err.Error())
+	}
+
+	err = groupX.Select(groups[10]) // "会議室"
+	if err != nil {
+		println("Select Error!", err.Error())
 	}
 
 	calendarDom := pageDom.Find("#redraw > table > tbody").Children()
@@ -121,8 +149,6 @@ func main() {
 			})
 		}
 	})
-
-	time.Sleep(3 * time.Second)
 
 	fmt.Printf("%v", rooms)
 
@@ -161,7 +187,7 @@ func main() {
 
 		page.FindByID("login-btn").Click()
 	*/
+
 	//	処理完了後、3秒間ブラウザを表示したままにする
 	time.Sleep(3 * time.Second)
-
 }
