@@ -72,28 +72,21 @@ func main() {
 	submitButton.Click() // ログインクリック
 	println("Logged in!")
 
+	/* レイアウトが頻繁に変わるため
+	schedule := page.FindByXPath("//*[@id='appIconMenuFrame']/div[2]/span[5]/a")
+	err = schedule.Click()
+	if err != nil {
+		println("Cant Click Schedule:", err.Error())
+	}
+	*/
+
 	// get whole page again
 	pageContent, errPage = page.HTML()
 	if errPage != nil {
 		println("Error:", errPage.Error())
 	}
 
-	/* デモ版のレイアウトが頻繁に変更されるためコメントアウト
-	schedule := page.FindByXPath("//*[@id='appIconMenuFrame']/div[2]/span[4]/a")
-	err = schedule.Click()
-	if err != nil {
-		println("Cant Click Schedule:", err.Error())
-	}
-
 	// by using goquery, to obtain Schedule
-	readerOfPage = strings.NewReader(pageContent)
-	pageDom, pErr = goquery.NewDocumentFromReader(readerOfPage)
-	if pErr != nil {
-		println("PrintErr:", pErr)
-	}
-	*/
-
-	// by using goquery, to obtain group lists
 	readerOfPage = strings.NewReader(pageContent)
 	pageDom, pErr = goquery.NewDocumentFromReader(readerOfPage)
 	if pErr != nil {
@@ -117,6 +110,19 @@ func main() {
 	err = groupX.Select(groups[10]) // "会議室"
 	if err != nil {
 		println("Select Error!", err.Error())
+	}
+
+	// get whole page again
+	pageContent, errPage = page.HTML()
+	if errPage != nil {
+		println("Error:", errPage.Error())
+	}
+
+	// by using goquery, to obtain Schedule
+	readerOfPage = strings.NewReader(pageContent)
+	pageDom, pErr = goquery.NewDocumentFromReader(readerOfPage)
+	if pErr != nil {
+		println("PrintErr:", pErr)
 	}
 
 	calendarDom := pageDom.Find("#redraw > table > tbody").Children()
