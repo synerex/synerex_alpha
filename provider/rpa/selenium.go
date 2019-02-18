@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -49,7 +48,7 @@ func main() {
 	selectDom.Each(func(i int, sel *goquery.Selection) {
 		tx := sel.Text()
 		users[i] = tx
-		println(i, tx)
+		// println(i, tx)
 	})
 
 	//	nameX := page.FindByXPath("//div[@id='content-wrapper']/div/div/table/tbody/tr/td/center/div/table/tbody/tr[2]/td[2]/div/div/table[2]/tbody/tr[2]/td/table/tbody/tr[2]/td/select")
@@ -98,7 +97,7 @@ func main() {
 	groupDom.Each(func(i int, g *goquery.Selection) {
 		tx := g.Text()
 		groups[i] = tx
-		println(i, tx)
+		// println(i, tx)
 	})
 
 	groupX := page.FindByName("GID")
@@ -129,15 +128,14 @@ func main() {
 	rooms := make(map[string][]string, calendarDom.Length()) // 会議室
 	calendarDom.Each(func(i int, sel *goquery.Selection) {
 		if i == 0 { //  dates.
-
 			sel.Children().Each(func(j int, cc *goquery.Selection) {
 				// for each td
 				if j == 0 {
 					rooms["dates"] = []string{}
 				} else {
-					st := strings.Trim(cc.Text(), " ")
+					st := strings.TrimSpace(cc.Text())
 					rooms["dates"] = append(rooms["dates"], st)
-					println("Dates", j, "[", st, "]")
+					// println("Dates", j, "[", st, "]")
 				}
 			})
 		} else { //rooms
@@ -145,18 +143,45 @@ func main() {
 			sel.Children().Each(func(j int, cc *goquery.Selection) {
 				if j == 0 {
 					rname = strings.Trim(cc.Children().First().First().Text(), " \n")
-					println("RoomName:", i, rname)
+					rname = strings.TrimSpace(rname)
+					// println("RoomName:", i, rname)
 					rooms[rname] = []string{}
 				} else {
 					st := strings.Trim(cc.Text(), " \n")
+					st = strings.TrimSpace(st)
 					rooms[rname] = append(rooms[rname], st)
-					println("RoomState:", j, "[", st, "]")
+					// println("RoomState:", j, "[", st, "]")
 				}
 			})
 		}
 	})
 
-	fmt.Printf("%v", rooms)
+	// for k, v := range rooms {
+	// 	fmt.Printf("rooms[%v]: %v\n", k, v)
+	// }
+
+	for i := 0; i < len(rooms["dates"]); i++ {
+		println("----------")
+		println(rooms["dates"][i])
+		println("第一会議室:", rooms["第一会議室"][i])
+		println("第二会議室:", rooms["第二会議室"][i])
+		println("打合せルーム:", rooms["打合せルーム"][i])
+	}
+
+	// subscribe date from user
+	userDate := "18（月）"
+
+	// 会議室のカレンダーと比較する
+	// 空室なら予約 or 満室なら別日程を促す
+	for i := 0; i < len(rooms["dates"]); i++ {
+		if rooms["dates"][i] == userDate {
+			println("----------")
+			println("userDate:", userDate)
+			println("第一会議室:", rooms["第一会議室"][i])
+			println("第二会議室:", rooms["第二会議室"][i])
+			println("打合せルーム:", rooms["打合せルーム"][i])
+		}
+	}
 
 	//	if err := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[1]/div/table/tbody/tr/td/center/div/table/tbody/tr[2]/td[2]/div/div/table[2]/tbody/tr[2]/td/table/tbody/tr[7]/td/input").Click(); err != nil {
 	//		log.Fatalf("Failed to submit: %v", err)
