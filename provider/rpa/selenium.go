@@ -85,7 +85,7 @@ func main() {
 		println("Error:", errPage.Error())
 	}
 
-	// by using goquery, to obtain Schedule
+	// by using goquery, to obtain Group
 	readerOfPage = strings.NewReader(pageContent)
 	pageDom, pErr = goquery.NewDocumentFromReader(readerOfPage)
 	if pErr != nil {
@@ -183,6 +183,189 @@ func main() {
 		}
 	}
 
+	// make a reservation
+	reserveButton := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[4]/div/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[1]/span/span/a")
+	_, e2 = reserveButton.Count()
+	if e2 != nil {
+		println("Reserve Error!", e2.Error())
+	}
+	reserveButton.Click()
+
+	// get whole page again
+	pageContent, errPage = page.HTML()
+	if errPage != nil {
+		println("Error:", errPage.Error())
+	}
+
+	// by using goquery, to obtain SetDate and SetTime
+	readerOfPage = strings.NewReader(pageContent)
+	pageDom, pErr = goquery.NewDocumentFromReader(readerOfPage)
+	if pErr != nil {
+		println("PrintErr:", pErr)
+	}
+
+	yearDom := pageDom.Find("select[name='SetDate.Year']").Children()
+	monthDom := pageDom.Find("select[name='SetDate.Month']").Children()
+	dayDom := pageDom.Find("select[name='SetDate.Day']").Children()
+	startHourDom := pageDom.Find("select[name='SetTime.Hour']").Children()
+	startMinuteDom := pageDom.Find("select[name='SetTime.Minute']").Children()
+	endHourDom := pageDom.Find("select[name='EndTime.Hour']").Children()
+	endMinuteDom := pageDom.Find("select[name='EndTime.Minute']").Children()
+
+	years := make([]string, yearDom.Length())
+	months := make([]string, monthDom.Length())
+	days := make([]string, dayDom.Length())
+	startHours := make([]string, startHourDom.Length())
+	startMinutes := make([]string, startMinuteDom.Length())
+	endHours := make([]string, endHourDom.Length())
+	endMinutes := make([]string, endMinuteDom.Length())
+
+	yearDom.Each(func(i int, g *goquery.Selection) {
+		tx := g.Text()
+		years[i] = tx
+	})
+	monthDom.Each(func(i int, g *goquery.Selection) {
+		tx := g.Text()
+		months[i] = tx
+	})
+	dayDom.Each(func(i int, g *goquery.Selection) {
+		tx := g.Text()
+		days[i] = tx
+	})
+	startHourDom.Each(func(i int, g *goquery.Selection) {
+		tx := g.Text()
+		startHours[i] = tx
+	})
+	startMinuteDom.Each(func(i int, g *goquery.Selection) {
+		tx := g.Text()
+		startMinutes[i] = tx
+	})
+	endHourDom.Each(func(i int, g *goquery.Selection) {
+		tx := g.Text()
+		endHours[i] = tx
+	})
+	endMinuteDom.Each(func(i int, g *goquery.Selection) {
+		tx := g.Text()
+		endMinutes[i] = tx
+	})
+
+	yearX := page.FindByName("SetDate.Year")
+	_, err = yearX.Count()
+	if err != nil {
+		println("Can't find Path", err.Error())
+	}
+	monthX := page.FindByName("SetDate.Month")
+	_, err = monthX.Count()
+	if err != nil {
+		println("Can't find Path", err.Error())
+	}
+	dayX := page.FindByName("SetDate.Day")
+	_, err = dayX.Count()
+	if err != nil {
+		println("Can't find Path", err.Error())
+	}
+	startHourX := page.FindByName("SetTime.Hour")
+	_, err = startHourX.Count()
+	if err != nil {
+		println("Can't find Path", err.Error())
+	}
+	startMinuteX := page.FindByName("SetTime.Minute")
+	_, err = startMinuteX.Count()
+	if err != nil {
+		println("Can't find Path", err.Error())
+	}
+	endHourX := page.FindByName("EndTime.Hour")
+	_, err = endHourX.Count()
+	if err != nil {
+		println("Can't find Path", err.Error())
+	}
+	endMinuteX := page.FindByName("EndTime.Minute")
+	_, err = endMinuteX.Count()
+	if err != nil {
+		println("Can't find Path", err.Error())
+	}
+
+	err = yearX.Select(years[22])
+	if err != nil {
+		println("Select Error!", err.Error())
+	}
+	err = monthX.Select(months[1])
+	if err != nil {
+		println("Select Error!", err.Error())
+	}
+	err = dayX.Select(days[20])
+	if err != nil {
+		println("Select Error!", err.Error())
+	}
+	err = startHourX.Select(startHours[11])
+	if err != nil {
+		println("Select Error!", err.Error())
+	}
+	err = startMinuteX.Select(startMinutes[2])
+	if err != nil {
+		println("Select Error!", err.Error())
+	}
+	err = endHourX.Select(endHours[12])
+	if err != nil {
+		println("Select Error!", err.Error())
+	}
+	err = endMinuteX.Select(endMinutes[2])
+	if err != nil {
+		println("Select Error!", err.Error())
+	}
+
+	// set the title
+	title := page.FindByName("Detail")
+	title.Fill("This is Test")
+
+	/* select the room > doesn't work well, especially theRoomX.Select()
+	// get whole page again
+	pageContent, errPage = page.HTML()
+	if errPage != nil {
+		println("Error:", errPage.Error())
+	}
+
+	// by using goquery, to obtain Rooms
+	readerOfPage = strings.NewReader(pageContent)
+	pageDom, pErr = goquery.NewDocumentFromReader(readerOfPage)
+	if pErr != nil {
+		println("PrintErr:", pErr)
+	}
+
+	theRoomDom := pageDom.Find("select[name='FCID']").Children()
+	theRooms := make([]string, theRoomDom.Length())
+	theRoomDom.Each(func(i int, g *goquery.Selection) {
+		tx := g.Text()
+		theRooms[i] = tx
+		println(i, tx)
+	})
+
+	theRoomX := page.FindByName("FCID")
+	_, err = theRoomX.Count()
+	if err != nil {
+		println("Can't find Path", err.Error())
+	}
+
+	err = theRoomX.Select(theRooms[2])
+	if err != nil {
+		println("Select Error!", err.Error())
+	}
+	*/
+
+	theRoomY := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[4]/div/form/div[2]/table/tbody/tr/td/table/tbody/tr[2]/td/div/div[1]/div/table/tbody/tr[7]/td/table/tbody/tr[1]/td[3]/select/option[2]")
+	theRoomY.Click()
+
+	time.Sleep(5 * time.Second)
+
+	// submit to make a reservation
+	entryButton := page.FindByName("Entry")
+	_, e2 = entryButton.Count()
+	if e2 != nil {
+		println("Login Error!", e2.Error())
+	}
+	entryButton.Click()
+	println("Made a reservation!")
+
 	//	if err := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[1]/div/table/tbody/tr/td/center/div/table/tbody/tr[2]/td[2]/div/div/table[2]/tbody/tr[2]/td/table/tbody/tr[7]/td/input").Click(); err != nil {
 	//		log.Fatalf("Failed to submit: %v", err)
 	//	}
@@ -219,6 +402,6 @@ func main() {
 		page.FindByID("login-btn").Click()
 	*/
 
-	//	処理完了後、3秒間ブラウザを表示したままにする
-	time.Sleep(3 * time.Second)
+	//	処理完了後、5秒間ブラウザを表示したままにする
+	time.Sleep(5 * time.Second)
 }
