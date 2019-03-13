@@ -28,6 +28,7 @@ var (
 	idlist     []uint64
 	spMap      map[uint64]*sxutil.SupplyOpts
 	mu         sync.Mutex
+	lastLat, lastLon, lastAngle float64
 )
 
 func messageHandler(client *MQTT.Client, msg MQTT.Message) {
@@ -53,19 +54,72 @@ func subscribe(client MQTT.Client, sub chan<- MQTT.Message) {
 func convertDocor2PTService(msg *string) (service *ptransit.PTService, argJson string){
 	// using docor info
 	payloads := strings.Split(*msg,",")
-	lat, err := strconv.ParseFloat(payloads[8],64)
-	if err != nil {
-		log.Printf("Can't convert latitude from `%s`", payloads[8])
+
+	// we need to check the length of the payloads.
+	if len(payloads) > 14 {
+
+		vid, _ := strconv.Atoi(payloads[1][4:]) // scrape from "KOTAXX"
+		lat, err := strconv.ParseFloat(payloads[8], 64)
+		if err != nil {
+			log.Printf("Can't convert latitude from `%s` at %d", payloads[8], vid)
+			// we need lat,lon to keep the map system working.
+			// just use last lat, lon
+			lat = lastLat // use last value
+		} else {
+			lastLat = lat
+		}
+		lon, err2 := strconv.ParseFloat(payloads[9], 64)
+		if err2 != nil {
+			log.Printf("Can't convert longitude from `%s` at %d", payloads[9], vid)
+			lon = lastLon // use last value
+		} else {
+			lastLon = lon
+		}
+		place := common.NewPlace().WithPoint(&common.Point{
+			Latitude:  lat,
+			Longitude: lon,
+		})
+		angle, err3 := strconv.ParseFloat(payloads[12], 32)
+		speed, _ := strconv.ParseFloat(payloads[13], 32)
+		if err3 != nil {
+			angle = lastAngle
+			speed = 0
+		} else {
+			lastAngle = angle
+		}
+		argJson = *msg
+
+		service = &ptransit.PTService{
+			VehicleId: int32(vid),
+			Angle: float32(angle),
+			Speed: int32(speed),
+			CurrentLocation: place,
+			VehicleType: 3, // bus number = 3 (for GTFS.Route.Type)
+		}
+
+		//	log.Printf("msg:%v",*service)
+		return service,argJson
+
+	}else{
+		argJson = *msg
+		place := common.NewPlace().WithPoint(&common.Point{
+			Latitude:  lastLat,
+			Longitude: lastLon,
+		})
+		vid, _ := strconv.Atoi(payloads[1][4:]) // scrape from "KOTAXX"
+
+		service = &ptransit.PTService{
+			VehicleId: int32(vid),
+			Angle: float32(lastAngle),
+			Speed: int32(0),
+			CurrentLocation: place,
+			VehicleType: 3, // bus number = 3 (for GTFS.Route.Type)
+		}
+
+		//	log.Printf("msg:%v",*service)
+		return service,argJson
+
 	}
-	lon, err2 := strconv.ParseFloat(payloads[9],64)
-	if err2 != nil {
-		log.Printf("Can't convert longitude from `%s`", payloads[9])
-	}
-	place := common.NewPlace().WithPoint(&common.Point{
-		Latitude: lat,
-		Longitude: lon,
-	})
-	vid,_ := strconv.Atoi(payloads[1][4:]) // scrape from "KOTAXX"
 	/*
 	human := payloads[4]
 	sdate := payloads[6]
@@ -74,8 +128,6 @@ func convertDocor2PTService(msg *string) (service *ptransit.PTService, argJson s
 	accuracy, _ := strconv.ParseFloat(payloads[10],32)
 	altitude, _ := strconv.ParseFloat(payloads[11],32)
 */
-	angle,_ := strconv.ParseFloat(payloads[12],32)
-	speed,_ := strconv.ParseFloat(payloads[13], 32)
 /*
 	rpm,_ := strconv.ParseFloat(payloads[14], 32)
 //not work	odo,_ := strconv.ParseFloat(payloads[15], 32) // odometry from today's start
@@ -108,18 +160,6 @@ func convertDocor2PTService(msg *string) (service *ptransit.PTService, argJson s
 //		sdate, time, human, state, pressure, temparature, humidity,altitude, rpm, gps_speed,accuracy,fuel,  ig_acc, total_odm,
 //		sim, status_time, satellite_time,positioning_state, etc3, gps_speed,etc12, etc13, etc14, person_count, in_count, out_count,
 //		etc60, etc61, etc63, etc64)
-	argJson = *msg
-
-	service = &ptransit.PTService{
-		VehicleId: int32(vid),
-		Angle: float32(angle),
-		Speed: int32(speed),
-		CurrentLocation: place,
-		VehicleType: 3, // bus number = 3 (for GTFS.Route.Type)
-	}
-
-//	log.Printf("msg:%v",*service)
-	return service,argJson
 }
 
 
