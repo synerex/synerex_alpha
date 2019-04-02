@@ -15,11 +15,7 @@ import marketing "github.com/synerex/synerex_alpha/api/marketing"
 import ptransit "github.com/synerex/synerex_alpha/api/ptransit"
 import rideshare "github.com/synerex/synerex_alpha/api/rideshare"
 import routing "github.com/synerex/synerex_alpha/api/routing"
-
-import (
-	context "golang.org/x/net/context"
-	grpc "google.golang.org/grpc"
-)
+import rpa "github.com/synerex/synerex_alpha/api/rpa"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -42,6 +38,7 @@ const (
 	ChannelType_PT_SERVICE        ChannelType = 4
 	ChannelType_ROUTING_SERVICE   ChannelType = 5
 	ChannelType_MARKETING_SERVICE ChannelType = 6
+	ChannelType_MEETING_SERVICE   ChannelType = 7
 	ChannelType_END               ChannelType = 10
 )
 
@@ -53,6 +50,7 @@ var ChannelType_name = map[int32]string{
 	4:  "PT_SERVICE",
 	5:  "ROUTING_SERVICE",
 	6:  "MARKETING_SERVICE",
+	7:  "MEETING_SERVICE",
 	10: "END",
 }
 var ChannelType_value = map[string]int32{
@@ -63,6 +61,7 @@ var ChannelType_value = map[string]int32{
 	"PT_SERVICE":        4,
 	"ROUTING_SERVICE":   5,
 	"MARKETING_SERVICE": 6,
+	"MEETING_SERVICE":   7,
 	"END":               10,
 }
 
@@ -70,7 +69,7 @@ func (x ChannelType) String() string {
 	return proto.EnumName(ChannelType_name, int32(x))
 }
 func (ChannelType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{0}
+	return fileDescriptor_synerex_64ff975bf195c314, []int{0}
 }
 
 type Response struct {
@@ -85,7 +84,7 @@ func (m *Response) Reset()         { *m = Response{} }
 func (m *Response) String() string { return proto.CompactTextString(m) }
 func (*Response) ProtoMessage()    {}
 func (*Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{0}
+	return fileDescriptor_synerex_64ff975bf195c314, []int{0}
 }
 func (m *Response) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Response.Unmarshal(m, b)
@@ -133,7 +132,7 @@ func (m *ConfirmResponse) Reset()         { *m = ConfirmResponse{} }
 func (m *ConfirmResponse) String() string { return proto.CompactTextString(m) }
 func (*ConfirmResponse) ProtoMessage()    {}
 func (*ConfirmResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{1}
+	return fileDescriptor_synerex_64ff975bf195c314, []int{1}
 }
 func (m *ConfirmResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConfirmResponse.Unmarshal(m, b)
@@ -200,6 +199,7 @@ type Supply struct {
 	//	*Supply_Arg_RoutingService
 	//	*Supply_Arg_MarketingService
 	//	*Supply_Arg_PTgtfs
+	//	*Supply_Arg_MeetingService
 	ArgOneof             isSupply_ArgOneof `protobuf_oneof:"arg_oneof"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
@@ -210,7 +210,7 @@ func (m *Supply) Reset()         { *m = Supply{} }
 func (m *Supply) String() string { return proto.CompactTextString(m) }
 func (*Supply) ProtoMessage()    {}
 func (*Supply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{2}
+	return fileDescriptor_synerex_64ff975bf195c314, []int{2}
 }
 func (m *Supply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Supply.Unmarshal(m, b)
@@ -322,6 +322,10 @@ type Supply_Arg_PTgtfs struct {
 	Arg_PTgtfs *ptransit.PTgtfs `protobuf:"bytes,17,opt,name=arg_PTgtfs,json=argPTgtfs,proto3,oneof"`
 }
 
+type Supply_Arg_MeetingService struct {
+	Arg_MeetingService *rpa.MeetingService `protobuf:"bytes,18,opt,name=arg_MeetingService,json=argMeetingService,proto3,oneof"`
+}
+
 func (*Supply_Arg_Fleet) isSupply_ArgOneof() {}
 
 func (*Supply_Arg_RideShare) isSupply_ArgOneof() {}
@@ -337,6 +341,8 @@ func (*Supply_Arg_RoutingService) isSupply_ArgOneof() {}
 func (*Supply_Arg_MarketingService) isSupply_ArgOneof() {}
 
 func (*Supply_Arg_PTgtfs) isSupply_ArgOneof() {}
+
+func (*Supply_Arg_MeetingService) isSupply_ArgOneof() {}
 
 func (m *Supply) GetArgOneof() isSupply_ArgOneof {
 	if m != nil {
@@ -401,6 +407,13 @@ func (m *Supply) GetArg_PTgtfs() *ptransit.PTgtfs {
 	return nil
 }
 
+func (m *Supply) GetArg_MeetingService() *rpa.MeetingService {
+	if x, ok := m.GetArgOneof().(*Supply_Arg_MeetingService); ok {
+		return x.Arg_MeetingService
+	}
+	return nil
+}
+
 // XXX_OneofFuncs is for the internal use of the proto package.
 func (*Supply) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
 	return _Supply_OneofMarshaler, _Supply_OneofUnmarshaler, _Supply_OneofSizer, []interface{}{
@@ -412,6 +425,7 @@ func (*Supply) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error,
 		(*Supply_Arg_RoutingService)(nil),
 		(*Supply_Arg_MarketingService)(nil),
 		(*Supply_Arg_PTgtfs)(nil),
+		(*Supply_Arg_MeetingService)(nil),
 	}
 }
 
@@ -457,6 +471,11 @@ func _Supply_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
 	case *Supply_Arg_PTgtfs:
 		b.EncodeVarint(17<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.Arg_PTgtfs); err != nil {
+			return err
+		}
+	case *Supply_Arg_MeetingService:
+		b.EncodeVarint(18<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Arg_MeetingService); err != nil {
 			return err
 		}
 	case nil:
@@ -533,6 +552,14 @@ func _Supply_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer)
 		err := b.DecodeMessage(msg)
 		m.ArgOneof = &Supply_Arg_PTgtfs{msg}
 		return true, err
+	case 18: // arg_oneof.arg_MeetingService
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(rpa.MeetingService)
+		err := b.DecodeMessage(msg)
+		m.ArgOneof = &Supply_Arg_MeetingService{msg}
+		return true, err
 	default:
 		return false, nil
 	}
@@ -582,6 +609,11 @@ func _Supply_OneofSizer(msg proto.Message) (n int) {
 		n += 2 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
+	case *Supply_Arg_MeetingService:
+		s := proto.Size(x.Arg_MeetingService)
+		n += 2 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
 	case nil:
 	default:
 		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
@@ -608,6 +640,7 @@ type Demand struct {
 	//	*Demand_Arg_RoutingService
 	//	*Demand_Arg_MarketingService
 	//	*Demand_Arg_PTgtfs
+	//	*Demand_Arg_MeetingService
 	ArgOneof             isDemand_ArgOneof `protobuf_oneof:"arg_oneof"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
@@ -618,7 +651,7 @@ func (m *Demand) Reset()         { *m = Demand{} }
 func (m *Demand) String() string { return proto.CompactTextString(m) }
 func (*Demand) ProtoMessage()    {}
 func (*Demand) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{3}
+	return fileDescriptor_synerex_64ff975bf195c314, []int{3}
 }
 func (m *Demand) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Demand.Unmarshal(m, b)
@@ -730,6 +763,10 @@ type Demand_Arg_PTgtfs struct {
 	Arg_PTgtfs *ptransit.PTgtfs `protobuf:"bytes,17,opt,name=arg_PTgtfs,json=argPTgtfs,proto3,oneof"`
 }
 
+type Demand_Arg_MeetingService struct {
+	Arg_MeetingService *rpa.MeetingService `protobuf:"bytes,18,opt,name=arg_MeetingService,json=argMeetingService,proto3,oneof"`
+}
+
 func (*Demand_Arg_Fleet) isDemand_ArgOneof() {}
 
 func (*Demand_Arg_RideShare) isDemand_ArgOneof() {}
@@ -745,6 +782,8 @@ func (*Demand_Arg_RoutingService) isDemand_ArgOneof() {}
 func (*Demand_Arg_MarketingService) isDemand_ArgOneof() {}
 
 func (*Demand_Arg_PTgtfs) isDemand_ArgOneof() {}
+
+func (*Demand_Arg_MeetingService) isDemand_ArgOneof() {}
 
 func (m *Demand) GetArgOneof() isDemand_ArgOneof {
 	if m != nil {
@@ -809,6 +848,13 @@ func (m *Demand) GetArg_PTgtfs() *ptransit.PTgtfs {
 	return nil
 }
 
+func (m *Demand) GetArg_MeetingService() *rpa.MeetingService {
+	if x, ok := m.GetArgOneof().(*Demand_Arg_MeetingService); ok {
+		return x.Arg_MeetingService
+	}
+	return nil
+}
+
 // XXX_OneofFuncs is for the internal use of the proto package.
 func (*Demand) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
 	return _Demand_OneofMarshaler, _Demand_OneofUnmarshaler, _Demand_OneofSizer, []interface{}{
@@ -820,6 +866,7 @@ func (*Demand) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error,
 		(*Demand_Arg_RoutingService)(nil),
 		(*Demand_Arg_MarketingService)(nil),
 		(*Demand_Arg_PTgtfs)(nil),
+		(*Demand_Arg_MeetingService)(nil),
 	}
 }
 
@@ -865,6 +912,11 @@ func _Demand_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
 	case *Demand_Arg_PTgtfs:
 		b.EncodeVarint(17<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.Arg_PTgtfs); err != nil {
+			return err
+		}
+	case *Demand_Arg_MeetingService:
+		b.EncodeVarint(18<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Arg_MeetingService); err != nil {
 			return err
 		}
 	case nil:
@@ -941,6 +993,14 @@ func _Demand_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer)
 		err := b.DecodeMessage(msg)
 		m.ArgOneof = &Demand_Arg_PTgtfs{msg}
 		return true, err
+	case 18: // arg_oneof.arg_MeetingService
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(rpa.MeetingService)
+		err := b.DecodeMessage(msg)
+		m.ArgOneof = &Demand_Arg_MeetingService{msg}
+		return true, err
 	default:
 		return false, nil
 	}
@@ -990,6 +1050,11 @@ func _Demand_OneofSizer(msg proto.Message) (n int) {
 		n += 2 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
+	case *Demand_Arg_MeetingService:
+		s := proto.Size(x.Arg_MeetingService)
+		n += 2 // tag and wire
+		n += proto.SizeVarint(uint64(s))
+		n += s
 	case nil:
 	default:
 		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
@@ -1013,7 +1078,7 @@ func (m *Target) Reset()         { *m = Target{} }
 func (m *Target) String() string { return proto.CompactTextString(m) }
 func (*Target) ProtoMessage()    {}
 func (*Target) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{4}
+	return fileDescriptor_synerex_64ff975bf195c314, []int{4}
 }
 func (m *Target) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Target.Unmarshal(m, b)
@@ -1088,7 +1153,7 @@ func (m *Channel) Reset()         { *m = Channel{} }
 func (m *Channel) String() string { return proto.CompactTextString(m) }
 func (*Channel) ProtoMessage()    {}
 func (*Channel) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{5}
+	return fileDescriptor_synerex_64ff975bf195c314, []int{5}
 }
 func (m *Channel) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Channel.Unmarshal(m, b)
@@ -1142,7 +1207,7 @@ func (m *Mbus) Reset()         { *m = Mbus{} }
 func (m *Mbus) String() string { return proto.CompactTextString(m) }
 func (*Mbus) ProtoMessage()    {}
 func (*Mbus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{6}
+	return fileDescriptor_synerex_64ff975bf195c314, []int{6}
 }
 func (m *Mbus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Mbus.Unmarshal(m, b)
@@ -1200,7 +1265,7 @@ func (m *MbusMsg) Reset()         { *m = MbusMsg{} }
 func (m *MbusMsg) String() string { return proto.CompactTextString(m) }
 func (*MbusMsg) ProtoMessage()    {}
 func (*MbusMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{7}
+	return fileDescriptor_synerex_64ff975bf195c314, []int{7}
 }
 func (m *MbusMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MbusMsg.Unmarshal(m, b)
@@ -1281,656 +1346,75 @@ func init() {
 	proto.RegisterEnum("api.ChannelType", ChannelType_name, ChannelType_value)
 }
 
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConn
+func init() { proto.RegisterFile("synerex.proto", fileDescriptor_synerex_64ff975bf195c314) }
 
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
-
-// SynerexClient is the client API for Synerex service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type SynerexClient interface {
-	RegisterDemand(ctx context.Context, in *Demand, opts ...grpc.CallOption) (*Response, error)
-	RegisterSupply(ctx context.Context, in *Supply, opts ...grpc.CallOption) (*Response, error)
-	ProposeDemand(ctx context.Context, in *Demand, opts ...grpc.CallOption) (*Response, error)
-	ProposeSupply(ctx context.Context, in *Supply, opts ...grpc.CallOption) (*Response, error)
-	ReserveSupply(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error)
-	ReserveDemand(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error)
-	SelectSupply(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error)
-	SelectDemand(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error)
-	Confirm(ctx context.Context, in *Target, opts ...grpc.CallOption) (*Response, error)
-	SubscribeDemand(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Synerex_SubscribeDemandClient, error)
-	SubscribeSupply(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Synerex_SubscribeSupplyClient, error)
-	SubscribeMbus(ctx context.Context, in *Mbus, opts ...grpc.CallOption) (Synerex_SubscribeMbusClient, error)
-	SendMsg(ctx context.Context, in *MbusMsg, opts ...grpc.CallOption) (*Response, error)
-	CloseMbus(ctx context.Context, in *Mbus, opts ...grpc.CallOption) (*Response, error)
-}
-
-type synerexClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewSynerexClient(cc *grpc.ClientConn) SynerexClient {
-	return &synerexClient{cc}
-}
-
-func (c *synerexClient) RegisterDemand(ctx context.Context, in *Demand, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/api.Synerex/RegisterDemand", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *synerexClient) RegisterSupply(ctx context.Context, in *Supply, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/api.Synerex/RegisterSupply", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *synerexClient) ProposeDemand(ctx context.Context, in *Demand, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/api.Synerex/ProposeDemand", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *synerexClient) ProposeSupply(ctx context.Context, in *Supply, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/api.Synerex/ProposeSupply", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *synerexClient) ReserveSupply(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error) {
-	out := new(ConfirmResponse)
-	err := c.cc.Invoke(ctx, "/api.Synerex/ReserveSupply", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *synerexClient) ReserveDemand(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error) {
-	out := new(ConfirmResponse)
-	err := c.cc.Invoke(ctx, "/api.Synerex/ReserveDemand", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *synerexClient) SelectSupply(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error) {
-	out := new(ConfirmResponse)
-	err := c.cc.Invoke(ctx, "/api.Synerex/SelectSupply", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *synerexClient) SelectDemand(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error) {
-	out := new(ConfirmResponse)
-	err := c.cc.Invoke(ctx, "/api.Synerex/SelectDemand", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *synerexClient) Confirm(ctx context.Context, in *Target, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/api.Synerex/Confirm", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *synerexClient) SubscribeDemand(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Synerex_SubscribeDemandClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Synerex_serviceDesc.Streams[0], "/api.Synerex/SubscribeDemand", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &synerexSubscribeDemandClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Synerex_SubscribeDemandClient interface {
-	Recv() (*Demand, error)
-	grpc.ClientStream
-}
-
-type synerexSubscribeDemandClient struct {
-	grpc.ClientStream
-}
-
-func (x *synerexSubscribeDemandClient) Recv() (*Demand, error) {
-	m := new(Demand)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *synerexClient) SubscribeSupply(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Synerex_SubscribeSupplyClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Synerex_serviceDesc.Streams[1], "/api.Synerex/SubscribeSupply", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &synerexSubscribeSupplyClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Synerex_SubscribeSupplyClient interface {
-	Recv() (*Supply, error)
-	grpc.ClientStream
-}
-
-type synerexSubscribeSupplyClient struct {
-	grpc.ClientStream
-}
-
-func (x *synerexSubscribeSupplyClient) Recv() (*Supply, error) {
-	m := new(Supply)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *synerexClient) SubscribeMbus(ctx context.Context, in *Mbus, opts ...grpc.CallOption) (Synerex_SubscribeMbusClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_Synerex_serviceDesc.Streams[2], "/api.Synerex/SubscribeMbus", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &synerexSubscribeMbusClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type Synerex_SubscribeMbusClient interface {
-	Recv() (*MbusMsg, error)
-	grpc.ClientStream
-}
-
-type synerexSubscribeMbusClient struct {
-	grpc.ClientStream
-}
-
-func (x *synerexSubscribeMbusClient) Recv() (*MbusMsg, error) {
-	m := new(MbusMsg)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *synerexClient) SendMsg(ctx context.Context, in *MbusMsg, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/api.Synerex/SendMsg", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *synerexClient) CloseMbus(ctx context.Context, in *Mbus, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/api.Synerex/CloseMbus", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// SynerexServer is the server API for Synerex service.
-type SynerexServer interface {
-	RegisterDemand(context.Context, *Demand) (*Response, error)
-	RegisterSupply(context.Context, *Supply) (*Response, error)
-	ProposeDemand(context.Context, *Demand) (*Response, error)
-	ProposeSupply(context.Context, *Supply) (*Response, error)
-	ReserveSupply(context.Context, *Target) (*ConfirmResponse, error)
-	ReserveDemand(context.Context, *Target) (*ConfirmResponse, error)
-	SelectSupply(context.Context, *Target) (*ConfirmResponse, error)
-	SelectDemand(context.Context, *Target) (*ConfirmResponse, error)
-	Confirm(context.Context, *Target) (*Response, error)
-	SubscribeDemand(*Channel, Synerex_SubscribeDemandServer) error
-	SubscribeSupply(*Channel, Synerex_SubscribeSupplyServer) error
-	SubscribeMbus(*Mbus, Synerex_SubscribeMbusServer) error
-	SendMsg(context.Context, *MbusMsg) (*Response, error)
-	CloseMbus(context.Context, *Mbus) (*Response, error)
-}
-
-func RegisterSynerexServer(s *grpc.Server, srv SynerexServer) {
-	s.RegisterService(&_Synerex_serviceDesc, srv)
-}
-
-func _Synerex_RegisterDemand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Demand)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).RegisterDemand(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/RegisterDemand",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).RegisterDemand(ctx, req.(*Demand))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Synerex_RegisterSupply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Supply)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).RegisterSupply(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/RegisterSupply",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).RegisterSupply(ctx, req.(*Supply))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Synerex_ProposeDemand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Demand)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).ProposeDemand(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/ProposeDemand",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).ProposeDemand(ctx, req.(*Demand))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Synerex_ProposeSupply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Supply)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).ProposeSupply(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/ProposeSupply",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).ProposeSupply(ctx, req.(*Supply))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Synerex_ReserveSupply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Target)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).ReserveSupply(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/ReserveSupply",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).ReserveSupply(ctx, req.(*Target))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Synerex_ReserveDemand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Target)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).ReserveDemand(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/ReserveDemand",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).ReserveDemand(ctx, req.(*Target))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Synerex_SelectSupply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Target)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).SelectSupply(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/SelectSupply",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).SelectSupply(ctx, req.(*Target))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Synerex_SelectDemand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Target)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).SelectDemand(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/SelectDemand",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).SelectDemand(ctx, req.(*Target))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Synerex_Confirm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Target)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).Confirm(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/Confirm",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).Confirm(ctx, req.(*Target))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Synerex_SubscribeDemand_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Channel)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(SynerexServer).SubscribeDemand(m, &synerexSubscribeDemandServer{stream})
-}
-
-type Synerex_SubscribeDemandServer interface {
-	Send(*Demand) error
-	grpc.ServerStream
-}
-
-type synerexSubscribeDemandServer struct {
-	grpc.ServerStream
-}
-
-func (x *synerexSubscribeDemandServer) Send(m *Demand) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _Synerex_SubscribeSupply_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Channel)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(SynerexServer).SubscribeSupply(m, &synerexSubscribeSupplyServer{stream})
-}
-
-type Synerex_SubscribeSupplyServer interface {
-	Send(*Supply) error
-	grpc.ServerStream
-}
-
-type synerexSubscribeSupplyServer struct {
-	grpc.ServerStream
-}
-
-func (x *synerexSubscribeSupplyServer) Send(m *Supply) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _Synerex_SubscribeMbus_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(Mbus)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(SynerexServer).SubscribeMbus(m, &synerexSubscribeMbusServer{stream})
-}
-
-type Synerex_SubscribeMbusServer interface {
-	Send(*MbusMsg) error
-	grpc.ServerStream
-}
-
-type synerexSubscribeMbusServer struct {
-	grpc.ServerStream
-}
-
-func (x *synerexSubscribeMbusServer) Send(m *MbusMsg) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _Synerex_SendMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MbusMsg)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).SendMsg(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/SendMsg",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).SendMsg(ctx, req.(*MbusMsg))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Synerex_CloseMbus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Mbus)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SynerexServer).CloseMbus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.Synerex/CloseMbus",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SynerexServer).CloseMbus(ctx, req.(*Mbus))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _Synerex_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "api.Synerex",
-	HandlerType: (*SynerexServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "RegisterDemand",
-			Handler:    _Synerex_RegisterDemand_Handler,
-		},
-		{
-			MethodName: "RegisterSupply",
-			Handler:    _Synerex_RegisterSupply_Handler,
-		},
-		{
-			MethodName: "ProposeDemand",
-			Handler:    _Synerex_ProposeDemand_Handler,
-		},
-		{
-			MethodName: "ProposeSupply",
-			Handler:    _Synerex_ProposeSupply_Handler,
-		},
-		{
-			MethodName: "ReserveSupply",
-			Handler:    _Synerex_ReserveSupply_Handler,
-		},
-		{
-			MethodName: "ReserveDemand",
-			Handler:    _Synerex_ReserveDemand_Handler,
-		},
-		{
-			MethodName: "SelectSupply",
-			Handler:    _Synerex_SelectSupply_Handler,
-		},
-		{
-			MethodName: "SelectDemand",
-			Handler:    _Synerex_SelectDemand_Handler,
-		},
-		{
-			MethodName: "Confirm",
-			Handler:    _Synerex_Confirm_Handler,
-		},
-		{
-			MethodName: "SendMsg",
-			Handler:    _Synerex_SendMsg_Handler,
-		},
-		{
-			MethodName: "CloseMbus",
-			Handler:    _Synerex_CloseMbus_Handler,
-		},
-	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "SubscribeDemand",
-			Handler:       _Synerex_SubscribeDemand_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "SubscribeSupply",
-			Handler:       _Synerex_SubscribeSupply_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "SubscribeMbus",
-			Handler:       _Synerex_SubscribeMbus_Handler,
-			ServerStreams: true,
-		},
-	},
-	Metadata: "synerex.proto",
-}
-
-func init() { proto.RegisterFile("synerex.proto", fileDescriptor_synerex_95a9cfc6fc70cd46) }
-
-var fileDescriptor_synerex_95a9cfc6fc70cd46 = []byte{
-	// 1031 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x57, 0xdd, 0x6e, 0xe3, 0x44,
-	0x14, 0xce, 0xaf, 0x9d, 0x9c, 0x34, 0x69, 0x3a, 0xbb, 0x55, 0xdd, 0xac, 0x44, 0xab, 0x08, 0x69,
-	0xab, 0xd5, 0x6e, 0xb2, 0xea, 0xc2, 0x2d, 0xd0, 0x36, 0x81, 0x04, 0x9a, 0x6c, 0x35, 0x09, 0x20,
-	0x71, 0x13, 0x39, 0xf5, 0xc4, 0x6b, 0x1a, 0xff, 0x68, 0xc6, 0x01, 0x22, 0x9e, 0x81, 0x5b, 0x5e,
-	0x82, 0x97, 0xe0, 0x82, 0x07, 0x43, 0x73, 0xc6, 0x76, 0xec, 0x84, 0x2d, 0x5d, 0x21, 0xb1, 0x37,
-	0x7b, 0xd3, 0xcc, 0xf9, 0xfb, 0xce, 0x8f, 0xcf, 0x67, 0x4f, 0xa1, 0x2e, 0xd6, 0x1e, 0xe3, 0xec,
-	0x97, 0x4e, 0xc0, 0xfd, 0xd0, 0x27, 0x45, 0x33, 0x70, 0x5a, 0x27, 0xb6, 0xef, 0xdb, 0x4b, 0xd6,
-	0x45, 0xd5, 0x7c, 0xb5, 0xe8, 0x86, 0x8e, 0xcb, 0x44, 0x68, 0xba, 0x81, 0xf2, 0x6a, 0x7d, 0xb4,
-	0xed, 0x60, 0xad, 0xb8, 0x19, 0x3a, 0xbe, 0x17, 0xd9, 0x0f, 0x16, 0x4b, 0xc6, 0xc2, 0x2e, 0xfe,
-	0x8d, 0x54, 0xc7, 0xdc, 0xb1, 0x98, 0x78, 0x63, 0x72, 0xd6, 0x4d, 0x4e, 0xb1, 0xc9, 0xb4, 0x04,
-	0xe3, 0x3f, 0x39, 0xb7, 0xac, 0x9b, 0x9c, 0x22, 0xd3, 0xe1, 0xd2, 0x99, 0x73, 0x93, 0xaf, 0xbb,
-	0xd1, 0x6f, 0xa4, 0x3e, 0x0a, 0x42, 0x6e, 0x7a, 0xc2, 0x09, 0xbb, 0xf1, 0x21, 0xf6, 0xe7, 0xfe,
-	0x2a, 0x74, 0x3c, 0xbb, 0x1b, 0xfd, 0xc6, 0x19, 0x5c, 0x93, 0xdf, 0x31, 0x34, 0x24, 0x27, 0x65,
-	0x6a, 0x3f, 0x87, 0x0a, 0x65, 0x22, 0xf0, 0x3d, 0xc1, 0x48, 0x03, 0x0a, 0xfe, 0x9d, 0x91, 0x3f,
-	0xcd, 0x9f, 0x55, 0x68, 0xc1, 0xbf, 0x23, 0x4d, 0x28, 0x32, 0xce, 0x8d, 0xc2, 0x69, 0xfe, 0xac,
-	0x4a, 0xe5, 0xb1, 0xfd, 0x2b, 0xec, 0x5f, 0xf9, 0xde, 0xc2, 0xe1, 0xee, 0x5b, 0x83, 0x8e, 0x40,
-	0x77, 0xe7, 0x2b, 0x31, 0x73, 0x2c, 0x0c, 0xd4, 0xa8, 0x26, 0xc5, 0xa1, 0x45, 0x5e, 0x40, 0xe9,
-	0x67, 0xd3, 0x09, 0x8d, 0xe2, 0x69, 0xfe, 0xac, 0x76, 0x7e, 0xdc, 0x51, 0x33, 0xec, 0xc4, 0x33,
-	0xec, 0xf4, 0xa2, 0x19, 0x52, 0x74, 0x8b, 0x93, 0x97, 0x36, 0xc9, 0x7f, 0xd7, 0x40, 0x9b, 0xac,
-	0x82, 0x60, 0xb9, 0x96, 0x49, 0x1d, 0x0b, 0x93, 0x6a, 0xb4, 0xe0, 0x58, 0xe4, 0x09, 0x54, 0x05,
-	0xf3, 0x2c, 0xc6, 0x37, 0x69, 0x2b, 0x4a, 0x31, 0x44, 0x63, 0x68, 0x72, 0x9b, 0x85, 0xd2, 0x58,
-	0x54, 0x46, 0xa5, 0x18, 0x5a, 0xe4, 0x63, 0x28, 0x85, 0xeb, 0x80, 0x61, 0x9e, 0xc6, 0x79, 0xb3,
-	0x63, 0x06, 0x4e, 0xe7, 0xea, 0x8d, 0xe9, 0x79, 0x6c, 0x39, 0x5d, 0x07, 0x8c, 0xa2, 0x95, 0x9c,
-	0x40, 0x4d, 0x60, 0xe6, 0x99, 0x67, 0xba, 0xcc, 0x28, 0x63, 0x51, 0xa0, 0x54, 0x63, 0xd3, 0x65,
-	0xe4, 0x19, 0x14, 0x42, 0x61, 0x68, 0xd8, 0x5a, 0x6b, 0xa7, 0xb5, 0x69, 0xbc, 0x3f, 0xb4, 0x10,
-	0x0a, 0x72, 0x0c, 0x15, 0x93, 0xdb, 0xb3, 0x1f, 0x85, 0xef, 0x19, 0x3a, 0x22, 0xe9, 0x26, 0xb7,
-	0xbf, 0x16, 0xbe, 0x97, 0x1e, 0x5e, 0x25, 0x33, 0xbc, 0x2e, 0x54, 0x65, 0xcc, 0x97, 0x72, 0xa3,
-	0x0c, 0xc0, 0x34, 0xaa, 0x56, 0xb5, 0x63, 0xa8, 0x1f, 0xe4, 0xa8, 0x04, 0xc6, 0x33, 0xf9, 0x1c,
-	0xea, 0x32, 0x80, 0x3a, 0x16, 0x9b, 0xc8, 0x5d, 0x33, 0x6a, 0x18, 0x64, 0x60, 0xd0, 0x66, 0x03,
-	0x13, 0xfb, 0x20, 0x47, 0xf7, 0x4c, 0x6e, 0x27, 0x72, 0x0c, 0x70, 0x61, 0x4d, 0xd4, 0x46, 0x1a,
-	0x7b, 0x29, 0x80, 0xcd, 0x9e, 0x26, 0xf6, 0x08, 0x20, 0x91, 0xc9, 0x17, 0xd0, 0x90, 0x00, 0xd7,
-	0xce, 0x3c, 0x46, 0xa8, 0x23, 0xc2, 0x11, 0x22, 0xc4, 0x0b, 0xbd, 0x31, 0x0f, 0x72, 0x54, 0x66,
-	0xdc, 0x28, 0xc8, 0x67, 0xaa, 0x84, 0x9b, 0x69, 0x0c, 0xd0, 0x48, 0x01, 0x24, 0x9b, 0x9f, 0x98,
-	0xa3, 0x0a, 0x12, 0x99, 0x5c, 0x03, 0xc1, 0x19, 0x28, 0x2e, 0xc4, 0x20, 0xfb, 0x08, 0xf2, 0x44,
-	0x0d, 0x22, 0xa2, 0x49, 0xd6, 0x65, 0x90, 0xa3, 0x07, 0x72, 0x16, 0x19, 0x25, 0x99, 0xc2, 0x63,
-	0x89, 0x36, 0x8a, 0x09, 0x14, 0xe3, 0x35, 0x11, 0xef, 0x04, 0xf1, 0x36, 0xec, 0xda, 0x76, 0x1b,
-	0xe4, 0xe8, 0x23, 0x93, 0xdb, 0xdb, 0x6a, 0xf2, 0x29, 0x80, 0xea, 0xd1, 0x0e, 0x17, 0xc2, 0x38,
-	0x40, 0xac, 0xc7, 0xdb, 0x0d, 0x4a, 0xdb, 0x20, 0x47, 0xab, 0xd8, 0x9d, 0x14, 0x2e, 0x6b, 0x6a,
-	0x1f, 0x7c, 0x8f, 0xf9, 0x0b, 0x24, 0x46, 0x8f, 0xb9, 0xa6, 0x67, 0xbd, 0x0f, 0x62, 0x58, 0x98,
-	0x39, 0x43, 0x0c, 0xa5, 0xfa, 0x40, 0x8c, 0x0f, 0xc4, 0x78, 0xbf, 0xc4, 0xf8, 0x33, 0x0f, 0xda,
-	0x14, 0x17, 0xfa, 0x7f, 0x27, 0x46, 0xfc, 0xb5, 0x2b, 0x3f, 0xec, 0x6b, 0x97, 0xda, 0x6f, 0x2d,
-	0xbd, 0xdf, 0x6d, 0x1b, 0xf4, 0x08, 0x5c, 0x56, 0x75, 0xbb, 0x74, 0x98, 0x87, 0x55, 0xa9, 0x4e,
-	0x2a, 0x4a, 0x91, 0xaa, 0xaa, 0x70, 0x6f, 0x55, 0x69, 0x86, 0x15, 0x33, 0x0c, 0x6b, 0x7f, 0x0f,
-	0xa5, 0xd1, 0x7c, 0x25, 0xee, 0xcf, 0xf2, 0xd6, 0x8f, 0xfb, 0x3d, 0xc0, 0x7f, 0xe5, 0x41, 0x97,
-	0xc8, 0x23, 0x61, 0x93, 0x43, 0xd0, 0x5c, 0x61, 0x6f, 0x90, 0xcb, 0xae, 0xb0, 0x87, 0xff, 0xe5,
-	0x61, 0xa4, 0x0a, 0x2a, 0x6d, 0x17, 0x24, 0x33, 0xe1, 0x4c, 0xe4, 0x33, 0xa8, 0x53, 0xdd, 0x15,
-	0xf6, 0x34, 0x1a, 0x02, 0x16, 0xe1, 0x2d, 0x7c, 0x1c, 0x76, 0x15, 0x4d, 0x43, 0x6f, 0xe1, 0xdf,
-	0xf3, 0x06, 0x7a, 0xf6, 0x5b, 0x1e, 0x6a, 0xa9, 0x81, 0x92, 0x0a, 0x94, 0xc6, 0xaf, 0xc7, 0xfd,
-	0x66, 0x8e, 0x34, 0x00, 0xe8, 0xb0, 0xd7, 0x9f, 0x4d, 0x06, 0x17, 0xb4, 0xdf, 0xcc, 0x4b, 0xf9,
-	0xa2, 0x37, 0x9b, 0xf4, 0xe9, 0x77, 0xc3, 0xab, 0x7e, 0xb3, 0x40, 0xf6, 0xa1, 0x76, 0x3d, 0xbc,
-	0x4c, 0x14, 0x45, 0xe9, 0x70, 0x33, 0x4d, 0xe4, 0x12, 0x79, 0x04, 0xfb, 0xf4, 0xf5, 0xb7, 0xd3,
-	0xe1, 0xf8, 0xab, 0x44, 0x59, 0x26, 0x87, 0x70, 0x30, 0xba, 0xa0, 0xdf, 0xf4, 0x33, 0x6a, 0x8d,
-	0xe8, 0x50, 0xec, 0x8f, 0x7b, 0x4d, 0x38, 0xff, 0xa3, 0x0c, 0xfa, 0x44, 0xdd, 0x5d, 0x49, 0x07,
-	0x1a, 0x94, 0xd9, 0x8e, 0x08, 0x19, 0x8f, 0xbe, 0x03, 0x35, 0x5c, 0x00, 0x25, 0xb4, 0xea, 0x28,
-	0xc4, 0x37, 0xb6, 0x76, 0x2e, 0xed, 0x1f, 0x5d, 0xa8, 0x94, 0xbf, 0x12, 0x76, 0xfd, 0x5f, 0x40,
-	0xfd, 0x86, 0xfb, 0x81, 0x2f, 0xd8, 0x83, 0xe0, 0x37, 0xee, 0x0f, 0x42, 0xff, 0x04, 0xea, 0x94,
-	0xc9, 0xd7, 0x66, 0xd6, 0x5d, 0x11, 0xb7, 0xa5, 0x38, 0xbf, 0x75, 0xeb, 0xcc, 0x44, 0x65, 0x6a,
-	0xfa, 0x97, 0xa8, 0x57, 0xb0, 0x37, 0x61, 0x4b, 0x76, 0x1b, 0xbe, 0x4b, 0xaa, 0x24, 0xe8, 0x5d,
-	0x32, 0x3d, 0x05, 0x3d, 0x52, 0x66, 0xfd, 0x77, 0xda, 0x7f, 0x09, 0xfb, 0x93, 0xd5, 0x5c, 0xdc,
-	0x72, 0x67, 0x1e, 0xb7, 0xb2, 0x97, 0xa6, 0x6f, 0x2b, 0x3d, 0xec, 0x76, 0xee, 0x65, 0x3e, 0x13,
-	0x11, 0xf5, 0xf1, 0x4f, 0x11, 0xca, 0x84, 0x11, 0xcf, 0xa1, 0x9e, 0x44, 0x20, 0xcb, 0xab, 0xe8,
-	0x21, 0x8f, 0xad, 0xbd, 0xe4, 0x38, 0x12, 0x36, 0x7a, 0x9f, 0x81, 0x3e, 0x61, 0x9e, 0x25, 0x09,
-	0x9b, 0x31, 0xee, 0xd6, 0xfe, 0x14, 0xaa, 0x57, 0x4b, 0x5f, 0xec, 0x60, 0x6e, 0x3b, 0x5e, 0x96,
-	0x7f, 0x90, 0xff, 0x59, 0xcd, 0x35, 0x7c, 0xff, 0xbd, 0xfa, 0x3b, 0x00, 0x00, 0xff, 0xff, 0x0e,
-	0xb3, 0x83, 0xed, 0x76, 0x0d, 0x00, 0x00,
+var fileDescriptor_synerex_64ff975bf195c314 = []byte{
+	// 1060 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x57, 0x5b, 0x6f, 0xe3, 0x44,
+	0x14, 0xce, 0xd5, 0x4e, 0x4e, 0x9a, 0x34, 0x9d, 0xdd, 0xaa, 0x6e, 0x56, 0xa2, 0x55, 0x84, 0xb4,
+	0xd5, 0x6a, 0x37, 0x59, 0x75, 0xe1, 0x15, 0xe8, 0x25, 0x90, 0x40, 0xd3, 0xad, 0x26, 0x01, 0x24,
+	0x5e, 0x2a, 0xa7, 0x9e, 0x78, 0x4d, 0xe3, 0x8b, 0x66, 0x1c, 0xa0, 0xe2, 0xdf, 0xf0, 0xca, 0x9f,
+	0xe0, 0x81, 0x9f, 0xc2, 0x0f, 0x41, 0x73, 0xc6, 0xe3, 0xd8, 0x09, 0x5b, 0xba, 0x42, 0x02, 0x09,
+	0xed, 0x4b, 0x33, 0xe7, 0xf6, 0x9d, 0x8b, 0xcf, 0x67, 0x4f, 0xa1, 0x29, 0xee, 0x02, 0xc6, 0xd9,
+	0x4f, 0xbd, 0x88, 0x87, 0x71, 0x48, 0xca, 0x76, 0xe4, 0x75, 0x0e, 0xdc, 0x30, 0x74, 0x17, 0xac,
+	0x8f, 0xaa, 0xd9, 0x72, 0xde, 0x8f, 0x3d, 0x9f, 0x89, 0xd8, 0xf6, 0x23, 0xe5, 0xd5, 0xf9, 0x60,
+	0xdd, 0xc1, 0x59, 0x72, 0x3b, 0xf6, 0xc2, 0x20, 0xb1, 0xef, 0xcc, 0x17, 0x8c, 0xc5, 0x7d, 0xfc,
+	0x9b, 0xa8, 0xf6, 0xb9, 0xe7, 0x30, 0xf1, 0xc6, 0xe6, 0xac, 0x9f, 0x9e, 0xb4, 0xc9, 0x76, 0x04,
+	0xe3, 0x3f, 0x78, 0x37, 0xac, 0x9f, 0x9e, 0x12, 0xd3, 0xee, 0xc2, 0x9b, 0x71, 0x9b, 0xdf, 0xf5,
+	0x93, 0xdf, 0x44, 0xbd, 0x17, 0xc5, 0xdc, 0x0e, 0x84, 0x17, 0xf7, 0xf5, 0x41, 0xfb, 0xf3, 0x70,
+	0x19, 0x7b, 0x81, 0xdb, 0x4f, 0x7e, 0x75, 0x06, 0xdf, 0xe6, 0xb7, 0x0c, 0x0d, 0xe9, 0x49, 0x97,
+	0xca, 0x23, 0xbb, 0xef, 0xb3, 0x8c, 0xaa, 0xfb, 0x1c, 0x6a, 0x94, 0x89, 0x28, 0x0c, 0x04, 0x23,
+	0x2d, 0x28, 0x85, 0xb7, 0x56, 0xf1, 0xb0, 0x78, 0x54, 0xa3, 0xa5, 0xf0, 0x96, 0xb4, 0xa1, 0xcc,
+	0x38, 0xb7, 0x4a, 0x87, 0xc5, 0xa3, 0x3a, 0x95, 0xc7, 0xee, 0xcf, 0xb0, 0x7d, 0x16, 0x06, 0x73,
+	0x8f, 0xfb, 0x6f, 0x0d, 0xda, 0x03, 0xd3, 0x9f, 0x2d, 0xc5, 0xb5, 0xe7, 0x60, 0xa0, 0x41, 0x0d,
+	0x29, 0x8e, 0x1c, 0xf2, 0x02, 0x2a, 0x3f, 0xda, 0x5e, 0x6c, 0x95, 0x0f, 0x8b, 0x47, 0x8d, 0xe3,
+	0xfd, 0x9e, 0x1a, 0x6b, 0x4f, 0x8f, 0xb5, 0x77, 0x9e, 0x8c, 0x95, 0xa2, 0x9b, 0x4e, 0x5e, 0x59,
+	0x25, 0xff, 0xc3, 0x00, 0x63, 0xb2, 0x8c, 0xa2, 0xc5, 0x9d, 0x4c, 0xea, 0x39, 0x98, 0xd4, 0xa0,
+	0x25, 0xcf, 0x21, 0x4f, 0xa0, 0x2e, 0x58, 0xe0, 0x30, 0xbe, 0x4a, 0x5b, 0x53, 0x8a, 0x11, 0x1a,
+	0x63, 0x9b, 0xbb, 0x2c, 0x96, 0xc6, 0xb2, 0x32, 0x2a, 0xc5, 0xc8, 0x21, 0x1f, 0x42, 0x25, 0xbe,
+	0x8b, 0x18, 0xe6, 0x69, 0x1d, 0xb7, 0x7b, 0x76, 0xe4, 0xf5, 0xce, 0xde, 0xd8, 0x41, 0xc0, 0x16,
+	0xd3, 0xbb, 0x88, 0x51, 0xb4, 0x92, 0x03, 0x68, 0x08, 0xcc, 0x7c, 0x1d, 0xd8, 0x3e, 0xb3, 0xaa,
+	0x58, 0x14, 0x28, 0xd5, 0xa5, 0xed, 0x33, 0xf2, 0x0c, 0x4a, 0xb1, 0xb0, 0x0c, 0x6c, 0xad, 0xb3,
+	0xd1, 0xda, 0x54, 0xaf, 0x14, 0x2d, 0xc5, 0x82, 0xec, 0x43, 0xcd, 0xe6, 0xee, 0xf5, 0xf7, 0x22,
+	0x0c, 0x2c, 0x13, 0x91, 0x4c, 0x9b, 0xbb, 0x5f, 0x8a, 0x30, 0xc8, 0x0e, 0xaf, 0x96, 0x1b, 0x5e,
+	0x1f, 0xea, 0x32, 0xe6, 0x73, 0xb9, 0x64, 0x16, 0x60, 0x1a, 0x55, 0xab, 0x5a, 0x3b, 0xd4, 0x0f,
+	0x0b, 0x54, 0x02, 0xe3, 0x99, 0x7c, 0x0a, 0x4d, 0x19, 0x40, 0x3d, 0x87, 0x4d, 0xe4, 0xfa, 0x59,
+	0x0d, 0x0c, 0xb2, 0x30, 0x68, 0xb5, 0x94, 0xa9, 0x7d, 0x58, 0xa0, 0x5b, 0x36, 0x77, 0x53, 0x59,
+	0x03, 0x9c, 0x38, 0x13, 0xb5, 0xa4, 0xd6, 0x56, 0x06, 0x60, 0xb5, 0xba, 0xa9, 0x3d, 0x01, 0x48,
+	0x65, 0xf2, 0x19, 0xb4, 0x24, 0xc0, 0x85, 0x37, 0xd3, 0x08, 0x4d, 0x44, 0xd8, 0x43, 0x04, 0xbd,
+	0xe3, 0x2b, 0xf3, 0xb0, 0x40, 0x65, 0xc6, 0x95, 0x82, 0x7c, 0xa2, 0x4a, 0xb8, 0x9a, 0x6a, 0x80,
+	0x56, 0x06, 0x20, 0x25, 0x43, 0x6a, 0x4e, 0x2a, 0x48, 0x65, 0x72, 0x01, 0x04, 0x67, 0xa0, 0xe8,
+	0xa1, 0x41, 0xb6, 0x11, 0xe4, 0x89, 0x1a, 0x44, 0xc2, 0x9c, 0xbc, 0xcb, 0xb0, 0x40, 0x77, 0xe4,
+	0x2c, 0x72, 0x4a, 0x32, 0x85, 0xc7, 0x12, 0x6d, 0xac, 0x39, 0xa5, 0xf1, 0xda, 0x88, 0x77, 0x80,
+	0x78, 0x2b, 0xc2, 0xad, 0xbb, 0x0d, 0x0b, 0xf4, 0x91, 0xcd, 0xdd, 0x75, 0x35, 0xf9, 0x18, 0x40,
+	0xf5, 0xe8, 0xc6, 0x73, 0x61, 0xed, 0x20, 0xd6, 0xe3, 0xf5, 0x06, 0xa5, 0x6d, 0x58, 0xa0, 0x75,
+	0xec, 0x4e, 0x0a, 0xba, 0xb5, 0x31, 0xcb, 0x95, 0x42, 0x32, 0xad, 0x69, 0x9a, 0xe7, 0x5d, 0x92,
+	0xd6, 0xf2, 0xca, 0xd3, 0x86, 0xda, 0xae, 0x30, 0x60, 0xe1, 0x1c, 0x69, 0x76, 0xce, 0x7c, 0x3b,
+	0x70, 0xfe, 0x0b, 0x9a, 0x39, 0x98, 0x39, 0x47, 0x33, 0xa5, 0x7a, 0x4f, 0xb3, 0xf7, 0x34, 0xfb,
+	0x3f, 0xd1, 0xec, 0xb7, 0x22, 0x18, 0x53, 0xa4, 0xc7, 0xbf, 0x4e, 0x33, 0xfd, 0x25, 0xae, 0x3e,
+	0xec, 0x4b, 0x9c, 0x61, 0x8b, 0x91, 0x65, 0x4b, 0xd7, 0x05, 0x33, 0x01, 0x97, 0x55, 0xdd, 0x2c,
+	0x3c, 0x16, 0x60, 0x55, 0xaa, 0x93, 0x9a, 0x52, 0x64, 0xaa, 0x2a, 0xdd, 0x5b, 0x55, 0x96, 0xaf,
+	0xe5, 0x1c, 0x5f, 0xbb, 0xdf, 0x42, 0x65, 0x3c, 0x5b, 0x8a, 0xfb, 0xb3, 0xbc, 0xf5, 0xe2, 0x71,
+	0x0f, 0xf0, 0xef, 0x45, 0x30, 0x25, 0xf2, 0x58, 0xb8, 0x64, 0x17, 0x0c, 0x5f, 0xb8, 0x2b, 0xe4,
+	0xaa, 0x2f, 0xdc, 0xd1, 0x3f, 0x79, 0x18, 0x99, 0x82, 0x2a, 0xeb, 0x05, 0xc9, 0x4c, 0x38, 0x13,
+	0xf9, 0x0c, 0x9a, 0xd4, 0xf4, 0x85, 0x3b, 0x4d, 0x86, 0x80, 0x45, 0x04, 0xf3, 0x10, 0x87, 0x5d,
+	0x47, 0xd3, 0x28, 0x98, 0x87, 0xf7, 0xbc, 0xcf, 0x9e, 0xfd, 0x52, 0x84, 0x46, 0x66, 0xa0, 0xa4,
+	0x06, 0x95, 0xcb, 0xd7, 0x97, 0x83, 0x76, 0x81, 0xb4, 0x00, 0xe8, 0xe8, 0x7c, 0x70, 0x3d, 0x19,
+	0x9e, 0xd0, 0x41, 0xbb, 0x28, 0xe5, 0x93, 0xf3, 0xeb, 0xc9, 0x80, 0x7e, 0x33, 0x3a, 0x1b, 0xb4,
+	0x4b, 0x64, 0x1b, 0x1a, 0x17, 0xa3, 0xd3, 0x54, 0x51, 0x96, 0x0e, 0x57, 0xd3, 0x54, 0xae, 0x90,
+	0x47, 0xb0, 0x4d, 0x5f, 0x7f, 0x3d, 0x1d, 0x5d, 0x7e, 0x91, 0x2a, 0xab, 0x64, 0x17, 0x76, 0xc6,
+	0x27, 0xf4, 0xab, 0x41, 0x4e, 0x6d, 0x48, 0xdf, 0xf1, 0x20, 0xaf, 0x34, 0x89, 0x09, 0xe5, 0xc1,
+	0xe5, 0x79, 0x1b, 0x8e, 0x7f, 0xad, 0x82, 0x39, 0x51, 0xf7, 0x6f, 0xd2, 0x83, 0x16, 0x65, 0xae,
+	0x27, 0x62, 0xc6, 0x93, 0x4f, 0x4d, 0x03, 0xb7, 0x42, 0x09, 0x9d, 0x26, 0x0a, 0xfa, 0x8a, 0xd9,
+	0x2d, 0x64, 0xfd, 0x93, 0x1b, 0xa0, 0xf2, 0x57, 0xc2, 0xa6, 0xff, 0x0b, 0x68, 0x5e, 0xf1, 0x30,
+	0x0a, 0x05, 0x7b, 0x10, 0xfc, 0xca, 0xfd, 0x41, 0xe8, 0x1f, 0x41, 0x93, 0x32, 0xf9, 0x66, 0xce,
+	0xbb, 0x2b, 0x36, 0x77, 0xd4, 0x6b, 0x65, 0xed, 0x9a, 0x9c, 0x8b, 0xca, 0xd5, 0xf4, 0x37, 0x51,
+	0xaf, 0x60, 0x6b, 0xc2, 0x16, 0xec, 0x26, 0x7e, 0x97, 0x54, 0x69, 0xd0, 0xbb, 0x64, 0x7a, 0x0a,
+	0x66, 0xa2, 0xcc, 0xfb, 0x6f, 0xb4, 0xff, 0x12, 0xb6, 0x27, 0xcb, 0x99, 0xb8, 0xe1, 0xde, 0x4c,
+	0xb7, 0xb2, 0x95, 0xe5, 0x74, 0x27, 0x3b, 0xec, 0x6e, 0xe1, 0x65, 0x31, 0x17, 0x91, 0xf4, 0xf1,
+	0x57, 0x11, 0xca, 0x84, 0x11, 0xcf, 0xa1, 0x99, 0x46, 0x20, 0xf5, 0xeb, 0xe8, 0x21, 0x8f, 0x9d,
+	0xad, 0xf4, 0x38, 0x16, 0x2e, 0x7a, 0x1f, 0x81, 0x39, 0x61, 0x81, 0x23, 0x59, 0x9c, 0x33, 0x6e,
+	0xd6, 0xfe, 0x14, 0xea, 0x67, 0x8b, 0x50, 0x6c, 0x60, 0xae, 0x3b, 0x9e, 0x56, 0xbf, 0x93, 0xff,
+	0x1d, 0xce, 0x0c, 0x7c, 0x29, 0xbe, 0xfa, 0x33, 0x00, 0x00, 0xff, 0xff, 0xf9, 0x54, 0x56, 0xb0,
+	0x3a, 0x0e, 0x00, 0x00,
 }
