@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package api.user;
+
+option go_package="github.com/synerex/synerex_alpha/api/rpa";
+
+import "google/protobuf/timestamp.proto";
+
+message User {
+    fixed64 user_id = 1;
+    string name = 2;
+    google.protobuf.Timestamp last_updated = 3;
+}
