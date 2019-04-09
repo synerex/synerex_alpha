@@ -8,6 +8,8 @@ package main
 //go:generate protoc -I ../api  --go_out=paths=source_relative:../api ptransit/ptransit.proto
 //go:generate protoc -I ../api  --go_out=paths=source_relative:../api routing/routing.proto
 //go:generate protoc -I ../api  --go_out=paths=source_relative:../api marketing/marketing.proto
+//go:generate protoc -I ../api  --go_out=paths=source_relative:../api rpa/meeting.proto
+//go:generate protoc -I ../api  --go_out=paths=source_relative:../api rpa/user.proto
 
 //go:generate protoc -I ../api -I .. --go_out=plugins=grpc:../api synerex.proto
 
