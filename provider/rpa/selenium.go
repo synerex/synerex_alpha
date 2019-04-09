@@ -14,13 +14,13 @@ func getPageDOM(page *agouti.Page) *goquery.Document {
 	// get whole page
 	wholePage, err := page.HTML()
 	if err != nil {
-		fmt.Println("failed to get whole page:", err)
+		fmt.Println("Failed to get whole page:", err)
 	}
 	// use goquery
 	readerOfPage := strings.NewReader(wholePage)
 	pageDom, err := goquery.NewDocumentFromReader(readerOfPage)
 	if err != nil {
-		fmt.Println("failed to get page dom:", err)
+		fmt.Println("Failed to get page dom:", err)
 	}
 	return pageDom
 }
@@ -31,12 +31,12 @@ func login(page *agouti.Page) {
 	users := make([]string, usersDom.Length())
 	usersDom.Each(func(i int, sel *goquery.Selection) {
 		users[i] = sel.Text()
-		// fmt.Println(i, users[i])
+		fmt.Println(i, users[i])
 	})
 	// set login user
 	name := page.FindByName("_ID")
 	if _, err := name.Count(); err != nil {
-		fmt.Println("Can't find path", err)
+		fmt.Println("Cannot find path:", err)
 	}
 	name.Select(users[1])
 	// click login button
@@ -51,11 +51,11 @@ func booking(page *agouti.Page) {
 	reserveButton := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[4]/div/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[1]/span/span/a")
 	_, err := reserveButton.Count()
 	if err != nil {
-		println("Reserve Error!", err)
+		fmt.Println("Cannot find path:", err)
 	}
 	reserveButton.Click()
 
-	// set date
+	// set the date
 	yearDom := getPageDOM(page).Find("select[name='SetDate.Year']").Children()
 	monthDom := getPageDOM(page).Find("select[name='SetDate.Month']").Children()
 	dayDom := getPageDOM(page).Find("select[name='SetDate.Day']").Children()
@@ -104,71 +104,71 @@ func booking(page *agouti.Page) {
 	yearX := page.FindByName("SetDate.Year")
 	_, err = yearX.Count()
 	if err != nil {
-		println("Can't find Path", err.Error())
+		fmt.Println("Cannot find path:", err)
 	}
 	monthX := page.FindByName("SetDate.Month")
 	_, err = monthX.Count()
 	if err != nil {
-		println("Can't find Path", err.Error())
+		fmt.Println("Cannot find path:", err)
 	}
 	dayX := page.FindByName("SetDate.Day")
 	_, err = dayX.Count()
 	if err != nil {
-		println("Can't find Path", err.Error())
+		fmt.Println("Cannot find path:", err)
 	}
 	startHourX := page.FindByName("SetTime.Hour")
 	_, err = startHourX.Count()
 	if err != nil {
-		println("Can't find Path", err.Error())
+		fmt.Println("Cannot find path:", err)
 	}
 	startMinuteX := page.FindByName("SetTime.Minute")
 	_, err = startMinuteX.Count()
 	if err != nil {
-		println("Can't find Path", err.Error())
+		fmt.Println("Cannot find path:", err)
 	}
 	endHourX := page.FindByName("EndTime.Hour")
 	_, err = endHourX.Count()
 	if err != nil {
-		println("Can't find Path", err.Error())
+		fmt.Println("Cannot find path:", err)
 	}
 	endMinuteX := page.FindByName("EndTime.Minute")
 	_, err = endMinuteX.Count()
 	if err != nil {
-		println("Can't find Path", err.Error())
+		fmt.Println("Cannot find path:", err)
 	}
 
 	err = yearX.Select(years[22])
 	if err != nil {
-		println("Select Error!", err.Error())
+		fmt.Println("Select Error:", err)
 	}
-	err = monthX.Select(months[1])
+	err = monthX.Select(months[3])
 	if err != nil {
-		println("Select Error!", err.Error())
+		fmt.Println("Select Error:", err)
 	}
 	err = dayX.Select(days[20])
 	if err != nil {
-		println("Select Error!", err.Error())
+		fmt.Println("Select Error:", err)
 	}
 	err = startHourX.Select(startHours[11])
 	if err != nil {
-		println("Select Error!", err.Error())
+		fmt.Println("Select Error:", err)
 	}
 	err = startMinuteX.Select(startMinutes[2])
 	if err != nil {
-		println("Select Error!", err.Error())
+		fmt.Println("Select Error:", err)
 	}
 	err = endHourX.Select(endHours[12])
 	if err != nil {
-		println("Select Error!", err.Error())
+		fmt.Println("Select Error:", err)
 	}
 	err = endMinuteX.Select(endMinutes[2])
 	if err != nil {
-		println("Select Error!", err.Error())
+		fmt.Println("Select Error:", err)
 	}
 
 	// set the title
 	title := page.FindByName("Detail")
-	title.Fill("This is Test")
+	title.Fill("Test Booking")
 
 	theRoomY := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[4]/div/form/div[2]/table/tbody/tr/td/table/tbody/tr[2]/td/div/div[1]/div/table/tbody/tr[7]/td/table/tbody/tr[1]/td[3]/select/option[2]")
 	theRoomY.Click()
@@ -179,10 +179,10 @@ func booking(page *agouti.Page) {
 	entryButton := page.FindByName("Entry")
 	_, err = entryButton.Count()
 	if err != nil {
-		println("Login Error!", err)
+		println("Login Error:", err)
 	}
 	entryButton.Click()
-	println("Made a reservation!")
+	println("Made a reservation.")
 }
 
 func main() {
@@ -218,7 +218,7 @@ func main() {
 	// move to meeting room page
 	group := page.FindByName("GID")
 	if _, err := group.Count(); err != nil {
-		fmt.Println("Can't find path", err)
+		fmt.Println("Cannot find path:", err)
 	}
 	group.Select(groups[10]) // "会議室"
 
@@ -251,9 +251,9 @@ func main() {
 		}
 	})
 
-	// for k, v := range rooms {
-	// 	fmt.Printf("rooms[%v]: %v\n", k, v)
-	// }
+	for k, v := range rooms {
+		fmt.Printf("rooms[%v]: %v\n", k, v)
+	}
 
 	// make a reservation
 	booking(page)
