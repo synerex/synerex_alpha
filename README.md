@@ -3,16 +3,15 @@ Demand/Supply Exchange Services for Synergic Mobility
 
 # Introduction
 Synerex alpha is an alpha version of Synergic Exchange and its support systems.
-This project is supported by JST.
+This project is supported by JST MIRAI.
 
 ## Requirements
 go 1.11 or later (we use go.mod files for module dependencies)
 nodejs(10.13.0) / npm(6.4.1) / yarn(1.12.1) for web client development.
 
 ## How to start
-Do 'go get' at all source directories to install dependent libraries.
-
 Starting from SynerexEngine.
+Synerex Engine is a daemon tool for controlling Synerex.
 ```
   cd cli/daemon
   go build
@@ -51,10 +50,16 @@ go build
 #### api
 
 Protocl Buffer / gRPC definition of Synergex API
+If you changed any protocol, you should re-generate pb.go files.
+To do so, you should change directory "server", and then
+```
+ go generate
+```
+synerex-server.go contains grpc protocl compile code.
 
 #### server
 
-Synerex Server draft version
+Synerex Server alpha version
 
 #### provider
 
