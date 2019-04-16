@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -25,29 +26,51 @@ func getPageDOM(page *agouti.Page) *goquery.Document {
 	return pageDom
 }
 
-func login(page *agouti.Page) {
+func searchIndex(dates []string, target string) (int, error) {
+	index := -1
+	for i, date := range dates {
+		if date == target {
+			index = i
+		}
+		// fmt.Println(i, date)
+	}
+	if index == -1 {
+		errMsg := "Failed to set parameter: " + target
+		return -1, errors.New(errMsg)
+	} else {
+		return index, nil
+	}
+}
+
+func login(page *agouti.Page, user string) {
 	// get user list
 	usersDom := getPageDOM(page).Find("select[name='_ID']").Children()
 	users := make([]string, usersDom.Length())
 	usersDom.Each(func(i int, sel *goquery.Selection) {
 		users[i] = sel.Text()
-		fmt.Println(i, users[i])
+		// fmt.Println(i, users[i])
 	})
+	// search index
+	userIndex, err := searchIndex(users, user)
+	if err != nil {
+		fmt.Println(err)
+	}
 	// set login user
 	name := page.FindByName("_ID")
 	if _, err := name.Count(); err != nil {
 		fmt.Println("Cannot find path:", err)
 	}
-	name.Select(users[1])
+	name.Select(users[userIndex])
 	// click login button
 	submitBtn := page.FindByName("Submit")
 	if _, err := submitBtn.Count(); err != nil {
 		fmt.Println("Failed to login:", err)
 	}
 	submitBtn.Click()
+	fmt.Println("Login complete:", users[userIndex])
 }
 
-func booking(page *agouti.Page) {
+func booking(page *agouti.Page, date string, start string, end string) {
 	reserveButton := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[4]/div/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[1]/span/span/a")
 	_, err := reserveButton.Count()
 	if err != nil {
@@ -101,6 +124,39 @@ func booking(page *agouti.Page) {
 		endMinutes[i] = tx
 	})
 
+	dateSplit := strings.Split(date, "/")
+	yearIndex, err := searchIndex(years, dateSplit[0])
+	if err != nil {
+		fmt.Println(err)
+	}
+	monthIndex, err := searchIndex(months, dateSplit[1])
+	if err != nil {
+		fmt.Println(err)
+	}
+	dayIndex, err := searchIndex(days, dateSplit[2])
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	startSplit := strings.Split(start, ":")
+	endSplit := strings.Split(end, ":")
+	startHourIndex, err := searchIndex(startHours, startSplit[0]+"時")
+	if err != nil {
+		fmt.Println(err)
+	}
+	startMinuteIndex, err := searchIndex(startMinutes, startSplit[1]+"分")
+	if err != nil {
+		fmt.Println(err)
+	}
+	endHourIndex, err := searchIndex(endHours, endSplit[0]+"時")
+	if err != nil {
+		fmt.Println(err)
+	}
+	endMinuteIndex, err := searchIndex(endMinutes, endSplit[1]+"分")
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	yearX := page.FindByName("SetDate.Year")
 	_, err = yearX.Count()
 	if err != nil {
@@ -137,31 +193,31 @@ func booking(page *agouti.Page) {
 		fmt.Println("Cannot find path:", err)
 	}
 
-	err = yearX.Select(years[22])
+	err = yearX.Select(years[yearIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
 	}
-	err = monthX.Select(months[3])
+	err = monthX.Select(months[monthIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
 	}
-	err = dayX.Select(days[20])
+	err = dayX.Select(days[dayIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
 	}
-	err = startHourX.Select(startHours[11])
+	err = startHourX.Select(startHours[startHourIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
 	}
-	err = startMinuteX.Select(startMinutes[2])
+	err = startMinuteX.Select(startMinutes[startMinuteIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
 	}
-	err = endHourX.Select(endHours[12])
+	err = endHourX.Select(endHours[endHourIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
 	}
-	err = endMinuteX.Select(endMinutes[2])
+	err = endMinuteX.Select(endMinutes[endMinuteIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
 	}
@@ -182,7 +238,7 @@ func booking(page *agouti.Page) {
 		println("Login Error:", err)
 	}
 	entryButton.Click()
-	println("Made a reservation.")
+	fmt.Println("Booking complete:", years[yearIndex], months[monthIndex], days[dayIndex], startHours[startHourIndex], startMinutes[startMinuteIndex], endHours[endHourIndex], endMinutes[endMinuteIndex])
 }
 
 func main() {
@@ -205,7 +261,7 @@ func main() {
 	}
 
 	// login
-	login(page)
+	login(page, "高橋 健太")
 
 	// get group list
 	groupsDom := getPageDOM(page).Find("select[name='GID']").Children()
@@ -256,7 +312,10 @@ func main() {
 	}
 
 	// make a reservation
-	booking(page)
+	date := "2019年/4月/23(火)"
+	start := "10:00"
+	end := "11:30"
+	booking(page, date, start, end)
 
 	time.Sleep(3 * time.Second)
 }
