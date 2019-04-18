@@ -19,7 +19,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mtfelian/golang-socketio"
+	gosocketio "github.com/mtfelian/golang-socketio"
 
 	"github.com/kardianos/service"
 )
@@ -115,55 +115,60 @@ func init() {
 		},
 		{
 			CmdName: "Map",
-			SrcDir: "provider/map",
+			SrcDir:  "provider/map",
 			BinName: "map-provider",
 			GoFiles: []string{"map-provider.go"},
 		},
 		{
 			CmdName: "Datastore",
-			SrcDir: "provider/datastore",
+			SrcDir:  "provider/datastore",
 			BinName: "datastore-provider",
 			GoFiles: []string{"datastore-provider.go"},
 		},
 		{
 			CmdName: "Ecotan",
-			SrcDir: "provider/kota-bus",
+			SrcDir:  "provider/kota-bus",
 			BinName: "ecotan-provider",
 			GoFiles: []string{"ecotan-provider.go"},
 		},
 		{
 			CmdName: "Onemile",
-			SrcDir: "provider/onemile",
+			SrcDir:  "provider/onemile",
 			BinName: "onemile-provider",
-			GoFiles: []string{"onemile-provider.go","onemile-routing.go"},
+			GoFiles: []string{"onemile-provider.go", "onemile-routing.go"},
 		},
 		{
 			CmdName: "Marketing",
-			SrcDir: "provider/marketing",
+			SrcDir:  "provider/marketing",
 			BinName: "marketing-provider",
 			GoFiles: []string{"marketing-provider.go"},
 		},
 		{
 			CmdName: "PTransit",
-			SrcDir: "provider/gtfs-ptransit",
+			SrcDir:  "provider/gtfs-ptransit",
 			BinName: "ptransit-provider",
 			GoFiles: []string{"ptransit-provider.go"},
 		},
 		{
 			CmdName: "SimpleRouting",
-			SrcDir: "provider/simple-routing",
+			SrcDir:  "provider/simple-routing",
 			BinName: "srouting-provider",
 			GoFiles: []string{"srouting-provider.go"},
 		},
 		{
 			CmdName: "Routing",
-			SrcDir: "provider/routing",
+			SrcDir:  "provider/routing",
 			BinName: "routing-provider",
-			GoFiles: []string{"routing-provider.go","timetable.go", "busTimetable.go"},
+			GoFiles: []string{"routing-provider.go", "timetable.go", "busTimetable.go"},
+		},
+		{
+			CmdName: "Meeting",
+			SrcDir:  "provider/rpa/meeting",
+			BinName: "meeting-provider",
+			GoFiles: []string{"meeting-provider.go"},
 		},
 	}
 }
-
 
 // for Structures for Github json.
 type committer struct {
@@ -187,7 +192,6 @@ type data struct {
 	Repository  repository
 }
 
-
 func githubHandler(w http.ResponseWriter, r *http.Request) {
 	status := 400
 	if r.Method == http.MethodPost {
@@ -199,11 +203,11 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		logger.Infof("UnMarshaled WebHook from:%s",d.Repository.Name)
-		logger.Infof("Pusher    :%s",d.Pusher)
-		logger.Infof("Committer :%s",d.Head_commit.Committer.Name)
-		logger.Infof("URL       :%s",d.Head_commit.Url)
- 		status = 200
+		logger.Infof("UnMarshaled WebHook from:%s", d.Repository.Name)
+		logger.Infof("Pusher    :%s", d.Pusher)
+		logger.Infof("Committer :%s", d.Head_commit.Committer.Name)
+		logger.Infof("URL       :%s", d.Head_commit.Url)
+		status = 200
 		if d.Ref == "refs/heads/"+githubBranch {
 			fmt.Println("Now staring rebuild and rerun.")
 			githubPullAndRun()
@@ -211,8 +215,8 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(status)
 }
-// for github end.
 
+// for github end.
 
 func pullGithub() {
 
@@ -251,9 +255,8 @@ func pullGithub() {
 	logger.Infof("Command [%s] closed\n", "git")
 }
 
-
 // compile and rerun..
-func githubPullAndRun (){
+func githubPullAndRun() {
 	//first get
 	//
 	var procs []string
@@ -262,7 +265,7 @@ func githubPullAndRun (){
 	providerMutex.RLock()
 	for key, _ := range providerMap {
 		procs[i] = key
-		i+=1
+		i += 1
 	}
 	providerMutex.RUnlock()
 
@@ -270,7 +273,7 @@ func githubPullAndRun (){
 	handleStop(procs)
 
 	// then build and rerun
-//	cleanAll() need not to clean all?
+	//	cleanAll() need not to clean all?
 
 	// we need to pull!
 	pullGithub()
@@ -281,21 +284,18 @@ func githubPullAndRun (){
 	handleRun("MonitorServer")
 	handleRun("SynerexServer")
 
-	for _, proc := range procs{
-		if proc != "NodeIDServer" && proc != "MonitorServer" && proc !="SynerexServer"{
+	for _, proc := range procs {
+		if proc != "NodeIDServer" && proc != "MonitorServer" && proc != "SynerexServer" {
 			handleRun(proc)
 		}
 	}
 
-
 }
-
 
 func (sesrv *SynerexService) Start(s service.Service) error {
 	go sesrv.run()
 	return nil
 }
-
 
 // assetsFileHandler for static Data
 func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
@@ -413,7 +413,7 @@ func buildCmd(sc SubCommands) string { // build local node server
 		sp := filepath.FromSlash(filepath.ToSlash(srcpath) + "/" + fn)
 		ss, errf := os.Stat(sp)
 		if errf != nil {
-			return "Can't find file "+srcpath+":"+err.Error()
+			return "Can't find file " + srcpath + ":" + err.Error()
 		}
 
 		if ss.ModTime().After(modTime) {
@@ -635,15 +635,13 @@ func handleRuns(target []string) []string { // we need to think order of servers
 	resp := make([]string, len(target))
 	for i, proc := range target {
 		if proc == "All" || proc == "all" {
-			resp[i]="-"
+			resp[i] = "-"
 		} else {
 			resp[i] = handleRun(proc)
 		}
 	}
 	return resp
 }
-
-
 
 func handleRun(target string) string {
 	for _, sc := range cmdArray {
@@ -753,15 +751,15 @@ func interfaceToString(target interface{}) []string {
 	return resp
 }
 
-type debugLogger struct {}
-func (d debugLogger) Write(p []byte) (n int, err error){
-	s:= string(p)
-	if strings.Contains(s, "multiple response.WriteHeader"){
+type debugLogger struct{}
+
+func (d debugLogger) Write(p []byte) (n int, err error) {
+	s := string(p)
+	if strings.Contains(s, "multiple response.WriteHeader") {
 		debug.PrintStack()
 	}
 	return os.Stderr.Write(p)
 }
-
 
 func (sesrv *SynerexService) run() error {
 	logger.Info("Starting.. Synergic Engine:" + version)
@@ -823,20 +821,20 @@ func (sesrv *SynerexService) run() error {
 	serveMux.Handle("/socket.io/", server)
 	serveMux.HandleFunc("/", assetsFileHandler)
 	// for GitHub auto development
-	serveMux.HandleFunc( "/github/", githubHandler)
+	serveMux.HandleFunc("/github/", githubHandler)
 
 	logger.Info("Starting Synerex Engine daemon on port ", port)
 
 	hLogger := log.New(debugLogger{}, "", 0)
 
 	server := &http.Server{
-		Addr: fmt.Sprintf(":%d", port),
-		Handler: serveMux,
+		Addr:     fmt.Sprintf(":%d", port),
+		Handler:  serveMux,
 		ErrorLog: hLogger,
 	}
 	err = server.ListenAndServe()
 
-//	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
+	//	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -903,11 +901,11 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 			cleanAll()
 			return "Clean all binaries", nil
 		case "github": // check
-			if 	len(os.Args) > 2 {
+			if len(os.Args) > 2 {
 				githubBranch = os.Args[2]
 			}
-			fmt.Println("Accept Github Webhook for branch "+githubBranch)
-//			return "Accept Github Webhook for branch "+githubBranch, nil
+			fmt.Println("Accept Github Webhook for branch " + githubBranch)
+			//			return "Accept Github Webhook for branch "+githubBranch, nil
 		default:
 			return usage, nil
 		}
@@ -923,8 +921,8 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 func main() {
 	// add gops agent.
 	//	fmt.Println("Start gops agent")
-//	if gerr := agent.Listen(agent.Options{}); gerr != nil {
-//		log.Fatal(gerr)
+	//	if gerr := agent.Listen(agent.Options{}); gerr != nil {
+	//		log.Fatal(gerr)
 	//}
 
 	serv := &SynerexService{}
