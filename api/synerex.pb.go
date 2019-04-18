@@ -17,6 +17,11 @@ import rideshare "github.com/synerex/synerex_alpha/api/rideshare"
 import routing "github.com/synerex/synerex_alpha/api/routing"
 import rpa "github.com/synerex/synerex_alpha/api/rpa"
 
+import (
+	context "golang.org/x/net/context"
+	grpc "google.golang.org/grpc"
+)
+
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
@@ -1344,6 +1349,589 @@ func init() {
 	proto.RegisterType((*Mbus)(nil), "api.Mbus")
 	proto.RegisterType((*MbusMsg)(nil), "api.MbusMsg")
 	proto.RegisterEnum("api.ChannelType", ChannelType_name, ChannelType_value)
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ grpc.ClientConn
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the grpc package it is being compiled against.
+const _ = grpc.SupportPackageIsVersion4
+
+// SynerexClient is the client API for Synerex service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type SynerexClient interface {
+	RegisterDemand(ctx context.Context, in *Demand, opts ...grpc.CallOption) (*Response, error)
+	RegisterSupply(ctx context.Context, in *Supply, opts ...grpc.CallOption) (*Response, error)
+	ProposeDemand(ctx context.Context, in *Demand, opts ...grpc.CallOption) (*Response, error)
+	ProposeSupply(ctx context.Context, in *Supply, opts ...grpc.CallOption) (*Response, error)
+	ReserveSupply(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error)
+	ReserveDemand(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error)
+	SelectSupply(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error)
+	SelectDemand(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error)
+	Confirm(ctx context.Context, in *Target, opts ...grpc.CallOption) (*Response, error)
+	SubscribeDemand(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Synerex_SubscribeDemandClient, error)
+	SubscribeSupply(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Synerex_SubscribeSupplyClient, error)
+	SubscribeMbus(ctx context.Context, in *Mbus, opts ...grpc.CallOption) (Synerex_SubscribeMbusClient, error)
+	SendMsg(ctx context.Context, in *MbusMsg, opts ...grpc.CallOption) (*Response, error)
+	CloseMbus(ctx context.Context, in *Mbus, opts ...grpc.CallOption) (*Response, error)
+}
+
+type synerexClient struct {
+	cc *grpc.ClientConn
+}
+
+func NewSynerexClient(cc *grpc.ClientConn) SynerexClient {
+	return &synerexClient{cc}
+}
+
+func (c *synerexClient) RegisterDemand(ctx context.Context, in *Demand, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/api.Synerex/RegisterDemand", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *synerexClient) RegisterSupply(ctx context.Context, in *Supply, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/api.Synerex/RegisterSupply", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *synerexClient) ProposeDemand(ctx context.Context, in *Demand, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/api.Synerex/ProposeDemand", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *synerexClient) ProposeSupply(ctx context.Context, in *Supply, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/api.Synerex/ProposeSupply", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *synerexClient) ReserveSupply(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error) {
+	out := new(ConfirmResponse)
+	err := c.cc.Invoke(ctx, "/api.Synerex/ReserveSupply", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *synerexClient) ReserveDemand(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error) {
+	out := new(ConfirmResponse)
+	err := c.cc.Invoke(ctx, "/api.Synerex/ReserveDemand", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *synerexClient) SelectSupply(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error) {
+	out := new(ConfirmResponse)
+	err := c.cc.Invoke(ctx, "/api.Synerex/SelectSupply", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *synerexClient) SelectDemand(ctx context.Context, in *Target, opts ...grpc.CallOption) (*ConfirmResponse, error) {
+	out := new(ConfirmResponse)
+	err := c.cc.Invoke(ctx, "/api.Synerex/SelectDemand", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *synerexClient) Confirm(ctx context.Context, in *Target, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/api.Synerex/Confirm", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *synerexClient) SubscribeDemand(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Synerex_SubscribeDemandClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Synerex_serviceDesc.Streams[0], "/api.Synerex/SubscribeDemand", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &synerexSubscribeDemandClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Synerex_SubscribeDemandClient interface {
+	Recv() (*Demand, error)
+	grpc.ClientStream
+}
+
+type synerexSubscribeDemandClient struct {
+	grpc.ClientStream
+}
+
+func (x *synerexSubscribeDemandClient) Recv() (*Demand, error) {
+	m := new(Demand)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *synerexClient) SubscribeSupply(ctx context.Context, in *Channel, opts ...grpc.CallOption) (Synerex_SubscribeSupplyClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Synerex_serviceDesc.Streams[1], "/api.Synerex/SubscribeSupply", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &synerexSubscribeSupplyClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Synerex_SubscribeSupplyClient interface {
+	Recv() (*Supply, error)
+	grpc.ClientStream
+}
+
+type synerexSubscribeSupplyClient struct {
+	grpc.ClientStream
+}
+
+func (x *synerexSubscribeSupplyClient) Recv() (*Supply, error) {
+	m := new(Supply)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *synerexClient) SubscribeMbus(ctx context.Context, in *Mbus, opts ...grpc.CallOption) (Synerex_SubscribeMbusClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_Synerex_serviceDesc.Streams[2], "/api.Synerex/SubscribeMbus", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &synerexSubscribeMbusClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Synerex_SubscribeMbusClient interface {
+	Recv() (*MbusMsg, error)
+	grpc.ClientStream
+}
+
+type synerexSubscribeMbusClient struct {
+	grpc.ClientStream
+}
+
+func (x *synerexSubscribeMbusClient) Recv() (*MbusMsg, error) {
+	m := new(MbusMsg)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *synerexClient) SendMsg(ctx context.Context, in *MbusMsg, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/api.Synerex/SendMsg", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *synerexClient) CloseMbus(ctx context.Context, in *Mbus, opts ...grpc.CallOption) (*Response, error) {
+	out := new(Response)
+	err := c.cc.Invoke(ctx, "/api.Synerex/CloseMbus", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// SynerexServer is the server API for Synerex service.
+type SynerexServer interface {
+	RegisterDemand(context.Context, *Demand) (*Response, error)
+	RegisterSupply(context.Context, *Supply) (*Response, error)
+	ProposeDemand(context.Context, *Demand) (*Response, error)
+	ProposeSupply(context.Context, *Supply) (*Response, error)
+	ReserveSupply(context.Context, *Target) (*ConfirmResponse, error)
+	ReserveDemand(context.Context, *Target) (*ConfirmResponse, error)
+	SelectSupply(context.Context, *Target) (*ConfirmResponse, error)
+	SelectDemand(context.Context, *Target) (*ConfirmResponse, error)
+	Confirm(context.Context, *Target) (*Response, error)
+	SubscribeDemand(*Channel, Synerex_SubscribeDemandServer) error
+	SubscribeSupply(*Channel, Synerex_SubscribeSupplyServer) error
+	SubscribeMbus(*Mbus, Synerex_SubscribeMbusServer) error
+	SendMsg(context.Context, *MbusMsg) (*Response, error)
+	CloseMbus(context.Context, *Mbus) (*Response, error)
+}
+
+func RegisterSynerexServer(s *grpc.Server, srv SynerexServer) {
+	s.RegisterService(&_Synerex_serviceDesc, srv)
+}
+
+func _Synerex_RegisterDemand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Demand)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).RegisterDemand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/RegisterDemand",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).RegisterDemand(ctx, req.(*Demand))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Synerex_RegisterSupply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Supply)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).RegisterSupply(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/RegisterSupply",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).RegisterSupply(ctx, req.(*Supply))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Synerex_ProposeDemand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Demand)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).ProposeDemand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/ProposeDemand",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).ProposeDemand(ctx, req.(*Demand))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Synerex_ProposeSupply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Supply)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).ProposeSupply(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/ProposeSupply",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).ProposeSupply(ctx, req.(*Supply))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Synerex_ReserveSupply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Target)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).ReserveSupply(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/ReserveSupply",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).ReserveSupply(ctx, req.(*Target))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Synerex_ReserveDemand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Target)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).ReserveDemand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/ReserveDemand",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).ReserveDemand(ctx, req.(*Target))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Synerex_SelectSupply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Target)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).SelectSupply(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/SelectSupply",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).SelectSupply(ctx, req.(*Target))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Synerex_SelectDemand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Target)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).SelectDemand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/SelectDemand",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).SelectDemand(ctx, req.(*Target))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Synerex_Confirm_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Target)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).Confirm(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/Confirm",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).Confirm(ctx, req.(*Target))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Synerex_SubscribeDemand_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Channel)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SynerexServer).SubscribeDemand(m, &synerexSubscribeDemandServer{stream})
+}
+
+type Synerex_SubscribeDemandServer interface {
+	Send(*Demand) error
+	grpc.ServerStream
+}
+
+type synerexSubscribeDemandServer struct {
+	grpc.ServerStream
+}
+
+func (x *synerexSubscribeDemandServer) Send(m *Demand) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Synerex_SubscribeSupply_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Channel)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SynerexServer).SubscribeSupply(m, &synerexSubscribeSupplyServer{stream})
+}
+
+type Synerex_SubscribeSupplyServer interface {
+	Send(*Supply) error
+	grpc.ServerStream
+}
+
+type synerexSubscribeSupplyServer struct {
+	grpc.ServerStream
+}
+
+func (x *synerexSubscribeSupplyServer) Send(m *Supply) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Synerex_SubscribeMbus_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(Mbus)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(SynerexServer).SubscribeMbus(m, &synerexSubscribeMbusServer{stream})
+}
+
+type Synerex_SubscribeMbusServer interface {
+	Send(*MbusMsg) error
+	grpc.ServerStream
+}
+
+type synerexSubscribeMbusServer struct {
+	grpc.ServerStream
+}
+
+func (x *synerexSubscribeMbusServer) Send(m *MbusMsg) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Synerex_SendMsg_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MbusMsg)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).SendMsg(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/SendMsg",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).SendMsg(ctx, req.(*MbusMsg))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Synerex_CloseMbus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Mbus)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SynerexServer).CloseMbus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/api.Synerex/CloseMbus",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SynerexServer).CloseMbus(ctx, req.(*Mbus))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _Synerex_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "api.Synerex",
+	HandlerType: (*SynerexServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RegisterDemand",
+			Handler:    _Synerex_RegisterDemand_Handler,
+		},
+		{
+			MethodName: "RegisterSupply",
+			Handler:    _Synerex_RegisterSupply_Handler,
+		},
+		{
+			MethodName: "ProposeDemand",
+			Handler:    _Synerex_ProposeDemand_Handler,
+		},
+		{
+			MethodName: "ProposeSupply",
+			Handler:    _Synerex_ProposeSupply_Handler,
+		},
+		{
+			MethodName: "ReserveSupply",
+			Handler:    _Synerex_ReserveSupply_Handler,
+		},
+		{
+			MethodName: "ReserveDemand",
+			Handler:    _Synerex_ReserveDemand_Handler,
+		},
+		{
+			MethodName: "SelectSupply",
+			Handler:    _Synerex_SelectSupply_Handler,
+		},
+		{
+			MethodName: "SelectDemand",
+			Handler:    _Synerex_SelectDemand_Handler,
+		},
+		{
+			MethodName: "Confirm",
+			Handler:    _Synerex_Confirm_Handler,
+		},
+		{
+			MethodName: "SendMsg",
+			Handler:    _Synerex_SendMsg_Handler,
+		},
+		{
+			MethodName: "CloseMbus",
+			Handler:    _Synerex_CloseMbus_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "SubscribeDemand",
+			Handler:       _Synerex_SubscribeDemand_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "SubscribeSupply",
+			Handler:       _Synerex_SubscribeSupply_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "SubscribeMbus",
+			Handler:       _Synerex_SubscribeMbus_Handler,
+			ServerStreams: true,
+		},
+	},
+	Metadata: "synerex.proto",
 }
 
 func init() { proto.RegisterFile("synerex.proto", fileDescriptor_synerex_64ff975bf195c314) }

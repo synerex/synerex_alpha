@@ -13,8 +13,8 @@ require (
 	github.com/synerex/synerex_alpha/api/rideshare v0.0.0
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
-	golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8
-	google.golang.org/grpc v1.16.0
+	golang.org/x/sys v0.0.0-20190107070147-cb59ee366067
+	google.golang.org/grpc v1.17.0
 )
 
 replace (

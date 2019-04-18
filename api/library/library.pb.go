@@ -48,7 +48,7 @@ func (x Action) String() string {
 	return proto.EnumName(Action_name, int32(x))
 }
 func (Action) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_library_7fd90a456c4cd5c9, []int{0}
+	return fileDescriptor_library_c34bec3145becd99, []int{0}
 }
 
 type LibService struct {
@@ -65,7 +65,7 @@ func (m *LibService) Reset()         { *m = LibService{} }
 func (m *LibService) String() string { return proto.CompactTextString(m) }
 func (*LibService) ProtoMessage()    {}
 func (*LibService) Descriptor() ([]byte, []int) {
-	return fileDescriptor_library_7fd90a456c4cd5c9, []int{0}
+	return fileDescriptor_library_c34bec3145becd99, []int{0}
 }
 func (m *LibService) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_LibService.Unmarshal(m, b)
@@ -128,7 +128,7 @@ func (m *Book) Reset()         { *m = Book{} }
 func (m *Book) String() string { return proto.CompactTextString(m) }
 func (*Book) ProtoMessage()    {}
 func (*Book) Descriptor() ([]byte, []int) {
-	return fileDescriptor_library_7fd90a456c4cd5c9, []int{1}
+	return fileDescriptor_library_c34bec3145becd99, []int{1}
 }
 func (m *Book) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Book.Unmarshal(m, b)
@@ -189,9 +189,9 @@ func init() {
 	proto.RegisterEnum("api.library.Action", Action_name, Action_value)
 }
 
-func init() { proto.RegisterFile("library/library.proto", fileDescriptor_library_7fd90a456c4cd5c9) }
+func init() { proto.RegisterFile("library/library.proto", fileDescriptor_library_c34bec3145becd99) }
 
-var fileDescriptor_library_7fd90a456c4cd5c9 = []byte{
+var fileDescriptor_library_c34bec3145becd99 = []byte{
 	// 394 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x92, 0x4f, 0x8f, 0xd3, 0x30,
 	0x10, 0xc5, 0x49, 0x93, 0x96, 0xcd, 0x14, 0x2d, 0x61, 0x16, 0x50, 0xb4, 0x42, 0xa2, 0xda, 0x0b,

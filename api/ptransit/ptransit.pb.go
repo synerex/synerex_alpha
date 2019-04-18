@@ -44,7 +44,7 @@ func (m *PTService) Reset()         { *m = PTService{} }
 func (m *PTService) String() string { return proto.CompactTextString(m) }
 func (*PTService) ProtoMessage()    {}
 func (*PTService) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ptransit_582bd9d9379c5e22, []int{0}
+	return fileDescriptor_ptransit_90e804a1f52f905d, []int{0}
 }
 func (m *PTService) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PTService.Unmarshal(m, b)
@@ -174,7 +174,7 @@ func (m *PTgtfs) Reset()         { *m = PTgtfs{} }
 func (m *PTgtfs) String() string { return proto.CompactTextString(m) }
 func (*PTgtfs) ProtoMessage()    {}
 func (*PTgtfs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_ptransit_582bd9d9379c5e22, []int{1}
+	return fileDescriptor_ptransit_90e804a1f52f905d, []int{1}
 }
 func (m *PTgtfs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PTgtfs.Unmarshal(m, b)
@@ -213,9 +213,9 @@ func init() {
 	proto.RegisterType((*PTgtfs)(nil), "api.ptransit.PTgtfs")
 }
 
-func init() { proto.RegisterFile("ptransit/ptransit.proto", fileDescriptor_ptransit_582bd9d9379c5e22) }
+func init() { proto.RegisterFile("ptransit/ptransit.proto", fileDescriptor_ptransit_90e804a1f52f905d) }
 
-var fileDescriptor_ptransit_582bd9d9379c5e22 = []byte{
+var fileDescriptor_ptransit_90e804a1f52f905d = []byte{
 	// 482 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x93, 0x5f, 0x6b, 0xdb, 0x3c,
 	0x14, 0xc6, 0x71, 0xdf, 0x24, 0xad, 0x4f, 0xd2, 0x26, 0x51, 0x5f, 0xa8, 0xdb, 0xfd, 0xcb, 0x7a,

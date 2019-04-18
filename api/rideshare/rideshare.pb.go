@@ -43,7 +43,7 @@ func (x TrafficType) String() string {
 	return proto.EnumName(TrafficType_name, int32(x))
 }
 func (TrafficType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_rideshare_1c97faadc41249de, []int{0}
+	return fileDescriptor_rideshare_abd5a7a298397b70, []int{0}
 }
 
 type StatusType int32
@@ -72,7 +72,7 @@ func (x StatusType) String() string {
 	return proto.EnumName(StatusType_name, int32(x))
 }
 func (StatusType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_rideshare_1c97faadc41249de, []int{1}
+	return fileDescriptor_rideshare_abd5a7a298397b70, []int{1}
 }
 
 type RideShare struct {
@@ -93,7 +93,7 @@ func (m *RideShare) Reset()         { *m = RideShare{} }
 func (m *RideShare) String() string { return proto.CompactTextString(m) }
 func (*RideShare) ProtoMessage()    {}
 func (*RideShare) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rideshare_1c97faadc41249de, []int{0}
+	return fileDescriptor_rideshare_abd5a7a298397b70, []int{0}
 }
 func (m *RideShare) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RideShare.Unmarshal(m, b)
@@ -193,7 +193,7 @@ func (m *Route) Reset()         { *m = Route{} }
 func (m *Route) String() string { return proto.CompactTextString(m) }
 func (*Route) ProtoMessage()    {}
 func (*Route) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rideshare_1c97faadc41249de, []int{1}
+	return fileDescriptor_rideshare_abd5a7a298397b70, []int{1}
 }
 func (m *Route) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Route.Unmarshal(m, b)
@@ -319,10 +319,10 @@ func init() {
 }
 
 func init() {
-	proto.RegisterFile("rideshare/rideshare.proto", fileDescriptor_rideshare_1c97faadc41249de)
+	proto.RegisterFile("rideshare/rideshare.proto", fileDescriptor_rideshare_abd5a7a298397b70)
 }
 
-var fileDescriptor_rideshare_1c97faadc41249de = []byte{
+var fileDescriptor_rideshare_abd5a7a298397b70 = []byte{
 	// 591 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x5f, 0x6b, 0xdb, 0x3c,
 	0x14, 0x87, 0x9b, 0xa4, 0x71, 0xe3, 0xe3, 0xa4, 0xf5, 0xab, 0x77, 0x17, 0x6e, 0x07, 0x23, 0xeb,
