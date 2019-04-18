@@ -24,6 +24,14 @@ provider/fleet/fleet-provider
 provider/multi/multi-provider
 provider/taxi/taxi-provider
 provider/user/user-provider
+provider/datastore/datastore-provider
+provider/gtfs-ptransit/ptransit-provider
+provider/kota-bus/ecotan-provider
+provider/map/map-provider
+provider/marketing/marketing-provider
+provider/onemile/onemile-provider
+provider/routing/routing-provider
+provider/simple-routing/srouting-provider
 server/synerex-server
 
 # Go module file
