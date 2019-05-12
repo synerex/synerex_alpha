@@ -23,6 +23,13 @@ func init() {
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 }
 
+func routingDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
+
+	log.Println("Got routing demand callback on SRouting")
+
+}
+
+
 // wait for routing demand.
 func subscribeDemand(client *sxutil.SMServiceClient) {
 	// goroutine!
