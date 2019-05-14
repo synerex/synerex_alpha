@@ -32,6 +32,7 @@ provider/marketing/marketing-provider
 provider/onemile/onemile-provider
 provider/routing/routing-provider
 provider/simple-routing/srouting-provider
+provider/rpa/meeting/meeting-provider
 server/synerex-server
 
 # Go module file
