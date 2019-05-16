@@ -167,6 +167,12 @@ func init() {
 			BinName: "meeting-provider",
 			GoFiles: []string{"meeting-provider.go"},
 		},
+		{
+			CmdName: "RPAUser",
+			SrcDir:  "provider/rpa/user",
+			BinName: "rpa-user-provider",
+			GoFiles: []string{"rpa-user-provider.go"},
+		},
 	}
 }
 

@@ -29,7 +29,6 @@ func routingDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 }
 
-
 // wait for routing demand.
 func subscribeDemand(client *sxutil.SMServiceClient) {
 	// goroutine!
