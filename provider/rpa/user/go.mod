@@ -1,6 +1,7 @@
 module rpa-user
 
 require (
+	github.com/googollee/go-socket.io v1.4.1
 	github.com/synerex/synerex_alpha/api v0.0.0
 	github.com/synerex/synerex_alpha/api/fleet v0.0.0
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
