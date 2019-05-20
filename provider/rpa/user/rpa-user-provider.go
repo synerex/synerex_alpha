@@ -8,7 +8,8 @@ import (
 	"net/http"
 	"sync"
 
-	socketio "github.com/googollee/go-socket.io"
+	gosocketio "github.com/mtfelian/golang-socketio"
+
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
@@ -39,32 +40,22 @@ func subscribeDemand(client *sxutil.SMServiceClient) {
 	log.Printf("Server closed... on Routing provider")
 }
 
-// run Socket.IO Server for User Interface
 func runSocketIOServer() {
-	server, err := socketio.NewServer(nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	server := gosocketio.NewServer()
 
-	server.OnConnect("/", func(s socketio.Conn) error {
-		s.SetContext("")
-		fmt.Println("OnConnect:", s.ID())
-		return nil
+	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
+		log.Printf("Connected %s", c.Id())
 	})
 
-	server.OnError("/", func(e error) {
-		fmt.Println("OnError:", e)
-	})
-
-	server.OnDisconnect("/", func(s socketio.Conn, msg string) {
-		fmt.Println("OnDisconnect", msg)
+	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
+		log.Printf("Disconnected %s", c.Id())
 	})
 
 	serveMux := http.NewServeMux()
 	serveMux.Handle("/socket.io/", server)
 	serveMux.Handle("/", http.FileServer(http.Dir("./client")))
 
-	log.Printf("Starting Socket.IO Server at localhost:%d\n", *port)
+	log.Printf("Starting Server at localhost:%d\n", *port)
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", *port), serveMux); err != nil {
 		log.Fatal(err)
 	}

@@ -2,6 +2,9 @@ module rpa-user
 
 require (
 	github.com/googollee/go-socket.io v1.4.1
+	github.com/mtfelian/golang-socketio v0.0.0-20181017124241-8d8ec6f9bb4c
+	github.com/mtfelian/synced v0.0.0-20181026093311-f1dd911faaa7 // indirect
+	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/synerex/synerex_alpha/api v0.0.0
 	github.com/synerex/synerex_alpha/api/fleet v0.0.0
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
