@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -47,6 +48,8 @@ func runSocketIOServer() {
 		log.Printf("Connected %s", c.Id())
 		server.On("client_to_server", func(c *gosocketio.Channel, data interface{}) {
 			log.Println("client_to_server:", data)
+			byte, _ := json.Marshal(data)
+			c.Emit("server_to_client", string(byte))
 		})
 	})
 

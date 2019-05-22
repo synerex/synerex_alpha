@@ -1,6 +1,10 @@
 $(() => {
     var socket = io();
 
+    socket.on("server_to_client", (data) => {
+        console.log("server_to_client:", data);
+    });
+
     $("#send").on("click", () => {
 
         var datetime = $("#datetimepicker").val();
