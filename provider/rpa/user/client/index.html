@@ -8,25 +8,34 @@
     <link rel="stylesheet" href="css/jquery-ui.min.css">
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
         integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/tempusdominus-bootstrap-4.min.css">
+    <link rel="stylesheet" href="css/index.css">
     <title>RPA User Client</title>
 </head>
 
 <body>
     <div class="container">
-        <form>
-            <div class="form-group">
-                <input type="button" id="disconnect" value="Disconnect" class="btn btn-primary">
+        <div class="row">
+            <div class="col-sm-6">
+                <input type="text" class="form-control datetimepicker-input" id="datetimepicker"
+                    data-toggle="datetimepicker" data-target="#datetimepicker" />
             </div>
-        </form>
+            <div class="col-sm-6">
+                <button type="button" id="send" class="btn btn-primary">Submit</button>
+            </div>
+        </div>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/jquery-ui.min.js"></script>
+    <script src="js/tempusdominus-bootstrap-4.min.js"></script>
     <script src="js/index.js"></script>
+    <script>
+    </script>
 </body>
 
 </html>

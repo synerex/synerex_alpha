@@ -45,6 +45,9 @@ func runSocketIOServer() {
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		log.Printf("Connected %s", c.Id())
+		server.On("client_to_server", func(c *gosocketio.Channel, data interface{}) {
+			log.Println("client_to_server:", data)
+		})
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
