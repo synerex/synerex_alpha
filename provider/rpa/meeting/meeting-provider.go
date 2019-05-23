@@ -23,20 +23,16 @@ func init() {
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 }
 
-func routingDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
-
-	log.Println("Got routing demand callback on SRouting")
-
+func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
+	log.Printf("Meeting demand callback is called\nId:%d, SenderId:%d, TargetId:%d, DemandName:%s, Args:%v\n", dm.Id, dm.SenderId, dm.TargetId, dm.DemandName, dm.GetArg_MeetingService())
 }
 
-
-// wait for routing demand.
 func subscribeDemand(client *sxutil.SMServiceClient) {
 	// goroutine!
 	ctx := context.Background() //
-	client.SubscribeDemand(ctx, routingDemandCallback)
+	client.SubscribeDemand(ctx, demandCallback)
 	// comes here if channel closed
-	log.Printf("Server closed... on Routing provider")
+	log.Println("Server closed... on Meeting provider")
 }
 
 func main() {
@@ -57,10 +53,11 @@ func main() {
 
 	client := api.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client: Meeting}")
-	sclient := sxutil.NewSMServiceClient(client, api.ChannelType_ROUTING_SERVICE, argJson)
+	sclient := sxutil.NewSMServiceClient(client, api.ChannelType_MEETING_SERVICE, argJson)
 
 	wg.Add(1)
 	go subscribeDemand(sclient)
+
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
 }

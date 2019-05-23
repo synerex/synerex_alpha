@@ -28,20 +28,18 @@ func init() {
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 }
 
-func routingDemandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
-	log.Println("Got routing demand callback on SRouting")
+func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 }
 
-// wait for routing demand.
-func subscribeDemand(client *sxutil.SMServiceClient) {
-	// goroutine!
-	ctx := context.Background() //
-	client.SubscribeDemand(ctx, routingDemandCallback)
+func subscribeSupply(client *sxutil.SMServiceClient) {
+	//called as goroutine
+	ctx := context.Background() // should check proper context
+	client.SubscribeSupply(ctx, supplyCallback)
 	// comes here if channel closed
-	log.Printf("Server closed... on Routing provider")
+	log.Printf("SMarket Server Closed?")
 }
 
-func runSocketIOServer() {
+func runSocketIOServer(sclient *sxutil.SMServiceClient) {
 	server := gosocketio.NewServer()
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
@@ -49,7 +47,8 @@ func runSocketIOServer() {
 		server.On("client_to_server", func(c *gosocketio.Channel, data interface{}) {
 			log.Println("client_to_server:", data)
 			byte, _ := json.Marshal(data)
-			c.Emit("server_to_client", string(byte))
+			sendDemand(sclient, "Booking meeting room", string(byte))
+			// c.Emit("server_to_client", string(byte))
 		})
 	})
 
@@ -65,6 +64,14 @@ func runSocketIOServer() {
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", *port), serveMux); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func sendDemand(sclient *sxutil.SMServiceClient, nm string, js string) {
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js}
+	mu.Lock()
+	id := sclient.RegisterDemand(opts)
+	mu.Unlock()
+	log.Printf("Register meeting demand as id:%v\n", id)
 }
 
 func main() {
@@ -85,13 +92,13 @@ func main() {
 
 	client := api.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client: RPAUser}")
-	sclient := sxutil.NewSMServiceClient(client, api.ChannelType_ROUTING_SERVICE, argJson)
+	sclient := sxutil.NewSMServiceClient(client, api.ChannelType_MEETING_SERVICE, argJson)
 
 	wg.Add(1)
-	go subscribeDemand(sclient)
+	go subscribeSupply(sclient)
 
 	wg.Add(1)
-	go runSocketIOServer()
+	go runSocketIOServer(sclient)
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
