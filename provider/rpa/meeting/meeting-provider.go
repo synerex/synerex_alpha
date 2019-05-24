@@ -24,7 +24,7 @@ func init() {
 }
 
 func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
-	log.Printf("Meeting demand callback is called\nId:%d, SenderId:%d, TargetId:%d, DemandName:%s, Args:%v\n", dm.Id, dm.SenderId, dm.TargetId, dm.DemandName, dm.GetArg_MeetingService())
+	log.Printf("Meeting demand callback is called\nId:%d, SenderId:%d, TargetId:%d, Type:%v, DemandName:%s, TimeStamp:%v, ArgJson:%v, MbusId:%d, ArgMeeting:%v\n", dm.Id, dm.SenderId, dm.TargetId, dm.Type, dm.DemandName, dm.Ts, dm.ArgJson, dm.MbusId, dm.GetArg_MeetingService())
 }
 
 func subscribeDemand(client *sxutil.SMServiceClient) {
