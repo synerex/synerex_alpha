@@ -15,16 +15,44 @@ import (
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
+	idList     []uint64
 	spMap      map[uint64]*sxutil.SupplyOpts
 	mu         sync.RWMutex
 )
 
 func init() {
+	idList = make([]uint64, 0)
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 }
 
+func exeSelenium(date string) (string, bool) {
+	fmt.Println("exeSelenium is called")
+	if date != "" {
+		return date, true
+	} else {
+		return "", false
+	}
+}
+
 func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
-	log.Printf("Meeting demand callback is called\nId:%d, SenderId:%d, TargetId:%d, Type:%v, DemandName:%s, TimeStamp:%v, ArgJson:%v, MbusId:%d, ArgMeeting:%v\n", dm.Id, dm.SenderId, dm.TargetId, dm.Type, dm.DemandName, dm.Ts, dm.ArgJson, dm.MbusId, dm.GetArg_MeetingService())
+	log.Printf("Got Meeting demand callback\nId:%d, SenderId:%d, TargetId:%d, Type:%v, DemandName:%s, TimeStamp:%v, ArgJson:%v, MbusId:%d, ArgMeeting:%v\n", dm.Id, dm.SenderId, dm.TargetId, dm.Type, dm.DemandName, dm.Ts, dm.ArgJson, dm.MbusId, dm.GetArg_MeetingService())
+
+	if result, flag := exeSelenium(dm.ArgJson); flag == true {
+		sp := &sxutil.SupplyOpts{
+			Target: dm.Id,
+			Name:   "Option of meeting room",
+			JSON:   result,
+		}
+
+		mu.Lock()
+		pid := clt.ProposeSupply(sp)
+		idList = append(idList, pid)
+		spMap[pid] = sp
+		mu.Unlock()
+	} else {
+		fmt.Printf("Failed to booking with:%v\n", result)
+	}
+
 }
 
 func subscribeDemand(client *sxutil.SMServiceClient) {
