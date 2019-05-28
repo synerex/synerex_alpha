@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	gosocketio "github.com/mtfelian/golang-socketio"
+	"github.com/tidwall/gjson"
 
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
@@ -19,16 +20,22 @@ import (
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	spMap      map[uint64]*sxutil.SupplyOpts
+	spMap      map[uint64]*api.Supply
 	mu         sync.RWMutex
 	port       = flag.Int("port", 8888, "RPA User Provider Listening Port")
 )
 
 func init() {
-	spMap = make(map[uint64]*sxutil.SupplyOpts)
+	spMap = make(map[uint64]*api.Supply)
 }
 
 func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
+	log.Printf("Got RPA User supply callback\nId:%d, SenderId:%d, TargetId:%d, Type:%v, SupplyName:%s, TimeStamp:%v, ArgJson:%v, MbusId:%d, ArgMeeting:%v\n", sp.Id, sp.SenderId, sp.TargetId, sp.Type, sp.SupplyName, sp.Ts, sp.ArgJson, sp.MbusId, sp.GetArg_MeetingService())
+
+	// parse JSON by gjson
+	cid := gjson.Get(sp.ArgJson, "cid")
+	date := gjson.GetMany(sp.ArgJson, "date.Year", "date.Month", "date.Day", "date.Time", "date.Ampm")
+	fmt.Printf("cid:%v %s/%s/%s %s%s\n", cid.String(), date[0], date[1], date[2], date[3], date[4])
 }
 
 func subscribeSupply(client *sxutil.SMServiceClient) {
@@ -47,7 +54,8 @@ func runSocketIOServer(sclient *sxutil.SMServiceClient) {
 		server.On("client_to_server", func(c *gosocketio.Channel, data interface{}) {
 			log.Println("client_to_server:", data)
 			byte, _ := json.Marshal(data)
-			sendDemand(sclient, "Booking meeting room", string(byte))
+			json := `{"cid":"` + c.Id() + `","date":` + string(byte) + `}`
+			sendDemand(sclient, "Booking meeting room", json)
 			// c.Emit("server_to_client", string(byte))
 		})
 	})
