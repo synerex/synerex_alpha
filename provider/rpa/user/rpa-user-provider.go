@@ -23,6 +23,7 @@ var (
 	spMap      map[uint64]*api.Supply
 	mu         sync.RWMutex
 	port       = flag.Int("port", 8888, "RPA User Provider Listening Port")
+	server     = gosocketio.NewServer()
 )
 
 func init() {
@@ -30,12 +31,32 @@ func init() {
 }
 
 func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
-	log.Printf("Got RPA User supply callback\nId:%d, SenderId:%d, TargetId:%d, Type:%v, SupplyName:%s, TimeStamp:%v, ArgJson:%v, MbusId:%d, ArgMeeting:%v\n", sp.Id, sp.SenderId, sp.TargetId, sp.Type, sp.SupplyName, sp.Ts, sp.ArgJson, sp.MbusId, sp.GetArg_MeetingService())
+	log.Println("Got RPA User supply callback")
 
 	// parse JSON by gjson
-	cid := gjson.Get(sp.ArgJson, "cid")
-	date := gjson.GetMany(sp.ArgJson, "date.Year", "date.Month", "date.Day", "date.Time", "date.Ampm")
-	fmt.Printf("cid:%v %s/%s/%s %s%s\n", cid.String(), date[0], date[1], date[2], date[3], date[4])
+	flag := gjson.Get(sp.ArgJson, "flag").String()
+	cid := gjson.Get(sp.ArgJson, "data.cid").String()
+	year := gjson.Get(sp.ArgJson, "data.date.Year").String()
+	month := gjson.Get(sp.ArgJson, "data.date.Month").String()
+	day := gjson.Get(sp.ArgJson, "data.date.Day").String()
+	time := gjson.Get(sp.ArgJson, "data.date.Time").String()
+	ampm := gjson.Get(sp.ArgJson, "data.date.Ampm").String()
+	// date := gjson.GetMany(sp.ArgJson, "data.date.Year", "data.date.Month", "data.date.Day", "data.date.Time", "data.date.Ampm")
+
+	var msg string
+	if flag == "true" {
+		msg = "Success to booking: " + year + "/" + month + "/" + day + " " + time + ampm
+	} else {
+		msg = "Failed to booking: " + year + "/" + month + "/" + day + " " + time + ampm
+	}
+
+	// emit to client
+	channel, err := server.GetChannel(cid)
+	if err != nil {
+		fmt.Println("Failed to get socket channel:", err)
+	}
+	channel.Emit("server_to_client", msg)
+	fmt.Printf("server_to_client: %v\n", msg)
 }
 
 func subscribeSupply(client *sxutil.SMServiceClient) {
@@ -47,17 +68,15 @@ func subscribeSupply(client *sxutil.SMServiceClient) {
 }
 
 func runSocketIOServer(sclient *sxutil.SMServiceClient) {
-	server := gosocketio.NewServer()
-
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		log.Printf("Connected %s", c.Id())
-		server.On("client_to_server", func(c *gosocketio.Channel, data interface{}) {
-			log.Println("client_to_server:", data)
-			byte, _ := json.Marshal(data)
-			json := `{"cid":"` + c.Id() + `","date":` + string(byte) + `}`
-			sendDemand(sclient, "Booking meeting room", json)
-			// c.Emit("server_to_client", string(byte))
-		})
+	})
+
+	server.On("client_to_server", func(c *gosocketio.Channel, data interface{}) {
+		log.Println("client_to_server:", data)
+		byte, _ := json.Marshal(data)
+		json := `{"cid":"` + c.Id() + `","date":` + string(byte) + `}`
+		sendDemand(sclient, "Booking meeting room", json)
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
