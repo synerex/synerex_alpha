@@ -25,23 +25,26 @@ func init() {
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 }
 
-func exeSelenium(date string) (string, bool) {
+func exeSelenium(date string) bool {
 	fmt.Println("exeSelenium is called")
+	flag := false
+
 	if date != "" {
-		return date, true
-	} else {
-		return "", false
+		flag = true
 	}
+	return flag
 }
 
 func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
-	log.Printf("Got Meeting demand callback\nId:%d, SenderId:%d, TargetId:%d, Type:%v, DemandName:%s, TimeStamp:%v, ArgJson:%v, MbusId:%d, ArgMeeting:%v\n", dm.Id, dm.SenderId, dm.TargetId, dm.Type, dm.DemandName, dm.Ts, dm.ArgJson, dm.MbusId, dm.GetArg_MeetingService())
+	log.Println("Got Meeting demand callback")
 
-	if result, flag := exeSelenium(dm.ArgJson); flag == true {
+	if flag := exeSelenium(dm.ArgJson); flag == true {
+		json := `{"flag":"true","data":` + dm.ArgJson + `}`
+
 		sp := &sxutil.SupplyOpts{
 			Target: dm.Id,
 			Name:   "Option of meeting room",
-			JSON:   result,
+			JSON:   json,
 		}
 
 		mu.Lock()
@@ -50,9 +53,20 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		spMap[pid] = sp
 		mu.Unlock()
 	} else {
-		fmt.Printf("Failed to booking with:%v\n", result)
-	}
+		json := `{"flag":"false","data":` + dm.ArgJson + `}`
 
+		sp := &sxutil.SupplyOpts{
+			Target: dm.Id,
+			Name:   "Failed to booking room",
+			JSON:   json,
+		}
+
+		mu.Lock()
+		pid := clt.ProposeSupply(sp)
+		idList = append(idList, pid)
+		spMap[pid] = sp
+		mu.Unlock()
+	}
 }
 
 func subscribeDemand(client *sxutil.SMServiceClient) {
