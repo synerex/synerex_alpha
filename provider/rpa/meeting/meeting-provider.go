@@ -90,34 +90,43 @@ func exeSelenium(date string) bool {
 func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	log.Println("Got Meeting demand callback")
 
-	if flag := exeSelenium(dm.ArgJson); flag == true {
-		json := `{"flag":"true","data":` + dm.ArgJson + `}`
+	if dm.TargetId != 0 { // selected
 
-		sp := &sxutil.SupplyOpts{
-			Target: dm.Id,
-			Name:   "Option of meeting room",
-			JSON:   json,
+		log.Println("Select the room!")
+		clt.Confirm(sxutil.IDType(dm.Id))
+
+	} else { // not selected
+
+		if flag := exeSelenium(dm.ArgJson); flag == true {
+			json := `{"flag":"true","data":` + dm.ArgJson + `}`
+
+			sp := &sxutil.SupplyOpts{
+				Target: dm.Id,
+				Name:   "Option of meeting room",
+				JSON:   json,
+			}
+
+			mu.Lock()
+			pid := clt.ProposeSupply(sp)
+			idList = append(idList, pid)
+			spMap[pid] = sp
+			mu.Unlock()
+		} else {
+			json := `{"flag":"false","data":` + dm.ArgJson + `}`
+
+			sp := &sxutil.SupplyOpts{
+				Target: dm.Id,
+				Name:   "Invalid booking",
+				JSON:   json,
+			}
+
+			mu.Lock()
+			pid := clt.ProposeSupply(sp)
+			idList = append(idList, pid)
+			spMap[pid] = sp
+			mu.Unlock()
 		}
 
-		mu.Lock()
-		pid := clt.ProposeSupply(sp)
-		idList = append(idList, pid)
-		spMap[pid] = sp
-		mu.Unlock()
-	} else {
-		json := `{"flag":"false","data":` + dm.ArgJson + `}`
-
-		sp := &sxutil.SupplyOpts{
-			Target: dm.Id,
-			Name:   "Failed to booking room",
-			JSON:   json,
-		}
-
-		mu.Lock()
-		pid := clt.ProposeSupply(sp)
-		idList = append(idList, pid)
-		spMap[pid] = sp
-		mu.Unlock()
 	}
 }
 

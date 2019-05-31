@@ -44,9 +44,10 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 
 	var msg string
 	if flag == "true" {
-		msg = "Success to booking: " + year + "/" + month + "/" + day + " " + hour + ":" + minute
+		clt.SelectSupply(sp)
+		msg = "Success to booking " + year + "/" + month + "/" + day + " " + hour + ":" + minute
 	} else {
-		msg = "Failed to booking: " + year + "/" + month + "/" + day + " " + hour + ":" + minute
+		msg = "This date is invalid."
 	}
 
 	// emit to client
