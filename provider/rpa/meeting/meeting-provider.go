@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
+	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
 )
 
@@ -25,11 +27,61 @@ func init() {
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 }
 
+func checkMonth(month int64) time.Month {
+	var t time.Month
+	switch month {
+	case 1:
+		t = time.January
+	case 2:
+		t = time.February
+	case 3:
+		t = time.March
+	case 4:
+		t = time.April
+	case 5:
+		t = time.May
+	case 6:
+		t = time.June
+	case 7:
+		t = time.July
+	case 8:
+		t = time.August
+	case 9:
+		t = time.September
+	case 10:
+		t = time.October
+	case 11:
+		t = time.November
+	case 12:
+		t = time.December
+	}
+	return t
+}
+
 func exeSelenium(date string) bool {
 	fmt.Println("exeSelenium is called")
+
 	flag := false
 
-	if date != "" {
+	year := gjson.Get(date, "date.Year").Int()
+	month := gjson.Get(date, "date.Month").Int()
+	day := gjson.Get(date, "date.Day").Int()
+	hour := gjson.Get(date, "date.Hour").Int()
+	minute := gjson.Get(date, "date.Minute").Int()
+
+	location, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		log.Println("Failed to get location of JST:", err)
+	}
+	now := time.Now().In(location)
+	then := time.Date(int(year), checkMonth(month), int(day), int(hour), int(minute), 59, 0, location)
+	subtract := then.Sub(now)
+
+	// fmt.Println("now:", now)
+	// fmt.Println("then:", then)
+	// fmt.Println("subtract:", subtract)
+
+	if subtract > 0 {
 		flag = true
 	}
 	return flag
