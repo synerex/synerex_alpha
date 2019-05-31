@@ -6,7 +6,6 @@ $(() => {
     });
 
     $("#send").on("click", () => {
-
         var datetime = $("#datetimepicker").val();
 
         $("#send").prop("disabled", true);
@@ -21,16 +20,27 @@ $(() => {
             var date = splits[0];
             var time = splits[1];
             var ampm = splits[2];
+
             splits = date.split('/');
             var month = splits[0];
             var day = splits[1];
             var year = splits[2];
+
+            splits = time.split(':');
+            var hour = splits[0];
+            var minute = splits[1];
+
+            if (ampm == "PM") {
+                hour = parseInt(hour, 10);
+                hour += 12;
+            }
+
             socket.emit("client_to_server", {
                 Year: year,
                 Month: month,
                 Day: day,
-                Time: time,
-                Ampm: ampm
+                Hour: hour,
+                Minute: minute
             });
         }
     });
