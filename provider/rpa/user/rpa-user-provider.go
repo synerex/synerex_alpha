@@ -30,6 +30,25 @@ func init() {
 	spMap = make(map[uint64]*api.Supply)
 }
 
+func confirmBooking(cid string, date string, clt *sxutil.SMServiceClient, sp *api.Supply) {
+	// emit to client
+	channel, err := server.GetChannel(cid)
+	if err != nil {
+		fmt.Println("Failed to get socket channel:", err)
+	}
+	msg := "Are you sure to booking? " + date
+	channel.Emit("check_booking", msg)
+
+	server.On("confirm_booking", func(c *gosocketio.Channel, data interface{}) {
+		if data == "yes" {
+			clt.SelectSupply(sp)
+			channel.Emit("server_to_client", "Success to booking!")
+		} else {
+			channel.Emit("server_to_client", "Stop booking.")
+		}
+	})
+}
+
 func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	log.Println("Got RPA User supply callback")
 
@@ -42,21 +61,17 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	hour := gjson.Get(sp.ArgJson, "data.date.Hour").String()
 	minute := gjson.Get(sp.ArgJson, "data.date.Minute").String()
 
-	var msg string
 	if flag == "true" {
-		clt.SelectSupply(sp)
-		msg = "Success to booking " + year + "/" + month + "/" + day + " " + hour + ":" + minute
+		date := year + "/" + month + "/" + day + " " + hour + ":" + minute
+		confirmBooking(cid, date, clt, sp)
 	} else {
-		msg = "This date is invalid."
+		// emit to client
+		channel, err := server.GetChannel(cid)
+		if err != nil {
+			fmt.Println("Failed to get socket channel:", err)
+		}
+		channel.Emit("server_to_client", "Invalid date.")
 	}
-
-	// emit to client
-	channel, err := server.GetChannel(cid)
-	if err != nil {
-		fmt.Println("Failed to get socket channel:", err)
-	}
-	channel.Emit("server_to_client", msg)
-	fmt.Printf("server_to_client: %v\n", msg)
 }
 
 func subscribeSupply(client *sxutil.SMServiceClient) {

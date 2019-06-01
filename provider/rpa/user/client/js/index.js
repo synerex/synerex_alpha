@@ -5,6 +5,21 @@ $(() => {
         console.log("server_to_client:", data);
     });
 
+    socket.on("check_booking", (msg) => {
+        var confirm_area = $("#confirm_area");
+        var contents = `<div id="confirm_message" class="row"><div class="col-sm-6"><p>${msg}</p></div><div class="col-sm-6"><button type="button" id="yes" class="btn btn-primary">YES</button><button type="button" id="stop" class="btn btn-secondary">STOP</button></div></div>`;
+        confirm_area.append(contents);
+    });
+
+    $(document).on("click", "#yes", () => {
+        socket.emit("confirm_booking", "yes");
+        $("#confirm_message").remove();
+    });
+    $(document).on("click", "#stop", () => {
+        socket.emit("confirm_booking", "stop");
+        $("#confirm_message").remove();
+    });
+
     $("#send").on("click", () => {
         var datetime = $("#datetimepicker").val();
 
