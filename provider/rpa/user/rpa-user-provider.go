@@ -31,21 +31,24 @@ func init() {
 }
 
 func confirmBooking(cid string, date string, clt *sxutil.SMServiceClient, sp *api.Supply) {
+	var msg string
+
 	// emit to client
 	channel, err := server.GetChannel(cid)
 	if err != nil {
 		fmt.Println("Failed to get socket channel:", err)
 	}
-	msg := "Are you sure to booking? " + date
+	msg = "Are you sure to booking? " + date
 	channel.Emit("check_booking", msg)
 
 	server.On("confirm_booking", func(c *gosocketio.Channel, data interface{}) {
 		if data == "yes" {
 			clt.SelectSupply(sp)
-			channel.Emit("server_to_client", "Success to booking!")
+			msg = "Success: " + date
 		} else {
-			channel.Emit("server_to_client", "Stop booking.")
+			msg = "Stop: " + date
 		}
+		channel.Emit("server_to_client", msg)
 	})
 }
 
@@ -70,7 +73,7 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 		if err != nil {
 			fmt.Println("Failed to get socket channel:", err)
 		}
-		channel.Emit("server_to_client", "Invalid date.")
+		channel.Emit("server_to_client", "Invalid date")
 	}
 }
 

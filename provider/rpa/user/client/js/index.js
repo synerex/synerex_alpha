@@ -2,7 +2,14 @@ $(() => {
     var socket = io();
 
     socket.on("server_to_client", (data) => {
-        console.log("server_to_client:", data);
+        var booking_results = $("#booking_results");
+        var list = `<li>${data}</li>`;
+        booking_results.append(list);
+
+        $("#confirm_message").remove();
+        $("#datetimepicker").val("");
+        $("#send").prop("disabled", false);
+        $("#datetimepicker").prop("disabled", false);
     });
 
     socket.on("check_booking", (msg) => {
@@ -13,11 +20,9 @@ $(() => {
 
     $(document).on("click", "#yes", () => {
         socket.emit("confirm_booking", "yes");
-        $("#confirm_message").remove();
     });
     $(document).on("click", "#stop", () => {
         socket.emit("confirm_booking", "stop");
-        $("#confirm_message").remove();
     });
 
     $("#send").on("click", () => {
