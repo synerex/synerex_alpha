@@ -10,34 +10,51 @@
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
         integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/tempusdominus-bootstrap-4.min.css">
+    <link rel="stylesheet" href="css/pickadate/classic.css">
+    <link rel="stylesheet" href="css/pickadate/classic.date.css">
+    <link rel="stylesheet" href="css/pickadate/classic.time.css">
     <link rel="stylesheet" href="css/index.css">
     <title>RPA User Client</title>
 </head>
 
 <body>
-    <div class="container">
-        <div class="row">
-            <div class="col-sm-6">
-                <input type="text" class="form-control datetimepicker-input" id="datetimepicker"
-                    data-toggle="datetimepicker" data-target="#datetimepicker" />
+    <div class="container" style="padding-top: 30px">
+
+        <form>
+            <div class="form-group">
+                <label for="booking-date">Date</label>
+                <input type="text" class="datepicker form-control" id="booking-date"
+                    style="background-color: transparent">
             </div>
-            <div class="col-sm-6">
-                <button type="button" id="send" class="btn btn-primary">Submit</button>
+            <div class="form-group">
+                <label for="booking-start">Start</label>
+                <input type="text" class="timepicker form-control" id="booking-start"
+                    style="background-color: transparent">
             </div>
-        </div>
+            <div class="form-group">
+                <label for="booking-end">End</label>
+                <input type="text" class="timepicker form-control" id="booking-end"
+                    style="background-color: transparent">
+            </div>
+            <div class="form-group">
+                <label for="number-people">People</label>
+                <input type="text" class="form-control" id="number-people">
+            </div>
+            <button type="button" id="send" class="btn btn-primary">Submit</button>
+        </form>
+
         <div id="confirm_area"></div>
         <ul id="booking_results"></ul>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/jquery-ui.min.js"></script>
-    <script src="js/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="js/pickadate/legacy.js"></script>
+    <script src="js/pickadate/picker.js"></script>
+    <script src="js/pickadate/picker.date.js"></script>
+    <script src="js/pickadate/picker.time.js"></script>
     <script src="js/index.js"></script>
-    <script>
-    </script>
 </body>
 
 </html>
