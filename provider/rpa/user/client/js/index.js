@@ -7,9 +7,17 @@ $(() => {
         booking_results.append(list);
 
         $("#confirm_message").remove();
-        $("#datetimepicker").val("");
+
+        $("#booking-date").val("");
+        $("#booking-start").val("");
+        $("#booking-end").val("");
+        $("#number-people").val("");
+
+        $("#booking-date").prop("disabled", false);
+        $("#booking-start").prop("disabled", false);
+        $("#booking-end").prop("disabled", false);
+        $("#number-people").prop("disabled", false);
         $("#send").prop("disabled", false);
-        $("#datetimepicker").prop("disabled", false);
     });
 
     socket.on("check_booking", (msg) => {
@@ -25,48 +33,48 @@ $(() => {
         socket.emit("confirm_booking", "stop");
     });
 
-    $("#send").on("click", () => {
-        var datetime = $("#datetimepicker").val();
+    $("#send").on("click", (e) => {
+        e.preventDefault();
 
+        var date = $("#booking-date").val();
+        var start = $("#booking-start").val();
+        var end = $("#booking-end").val();
+        var people = $("#number-people").val();
+
+        $("#booking-date").prop("disabled", true);
+        $("#booking-start").prop("disabled", true);
+        $("#booking-end").prop("disabled", true);
+        $("#number-people").prop("disabled", true);
         $("#send").prop("disabled", true);
-        $("#datetimepicker").prop("disabled", true);
 
-        if (datetime == "") {
+        if (date == "" || start == "" || end == "") {
+            $("#booking-date").prop("disabled", false);
+            $("#booking-start").prop("disabled", false);
+            $("#booking-end").prop("disabled", false);
+            $("#number-people").prop("disabled", false);
             $("#send").prop("disabled", false);
-            $("#datetimepicker").prop("disabled", false);
             console.log("You must set the date and time.")
         } else {
-            var splits = datetime.split(' ');
-            var date = splits[0];
-            var time = splits[1];
-            var ampm = splits[2];
-
-            splits = date.split('/');
-            var month = splits[0];
-            var day = splits[1];
-            var year = splits[2];
-
-            splits = time.split(':');
-            var hour = splits[0];
-            var minute = splits[1];
-
-            if (ampm == "PM") {
-                hour = parseInt(hour, 10);
-                hour += 12;
-            }
+            var splits = date.split('/');
+            var year = splits[0];
+            var month = splits[1];
+            var day = splits[2];
 
             socket.emit("client_to_server", {
                 Year: year,
                 Month: month,
                 Day: day,
-                Hour: hour,
-                Minute: minute
+                Start: start,
+                End: end,
+                People: people,
             });
         }
     });
 
     // pickadate.js
-    $(".datepicker").pickadate();
+    $(".datepicker").pickadate({
+        format: 'yyyy/mm/dd',
+    });
     $(".timepicker").pickatime({
         format: 'H:i',
     });

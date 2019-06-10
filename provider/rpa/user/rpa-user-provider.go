@@ -61,11 +61,16 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	year := gjson.Get(sp.ArgJson, "data.date.Year").String()
 	month := gjson.Get(sp.ArgJson, "data.date.Month").String()
 	day := gjson.Get(sp.ArgJson, "data.date.Day").String()
-	hour := gjson.Get(sp.ArgJson, "data.date.Hour").String()
-	minute := gjson.Get(sp.ArgJson, "data.date.Minute").String()
+	start := gjson.Get(sp.ArgJson, "data.date.Start").String()
+	end := gjson.Get(sp.ArgJson, "data.date.End").String()
+	people := gjson.Get(sp.ArgJson, "data.date.People").String()
+
+	if people == "" {
+		people = "0"
+	}
 
 	if flag == "true" {
-		date := year + "/" + month + "/" + day + " " + hour + ":" + minute
+		date := year + "/" + month + "/" + day + " " + start + "~" + end + " with " + people + " people"
 		confirmBooking(cid, date, clt, sp)
 	} else {
 		// emit to client

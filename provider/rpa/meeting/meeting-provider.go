@@ -66,22 +66,21 @@ func exeSelenium(date string) bool {
 	year := gjson.Get(date, "date.Year").Int()
 	month := gjson.Get(date, "date.Month").Int()
 	day := gjson.Get(date, "date.Day").Int()
-	hour := gjson.Get(date, "date.Hour").Int()
-	minute := gjson.Get(date, "date.Minute").Int()
 
 	location, err := time.LoadLocation("Asia/Tokyo")
 	if err != nil {
 		log.Println("Failed to get location of JST:", err)
 	}
 	now := time.Now().In(location)
-	then := time.Date(int(year), checkMonth(month), int(day), int(hour), int(minute), 59, 0, location)
+	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, location)
+	then := time.Date(int(year), checkMonth(month), int(day), 0, 0, 0, 0, location)
 	subtract := then.Sub(now)
 
 	// fmt.Println("now:", now)
 	// fmt.Println("then:", then)
 	// fmt.Println("subtract:", subtract)
 
-	if subtract > 0 {
+	if subtract >= 0 {
 		flag = true
 	}
 	return flag
