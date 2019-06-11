@@ -20,7 +20,7 @@
 <body>
     <div class="container" style="padding-top: 30px">
 
-        <form>
+        <form id="booking_form">
             <div class="form-group">
                 <label for="booking-date">Date</label>
                 <input type="text" class="datepicker form-control" id="booking-date">
@@ -35,12 +35,15 @@
             </div>
             <div class="form-group">
                 <label for="number-people">People</label>
-                <input type="text" class="form-control" id="number-people">
+                <input type="number" class="form-control" id="number-people" min="0" max="100">
+            </div>
+            <div class="form-group">
+                <label for="booking-title">Title</label>
+                <input type="text" class="form-control" id="booking-title">
             </div>
             <button type="submit" id="send" class="btn btn-primary">Submit</button>
         </form>
 
-        <div id="confirm_area"></div>
         <ul id="booking_results"></ul>
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>

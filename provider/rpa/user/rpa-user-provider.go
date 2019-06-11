@@ -64,13 +64,14 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	start := gjson.Get(sp.ArgJson, "data.date.Start").String()
 	end := gjson.Get(sp.ArgJson, "data.date.End").String()
 	people := gjson.Get(sp.ArgJson, "data.date.People").String()
+	title := gjson.Get(sp.ArgJson, "data.date.Title").String()
 
 	if people == "" {
 		people = "0"
 	}
 
 	if flag == "true" {
-		date := year + "/" + month + "/" + day + " " + start + "~" + end + " with " + people + " people"
+		date := year + "/" + month + "/" + day + " " + start + "~" + end + " " + title + " (" + people + " people)"
 		confirmBooking(cid, date, clt, sp)
 	} else {
 		// emit to client
