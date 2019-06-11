@@ -6,24 +6,21 @@ $(() => {
         var list = `<li>${data}</li>`;
         booking_results.append(list);
 
-        $("#confirm_message").remove();
+        $("#confirm_area").remove();
 
-        $("#booking-date").val("");
-        $("#booking-start").val("");
-        $("#booking-end").val("");
-        $("#number-people").val("");
-
-        $("#booking-date").prop("disabled", false);
-        $("#booking-start").prop("disabled", false);
-        $("#booking-end").prop("disabled", false);
-        $("#number-people").prop("disabled", false);
-        $("#send").prop("disabled", false);
+        resetValues();
+        changeAllProps();
     });
 
     socket.on("check_booking", (msg) => {
-        var confirm_area = $("#confirm_area");
-        var contents = `<div id="confirm_message" class="row"><div class="col-sm-6"><p>${msg}</p></div><div class="col-sm-6"><button type="button" id="yes" class="btn btn-primary">YES</button><button type="button" id="stop" class="btn btn-secondary">STOP</button></div></div>`;
-        confirm_area.append(contents);
+        var booking_form = $("#booking_form");
+        var contents = `
+            <div id="confirm_area">
+                <label>${msg}</label>
+                <button type="button" id="yes" class="btn btn-primary">YES</button>
+                <button type="button" id="stop" class="btn btn-secondary">STOP</button>
+            </div>`;
+        booking_form.append(contents);
     });
 
     $(document).on("click", "#yes", () => {
@@ -35,24 +32,16 @@ $(() => {
 
     $("#send").on("click", (e) => {
         e.preventDefault();
+        changeAllProps();
 
         var date = $("#booking-date").val();
         var start = $("#booking-start").val();
         var end = $("#booking-end").val();
         var people = $("#number-people").val();
-
-        $("#booking-date").prop("disabled", true);
-        $("#booking-start").prop("disabled", true);
-        $("#booking-end").prop("disabled", true);
-        $("#number-people").prop("disabled", true);
-        $("#send").prop("disabled", true);
+        var title = $("#booking-title").val();
 
         if (date == "" || start == "" || end == "") {
-            $("#booking-date").prop("disabled", false);
-            $("#booking-start").prop("disabled", false);
-            $("#booking-end").prop("disabled", false);
-            $("#number-people").prop("disabled", false);
-            $("#send").prop("disabled", false);
+            changeAllProps();
             console.log("You must set the date and time.")
         } else {
             var splits = date.split('/');
@@ -67,6 +56,7 @@ $(() => {
                 Start: start,
                 End: end,
                 People: people,
+                Title: title,
             });
         }
     });
@@ -80,3 +70,31 @@ $(() => {
     });
 
 });
+
+const changeAllProps = () => {
+    var flag = $("#send").prop("disabled");
+
+    if (flag) {
+        $("#booking-date").prop("disabled", false);
+        $("#booking-start").prop("disabled", false);
+        $("#booking-end").prop("disabled", false);
+        $("#number-people").prop("disabled", false);
+        $("#booking-title").prop("disabled", false);
+        $("#send").prop("disabled", false);
+    } else {
+        $("#booking-date").prop("disabled", true);
+        $("#booking-start").prop("disabled", true);
+        $("#booking-end").prop("disabled", true);
+        $("#number-people").prop("disabled", true);
+        $("#booking-title").prop("disabled", true);
+        $("#send").prop("disabled", true);
+    }
+}
+
+const resetValues = () => {
+    $("#booking-date").val("");
+    $("#booking-start").val("");
+    $("#booking-end").val("");
+    $("#number-people").val("");
+    $("#booking-title").val("");
+}
