@@ -66,8 +66,12 @@ func login(page *agouti.Page, user string) {
 	if _, err := submitBtn.Count(); err != nil {
 		fmt.Println("Failed to login:", err)
 	}
-	submitBtn.Click()
-	fmt.Println("Login complete:", users[userIndex])
+	// click
+	if err := submitBtn.Click(); err != nil {
+		fmt.Println("Faild to click:", err)
+	} else {
+		fmt.Println("Login complete:", users[userIndex])
+	}
 }
 
 func booking(page *agouti.Page, date string, start string, end string) {
