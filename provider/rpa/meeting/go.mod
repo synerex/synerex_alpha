@@ -4,6 +4,7 @@ require (
 	github.com/synerex/synerex_alpha/api v0.0.0
 	github.com/synerex/synerex_alpha/api/fleet v0.0.0
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
+	github.com/synerex/synerex_alpha/provider/rpa/selenium v0.0.0-00010101000000-000000000000
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
 	github.com/tidwall/gjson v1.2.1
 	github.com/tidwall/match v1.0.1 // indirect
@@ -21,5 +22,6 @@ replace (
 	github.com/synerex/synerex_alpha/api/rideshare => ../../../api/rideshare
 	github.com/synerex/synerex_alpha/api/routing => ../../../api/routing
 	github.com/synerex/synerex_alpha/nodeapi => ../../../nodeapi
+	github.com/synerex/synerex_alpha/provider/rpa/selenium => ../selenium
 	github.com/synerex/synerex_alpha/sxutil => ../../../sxutil
 )

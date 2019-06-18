@@ -1,4 +1,4 @@
-package main
+package selenium
 
 import (
 	"errors"
@@ -245,7 +245,7 @@ func booking(page *agouti.Page, date string, start string, end string) {
 	fmt.Println("Booking complete:", years[yearIndex], months[monthIndex], days[dayIndex], startHours[startHourIndex], startMinutes[startMinuteIndex], endHours[endHourIndex], endMinutes[endMinuteIndex])
 }
 
-func main() {
+func Execute(year string, month string, day string, week string, start string, end string, people string, title string) bool {
 	// set of Chrome
 	driver := agouti.ChromeDriver(agouti.Browser("chrome"))
 	if err := driver.Start(); err != nil {
@@ -316,10 +316,12 @@ func main() {
 	}
 
 	// make a reservation
-	date := "2019年/4月/23(火)"
-	start := "10:00"
-	end := "11:30"
+	// date := "2019年/4月/23(火)"
+	// start := "10:00"
+	// end := "11:30"
+	date := year + "年/" + month + "月/" + day + week
 	booking(page, date, start, end)
 
 	time.Sleep(3 * time.Second)
+	return true
 }

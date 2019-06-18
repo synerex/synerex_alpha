@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/synerex/synerex_alpha/provider/rpa/selenium"
+
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"github.com/tidwall/gjson"
@@ -58,31 +60,41 @@ func checkMonth(month int64) time.Month {
 	return t
 }
 
+// func isPasted(year int64, month int64, day int64) bool {
+// 	flag := false
+
+// 	location, err := time.LoadLocation("Asia/Tokyo")
+// 	if err != nil {
+// 		log.Println("Failed to get location of JST:", err)
+// 	}
+// 	now := time.Now().In(location)
+// 	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, location)
+// 	then := time.Date(int(year), checkMonth(month), int(day), 0, 0, 0, 0, location)
+// 	subtract := then.Sub(now)
+
+// 	fmt.Println("now:", now)
+// 	fmt.Println("then:", then)
+// 	fmt.Println("subtract:", subtract)
+
+// 	if subtract >= 0 {
+// 		flag = true
+// 	}
+// 	return flag
+// }
+
 func exeSelenium(date string) bool {
 	fmt.Println("exeSelenium is called")
 
-	flag := false
+	year := gjson.Get(date, "date.Year").String()
+	month := gjson.Get(date, "date.Month").String()
+	day := gjson.Get(date, "date.Day").String()
+	week := gjson.Get(date, "date.Week").String()
+	start := gjson.Get(date, "date.Start").String()
+	end := gjson.Get(date, "date.End").String()
+	people := gjson.Get(date, "date.People").String()
+	title := gjson.Get(date, "date.Title").String()
 
-	year := gjson.Get(date, "date.Year").Int()
-	month := gjson.Get(date, "date.Month").Int()
-	day := gjson.Get(date, "date.Day").Int()
-
-	location, err := time.LoadLocation("Asia/Tokyo")
-	if err != nil {
-		log.Println("Failed to get location of JST:", err)
-	}
-	now := time.Now().In(location)
-	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, location)
-	then := time.Date(int(year), checkMonth(month), int(day), 0, 0, 0, 0, location)
-	subtract := then.Sub(now)
-
-	// fmt.Println("now:", now)
-	// fmt.Println("then:", then)
-	// fmt.Println("subtract:", subtract)
-
-	if subtract >= 0 {
-		flag = true
-	}
+	flag := selenium.Execute(year, month, day, week, start, end, people, title)
 	return flag
 }
 
