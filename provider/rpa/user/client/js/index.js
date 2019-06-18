@@ -44,7 +44,10 @@ $(() => {
             changeAllProps();
             console.log("You must set the date and time.")
         } else {
-            var splits = date.split('/');
+            var splits = date.split(' ');
+            var week = splits[1];
+
+            splits = splits[0].split('/');
             var year = splits[0];
             var month = splits[1];
             var day = splits[2];
@@ -53,6 +56,7 @@ $(() => {
                 Year: year,
                 Month: month,
                 Day: day,
+                Week: week,
                 Start: start,
                 End: end,
                 People: people,
@@ -63,7 +67,7 @@ $(() => {
 
     // pickadate.js
     $(".datepicker").pickadate({
-        format: 'yyyy/mm/dd',
+        format: 'yyyy/m/d (ddd)',
     });
     $(".timepicker").pickatime({
         format: 'H:i',

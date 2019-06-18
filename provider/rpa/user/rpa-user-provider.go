@@ -61,6 +61,7 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	year := gjson.Get(sp.ArgJson, "data.date.Year").String()
 	month := gjson.Get(sp.ArgJson, "data.date.Month").String()
 	day := gjson.Get(sp.ArgJson, "data.date.Day").String()
+	week := gjson.Get(sp.ArgJson, "data.date.Week").String()
 	start := gjson.Get(sp.ArgJson, "data.date.Start").String()
 	end := gjson.Get(sp.ArgJson, "data.date.End").String()
 	people := gjson.Get(sp.ArgJson, "data.date.People").String()
@@ -71,7 +72,7 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	}
 
 	if flag == "true" {
-		date := year + "/" + month + "/" + day + " " + start + "~" + end + " " + title + " (" + people + " people)"
+		date := year + "/" + month + "/" + day + " " + week + " " + start + "~" + end + " " + title + " (" + people + " people)"
 		confirmBooking(cid, date, clt, sp)
 	} else {
 		// emit to client
