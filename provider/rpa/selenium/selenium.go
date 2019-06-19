@@ -11,6 +11,11 @@ import (
 	"github.com/sclevine/agouti"
 )
 
+var (
+	url       = "https://onlinedemo.cybozu.info/scripts/office10/ag.cgi?"
+	loginName = "高橋 健太"
+)
+
 func getPageDOM(page *agouti.Page) *goquery.Document {
 	// get whole page
 	wholePage, err := page.HTML()
@@ -260,19 +265,67 @@ func Execute(year string, month string, day string, week string, start string, e
 	}
 
 	// sample Cybozu
-	if err := page.Navigate("https://onlinedemo.cybozu.info/scripts/office10/ag.cgi?"); err != nil {
+	if err := page.Navigate(url); err != nil {
 		fmt.Println("Failed to navigate:", err)
 	}
 
 	// login
-	login(page, "高橋 健太")
+	login(page, loginName)
 
 	// get group list
 	groupsDom := getPageDOM(page).Find("select[name='GID']").Children()
 	groups := make([]string, groupsDom.Length())
 	groupsDom.Each(func(i int, sel *goquery.Selection) {
 		groups[i] = sel.Text()
-		fmt.Println(i, groups[i])
+		// fmt.Println(i, groups[i])
+	})
+
+	// move to meeting room page
+	group := page.FindByName("GID")
+	if _, err := group.Count(); err != nil {
+		fmt.Println("Cannot find path:", err)
+	}
+	group.Select(groups[10]) // "会議室"
+
+	// make a reservation
+	// date := "2019年/4月/23(火)"
+	// start := "10:00"
+	// end := "11:30"
+	date := year + "年/" + month + "月/" + day + week
+	booking(page, date, start, end)
+
+	time.Sleep(3 * time.Second)
+	return true
+}
+
+func Schedules() map[string][]string {
+	// set of Chrome
+	driver := agouti.ChromeDriver(agouti.Browser("chrome"))
+	if err := driver.Start(); err != nil {
+		println("", err)
+		fmt.Println("Failed to start driver:", err)
+	}
+	defer driver.Stop()
+
+	page, err := driver.NewPage()
+	if err != nil {
+		fmt.Println("Failed to open new page:", err)
+	}
+
+	// sample Cybozu
+	if err := page.Navigate(url); err != nil {
+		fmt.Println("Failed to navigate:", err)
+	}
+
+	// login
+	login(page, loginName)
+
+	// get group list
+	groupsDom := getPageDOM(page).Find("select[name='GID']").Children()
+	groups := make([]string, groupsDom.Length())
+	groupsDom.Each(func(i int, sel *goquery.Selection) {
+		groups[i] = sel.Text()
+		// fmt.Println(i, groups[i])
 	})
 
 	// move to meeting room page
@@ -311,17 +364,6 @@ func Execute(year string, month string, day string, week string, start string, e
 		}
 	})
 
-	for k, v := range rooms {
-		fmt.Printf("rooms[%v]: %v\n", k, v)
-	}
-
-	// make a reservation
-	// date := "2019年/4月/23(火)"
-	// start := "10:00"
-	// end := "11:30"
-	date := year + "年/" + month + "月/" + day + week
-	booking(page, date, start, end)
-
 	time.Sleep(3 * time.Second)
-	return true
+	return rooms
 }
