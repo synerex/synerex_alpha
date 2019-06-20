@@ -79,7 +79,7 @@ func login(page *agouti.Page, user string) {
 	}
 }
 
-func booking(page *agouti.Page, date string, start string, end string) {
+func booking(page *agouti.Page, date string, start string, end string, title string) bool {
 	reserveButton := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[4]/div/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[1]/span/span/a")
 	_, err := reserveButton.Count()
 	if err != nil {
@@ -232,8 +232,33 @@ func booking(page *agouti.Page, date string, start string, end string) {
 	}
 
 	// set the title
-	title := page.FindByName("Detail")
-	title.Fill("Test Booking")
+	detail := page.FindByName("Detail")
+	if _, err := detail.Count(); err != nil {
+		fmt.Println("Failed to find path:", err)
+	}
+	detail.Fill(title)
+
+	// // get room list
+	// groupsDom := getPageDOM(page).Find("select[name='FGID']").Children()
+	// groups := make([]string, groupsDom.Length())
+	// groupsDom.Each(func(i int, sel *goquery.Selection) {
+	// 	groups[i] = sel.Text()
+	// 	// fmt.Println(i, groups[i])
+	// })
+	// // select group
+	// group := page.FindByName("FGID")
+	// if _, err := group.Count(); err != nil {
+	// 	fmt.Println("Cannot find path:", err)
+	// }
+	// group.Select(groups[1]) // "会議室"
+	// // check availability
+	// availability := page.FindByXPath("//input[@value='空き時間を確認する']")
+	// if _, err := availability.Count(); err != nil {
+	// 	fmt.Println("Failed to find path:", err)
+	// }
+	// if err := availability.Click(); err != nil {
+	// 	fmt.Println("Faild to click:", err)
+	// }
 
 	theRoomY := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[4]/div/form/div[2]/table/tbody/tr/td/table/tbody/tr[2]/td/div/div[1]/div/table/tbody/tr[7]/td/table/tbody/tr[1]/td[3]/select/option[2]")
 	theRoomY.Click()
@@ -248,13 +273,14 @@ func booking(page *agouti.Page, date string, start string, end string) {
 	}
 	entryButton.Click()
 	fmt.Println("Booking complete:", years[yearIndex], months[monthIndex], days[dayIndex], startHours[startHourIndex], startMinutes[startMinuteIndex], endHours[endHourIndex], endMinutes[endMinuteIndex])
+
+	return true
 }
 
 func Execute(year string, month string, day string, week string, start string, end string, people string, title string) bool {
 	// set of Chrome
 	driver := agouti.ChromeDriver(agouti.Browser("chrome"))
 	if err := driver.Start(); err != nil {
-		println("", err)
 		fmt.Println("Failed to start driver:", err)
 	}
 	defer driver.Stop()
@@ -285,24 +311,32 @@ func Execute(year string, month string, day string, week string, start string, e
 	if _, err := group.Count(); err != nil {
 		fmt.Println("Cannot find path:", err)
 	}
-	group.Select(groups[10]) // "会議室"
+	group.Select(groups[9]) // "(全施設)"
 
 	// make a reservation
 	// date := "2019年/4月/23(火)"
 	// start := "10:00"
 	// end := "11:30"
 	date := year + "年/" + month + "月/" + day + week
-	booking(page, date, start, end)
+	flag := booking(page, date, start, end, title)
 
 	time.Sleep(3 * time.Second)
-	return true
+	return flag
 }
 
-func Schedules() map[string][]string {
+func Schedules(year string, month string, day string, start string, end string, people string) bool {
 	// set of Chrome
 	driver := agouti.ChromeDriver(agouti.Browser("chrome"))
+
+	// Headless Chrome Driver
+	// driver := agouti.ChromeDriver(
+	// 	agouti.ChromeOptions("args", []string{
+	// 		"--headless",
+	// 	}),
+	// 	agouti.Debug,
+	// )
+
 	if err := driver.Start(); err != nil {
-		println("", err)
 		fmt.Println("Failed to start driver:", err)
 	}
 	defer driver.Stop()
@@ -364,6 +398,10 @@ func Schedules() map[string][]string {
 		}
 	})
 
+	for k, v := range rooms {
+		fmt.Printf("rooms[%v]: %v\n", k, v)
+	}
+
 	time.Sleep(3 * time.Second)
-	return rooms
+	return true
 }
