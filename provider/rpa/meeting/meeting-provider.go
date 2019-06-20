@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -29,62 +30,65 @@ func init() {
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 }
 
-func checkMonth(month int64) time.Month {
+func checkMonth(month string) time.Month {
 	var t time.Month
 	switch month {
-	case 1:
+	case "1":
 		t = time.January
-	case 2:
+	case "2":
 		t = time.February
-	case 3:
+	case "3":
 		t = time.March
-	case 4:
+	case "4":
 		t = time.April
-	case 5:
+	case "5":
 		t = time.May
-	case 6:
+	case "6":
 		t = time.June
-	case 7:
+	case "7":
 		t = time.July
-	case 8:
+	case "8":
 		t = time.August
-	case 9:
+	case "9":
 		t = time.September
-	case 10:
+	case "10":
 		t = time.October
-	case 11:
+	case "11":
 		t = time.November
-	case 12:
+	case "12":
 		t = time.December
 	}
 	return t
 }
 
-// func isPasted(year int64, month int64, day int64) bool {
-// 	flag := false
+func isPasted(year string, month string, day string) bool {
+	flag := false
+	y, _ := strconv.Atoi(year)
+	m := checkMonth(month)
+	d, _ := strconv.Atoi(day)
 
-// 	location, err := time.LoadLocation("Asia/Tokyo")
-// 	if err != nil {
-// 		log.Println("Failed to get location of JST:", err)
-// 	}
-// 	now := time.Now().In(location)
-// 	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, location)
-// 	then := time.Date(int(year), checkMonth(month), int(day), 0, 0, 0, 0, location)
-// 	subtract := then.Sub(now)
+	location, err := time.LoadLocation("Asia/Tokyo")
+	if err != nil {
+		log.Println("Failed to get location of JST:", err)
+	}
 
-// 	fmt.Println("now:", now)
-// 	fmt.Println("then:", then)
-// 	fmt.Println("subtract:", subtract)
+	now := time.Now().In(location)
+	now = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, location)
+	then := time.Date(y, m, d, 0, 0, 0, 0, location)
+	subtract := then.Sub(now)
 
-// 	if subtract >= 0 {
-// 		flag = true
-// 	}
-// 	return flag
-// }
+	// fmt.Println("now:", now)
+	// fmt.Println("then:", then)
+	// fmt.Println("subtract:", subtract)
+
+	if subtract >= 0 {
+		flag = true
+	}
+	return flag
+}
 
 func exeSelenium(date string) bool {
-	fmt.Println("exeSelenium is called")
-
+	// parse by gjson
 	year := gjson.Get(date, "date.Year").String()
 	month := gjson.Get(date, "date.Month").String()
 	day := gjson.Get(date, "date.Day").String()
@@ -94,7 +98,15 @@ func exeSelenium(date string) bool {
 	people := gjson.Get(date, "date.People").String()
 	title := gjson.Get(date, "date.Title").String()
 
-	flag := selenium.Execute(year, month, day, week, start, end, people, title)
+	flag := isPasted(year, month, day)
+	if flag == true {
+		selenium.Execute(year, month, day, week, start, end, people, title)
+
+		// // check schedules
+		// if s := selenium.Schedules(year, month, day, start, end, people); s == true {
+		// 	selenium.Execute(year, month, day, week, start, end, people, title)
+		// }
+	}
 	return flag
 }
 
