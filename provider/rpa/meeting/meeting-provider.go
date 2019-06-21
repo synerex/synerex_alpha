@@ -25,6 +25,19 @@ var (
 	mu         sync.RWMutex
 )
 
+type BookingJson struct {
+	cid    string
+	status string
+	year   string
+	month  string
+	day    string
+	week   string
+	start  string
+	end    string
+	people string
+	title  string
+}
+
 func init() {
 	idList = make([]uint64, 0)
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
@@ -101,17 +114,43 @@ func exeSelenium(date string) bool {
 	flag := isPasted(year, month, day)
 	if flag == true {
 		selenium.Execute(year, month, day, week, start, end, people, title)
-
-		// // check schedules
-		// if s := selenium.Schedules(year, month, day, start, end, people); s == true {
-		// 	selenium.Execute(year, month, day, week, start, end, people, title)
-		// }
 	}
 	return flag
 }
 
+func parseByGjson(json string) BookingJson {
+	cid := gjson.Get(json, "cid").String()
+	status := gjson.Get(json, "status").String()
+	year := gjson.Get(json, "date.Year").String()
+	month := gjson.Get(json, "date.Month").String()
+	day := gjson.Get(json, "date.Day").String()
+	week := gjson.Get(json, "date.Week").String()
+	start := gjson.Get(json, "date.Start").String()
+	end := gjson.Get(json, "date.End").String()
+	people := gjson.Get(json, "date.People").String()
+	title := gjson.Get(json, "date.Title").String()
+
+	bj := BookingJson{
+		cid:    cid,
+		status: status,
+		year:   year,
+		month:  month,
+		day:    day,
+		week:   week,
+		start:  start,
+		end:    end,
+		people: people,
+		title:  title,
+	}
+
+	fmt.Println("parseByGjson is called:", bj)
+	return bj
+}
+
 func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	log.Println("Got Meeting demand callback")
+
+	bj := parseByGjson(dm.ArgJson)
 
 	if dm.TargetId != 0 { // selected
 
@@ -120,34 +159,104 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 	} else { // not selected
 
-		if flag := exeSelenium(dm.ArgJson); flag == true {
-			json := `{"flag":"true","data":` + dm.ArgJson + `}`
+		switch bj.status {
+		case "checking":
+			if flag := isPasted(bj.year, bj.month, bj.day); flag == true {
+				if flag := selenium.Schedules(bj.year, bj.month, bj.day, bj.start, bj.end, bj.people); flag == true {
+					// bj.status = "OK"
+					// b, err := json.Marshal(&bj)
+					// if err != nil {
+					// 	fmt.Println("Failed to json marshal:", err)
+					// }
+					json := `{"flag":"OK","data":` + dm.ArgJson + `}`
+					sp := &sxutil.SupplyOpts{
+						Target: dm.Id,
+						Name:   "Valid schedules",
+						JSON:   json,
+					}
 
-			sp := &sxutil.SupplyOpts{
-				Target: dm.Id,
-				Name:   "Option of meeting room",
-				JSON:   json,
+					mu.Lock()
+					pid := clt.ProposeSupply(sp)
+					idList = append(idList, pid)
+					spMap[pid] = sp
+					mu.Unlock()
+				} else {
+					// bj.status = "NG"
+					// b, err := json.Marshal(&bj)
+					// if err != nil {
+					// 	fmt.Println("Failed to json marshal:", err)
+					// }
+					json := `{"flag":"NG","data":` + dm.ArgJson + `}`
+					sp := &sxutil.SupplyOpts{
+						Target: dm.Id,
+						Name:   "Invalid schedules",
+						JSON:   json,
+					}
+
+					mu.Lock()
+					pid := clt.ProposeSupply(sp)
+					idList = append(idList, pid)
+					spMap[pid] = sp
+					mu.Unlock()
+				}
+			} else {
+				// bj.status = "NG"
+				// b, err := json.Marshal(&bj)
+				// if err != nil {
+				// 	fmt.Println("Failed to json marshal:", err)
+				// }
+				json := `{"flag":"NG","data":` + dm.ArgJson + `}`
+				sp := &sxutil.SupplyOpts{
+					Target: dm.Id,
+					Name:   "Invalid schedules",
+					JSON:   json,
+				}
+
+				mu.Lock()
+				pid := clt.ProposeSupply(sp)
+				idList = append(idList, pid)
+				spMap[pid] = sp
+				mu.Unlock()
 			}
+		case "confirming":
+			if flag := selenium.Execute(bj.year, bj.month, bj.day, bj.week, bj.start, bj.end, bj.people, bj.title); flag == true {
+				// bj.status = "success"
+				// b, err := json.Marshal(&bj)
+				// if err != nil {
+				// 	fmt.Println("Failed to json marshal:", err)
+				// }
+				json := `{"flag":"SUCCESS","data":` + dm.ArgJson + `}`
+				sp := &sxutil.SupplyOpts{
+					Target: dm.Id,
+					Name:   "Succeeded selenium",
+					JSON:   json,
+				}
 
-			mu.Lock()
-			pid := clt.ProposeSupply(sp)
-			idList = append(idList, pid)
-			spMap[pid] = sp
-			mu.Unlock()
-		} else {
-			json := `{"flag":"false","data":` + dm.ArgJson + `}`
+				mu.Lock()
+				pid := clt.ProposeSupply(sp)
+				idList = append(idList, pid)
+				spMap[pid] = sp
+				mu.Unlock()
+			} else {
+				// b, err := json.Marshal(&bj)
+				// if err != nil {
+				// 	fmt.Println("Failed to json marshal:", err)
+				// }
+				json := `{"flag":"FAILED","data":` + dm.ArgJson + `}`
+				sp := &sxutil.SupplyOpts{
+					Target: dm.Id,
+					Name:   "Failed selenium",
+					JSON:   json,
+				}
 
-			sp := &sxutil.SupplyOpts{
-				Target: dm.Id,
-				Name:   "Invalid booking",
-				JSON:   json,
+				mu.Lock()
+				pid := clt.ProposeSupply(sp)
+				idList = append(idList, pid)
+				spMap[pid] = sp
+				mu.Unlock()
 			}
-
-			mu.Lock()
-			pid := clt.ProposeSupply(sp)
-			idList = append(idList, pid)
-			spMap[pid] = sp
-			mu.Unlock()
+		default:
+			fmt.Printf("Switch case of default(%s) is called\n", bj.status)
 		}
 
 	}

@@ -26,61 +26,94 @@ var (
 	server     = gosocketio.NewServer()
 )
 
+type BookingJson struct {
+	cid    string
+	status string
+	year   string
+	month  string
+	day    string
+	week   string
+	start  string
+	end    string
+	people string
+	title  string
+}
+
 func init() {
 	spMap = make(map[uint64]*api.Supply)
 }
 
-func confirmBooking(cid string, date string, clt *sxutil.SMServiceClient, sp *api.Supply) {
-	var msg string
+func parseByGjson(json string) BookingJson {
+	cid := gjson.Get(json, "data.cid").String()
+	status := gjson.Get(json, "flag").String()
+	year := gjson.Get(json, "data.date.Year").String()
+	month := gjson.Get(json, "data.date.Month").String()
+	day := gjson.Get(json, "data.date.Day").String()
+	week := gjson.Get(json, "data.date.Week").String()
+	start := gjson.Get(json, "data.date.Start").String()
+	end := gjson.Get(json, "data.date.End").String()
+	people := gjson.Get(json, "data.date.People").String()
+	title := gjson.Get(json, "data.date.Title").String()
 
+	bj := BookingJson{
+		cid:    cid,
+		status: status,
+		year:   year,
+		month:  month,
+		day:    day,
+		week:   week,
+		start:  start,
+		end:    end,
+		people: people,
+		title:  title,
+	}
+
+	fmt.Println("parseByGjson is called:", bj)
+	return bj
+}
+
+func confirmBooking(bj BookingJson, clt *sxutil.SMServiceClient, sp *api.Supply) {
 	// emit to client
-	channel, err := server.GetChannel(cid)
+	channel, err := server.GetChannel(bj.cid)
 	if err != nil {
 		fmt.Println("Failed to get socket channel:", err)
 	}
-	msg = "Are you sure to booking? " + date
-	channel.Emit("check_booking", msg)
+	channel.Emit("check_booking", "Are you sure to booking?")
+	fmt.Printf("check_booking: Are you sure to booking? %v\n", bj)
 
 	server.On("confirm_booking", func(c *gosocketio.Channel, data interface{}) {
+		msg := ""
 		if data == "yes" {
 			clt.SelectSupply(sp)
-			msg = "Success: " + date
+			msg = "Success: " + bj.year + "/" + bj.month + "/" + bj.day + " " + bj.start + "~" + bj.end + " " + bj.title + " (" + bj.people + " 人)"
 		} else {
-			msg = "Stop: " + date
+			msg = "Stop: " + bj.year + "/" + bj.month + "/" + bj.day + " " + bj.start + "~" + bj.end + " " + bj.title + " (" + bj.people + " 人)"
 		}
 		channel.Emit("server_to_client", msg)
 	})
 }
 
 func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
-	log.Println("Got RPA User supply callback")
+	log.Println("Got RPA User supply callback and sp.ArgJson:", sp.ArgJson)
 
-	// parse JSON by gjson
-	flag := gjson.Get(sp.ArgJson, "flag").String()
-	cid := gjson.Get(sp.ArgJson, "data.cid").String()
-	year := gjson.Get(sp.ArgJson, "data.date.Year").String()
-	month := gjson.Get(sp.ArgJson, "data.date.Month").String()
-	day := gjson.Get(sp.ArgJson, "data.date.Day").String()
-	week := gjson.Get(sp.ArgJson, "data.date.Week").String()
-	start := gjson.Get(sp.ArgJson, "data.date.Start").String()
-	end := gjson.Get(sp.ArgJson, "data.date.End").String()
-	people := gjson.Get(sp.ArgJson, "data.date.People").String()
-	title := gjson.Get(sp.ArgJson, "data.date.Title").String()
+	bj := parseByGjson(sp.ArgJson)
 
-	if people == "" {
-		people = "0"
+	if bj.people == "" {
+		bj.people = "0"
 	}
 
-	if flag == "true" {
-		date := year + "/" + month + "/" + day + " " + week + " " + start + "~" + end + " " + title + " (" + people + " people)"
-		confirmBooking(cid, date, clt, sp)
-	} else {
+	switch bj.status {
+	case "OK":
+		confirmBooking(bj, clt, sp)
+	case "NG":
 		// emit to client
-		channel, err := server.GetChannel(cid)
+		channel, err := server.GetChannel(bj.cid)
 		if err != nil {
 			fmt.Println("Failed to get socket channel:", err)
 		}
-		channel.Emit("server_to_client", "Invalid date")
+		channel.Emit("server_to_client", "Invalid schedules")
+	default:
+		fmt.Printf("Switch case of default(%s) is called\n", bj.status)
 	}
 }
 
@@ -89,23 +122,23 @@ func subscribeSupply(client *sxutil.SMServiceClient) {
 	ctx := context.Background() // should check proper context
 	client.SubscribeSupply(ctx, supplyCallback)
 	// comes here if channel closed
-	log.Printf("SMarket Server Closed?")
+	log.Println("SMarket Server Closed?")
 }
 
 func runSocketIOServer(sclient *sxutil.SMServiceClient) {
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
-		log.Printf("Connected %s", c.Id())
+		log.Printf("Connected %s\n", c.Id())
 	})
 
 	server.On("client_to_server", func(c *gosocketio.Channel, data interface{}) {
 		log.Println("client_to_server:", data)
 		byte, _ := json.Marshal(data)
-		json := `{"cid":"` + c.Id() + `","date":` + string(byte) + `}`
+		json := `{"cid":"` + c.Id() + `","status":"checking","date":` + string(byte) + `}`
 		sendDemand(sclient, "Booking meeting room", json)
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
-		log.Printf("Disconnected %s", c.Id())
+		log.Printf("Disconnected %s\n", c.Id())
 	})
 
 	serveMux := http.NewServeMux()
