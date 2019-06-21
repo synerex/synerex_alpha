@@ -24,6 +24,7 @@ var (
 	mu         sync.RWMutex
 	port       = flag.Int("port", 8888, "RPA User Provider Listening Port")
 	server     = gosocketio.NewServer()
+	bj         *BookingJson
 )
 
 type BookingJson struct {
@@ -43,7 +44,7 @@ func init() {
 	spMap = make(map[uint64]*api.Supply)
 }
 
-func parseByGjson(json string) BookingJson {
+func parseByGjson(json string) *BookingJson {
 	cid := gjson.Get(json, "data.cid").String()
 	status := gjson.Get(json, "flag").String()
 	year := gjson.Get(json, "data.date.Year").String()
@@ -55,7 +56,7 @@ func parseByGjson(json string) BookingJson {
 	people := gjson.Get(json, "data.date.People").String()
 	title := gjson.Get(json, "data.date.Title").String()
 
-	bj := BookingJson{
+	bj := &BookingJson{
 		cid:    cid,
 		status: status,
 		year:   year,
@@ -72,14 +73,13 @@ func parseByGjson(json string) BookingJson {
 	return bj
 }
 
-func confirmBooking(bj BookingJson, clt *sxutil.SMServiceClient, sp *api.Supply) {
+func confirmBooking(bj *BookingJson, clt *sxutil.SMServiceClient, sp *api.Supply) {
 	// emit to client
 	channel, err := server.GetChannel(bj.cid)
 	if err != nil {
 		fmt.Println("Failed to get socket channel:", err)
 	}
-	channel.Emit("check_booking", "Are you sure to booking?")
-	fmt.Printf("check_booking: Are you sure to booking? %v\n", bj)
+	channel.Emit("check_booking", "この内容で予約可能です。予約しますか？")
 
 	server.On("confirm_booking", func(c *gosocketio.Channel, data interface{}) {
 		msg := ""
@@ -96,7 +96,7 @@ func confirmBooking(bj BookingJson, clt *sxutil.SMServiceClient, sp *api.Supply)
 func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	log.Println("Got RPA User supply callback and sp.ArgJson:", sp.ArgJson)
 
-	bj := parseByGjson(sp.ArgJson)
+	bj = parseByGjson(sp.ArgJson)
 
 	if bj.people == "" {
 		bj.people = "0"

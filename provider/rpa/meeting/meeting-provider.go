@@ -23,6 +23,7 @@ var (
 	idList     []uint64
 	spMap      map[uint64]*sxutil.SupplyOpts
 	mu         sync.RWMutex
+	bj         *BookingJson
 )
 
 type BookingJson struct {
@@ -100,25 +101,7 @@ func isPasted(year string, month string, day string) bool {
 	return flag
 }
 
-func exeSelenium(date string) bool {
-	// parse by gjson
-	year := gjson.Get(date, "date.Year").String()
-	month := gjson.Get(date, "date.Month").String()
-	day := gjson.Get(date, "date.Day").String()
-	week := gjson.Get(date, "date.Week").String()
-	start := gjson.Get(date, "date.Start").String()
-	end := gjson.Get(date, "date.End").String()
-	people := gjson.Get(date, "date.People").String()
-	title := gjson.Get(date, "date.Title").String()
-
-	flag := isPasted(year, month, day)
-	if flag == true {
-		selenium.Execute(year, month, day, week, start, end, people, title)
-	}
-	return flag
-}
-
-func parseByGjson(json string) BookingJson {
+func parseByGjson(json string) *BookingJson {
 	cid := gjson.Get(json, "cid").String()
 	status := gjson.Get(json, "status").String()
 	year := gjson.Get(json, "date.Year").String()
@@ -130,7 +113,7 @@ func parseByGjson(json string) BookingJson {
 	people := gjson.Get(json, "date.People").String()
 	title := gjson.Get(json, "date.Title").String()
 
-	bj := BookingJson{
+	bj := &BookingJson{
 		cid:    cid,
 		status: status,
 		year:   year,
@@ -149,10 +132,18 @@ func parseByGjson(json string) BookingJson {
 
 func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	log.Println("Got Meeting demand callback")
-
-	bj := parseByGjson(dm.ArgJson)
+	fmt.Println(dm.ArgJson)
+	bj = parseByGjson(dm.ArgJson)
 
 	if dm.TargetId != 0 { // selected
+
+		// ---------- This Error MUST fix ----------
+		// if flag := selenium.Execute(bj.year, bj.month, bj.day, bj.week, bj.start, bj.end, bj.people, bj.title); flag == true {
+		// 	log.Println("Select the room!")
+		// 	clt.Confirm(sxutil.IDType(dm.Id))
+		// } else {
+		// 	log.Println("Failed to execute selenium")
+		// }
 
 		log.Println("Select the room!")
 		clt.Confirm(sxutil.IDType(dm.Id))
@@ -209,43 +200,6 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 				sp := &sxutil.SupplyOpts{
 					Target: dm.Id,
 					Name:   "Invalid schedules",
-					JSON:   json,
-				}
-
-				mu.Lock()
-				pid := clt.ProposeSupply(sp)
-				idList = append(idList, pid)
-				spMap[pid] = sp
-				mu.Unlock()
-			}
-		case "confirming":
-			if flag := selenium.Execute(bj.year, bj.month, bj.day, bj.week, bj.start, bj.end, bj.people, bj.title); flag == true {
-				// bj.status = "success"
-				// b, err := json.Marshal(&bj)
-				// if err != nil {
-				// 	fmt.Println("Failed to json marshal:", err)
-				// }
-				json := `{"flag":"SUCCESS","data":` + dm.ArgJson + `}`
-				sp := &sxutil.SupplyOpts{
-					Target: dm.Id,
-					Name:   "Succeeded selenium",
-					JSON:   json,
-				}
-
-				mu.Lock()
-				pid := clt.ProposeSupply(sp)
-				idList = append(idList, pid)
-				spMap[pid] = sp
-				mu.Unlock()
-			} else {
-				// b, err := json.Marshal(&bj)
-				// if err != nil {
-				// 	fmt.Println("Failed to json marshal:", err)
-				// }
-				json := `{"flag":"FAILED","data":` + dm.ArgJson + `}`
-				sp := &sxutil.SupplyOpts{
-					Target: dm.Id,
-					Name:   "Failed selenium",
 					JSON:   json,
 				}
 
