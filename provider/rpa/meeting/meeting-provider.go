@@ -133,7 +133,6 @@ func parseByGjson(json string) *BookingJson {
 func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	log.Println("Got Meeting demand callback")
 	fmt.Println(dm.ArgJson)
-	bj = parseByGjson(dm.ArgJson)
 
 	if dm.TargetId != 0 { // selected
 
@@ -149,6 +148,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		clt.Confirm(sxutil.IDType(dm.Id))
 
 	} else { // not selected
+		bj = parseByGjson(dm.ArgJson)
 
 		switch bj.status {
 		case "checking":
