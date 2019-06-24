@@ -23,7 +23,9 @@ $(() => {
         booking_form.append(contents);
     });
 
-    $(document).on("click", "#yes", () => {
+    $(document).on("click", "#yes", (e) => {
+        $(e.target).prop("disabled", true);
+        $("button#stop").prop("disabled", true);
         socket.emit("confirm_booking", "yes");
     });
     $(document).on("click", "#stop", () => {
