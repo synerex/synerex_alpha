@@ -4,21 +4,15 @@ package api.meeting;
 
 option go_package="github.com/synerex/synerex_alpha/api/rpa";
 
-import "google/protobuf/timestamp.proto";
-
 message MeetingService {
-    message Room {
-        int32 room_id = 1;
-        string name = 2;
-        int32 capacity = 3;
-    }
-    fixed64 provider_id = 1;
-    repeated Room rooms = 2;
-}
-
-message Booking {
-    fixed64 booking_id = 1;
-    google.protobuf.Timestamp date = 2;
-    google.protobuf.Timestamp start = 3;
-    google.protobuf.Timestamp end = 4;
+    string cid = 1;
+    string status = 2;
+    string year = 3;
+    string month = 4;
+    string day = 5;
+    string week = 6;
+    string start = 7;
+    string end = 8;
+    string people = 9;
+    string title = 10;
 }
