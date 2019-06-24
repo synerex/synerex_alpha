@@ -79,11 +79,12 @@ func login(page *agouti.Page, user string) {
 	}
 }
 
-func booking(page *agouti.Page, date string, start string, end string, title string) bool {
+func booking(page *agouti.Page, date string, start string, end string, title string) error {
 	reserveButton := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[4]/div/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[1]/span/span/a")
 	_, err := reserveButton.Count()
 	if err != nil {
 		fmt.Println("Cannot find path:", err)
+		return err
 	}
 	reserveButton.Click()
 
@@ -137,14 +138,17 @@ func booking(page *agouti.Page, date string, start string, end string, title str
 	yearIndex, err := searchIndex(years, dateSplit[0])
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
 	monthIndex, err := searchIndex(months, dateSplit[1])
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
 	dayIndex, err := searchIndex(days, dateSplit[2])
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
 
 	startSplit := strings.Split(start, ":")
@@ -152,89 +156,108 @@ func booking(page *agouti.Page, date string, start string, end string, title str
 	startHourIndex, err := searchIndex(startHours, startSplit[0]+"時")
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
 	startMinuteIndex, err := searchIndex(startMinutes, startSplit[1]+"分")
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
 	endHourIndex, err := searchIndex(endHours, endSplit[0]+"時")
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
 	endMinuteIndex, err := searchIndex(endMinutes, endSplit[1]+"分")
 	if err != nil {
 		fmt.Println(err)
+		return err
 	}
 
 	yearX := page.FindByName("SetDate.Year")
 	_, err = yearX.Count()
 	if err != nil {
 		fmt.Println("Cannot find path:", err)
+		return err
 	}
 	monthX := page.FindByName("SetDate.Month")
 	_, err = monthX.Count()
 	if err != nil {
 		fmt.Println("Cannot find path:", err)
+		return err
 	}
 	dayX := page.FindByName("SetDate.Day")
 	_, err = dayX.Count()
 	if err != nil {
 		fmt.Println("Cannot find path:", err)
+		return err
 	}
 	startHourX := page.FindByName("SetTime.Hour")
 	_, err = startHourX.Count()
 	if err != nil {
 		fmt.Println("Cannot find path:", err)
+		return err
 	}
 	startMinuteX := page.FindByName("SetTime.Minute")
 	_, err = startMinuteX.Count()
 	if err != nil {
 		fmt.Println("Cannot find path:", err)
+		return err
 	}
 	endHourX := page.FindByName("EndTime.Hour")
 	_, err = endHourX.Count()
 	if err != nil {
 		fmt.Println("Cannot find path:", err)
+		return err
 	}
 	endMinuteX := page.FindByName("EndTime.Minute")
 	_, err = endMinuteX.Count()
 	if err != nil {
 		fmt.Println("Cannot find path:", err)
+		return err
 	}
 
 	err = yearX.Select(years[yearIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
+		return err
 	}
 	err = monthX.Select(months[monthIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
+		return err
 	}
 	err = dayX.Select(days[dayIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
+		return err
 	}
 	err = startHourX.Select(startHours[startHourIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
+		return err
 	}
 	err = startMinuteX.Select(startMinutes[startMinuteIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
+		return err
 	}
 	err = endHourX.Select(endHours[endHourIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
+		return err
 	}
 	err = endMinuteX.Select(endMinutes[endMinuteIndex])
 	if err != nil {
 		fmt.Println("Select Error:", err)
+		return err
 	}
 
 	// set the title
 	detail := page.FindByName("Detail")
 	if _, err := detail.Count(); err != nil {
 		fmt.Println("Failed to find path:", err)
+		return err
 	}
 	detail.Fill(title)
 
@@ -270,14 +293,15 @@ func booking(page *agouti.Page, date string, start string, end string, title str
 	_, err = entryButton.Count()
 	if err != nil {
 		println("Login Error:", err)
+		return err
 	}
 	entryButton.Click()
 	fmt.Println("Booking complete:", years[yearIndex], months[monthIndex], days[dayIndex], startHours[startHourIndex], startMinutes[startMinuteIndex], endHours[endHourIndex], endMinutes[endMinuteIndex])
 
-	return true
+	return nil
 }
 
-func Execute(year string, month string, day string, week string, start string, end string, people string, title string) bool {
+func Execute(year string, month string, day string, week string, start string, end string, people string, title string) error {
 	// set of Chrome
 	driver := agouti.ChromeDriver(agouti.Browser("chrome"))
 	if err := driver.Start(); err != nil {
@@ -318,13 +342,15 @@ func Execute(year string, month string, day string, week string, start string, e
 	// start := "10:00"
 	// end := "11:30"
 	date := year + "年/" + month + "月/" + day + week
-	flag := booking(page, date, start, end, title)
+	if err := booking(page, date, start, end, title); err != nil {
+		return err
+	}
 
 	time.Sleep(3 * time.Second)
-	return flag
+	return nil
 }
 
-func Schedules(year string, month string, day string, start string, end string, people string) bool {
+func Schedules(year string, month string, day string, start string, end string, people string) error {
 	// set of Chrome
 	driver := agouti.ChromeDriver(agouti.Browser("chrome"))
 
@@ -403,5 +429,5 @@ func Schedules(year string, month string, day string, start string, end string, 
 	}
 
 	time.Sleep(3 * time.Second)
-	return true
+	return nil
 }
