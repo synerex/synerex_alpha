@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/synerex/synerex_alpha/api/rpa"
+
 	gosocketio "github.com/mtfelian/golang-socketio"
 	"github.com/tidwall/gjson"
 
@@ -24,58 +26,16 @@ var (
 	mu         sync.RWMutex
 	port       = flag.Int("port", 8888, "RPA User Provider Listening Port")
 	server     = gosocketio.NewServer()
-	bj         *BookingJson
+	rm         *rpa.MeetingService
 )
-
-type BookingJson struct {
-	cid    string
-	status string
-	year   string
-	month  string
-	day    string
-	week   string
-	start  string
-	end    string
-	people string
-	title  string
-}
 
 func init() {
 	spMap = make(map[uint64]*api.Supply)
 }
 
-func parseByGjson(json string) *BookingJson {
-	cid := gjson.Get(json, "data.cid").String()
-	status := gjson.Get(json, "flag").String()
-	year := gjson.Get(json, "data.date.Year").String()
-	month := gjson.Get(json, "data.date.Month").String()
-	day := gjson.Get(json, "data.date.Day").String()
-	week := gjson.Get(json, "data.date.Week").String()
-	start := gjson.Get(json, "data.date.Start").String()
-	end := gjson.Get(json, "data.date.End").String()
-	people := gjson.Get(json, "data.date.People").String()
-	title := gjson.Get(json, "data.date.Title").String()
-
-	bj := &BookingJson{
-		cid:    cid,
-		status: status,
-		year:   year,
-		month:  month,
-		day:    day,
-		week:   week,
-		start:  start,
-		end:    end,
-		people: people,
-		title:  title,
-	}
-
-	fmt.Println("parseByGjson is called:", bj)
-	return bj
-}
-
-func confirmBooking(bj *BookingJson, clt *sxutil.SMServiceClient, sp *api.Supply) {
+func confirmBooking(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	// emit to client
-	channel, err := server.GetChannel(bj.cid)
+	channel, err := server.GetChannel(rm.Cid)
 	if err != nil {
 		fmt.Println("Failed to get socket channel:", err)
 	}
@@ -85,35 +45,60 @@ func confirmBooking(bj *BookingJson, clt *sxutil.SMServiceClient, sp *api.Supply
 		msg := ""
 		if data == "yes" {
 			clt.SelectSupply(sp)
-			msg = "Success: " + bj.year + "/" + bj.month + "/" + bj.day + " " + bj.start + "~" + bj.end + " " + bj.title + " (" + bj.people + " 人)"
+			msg = "Success: " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " (" + rm.People + " 人)"
 		} else {
-			msg = "Stop: " + bj.year + "/" + bj.month + "/" + bj.day + " " + bj.start + "~" + bj.end + " " + bj.title + " (" + bj.people + " 人)"
+			msg = "Stop: " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " (" + rm.People + " 人)"
 		}
 		channel.Emit("server_to_client", msg)
 	})
 }
 
+func setMeetingService(json string) {
+	cid := gjson.Get(json, "cid").String()
+	status := gjson.Get(json, "status").String()
+	year := gjson.Get(json, "year").String()
+	month := gjson.Get(json, "month").String()
+	day := gjson.Get(json, "day").String()
+	week := gjson.Get(json, "week").String()
+	start := gjson.Get(json, "start").String()
+	end := gjson.Get(json, "end").String()
+	people := gjson.Get(json, "people").String()
+	title := gjson.Get(json, "title").String()
+
+	rm = &rpa.MeetingService{
+		Cid:    cid,
+		Status: status,
+		Year:   year,
+		Month:  month,
+		Day:    day,
+		Week:   week,
+		Start:  start,
+		End:    end,
+		People: people,
+		Title:  title,
+	}
+}
+
 func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
-	log.Println("Got RPA User supply callback and sp.ArgJson:", sp.ArgJson)
+	log.Println("Got RPA User supply callback")
+	setMeetingService(sp.ArgJson)
 
-	bj = parseByGjson(sp.ArgJson)
-
-	if bj.people == "" {
-		bj.people = "0"
+	if rm.People == "" {
+		rm.People = "0"
 	}
 
-	switch bj.status {
+	switch rm.Status {
 	case "OK":
-		confirmBooking(bj, clt, sp)
+		confirmBooking(clt, sp)
 	case "NG":
 		// emit to client
-		channel, err := server.GetChannel(bj.cid)
+		channel, err := server.GetChannel(rm.Cid)
 		if err != nil {
 			fmt.Println("Failed to get socket channel:", err)
 		}
 		channel.Emit("server_to_client", "Invalid schedules")
 	default:
-		fmt.Printf("Switch case of default(%s) is called\n", bj.status)
+		fmt.Printf("Switch case of default(%s) is called\n", rm.Status)
 	}
 }
 
@@ -133,8 +118,31 @@ func runSocketIOServer(sclient *sxutil.SMServiceClient) {
 	server.On("client_to_server", func(c *gosocketio.Channel, data interface{}) {
 		log.Println("client_to_server:", data)
 		byte, _ := json.Marshal(data)
-		json := `{"cid":"` + c.Id() + `","status":"checking","date":` + string(byte) + `}`
-		sendDemand(sclient, "Booking meeting room", json)
+		st := string(byte)
+		year := gjson.Get(st, "Year").String()
+		month := gjson.Get(st, "Month").String()
+		day := gjson.Get(st, "Day").String()
+		week := gjson.Get(st, "Week").String()
+		start := gjson.Get(st, "Start").String()
+		end := gjson.Get(st, "End").String()
+		people := gjson.Get(st, "People").String()
+		title := gjson.Get(st, "Title").String()
+		rm := rpa.MeetingService{
+			Cid:    c.Id(),
+			Status: "checking",
+			Year:   year,
+			Month:  month,
+			Day:    day,
+			Week:   week,
+			Start:  start,
+			End:    end,
+			People: people,
+			Title:  title,
+		}
+		fmt.Println("rm in client_to_server:", rm)
+		// json := `{"cid":"` + c.Id() + `","status":"checking","date":` + st + `}`
+		b, _ := json.Marshal(rm)
+		sendDemand(sclient, "Booking meeting room", string(b))
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {

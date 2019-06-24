@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -9,11 +10,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/synerex/synerex_alpha/api/rpa"
+	"github.com/tidwall/gjson"
+
 	"github.com/synerex/synerex_alpha/provider/rpa/selenium"
 
 	"github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
-	"github.com/tidwall/gjson"
 	"google.golang.org/grpc"
 )
 
@@ -23,21 +26,8 @@ var (
 	idList     []uint64
 	spMap      map[uint64]*sxutil.SupplyOpts
 	mu         sync.RWMutex
-	bj         *BookingJson
+	rm         *rpa.MeetingService
 )
-
-type BookingJson struct {
-	cid    string
-	status string
-	year   string
-	month  string
-	day    string
-	week   string
-	start  string
-	end    string
-	people string
-	title  string
-}
 
 func init() {
 	idList = make([]uint64, 0)
@@ -101,69 +91,61 @@ func isPasted(year string, month string, day string) bool {
 	return flag
 }
 
-func parseByGjson(json string) *BookingJson {
+func setMeetingService(json string) {
 	cid := gjson.Get(json, "cid").String()
 	status := gjson.Get(json, "status").String()
-	year := gjson.Get(json, "date.Year").String()
-	month := gjson.Get(json, "date.Month").String()
-	day := gjson.Get(json, "date.Day").String()
-	week := gjson.Get(json, "date.Week").String()
-	start := gjson.Get(json, "date.Start").String()
-	end := gjson.Get(json, "date.End").String()
-	people := gjson.Get(json, "date.People").String()
-	title := gjson.Get(json, "date.Title").String()
+	year := gjson.Get(json, "year").String()
+	month := gjson.Get(json, "month").String()
+	day := gjson.Get(json, "day").String()
+	week := gjson.Get(json, "week").String()
+	start := gjson.Get(json, "start").String()
+	end := gjson.Get(json, "end").String()
+	people := gjson.Get(json, "people").String()
+	title := gjson.Get(json, "title").String()
 
-	bj := &BookingJson{
-		cid:    cid,
-		status: status,
-		year:   year,
-		month:  month,
-		day:    day,
-		week:   week,
-		start:  start,
-		end:    end,
-		people: people,
-		title:  title,
+	rm = &rpa.MeetingService{
+		Cid:    cid,
+		Status: status,
+		Year:   year,
+		Month:  month,
+		Day:    day,
+		Week:   week,
+		Start:  start,
+		End:    end,
+		People: people,
+		Title:  title,
 	}
-
-	fmt.Println("parseByGjson is called:", bj)
-	return bj
 }
 
 func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 	log.Println("Got Meeting demand callback")
-	fmt.Println(dm.ArgJson)
 
 	if dm.TargetId != 0 { // selected
 
-		// ---------- This Error MUST fix ----------
-		// if flag := selenium.Execute(bj.year, bj.month, bj.day, bj.week, bj.start, bj.end, bj.people, bj.title); flag == true {
-		// 	log.Println("Select the room!")
-		// 	clt.Confirm(sxutil.IDType(dm.Id))
-		// } else {
-		// 	log.Println("Failed to execute selenium")
-		// }
-
-		log.Println("Select the room!")
-		clt.Confirm(sxutil.IDType(dm.Id))
+		if flag := selenium.Execute(rm.Year, rm.Month, rm.Day, rm.Week, rm.Start, rm.End, rm.People, rm.Title); flag == true {
+			log.Println("Select the room!")
+			clt.Confirm(sxutil.IDType(dm.Id))
+		} else {
+			log.Println("Failed to execute selenium")
+		}
 
 	} else { // not selected
-		bj = parseByGjson(dm.ArgJson)
 
-		switch bj.status {
+		setMeetingService(dm.ArgJson)
+
+		switch rm.Status {
 		case "checking":
-			if flag := isPasted(bj.year, bj.month, bj.day); flag == true {
-				if flag := selenium.Schedules(bj.year, bj.month, bj.day, bj.start, bj.end, bj.people); flag == true {
-					// bj.status = "OK"
-					// b, err := json.Marshal(&bj)
-					// if err != nil {
-					// 	fmt.Println("Failed to json marshal:", err)
-					// }
-					json := `{"flag":"OK","data":` + dm.ArgJson + `}`
+			if flag := isPasted(rm.Year, rm.Month, rm.Day); flag == true {
+				if flag := selenium.Schedules(rm.Year, rm.Month, rm.Day, rm.Start, rm.End, rm.People); flag == true {
+					rm.Status = "OK"
+					b, err := json.Marshal(rm)
+					if err != nil {
+						fmt.Println("Failed to json marshal:", err)
+					}
 					sp := &sxutil.SupplyOpts{
 						Target: dm.Id,
 						Name:   "Valid schedules",
-						JSON:   json,
+						JSON:   string(b),
 					}
 
 					mu.Lock()
@@ -172,16 +154,15 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 					spMap[pid] = sp
 					mu.Unlock()
 				} else {
-					// bj.status = "NG"
-					// b, err := json.Marshal(&bj)
-					// if err != nil {
-					// 	fmt.Println("Failed to json marshal:", err)
-					// }
-					json := `{"flag":"NG","data":` + dm.ArgJson + `}`
+					rm.Status = "NG"
+					b, err := json.Marshal(rm)
+					if err != nil {
+						fmt.Println("Failed to json marshal:", err)
+					}
 					sp := &sxutil.SupplyOpts{
 						Target: dm.Id,
 						Name:   "Invalid schedules",
-						JSON:   json,
+						JSON:   string(b),
 					}
 
 					mu.Lock()
@@ -191,16 +172,15 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 					mu.Unlock()
 				}
 			} else {
-				// bj.status = "NG"
-				// b, err := json.Marshal(&bj)
-				// if err != nil {
-				// 	fmt.Println("Failed to json marshal:", err)
-				// }
-				json := `{"flag":"NG","data":` + dm.ArgJson + `}`
+				rm.Status = "NG"
+				b, err := json.Marshal(rm)
+				if err != nil {
+					fmt.Println("Failed to json marshal:", err)
+				}
 				sp := &sxutil.SupplyOpts{
 					Target: dm.Id,
 					Name:   "Invalid schedules",
-					JSON:   json,
+					JSON:   string(b),
 				}
 
 				mu.Lock()
@@ -210,7 +190,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 				mu.Unlock()
 			}
 		default:
-			fmt.Printf("Switch case of default(%s) is called\n", bj.status)
+			fmt.Printf("Switch case of default(%s) is called\n", rm.Status)
 		}
 
 	}
