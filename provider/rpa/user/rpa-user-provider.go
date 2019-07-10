@@ -39,15 +39,15 @@ func confirmBooking(clt *sxutil.SMServiceClient, sp *api.Supply) {
 	if err != nil {
 		fmt.Println("Failed to get socket channel:", err)
 	}
-	channel.Emit("check_booking", "この内容で予約可能です。予約しますか？")
+	channel.Emit("check_booking", rm.Room)
 
 	server.On("confirm_booking", func(c *gosocketio.Channel, data interface{}) {
 		msg := ""
 		if data == "yes" {
 			clt.SelectSupply(sp)
-			msg = "Success: " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " (" + rm.People + " 人)"
+			msg = "Success: " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " " + rm.Room + " (" + rm.People + " 人)"
 		} else {
-			msg = "Stop: " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " (" + rm.People + " 人)"
+			msg = "Stop: " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " " + rm.Room + " (" + rm.People + " 人)"
 		}
 		channel.Emit("server_to_client", msg)
 	})
@@ -64,6 +64,7 @@ func setMeetingService(json string) {
 	end := gjson.Get(json, "end").String()
 	people := gjson.Get(json, "people").String()
 	title := gjson.Get(json, "title").String()
+	room := gjson.Get(json, "room").String()
 
 	rm = &rpa.MeetingService{
 		Cid:    cid,
@@ -76,6 +77,7 @@ func setMeetingService(json string) {
 		End:    end,
 		People: people,
 		Title:  title,
+		Room:   room,
 	}
 }
 

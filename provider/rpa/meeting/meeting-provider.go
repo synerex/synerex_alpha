@@ -102,6 +102,7 @@ func setMeetingService(json string) {
 	end := gjson.Get(json, "end").String()
 	people := gjson.Get(json, "people").String()
 	title := gjson.Get(json, "title").String()
+	room := gjson.Get(json, "room").String()
 
 	rm = &rpa.MeetingService{
 		Cid:    cid,
@@ -114,6 +115,7 @@ func setMeetingService(json string) {
 		End:    end,
 		People: people,
 		Title:  title,
+		Room:   room,
 	}
 }
 
@@ -122,7 +124,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 	if dm.TargetId != 0 { // selected
 
-		if err := selenium.Execute(rm.Year, rm.Month, rm.Day, rm.Week, rm.Start, rm.End, rm.People, rm.Title); err != nil {
+		if err := selenium.Execute(rm.Year, rm.Month, rm.Day, rm.Week, rm.Start, rm.End, rm.People, rm.Title, rm.Room); err != nil {
 			log.Println("Failed to execute selenium:", err)
 		} else {
 			log.Println("Select the room!")
@@ -136,7 +138,8 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 		switch rm.Status {
 		case "checking":
 			if flag := isPasted(rm.Year, rm.Month, rm.Day); flag == true {
-				if err := selenium.Schedules(rm.Year, rm.Month, rm.Day, rm.Start, rm.End, rm.People); err != nil {
+				room, err := selenium.Schedules(rm.Year, rm.Month, rm.Day, rm.Start, rm.End, rm.People)
+				if err != nil {
 					rm.Status = "NG"
 					b, err := json.Marshal(rm)
 					if err != nil {
@@ -155,6 +158,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 					mu.Unlock()
 				} else {
 					rm.Status = "OK"
+					rm.Room = room
 					b, err := json.Marshal(rm)
 					if err != nil {
 						fmt.Println("Failed to json marshal:", err)

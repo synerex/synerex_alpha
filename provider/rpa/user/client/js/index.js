@@ -6,26 +6,26 @@ $(() => {
         var list = `<li>${data}</li>`;
         booking_results.append(list);
 
-        $("#confirm_area").remove();
+        $("#booking_options").empty();
 
         resetValues();
         changeAllProps();
     });
 
     socket.on("check_booking", (msg) => {
-        var booking_form = $("#booking_form");
+        var booking_options = $("#booking_options");
+
         var contents = `
-            <div id="confirm_area">
-                <label>${msg}</label>
-                <button type="button" id="yes" class="btn btn-primary">YES</button>
-                <button type="button" id="stop" class="btn btn-secondary">STOP</button>
-            </div>`;
-        booking_form.append(contents);
+            <p>${msg}</p>
+            <button type="button" id="yes" class="btn btn-primary">Select</button>
+            <button type="button" id="stop" class="btn btn-secondary">STOP</button>
+        `;
+        booking_options.append(contents);
     });
 
     $(document).on("click", "#yes", (e) => {
         $(e.target).prop("disabled", true);
-        $("button#stop").prop("disabled", true);
+        $("button").prop("disabled", true);
         socket.emit("confirm_booking", "yes");
     });
     $(document).on("click", "#stop", () => {

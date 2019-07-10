@@ -15,4 +15,5 @@ message MeetingService {
     string end = 8;
     string people = 9;
     string title = 10;
+    string room = 11;
 }

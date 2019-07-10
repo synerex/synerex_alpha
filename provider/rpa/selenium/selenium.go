@@ -3,6 +3,7 @@ package selenium
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"strings"
 	"time"
 
@@ -79,7 +80,7 @@ func login(page *agouti.Page, user string) {
 	}
 }
 
-func booking(page *agouti.Page, date string, start string, end string, title string) error {
+func booking(page *agouti.Page, date string, start string, end string, title string, room string) error {
 	reserveButton := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[4]/div/div[1]/table/tbody/tr/td[1]/table/tbody/tr/td[1]/span/span/a")
 	_, err := reserveButton.Count()
 	if err != nil {
@@ -261,29 +262,17 @@ func booking(page *agouti.Page, date string, start string, end string, title str
 	}
 	detail.Fill(title)
 
-	// // get room list
-	// groupsDom := getPageDOM(page).Find("select[name='FGID']").Children()
-	// groups := make([]string, groupsDom.Length())
-	// groupsDom.Each(func(i int, sel *goquery.Selection) {
-	// 	groups[i] = sel.Text()
-	// 	// fmt.Println(i, groups[i])
-	// })
-	// // select group
-	// group := page.FindByName("FGID")
-	// if _, err := group.Count(); err != nil {
-	// 	fmt.Println("Cannot find path:", err)
-	// }
-	// group.Select(groups[1]) // "会議室"
-	// // check availability
-	// availability := page.FindByXPath("//input[@value='空き時間を確認する']")
-	// if _, err := availability.Count(); err != nil {
-	// 	fmt.Println("Failed to find path:", err)
-	// }
-	// if err := availability.Click(); err != nil {
-	// 	fmt.Println("Faild to click:", err)
-	// }
-
-	theRoomY := page.FindByXPath("//*[@id=\"content-wrapper\"]/div[4]/div/form/div[2]/table/tbody/tr/td/table/tbody/tr[2]/td/div/div[1]/div/table/tbody/tr[7]/td/table/tbody/tr[1]/td[3]/select/option[2]")
+	// choose room
+	xpath := ""
+	switch room {
+	case "第一会議室":
+		xpath = "//*[@id=\"content-wrapper\"]/div[4]/div/form/div[2]/table/tbody/tr/td/table/tbody/tr[2]/td/div/div[1]/div/table/tbody/tr[7]/td/table/tbody/tr[1]/td[3]/select/option[1]"
+	case "第二会議室":
+		xpath = "//*[@id=\"content-wrapper\"]/div[4]/div/form/div[2]/table/tbody/tr/td/table/tbody/tr[2]/td/div/div[1]/div/table/tbody/tr[7]/td/table/tbody/tr[1]/td[3]/select/option[2]"
+	case "打合せルーム":
+		xpath = "//*[@id=\"content-wrapper\"]/div[4]/div/form/div[2]/table/tbody/tr/td/table/tbody/tr[2]/td/div/div[1]/div/table/tbody/tr[7]/td/table/tbody/tr[1]/td[3]/select/option[3]"
+	}
+	theRoomY := page.FindByXPath(xpath)
 	theRoomY.Click()
 
 	time.Sleep(2 * time.Second)
@@ -301,7 +290,7 @@ func booking(page *agouti.Page, date string, start string, end string, title str
 	return nil
 }
 
-func Execute(year string, month string, day string, week string, start string, end string, people string, title string) error {
+func Execute(year string, month string, day string, week string, start string, end string, people string, title string, room string) error {
 	// set of Chrome
 	driver := agouti.ChromeDriver(agouti.Browser("chrome"))
 	if err := driver.Start(); err != nil {
@@ -342,7 +331,7 @@ func Execute(year string, month string, day string, week string, start string, e
 	// start := "10:00"
 	// end := "11:30"
 	date := year + "年/" + month + "月/" + day + week
-	if err := booking(page, date, start, end, title); err != nil {
+	if err := booking(page, date, start, end, title, room); err != nil {
 		return err
 	}
 
@@ -350,7 +339,7 @@ func Execute(year string, month string, day string, week string, start string, e
 	return nil
 }
 
-func Schedules(year string, month string, day string, start string, end string, people string) error {
+func Schedules(year string, month string, day string, start string, end string, people string) (string, error) {
 	// set of Chrome
 	driver := agouti.ChromeDriver(agouti.Browser("chrome"))
 
@@ -428,6 +417,15 @@ func Schedules(year string, month string, day string, start string, end string, 
 		fmt.Printf("rooms[%v]: %v\n", k, v)
 	}
 
+	roomArr := []string{"第一会議室", "第二会議室", "打合せルーム"}
+
 	time.Sleep(3 * time.Second)
-	return nil
+	return choice(roomArr), nil
+}
+
+// choose room randomly
+func choice(s []string) string {
+	rand.Seed(time.Now().UnixNano())
+	i := rand.Intn(len(s))
+	return s[i]
 }
