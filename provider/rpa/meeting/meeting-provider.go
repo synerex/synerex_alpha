@@ -137,45 +137,8 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 
 		switch rm.Status {
 		case "checking":
-			if flag := isPasted(rm.Year, rm.Month, rm.Day); flag == true {
-				room, err := selenium.Schedules(rm.Year, rm.Month, rm.Day, rm.Start, rm.End, rm.People)
-				if err != nil {
-					rm.Status = "NG"
-					b, err := json.Marshal(rm)
-					if err != nil {
-						fmt.Println("Failed to json marshal:", err)
-					}
-					sp := &sxutil.SupplyOpts{
-						Target: dm.Id,
-						Name:   "Invalid schedules",
-						JSON:   string(b),
-					}
-
-					mu.Lock()
-					pid := clt.ProposeSupply(sp)
-					idList = append(idList, pid)
-					spMap[pid] = sp
-					mu.Unlock()
-				} else {
-					rm.Status = "OK"
-					rm.Room = room
-					b, err := json.Marshal(rm)
-					if err != nil {
-						fmt.Println("Failed to json marshal:", err)
-					}
-					sp := &sxutil.SupplyOpts{
-						Target: dm.Id,
-						Name:   "Valid schedules",
-						JSON:   string(b),
-					}
-
-					mu.Lock()
-					pid := clt.ProposeSupply(sp)
-					idList = append(idList, pid)
-					spMap[pid] = sp
-					mu.Unlock()
-				}
-			} else {
+			room, err := selenium.Schedules(rm.Year, rm.Month, rm.Day, rm.Start, rm.End, rm.People)
+			if err != nil {
 				rm.Status = "NG"
 				b, err := json.Marshal(rm)
 				if err != nil {
@@ -184,6 +147,24 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *api.Demand) {
 				sp := &sxutil.SupplyOpts{
 					Target: dm.Id,
 					Name:   "Invalid schedules",
+					JSON:   string(b),
+				}
+
+				mu.Lock()
+				pid := clt.ProposeSupply(sp)
+				idList = append(idList, pid)
+				spMap[pid] = sp
+				mu.Unlock()
+			} else {
+				rm.Status = "OK"
+				rm.Room = room
+				b, err := json.Marshal(rm)
+				if err != nil {
+					fmt.Println("Failed to json marshal:", err)
+				}
+				sp := &sxutil.SupplyOpts{
+					Target: dm.Id,
+					Name:   "Valid schedules",
 					JSON:   string(b),
 				}
 
