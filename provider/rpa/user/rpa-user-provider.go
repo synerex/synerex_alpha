@@ -46,8 +46,6 @@ func confirmBooking(clt *sxutil.SMServiceClient, sp *api.Supply) {
 		if data == "yes" {
 			clt.SelectSupply(sp)
 			msg = "Success: " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " " + rm.Room + " (" + rm.People + " 人)"
-		} else {
-			msg = "Stop: " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " " + rm.Room + " (" + rm.People + " 人)"
 		}
 		channel.Emit("server_to_client", msg)
 	})

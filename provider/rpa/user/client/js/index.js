@@ -16,9 +16,7 @@ $(() => {
         var booking_options = $("#booking_options");
 
         var contents = `
-            <p>${msg}</p>
-            <button type="button" id="yes" class="btn btn-primary">Select</button>
-            <button type="button" id="stop" class="btn btn-secondary">STOP</button>
+            <p>${msg}<span><button type="button" id="yes" class="btn btn-primary">Select</button></span></p>
         `;
         booking_options.append(contents);
     });
@@ -27,9 +25,6 @@ $(() => {
         $(e.target).prop("disabled", true);
         $("button").prop("disabled", true);
         socket.emit("confirm_booking", "yes");
-    });
-    $(document).on("click", "#stop", () => {
-        socket.emit("confirm_booking", "stop");
     });
 
     $("#send").on("click", (e) => {
