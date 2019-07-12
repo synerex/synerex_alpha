@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/synerex/synerex_alpha/api/rpa"
@@ -45,7 +46,7 @@ func confirmBooking(clt *sxutil.SMServiceClient, sp *api.Supply) {
 		msg := ""
 		if data == "yes" {
 			clt.SelectSupply(sp)
-			msg = "Success: " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " " + rm.Room + " (" + rm.People + " 人)"
+			msg = "SUCCESS from id:" + strconv.FormatUint(sp.Id, 10) + " " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " with " + rm.People + " people."
 		}
 		channel.Emit("server_to_client", msg)
 	})
@@ -96,7 +97,8 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 		if err != nil {
 			fmt.Println("Failed to get socket channel:", err)
 		}
-		channel.Emit("server_to_client", "Invalid schedules")
+		msg := "NG from id:" + strconv.FormatUint(sp.Id, 10) + " " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " [" + rm.Title + "] with " + rm.People + " people."
+		channel.Emit("server_to_client", msg)
 	default:
 		fmt.Printf("Switch case of default(%s) is called\n", rm.Status)
 	}
@@ -139,8 +141,6 @@ func runSocketIOServer(sclient *sxutil.SMServiceClient) {
 			People: people,
 			Title:  title,
 		}
-		fmt.Println("rm in client_to_server:", rm)
-		// json := `{"cid":"` + c.Id() + `","status":"checking","date":` + st + `}`
 		b, _ := json.Marshal(rm)
 		sendDemand(sclient, "Booking meeting room", string(b))
 	})
