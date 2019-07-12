@@ -46,7 +46,7 @@ func confirmBooking(clt *sxutil.SMServiceClient, sp *api.Supply) {
 		msg := ""
 		if data == "yes" {
 			clt.SelectSupply(sp)
-			msg = "SUCCESS from id:" + strconv.FormatUint(sp.Id, 10) + " " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " with " + rm.People + " people."
+			msg = "SUCCESS from id:" + strconv.FormatUint(sp.Id, 10) + " " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " with " + rm.People + " people in " + rm.Room + "."
 		}
 		channel.Emit("server_to_client", msg)
 	})
@@ -97,7 +97,7 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *api.Supply) {
 		if err != nil {
 			fmt.Println("Failed to get socket channel:", err)
 		}
-		msg := "NG from id:" + strconv.FormatUint(sp.Id, 10) + " " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " [" + rm.Title + "] with " + rm.People + " people."
+		msg := "NG from id:" + strconv.FormatUint(sp.Id, 10)
 		channel.Emit("server_to_client", msg)
 	default:
 		fmt.Printf("Switch case of default(%s) is called\n", rm.Status)
