@@ -13,6 +13,8 @@ import "library/library.proto";
 import "ptransit/ptransit.proto";
 import "routing/routing.proto";
 import "marketing/marketing.proto";
+import "area/area.proto";
+import "agent/agent.proto";
 
 service Synerex {
     rpc RegisterDemand(Demand) returns (Response) {}
@@ -64,6 +66,9 @@ enum ChannelType {
     PT_SERVICE = 4;  // Public Transit Information
     ROUTING_SERVICE = 5; // Routing Service
     MARKETING_SERVICE = 6; // Marketing (Ad/Enquate)
+    CLOCK_SERVICE = 1;  // Simulation Clock Service Information
+    AREA_SERVICE = 2;  // Simulation Area Service Information
+    AGENT_SERVICE = 3; // Simulation Agent Service Information
     END = 10;
 }
 
@@ -86,6 +91,9 @@ message Supply{
         routing.RoutingService arg_RoutingService = 15;
         marketing.MarketingService arg_MarketingService = 16;
         ptransit.PTgtfs arg_PTgtfs = 17;
+        clock.ClockService arg_ClockService = 18;
+        area.AreaService arg_AreaService = 19;
+        agent.AgentService arg_AgentService = 20;
     }
 }
 
@@ -108,6 +116,9 @@ message Demand {
         routing.RoutingService arg_RoutingService = 15;
         marketing.MarketingService arg_MarketingService = 16;
         ptransit.PTgtfs arg_PTgtfs = 17;
+        clock.ClockService arg_ClockService = 18; 
+        area.AreaService arg_AreaService = 19;
+        agent.AgentService arg_AgentService = 20;
     }
 }
 

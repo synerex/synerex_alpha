@@ -10,6 +10,9 @@ import (
 	"fmt"
 	"github.com/synerex/synerex_alpha/api/rideshare"
 	"github.com/synerex/synerex_alpha/api/routing"
+	"github.com/synerex/synerex_alpha/api2/clock"
+	"github.com/synerex/synerex_alpha/api2/area"
+	"github.com/synerex/synerex_alpha/api2/agent"
 	"io"
 	"log"
 	"sync"
@@ -46,6 +49,9 @@ type DemandOpts struct {
 	JSON   string
 	RoutingService *routing.RoutingService
 	RideShare *rideshare.RideShare
+	ClockService *clock.ClockService
+	AreaService *area.AreaService
+	AgentService *agent.AgentService
 }
 
 // SupplyOpts is sender options for Supply
@@ -58,6 +64,9 @@ type SupplyOpts struct {
 	PTService *ptransit.PTService
 	RoutingService *routing.RoutingService
 	RideShare *rideshare.RideShare
+	ClockService *clock.ClockService
+	AreaService *area.AreaService
+	AgentService *agent.AgentService
 }
 
 func init() {
@@ -227,6 +236,18 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 	}
 
 	switch clt.MType {
+	case api.ChannelType_CLOCK_SERVICE:
+		if spo.ClockService != nil {
+			sp.WithClockService(spo.ClockService)
+		}
+	case api.ChannelType_AREA_SERVICE:
+		if spo.AreaService != nil {
+			sp.WithAreaService(spo.AreaService)
+		}
+	case api.ChannelType_AGENT_SERVICE:
+		if spo.AgentService != nil {
+			sp.WithAgentService(spo.AgentService)
+		}
 	case api.ChannelType_RIDE_SHARE:
 		if spo.RideShare != nil {
 			sp.WithRideShare(spo.RideShare)
@@ -424,6 +445,24 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 		ArgJson:    dmo.JSON,
 	}
 	switch clt.MType {
+	case api.ChannelType_CLOCK_SERVICE:
+		if dmo.ClockService != nil{
+			dm.WithClockService(dmo.ClockService)
+		}else{
+			log.Printf("ClockService info is nil")
+		}
+	case api.ChannelType_AREA_SERVICE:
+		if dmo.AreaService != nil{
+			dm.WithAreaService(dmo.AreaService)
+		}else{
+			log.Printf("AreaService info is nil")
+		}
+	case api.ChannelType_AGENT_SERVICE:
+		if dmo.AgentService != nil{
+			dm.WithAgentService(dmo.AgentService)
+		}else{
+			log.Printf("AgentService info is nil")
+		}
 	case api.ChannelType_ROUTING_SERVICE:
 		rsp := api.Demand_Arg_RoutingService{
 			dmo.RoutingService,
@@ -476,6 +515,24 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 	}
 
 	switch clt.MType {
+	case api.ChannelType_CLOCK_SERVICE:
+		if smo.ClockService != nil{
+			sp.WithClockService(smo.ClockService)
+		}else{
+			log.Printf("ClockService info is nil")
+		}
+	case api.ChannelType_AREA_SERVICE:
+		if smo.AreaService != nil{
+			sp.WithAreaService(smo.AreaService)
+		}else{
+			log.Printf("AreaService info is nil")
+		}
+	case api.ChannelType_AGENT_SERVICE:
+		if smo.AgentService != nil{
+			sp.WithAgentService(smo.AgentService)
+		}else{
+			log.Printf("AgentService info is nil")
+		}
 	case api.ChannelType_RIDE_SHARE:
 		sp := api.Supply_Arg_Fleet{
 			smo.Fleet,

@@ -8,6 +8,9 @@ import (
 	"github.com/synerex/synerex_alpha/api/ptransit"
 	"github.com/synerex/synerex_alpha/api/rideshare"
 	"github.com/synerex/synerex_alpha/api/routing"
+	"github.com/synerex/synerex_alpha/api/clock"
+	"github.com/synerex/synerex_alpha/api/area"
+	"github.com/synerex/synerex_alpha/api/agent"
 )
 
 // NewDemand returns empty Demand.
@@ -101,5 +104,23 @@ func (sp *Supply) WithRoutingService(r *routing.RoutingService) *Supply {
 // WithMarketingService set a given MarketingService to Supply.Supply_Arg_MarketingService.Arg_MarketingService.
 func (sp *Supply) WithMarketingService(m *marketing.MarketingService) *Supply {
 	sp.ArgOneof = &Supply_Arg_MarketingService{m}
+	return sp
+}
+
+// WithClockService set a given ClockService to Supply.Supply_Arg_ClockService.Arg_ClockService .
+func (sp *Supply) WithClockService(c *clock.ClockService) *Supply {
+	sp.ArgOneof = &Supply_Arg_ClockService{c}
+	return sp
+}
+
+// WithAreaService set a given AreaService to Supply.Supply_Arg_AreaService.Arg_AreaService.
+func (sp *Supply) WithAreaService(a *area.AreaService) *Supply {
+	sp.ArgOneof = &Supply_Arg_AreaService{a}
+	return sp
+}
+
+// WithAgentService set a given AgentService to Supply.Supply_Arg_AgentService.Arg_AgentService.
+func (sp *Supply) WithAgentService(a *agent.AgentService) *Supply {
+	sp.ArgOneof = &Supply_Arg_AgentService{a}
 	return sp
 }

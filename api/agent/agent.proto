@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package api.agent;
+
+option go_package="github.com/synerex/synerex_alpha/api/agent";
+
+message AgentService {
+    uint32 num_adult = 5;
+    uint32 num_child = 6;
+    uint32 amount_price = 8;
+}

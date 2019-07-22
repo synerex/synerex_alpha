@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package api.area;
+
+option go_package="github.com/synerex/synerex_alpha/api/area";
+
+
+message AreaService {
+    uint32 num_adult = 5;
+    uint32 num_child = 6;
+    uint32 amount_price = 8;
+}
