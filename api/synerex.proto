@@ -15,6 +15,7 @@ import "routing/routing.proto";
 import "marketing/marketing.proto";
 import "area/area.proto";
 import "agent/agent.proto";
+import "clock/clock.proto";
 
 service Synerex {
     rpc RegisterDemand(Demand) returns (Response) {}
@@ -66,9 +67,9 @@ enum ChannelType {
     PT_SERVICE = 4;  // Public Transit Information
     ROUTING_SERVICE = 5; // Routing Service
     MARKETING_SERVICE = 6; // Marketing (Ad/Enquate)
-    CLOCK_SERVICE = 1;  // Simulation Clock Service Information
-    AREA_SERVICE = 2;  // Simulation Area Service Information
-    AGENT_SERVICE = 3; // Simulation Agent Service Information
+    CLOCK_SERVICE = 7;  // Simulation Clock Service Information
+    AREA_SERVICE = 8;  // Simulation Area Service Information
+    AGENT_SERVICE = 9; // Simulation Agent Service Information
     END = 10;
 }
 

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.area;
 
-option go_package="github.com/synerex/synerex_alpha/api/area";
+option go_package="area";
 
 
 message AreaService {

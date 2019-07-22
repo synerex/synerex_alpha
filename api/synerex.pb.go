@@ -3,22 +3,26 @@
 
 package api
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import duration "github.com/golang/protobuf/ptypes/duration"
-import timestamp "github.com/golang/protobuf/ptypes/timestamp"
-import adservice "github.com/synerex/synerex_alpha/api/adservice"
-import fleet "github.com/synerex/synerex_alpha/api/fleet"
-import library "github.com/synerex/synerex_alpha/api/library"
-import marketing "github.com/synerex/synerex_alpha/api/marketing"
-import ptransit "github.com/synerex/synerex_alpha/api/ptransit"
-import rideshare "github.com/synerex/synerex_alpha/api/rideshare"
-import routing "github.com/synerex/synerex_alpha/api/routing"
-
 import (
-	context "golang.org/x/net/context"
+	agent "agent"
+	area "area"
+	clock "clock"
+	context "context"
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	duration "github.com/golang/protobuf/ptypes/duration"
+	timestamp "github.com/golang/protobuf/ptypes/timestamp"
+	adservice "github.com/synerex/synerex_alpha/api/adservice"
+	fleet "github.com/synerex/synerex_alpha/api/fleet"
+	library "github.com/synerex/synerex_alpha/api/library"
+	marketing "github.com/synerex/synerex_alpha/api/marketing"
+	ptransit "github.com/synerex/synerex_alpha/api/ptransit"
+	rideshare "github.com/synerex/synerex_alpha/api/rideshare"
+	routing "github.com/synerex/synerex_alpha/api/routing"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -30,7 +34,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type ChannelType int32
 
@@ -42,6 +46,9 @@ const (
 	ChannelType_PT_SERVICE        ChannelType = 4
 	ChannelType_ROUTING_SERVICE   ChannelType = 5
 	ChannelType_MARKETING_SERVICE ChannelType = 6
+	ChannelType_CLOCK_SERVICE     ChannelType = 7
+	ChannelType_AREA_SERVICE      ChannelType = 8
+	ChannelType_AGENT_SERVICE     ChannelType = 9
 	ChannelType_END               ChannelType = 10
 )
 
@@ -53,8 +60,12 @@ var ChannelType_name = map[int32]string{
 	4:  "PT_SERVICE",
 	5:  "ROUTING_SERVICE",
 	6:  "MARKETING_SERVICE",
+	7:  "CLOCK_SERVICE",
+	8:  "AREA_SERVICE",
+	9:  "AGENT_SERVICE",
 	10: "END",
 }
+
 var ChannelType_value = map[string]int32{
 	"NONE":              0,
 	"RIDE_SHARE":        1,
@@ -63,14 +74,18 @@ var ChannelType_value = map[string]int32{
 	"PT_SERVICE":        4,
 	"ROUTING_SERVICE":   5,
 	"MARKETING_SERVICE": 6,
+	"CLOCK_SERVICE":     7,
+	"AREA_SERVICE":      8,
+	"AGENT_SERVICE":     9,
 	"END":               10,
 }
 
 func (x ChannelType) String() string {
 	return proto.EnumName(ChannelType_name, int32(x))
 }
+
 func (ChannelType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{0}
+	return fileDescriptor_64312b9648bb40d3, []int{0}
 }
 
 type Response struct {
@@ -85,16 +100,17 @@ func (m *Response) Reset()         { *m = Response{} }
 func (m *Response) String() string { return proto.CompactTextString(m) }
 func (*Response) ProtoMessage()    {}
 func (*Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{0}
+	return fileDescriptor_64312b9648bb40d3, []int{0}
 }
+
 func (m *Response) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Response.Unmarshal(m, b)
 }
 func (m *Response) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Response.Marshal(b, m, deterministic)
 }
-func (dst *Response) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Response.Merge(dst, src)
+func (m *Response) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Response.Merge(m, src)
 }
 func (m *Response) XXX_Size() int {
 	return xxx_messageInfo_Response.Size(m)
@@ -133,16 +149,17 @@ func (m *ConfirmResponse) Reset()         { *m = ConfirmResponse{} }
 func (m *ConfirmResponse) String() string { return proto.CompactTextString(m) }
 func (*ConfirmResponse) ProtoMessage()    {}
 func (*ConfirmResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{1}
+	return fileDescriptor_64312b9648bb40d3, []int{1}
 }
+
 func (m *ConfirmResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ConfirmResponse.Unmarshal(m, b)
 }
 func (m *ConfirmResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ConfirmResponse.Marshal(b, m, deterministic)
 }
-func (dst *ConfirmResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ConfirmResponse.Merge(dst, src)
+func (m *ConfirmResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ConfirmResponse.Merge(m, src)
 }
 func (m *ConfirmResponse) XXX_Size() int {
 	return xxx_messageInfo_ConfirmResponse.Size(m)
@@ -188,7 +205,7 @@ type Supply struct {
 	Type       ChannelType          `protobuf:"varint,4,opt,name=type,proto3,enum=api.ChannelType" json:"type,omitempty"`
 	SupplyName string               `protobuf:"bytes,5,opt,name=supply_name,json=supplyName,proto3" json:"supply_name,omitempty"`
 	Ts         *timestamp.Timestamp `protobuf:"bytes,6,opt,name=ts,proto3" json:"ts,omitempty"`
-	// message content = 7; // json
+	//message content = 7; // json
 	ArgJson string `protobuf:"bytes,7,opt,name=arg_json,json=argJson,proto3" json:"arg_json,omitempty"`
 	MbusId  uint64 `protobuf:"fixed64,8,opt,name=mbus_id,json=mbusId,proto3" json:"mbus_id,omitempty"`
 	// Types that are valid to be assigned to ArgOneof:
@@ -200,6 +217,9 @@ type Supply struct {
 	//	*Supply_Arg_RoutingService
 	//	*Supply_Arg_MarketingService
 	//	*Supply_Arg_PTgtfs
+	//	*Supply_Arg_ClockService
+	//	*Supply_Arg_AreaService
+	//	*Supply_Arg_AgentService
 	ArgOneof             isSupply_ArgOneof `protobuf_oneof:"arg_oneof"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
@@ -210,16 +230,17 @@ func (m *Supply) Reset()         { *m = Supply{} }
 func (m *Supply) String() string { return proto.CompactTextString(m) }
 func (*Supply) ProtoMessage()    {}
 func (*Supply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{2}
+	return fileDescriptor_64312b9648bb40d3, []int{2}
 }
+
 func (m *Supply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Supply.Unmarshal(m, b)
 }
 func (m *Supply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Supply.Marshal(b, m, deterministic)
 }
-func (dst *Supply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Supply.Merge(dst, src)
+func (m *Supply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Supply.Merge(m, src)
 }
 func (m *Supply) XXX_Size() int {
 	return xxx_messageInfo_Supply.Size(m)
@@ -322,6 +343,18 @@ type Supply_Arg_PTgtfs struct {
 	Arg_PTgtfs *ptransit.PTgtfs `protobuf:"bytes,17,opt,name=arg_PTgtfs,json=argPTgtfs,proto3,oneof"`
 }
 
+type Supply_Arg_ClockService struct {
+	Arg_ClockService *clock.ClockService `protobuf:"bytes,18,opt,name=arg_ClockService,json=argClockService,proto3,oneof"`
+}
+
+type Supply_Arg_AreaService struct {
+	Arg_AreaService *area.AreaService `protobuf:"bytes,19,opt,name=arg_AreaService,json=argAreaService,proto3,oneof"`
+}
+
+type Supply_Arg_AgentService struct {
+	Arg_AgentService *agent.AgentService `protobuf:"bytes,20,opt,name=arg_AgentService,json=argAgentService,proto3,oneof"`
+}
+
 func (*Supply_Arg_Fleet) isSupply_ArgOneof() {}
 
 func (*Supply_Arg_RideShare) isSupply_ArgOneof() {}
@@ -337,6 +370,12 @@ func (*Supply_Arg_RoutingService) isSupply_ArgOneof() {}
 func (*Supply_Arg_MarketingService) isSupply_ArgOneof() {}
 
 func (*Supply_Arg_PTgtfs) isSupply_ArgOneof() {}
+
+func (*Supply_Arg_ClockService) isSupply_ArgOneof() {}
+
+func (*Supply_Arg_AreaService) isSupply_ArgOneof() {}
+
+func (*Supply_Arg_AgentService) isSupply_ArgOneof() {}
 
 func (m *Supply) GetArgOneof() isSupply_ArgOneof {
 	if m != nil {
@@ -401,9 +440,30 @@ func (m *Supply) GetArg_PTgtfs() *ptransit.PTgtfs {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*Supply) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _Supply_OneofMarshaler, _Supply_OneofUnmarshaler, _Supply_OneofSizer, []interface{}{
+func (m *Supply) GetArg_ClockService() *clock.ClockService {
+	if x, ok := m.GetArgOneof().(*Supply_Arg_ClockService); ok {
+		return x.Arg_ClockService
+	}
+	return nil
+}
+
+func (m *Supply) GetArg_AreaService() *area.AreaService {
+	if x, ok := m.GetArgOneof().(*Supply_Arg_AreaService); ok {
+		return x.Arg_AreaService
+	}
+	return nil
+}
+
+func (m *Supply) GetArg_AgentService() *agent.AgentService {
+	if x, ok := m.GetArgOneof().(*Supply_Arg_AgentService); ok {
+		return x.Arg_AgentService
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*Supply) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*Supply_Arg_Fleet)(nil),
 		(*Supply_Arg_RideShare)(nil),
 		(*Supply_Arg_AdService)(nil),
@@ -412,181 +472,10 @@ func (*Supply) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error,
 		(*Supply_Arg_RoutingService)(nil),
 		(*Supply_Arg_MarketingService)(nil),
 		(*Supply_Arg_PTgtfs)(nil),
+		(*Supply_Arg_ClockService)(nil),
+		(*Supply_Arg_AreaService)(nil),
+		(*Supply_Arg_AgentService)(nil),
 	}
-}
-
-func _Supply_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*Supply)
-	// arg_oneof
-	switch x := m.ArgOneof.(type) {
-	case *Supply_Arg_Fleet:
-		b.EncodeVarint(10<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_Fleet); err != nil {
-			return err
-		}
-	case *Supply_Arg_RideShare:
-		b.EncodeVarint(11<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_RideShare); err != nil {
-			return err
-		}
-	case *Supply_Arg_AdService:
-		b.EncodeVarint(12<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_AdService); err != nil {
-			return err
-		}
-	case *Supply_Arg_LibService:
-		b.EncodeVarint(13<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_LibService); err != nil {
-			return err
-		}
-	case *Supply_Arg_PTService:
-		b.EncodeVarint(14<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_PTService); err != nil {
-			return err
-		}
-	case *Supply_Arg_RoutingService:
-		b.EncodeVarint(15<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_RoutingService); err != nil {
-			return err
-		}
-	case *Supply_Arg_MarketingService:
-		b.EncodeVarint(16<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_MarketingService); err != nil {
-			return err
-		}
-	case *Supply_Arg_PTgtfs:
-		b.EncodeVarint(17<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_PTgtfs); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("Supply.ArgOneof has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _Supply_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*Supply)
-	switch tag {
-	case 10: // arg_oneof.arg_Fleet
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(fleet.Fleet)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Supply_Arg_Fleet{msg}
-		return true, err
-	case 11: // arg_oneof.arg_RideShare
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(rideshare.RideShare)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Supply_Arg_RideShare{msg}
-		return true, err
-	case 12: // arg_oneof.arg_AdService
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(adservice.AdService)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Supply_Arg_AdService{msg}
-		return true, err
-	case 13: // arg_oneof.arg_LibService
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(library.LibService)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Supply_Arg_LibService{msg}
-		return true, err
-	case 14: // arg_oneof.arg_PTService
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ptransit.PTService)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Supply_Arg_PTService{msg}
-		return true, err
-	case 15: // arg_oneof.arg_RoutingService
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(routing.RoutingService)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Supply_Arg_RoutingService{msg}
-		return true, err
-	case 16: // arg_oneof.arg_MarketingService
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(marketing.MarketingService)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Supply_Arg_MarketingService{msg}
-		return true, err
-	case 17: // arg_oneof.arg_PTgtfs
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ptransit.PTgtfs)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Supply_Arg_PTgtfs{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _Supply_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*Supply)
-	// arg_oneof
-	switch x := m.ArgOneof.(type) {
-	case *Supply_Arg_Fleet:
-		s := proto.Size(x.Arg_Fleet)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Supply_Arg_RideShare:
-		s := proto.Size(x.Arg_RideShare)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Supply_Arg_AdService:
-		s := proto.Size(x.Arg_AdService)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Supply_Arg_LibService:
-		s := proto.Size(x.Arg_LibService)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Supply_Arg_PTService:
-		s := proto.Size(x.Arg_PTService)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Supply_Arg_RoutingService:
-		s := proto.Size(x.Arg_RoutingService)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Supply_Arg_MarketingService:
-		s := proto.Size(x.Arg_MarketingService)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Supply_Arg_PTgtfs:
-		s := proto.Size(x.Arg_PTgtfs)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type Demand struct {
@@ -596,7 +485,7 @@ type Demand struct {
 	Type       ChannelType          `protobuf:"varint,4,opt,name=type,proto3,enum=api.ChannelType" json:"type,omitempty"`
 	DemandName string               `protobuf:"bytes,5,opt,name=demand_name,json=demandName,proto3" json:"demand_name,omitempty"`
 	Ts         *timestamp.Timestamp `protobuf:"bytes,6,opt,name=ts,proto3" json:"ts,omitempty"`
-	// message content = 7; // json
+	//message content = 7; // json
 	ArgJson string `protobuf:"bytes,7,opt,name=arg_json,json=argJson,proto3" json:"arg_json,omitempty"`
 	MbusId  uint64 `protobuf:"fixed64,8,opt,name=mbus_id,json=mbusId,proto3" json:"mbus_id,omitempty"`
 	// Types that are valid to be assigned to ArgOneof:
@@ -608,6 +497,9 @@ type Demand struct {
 	//	*Demand_Arg_RoutingService
 	//	*Demand_Arg_MarketingService
 	//	*Demand_Arg_PTgtfs
+	//	*Demand_Arg_ClockService
+	//	*Demand_Arg_AreaService
+	//	*Demand_Arg_AgentService
 	ArgOneof             isDemand_ArgOneof `protobuf_oneof:"arg_oneof"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
 	XXX_unrecognized     []byte            `json:"-"`
@@ -618,16 +510,17 @@ func (m *Demand) Reset()         { *m = Demand{} }
 func (m *Demand) String() string { return proto.CompactTextString(m) }
 func (*Demand) ProtoMessage()    {}
 func (*Demand) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{3}
+	return fileDescriptor_64312b9648bb40d3, []int{3}
 }
+
 func (m *Demand) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Demand.Unmarshal(m, b)
 }
 func (m *Demand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Demand.Marshal(b, m, deterministic)
 }
-func (dst *Demand) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Demand.Merge(dst, src)
+func (m *Demand) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Demand.Merge(m, src)
 }
 func (m *Demand) XXX_Size() int {
 	return xxx_messageInfo_Demand.Size(m)
@@ -730,6 +623,18 @@ type Demand_Arg_PTgtfs struct {
 	Arg_PTgtfs *ptransit.PTgtfs `protobuf:"bytes,17,opt,name=arg_PTgtfs,json=argPTgtfs,proto3,oneof"`
 }
 
+type Demand_Arg_ClockService struct {
+	Arg_ClockService *clock.ClockService `protobuf:"bytes,18,opt,name=arg_ClockService,json=argClockService,proto3,oneof"`
+}
+
+type Demand_Arg_AreaService struct {
+	Arg_AreaService *area.AreaService `protobuf:"bytes,19,opt,name=arg_AreaService,json=argAreaService,proto3,oneof"`
+}
+
+type Demand_Arg_AgentService struct {
+	Arg_AgentService *agent.AgentService `protobuf:"bytes,20,opt,name=arg_AgentService,json=argAgentService,proto3,oneof"`
+}
+
 func (*Demand_Arg_Fleet) isDemand_ArgOneof() {}
 
 func (*Demand_Arg_RideShare) isDemand_ArgOneof() {}
@@ -745,6 +650,12 @@ func (*Demand_Arg_RoutingService) isDemand_ArgOneof() {}
 func (*Demand_Arg_MarketingService) isDemand_ArgOneof() {}
 
 func (*Demand_Arg_PTgtfs) isDemand_ArgOneof() {}
+
+func (*Demand_Arg_ClockService) isDemand_ArgOneof() {}
+
+func (*Demand_Arg_AreaService) isDemand_ArgOneof() {}
+
+func (*Demand_Arg_AgentService) isDemand_ArgOneof() {}
 
 func (m *Demand) GetArgOneof() isDemand_ArgOneof {
 	if m != nil {
@@ -809,9 +720,30 @@ func (m *Demand) GetArg_PTgtfs() *ptransit.PTgtfs {
 	return nil
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*Demand) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _Demand_OneofMarshaler, _Demand_OneofUnmarshaler, _Demand_OneofSizer, []interface{}{
+func (m *Demand) GetArg_ClockService() *clock.ClockService {
+	if x, ok := m.GetArgOneof().(*Demand_Arg_ClockService); ok {
+		return x.Arg_ClockService
+	}
+	return nil
+}
+
+func (m *Demand) GetArg_AreaService() *area.AreaService {
+	if x, ok := m.GetArgOneof().(*Demand_Arg_AreaService); ok {
+		return x.Arg_AreaService
+	}
+	return nil
+}
+
+func (m *Demand) GetArg_AgentService() *agent.AgentService {
+	if x, ok := m.GetArgOneof().(*Demand_Arg_AgentService); ok {
+		return x.Arg_AgentService
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*Demand) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
 		(*Demand_Arg_Fleet)(nil),
 		(*Demand_Arg_RideShare)(nil),
 		(*Demand_Arg_AdService)(nil),
@@ -820,181 +752,10 @@ func (*Demand) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error,
 		(*Demand_Arg_RoutingService)(nil),
 		(*Demand_Arg_MarketingService)(nil),
 		(*Demand_Arg_PTgtfs)(nil),
+		(*Demand_Arg_ClockService)(nil),
+		(*Demand_Arg_AreaService)(nil),
+		(*Demand_Arg_AgentService)(nil),
 	}
-}
-
-func _Demand_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*Demand)
-	// arg_oneof
-	switch x := m.ArgOneof.(type) {
-	case *Demand_Arg_Fleet:
-		b.EncodeVarint(10<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_Fleet); err != nil {
-			return err
-		}
-	case *Demand_Arg_RideShare:
-		b.EncodeVarint(11<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_RideShare); err != nil {
-			return err
-		}
-	case *Demand_Arg_AdService:
-		b.EncodeVarint(12<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_AdService); err != nil {
-			return err
-		}
-	case *Demand_Arg_LibService:
-		b.EncodeVarint(13<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_LibService); err != nil {
-			return err
-		}
-	case *Demand_Arg_PTService:
-		b.EncodeVarint(14<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_PTService); err != nil {
-			return err
-		}
-	case *Demand_Arg_RoutingService:
-		b.EncodeVarint(15<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_RoutingService); err != nil {
-			return err
-		}
-	case *Demand_Arg_MarketingService:
-		b.EncodeVarint(16<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_MarketingService); err != nil {
-			return err
-		}
-	case *Demand_Arg_PTgtfs:
-		b.EncodeVarint(17<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Arg_PTgtfs); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("Demand.ArgOneof has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _Demand_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*Demand)
-	switch tag {
-	case 10: // arg_oneof.arg_Fleet
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(fleet.Fleet)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Demand_Arg_Fleet{msg}
-		return true, err
-	case 11: // arg_oneof.arg_RideShare
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(rideshare.RideShare)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Demand_Arg_RideShare{msg}
-		return true, err
-	case 12: // arg_oneof.arg_AdService
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(adservice.AdService)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Demand_Arg_AdService{msg}
-		return true, err
-	case 13: // arg_oneof.arg_LibService
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(library.LibService)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Demand_Arg_LibService{msg}
-		return true, err
-	case 14: // arg_oneof.arg_PTService
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ptransit.PTService)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Demand_Arg_PTService{msg}
-		return true, err
-	case 15: // arg_oneof.arg_RoutingService
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(routing.RoutingService)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Demand_Arg_RoutingService{msg}
-		return true, err
-	case 16: // arg_oneof.arg_MarketingService
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(marketing.MarketingService)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Demand_Arg_MarketingService{msg}
-		return true, err
-	case 17: // arg_oneof.arg_PTgtfs
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(ptransit.PTgtfs)
-		err := b.DecodeMessage(msg)
-		m.ArgOneof = &Demand_Arg_PTgtfs{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _Demand_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*Demand)
-	// arg_oneof
-	switch x := m.ArgOneof.(type) {
-	case *Demand_Arg_Fleet:
-		s := proto.Size(x.Arg_Fleet)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Demand_Arg_RideShare:
-		s := proto.Size(x.Arg_RideShare)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Demand_Arg_AdService:
-		s := proto.Size(x.Arg_AdService)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Demand_Arg_LibService:
-		s := proto.Size(x.Arg_LibService)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Demand_Arg_PTService:
-		s := proto.Size(x.Arg_PTService)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Demand_Arg_RoutingService:
-		s := proto.Size(x.Arg_RoutingService)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Demand_Arg_MarketingService:
-		s := proto.Size(x.Arg_MarketingService)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case *Demand_Arg_PTgtfs:
-		s := proto.Size(x.Arg_PTgtfs)
-		n += 2 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
 }
 
 type Target struct {
@@ -1013,16 +774,17 @@ func (m *Target) Reset()         { *m = Target{} }
 func (m *Target) String() string { return proto.CompactTextString(m) }
 func (*Target) ProtoMessage()    {}
 func (*Target) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{4}
+	return fileDescriptor_64312b9648bb40d3, []int{4}
 }
+
 func (m *Target) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Target.Unmarshal(m, b)
 }
 func (m *Target) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Target.Marshal(b, m, deterministic)
 }
-func (dst *Target) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Target.Merge(dst, src)
+func (m *Target) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Target.Merge(m, src)
 }
 func (m *Target) XXX_Size() int {
 	return xxx_messageInfo_Target.Size(m)
@@ -1088,16 +850,17 @@ func (m *Channel) Reset()         { *m = Channel{} }
 func (m *Channel) String() string { return proto.CompactTextString(m) }
 func (*Channel) ProtoMessage()    {}
 func (*Channel) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{5}
+	return fileDescriptor_64312b9648bb40d3, []int{5}
 }
+
 func (m *Channel) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Channel.Unmarshal(m, b)
 }
 func (m *Channel) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Channel.Marshal(b, m, deterministic)
 }
-func (dst *Channel) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Channel.Merge(dst, src)
+func (m *Channel) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Channel.Merge(m, src)
 }
 func (m *Channel) XXX_Size() int {
 	return xxx_messageInfo_Channel.Size(m)
@@ -1142,16 +905,17 @@ func (m *Mbus) Reset()         { *m = Mbus{} }
 func (m *Mbus) String() string { return proto.CompactTextString(m) }
 func (*Mbus) ProtoMessage()    {}
 func (*Mbus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{6}
+	return fileDescriptor_64312b9648bb40d3, []int{6}
 }
+
 func (m *Mbus) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Mbus.Unmarshal(m, b)
 }
 func (m *Mbus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Mbus.Marshal(b, m, deterministic)
 }
-func (dst *Mbus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Mbus.Merge(dst, src)
+func (m *Mbus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Mbus.Merge(m, src)
 }
 func (m *Mbus) XXX_Size() int {
 	return xxx_messageInfo_Mbus.Size(m)
@@ -1200,16 +964,17 @@ func (m *MbusMsg) Reset()         { *m = MbusMsg{} }
 func (m *MbusMsg) String() string { return proto.CompactTextString(m) }
 func (*MbusMsg) ProtoMessage()    {}
 func (*MbusMsg) Descriptor() ([]byte, []int) {
-	return fileDescriptor_synerex_95a9cfc6fc70cd46, []int{7}
+	return fileDescriptor_64312b9648bb40d3, []int{7}
 }
+
 func (m *MbusMsg) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MbusMsg.Unmarshal(m, b)
 }
 func (m *MbusMsg) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_MbusMsg.Marshal(b, m, deterministic)
 }
-func (dst *MbusMsg) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MbusMsg.Merge(dst, src)
+func (m *MbusMsg) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MbusMsg.Merge(m, src)
 }
 func (m *MbusMsg) XXX_Size() int {
 	return xxx_messageInfo_MbusMsg.Size(m)
@@ -1270,6 +1035,7 @@ func (m *MbusMsg) GetArgJson() string {
 }
 
 func init() {
+	proto.RegisterEnum("api.ChannelType", ChannelType_name, ChannelType_value)
 	proto.RegisterType((*Response)(nil), "api.Response")
 	proto.RegisterType((*ConfirmResponse)(nil), "api.ConfirmResponse")
 	proto.RegisterType((*Supply)(nil), "api.Supply")
@@ -1278,7 +1044,85 @@ func init() {
 	proto.RegisterType((*Channel)(nil), "api.Channel")
 	proto.RegisterType((*Mbus)(nil), "api.Mbus")
 	proto.RegisterType((*MbusMsg)(nil), "api.MbusMsg")
-	proto.RegisterEnum("api.ChannelType", ChannelType_name, ChannelType_value)
+}
+
+func init() { proto.RegisterFile("synerex.proto", fileDescriptor_64312b9648bb40d3) }
+
+var fileDescriptor_64312b9648bb40d3 = []byte{
+	// 1153 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x57, 0xdd, 0x6e, 0xdb, 0x36,
+	0x14, 0xf6, 0xbf, 0xec, 0xe3, 0xdf, 0x30, 0x09, 0xe2, 0xb8, 0xc0, 0x12, 0x18, 0x03, 0x1a, 0x14,
+	0xad, 0x55, 0xa4, 0xdb, 0xed, 0x56, 0xc7, 0xf6, 0x6a, 0xaf, 0x89, 0x13, 0xd0, 0xde, 0x06, 0xec,
+	0x26, 0xa0, 0x2d, 0x5a, 0xd5, 0x62, 0x4b, 0x02, 0x29, 0x6f, 0x0b, 0xf6, 0x48, 0x7b, 0x89, 0x5d,
+	0x6c, 0x6f, 0xb2, 0x07, 0x19, 0x48, 0x8a, 0xb2, 0xe4, 0xac, 0x59, 0x8a, 0x0d, 0xeb, 0x4d, 0x6e,
+	0x64, 0xf2, 0x3b, 0xe7, 0x7c, 0xe7, 0xf0, 0x88, 0x1f, 0x4d, 0x41, 0x95, 0xdf, 0xba, 0x94, 0xd1,
+	0x9f, 0x3b, 0x3e, 0xf3, 0x02, 0x0f, 0x65, 0x89, 0xef, 0xb4, 0x8e, 0x6c, 0xcf, 0xb3, 0x97, 0xd4,
+	0x94, 0xd0, 0x6c, 0xbd, 0x30, 0x03, 0x67, 0x45, 0x79, 0x40, 0x56, 0xbe, 0xf2, 0x6a, 0x7d, 0xb2,
+	0xed, 0x60, 0xad, 0x19, 0x09, 0x1c, 0xcf, 0x0d, 0xed, 0x3b, 0x8b, 0x25, 0xa5, 0x81, 0x29, 0x9f,
+	0x21, 0x74, 0xc8, 0x1c, 0x8b, 0xf2, 0x77, 0x84, 0x51, 0x33, 0x1a, 0x69, 0x13, 0xb1, 0x38, 0x65,
+	0x3f, 0x3a, 0x73, 0x6a, 0x46, 0xa3, 0xd0, 0xb4, 0xbf, 0x74, 0x66, 0x8c, 0xb0, 0x5b, 0x33, 0xfc,
+	0x0d, 0xe1, 0x03, 0x3f, 0x60, 0xc4, 0xe5, 0x4e, 0x60, 0xea, 0x81, 0xf6, 0x67, 0xde, 0x3a, 0x70,
+	0x5c, 0xdb, 0x0c, 0x7f, 0x75, 0x86, 0x15, 0x61, 0x37, 0x54, 0x1a, 0xa2, 0x51, 0x68, 0xaa, 0x13,
+	0x46, 0x89, 0x29, 0x1e, 0xba, 0x76, 0x62, 0x53, 0x37, 0x30, 0xe5, 0x53, 0x43, 0xf3, 0xa5, 0x37,
+	0xbf, 0x31, 0xe5, 0x53, 0x41, 0xed, 0xe7, 0x50, 0xc4, 0x94, 0xfb, 0x9e, 0xcb, 0x29, 0xaa, 0x41,
+	0xc6, 0xbb, 0x69, 0xa6, 0x8f, 0xd3, 0x27, 0x45, 0x9c, 0xf1, 0x6e, 0x50, 0x03, 0xb2, 0x94, 0xb1,
+	0x66, 0xe6, 0x38, 0x7d, 0x52, 0xc2, 0x62, 0xd8, 0xfe, 0x05, 0xea, 0x3d, 0xcf, 0x5d, 0x38, 0x6c,
+	0xf5, 0xde, 0xa0, 0x03, 0x30, 0x56, 0xb3, 0x35, 0xbf, 0x76, 0x2c, 0x19, 0x58, 0xc0, 0x05, 0x31,
+	0x1d, 0x59, 0xe8, 0x05, 0xe4, 0x7e, 0x22, 0x4e, 0xd0, 0xcc, 0x1e, 0xa7, 0x4f, 0xca, 0xa7, 0x87,
+	0x1d, 0xd5, 0xfa, 0x8e, 0x6e, 0x7d, 0xa7, 0x1f, 0xb6, 0x1e, 0x4b, 0x37, 0x9d, 0x3c, 0xb7, 0x49,
+	0xfe, 0xa7, 0x01, 0x85, 0xc9, 0xda, 0xf7, 0x97, 0xb7, 0x22, 0xa9, 0x63, 0xc9, 0xa4, 0x05, 0x9c,
+	0x71, 0x2c, 0xf4, 0x04, 0x4a, 0x9c, 0xba, 0x16, 0x65, 0x9b, 0xb4, 0x45, 0x05, 0x8c, 0xa4, 0x31,
+	0x20, 0xcc, 0xa6, 0x81, 0x30, 0x66, 0x95, 0x51, 0x01, 0x23, 0x0b, 0x7d, 0x0a, 0xb9, 0xe0, 0xd6,
+	0xa7, 0x32, 0x4f, 0xed, 0xb4, 0xd1, 0x21, 0xbe, 0xd3, 0xe9, 0xbd, 0x23, 0xae, 0x4b, 0x97, 0xd3,
+	0x5b, 0x9f, 0x62, 0x69, 0x45, 0x47, 0x50, 0xe6, 0x32, 0xf3, 0xb5, 0x4b, 0x56, 0xb4, 0x99, 0x97,
+	0x45, 0x81, 0x82, 0xc6, 0x64, 0x45, 0xd1, 0x33, 0xc8, 0x04, 0xbc, 0x59, 0x90, 0x4b, 0x6b, 0xdd,
+	0x59, 0xda, 0x54, 0x6f, 0x3b, 0x9c, 0x09, 0x38, 0x3a, 0x84, 0x22, 0x61, 0xf6, 0xf5, 0x0f, 0xdc,
+	0x73, 0x9b, 0x86, 0x64, 0x32, 0x08, 0xb3, 0xbf, 0xe6, 0x9e, 0x1b, 0x6f, 0x5e, 0x31, 0xd1, 0x3c,
+	0x13, 0x4a, 0x22, 0xe6, 0x2b, 0xb1, 0x11, 0x9b, 0x20, 0xd3, 0xa8, 0x5a, 0xd5, 0xd6, 0x94, 0xf8,
+	0x30, 0x85, 0x05, 0xb1, 0x1c, 0xa3, 0x2f, 0xa1, 0x2a, 0x02, 0xb0, 0x63, 0xd1, 0x89, 0xd8, 0xa2,
+	0xcd, 0xb2, 0x0c, 0x6a, 0xca, 0xa0, 0xcd, 0xc6, 0x8d, 0xec, 0xc3, 0x14, 0xae, 0x10, 0x66, 0x47,
+	0x73, 0x4d, 0xd0, 0xb5, 0x26, 0x6a, 0x23, 0x37, 0x2b, 0x31, 0x82, 0xcd, 0xf6, 0x8e, 0xec, 0x21,
+	0x41, 0x34, 0x47, 0xaf, 0xa1, 0x26, 0x08, 0xce, 0x9d, 0x99, 0x66, 0xa8, 0x4a, 0x86, 0x03, 0xc9,
+	0xa0, 0x75, 0xb0, 0x31, 0x0f, 0x53, 0x58, 0x64, 0xdc, 0x00, 0xe8, 0x0b, 0x55, 0xc2, 0xd5, 0x54,
+	0x13, 0xd4, 0x62, 0x04, 0x91, 0x60, 0x22, 0x73, 0x58, 0x41, 0x34, 0x47, 0xe7, 0x80, 0x64, 0x0f,
+	0x94, 0x84, 0x34, 0x49, 0x5d, 0x92, 0x3c, 0x51, 0x8d, 0x08, 0xd5, 0x95, 0x74, 0x19, 0xa6, 0xf0,
+	0x8e, 0xe8, 0x45, 0x02, 0x44, 0x53, 0xd8, 0x13, 0x6c, 0x17, 0x5a, 0x77, 0x9a, 0xaf, 0x21, 0xf9,
+	0x8e, 0x24, 0xdf, 0x46, 0x94, 0xdb, 0x6e, 0xc3, 0x14, 0xde, 0x25, 0xcc, 0xde, 0x86, 0xd1, 0xe7,
+	0x00, 0x6a, 0x8d, 0x76, 0xb0, 0xe0, 0xcd, 0x1d, 0xc9, 0xb5, 0xb7, 0xbd, 0x40, 0x61, 0x1b, 0xa6,
+	0x70, 0x49, 0xae, 0x4e, 0x4c, 0x50, 0x1f, 0x1a, 0x22, 0xac, 0x27, 0x94, 0xac, 0x0b, 0x41, 0xb1,
+	0xee, 0x28, 0x89, 0xc7, 0xcd, 0xc3, 0x14, 0xae, 0x13, 0x66, 0xc7, 0x21, 0xf4, 0x1a, 0xea, 0xf2,
+	0x1d, 0x33, 0x4a, 0x34, 0xc9, 0xae, 0x24, 0xd9, 0x57, 0x6f, 0x59, 0x1c, 0x26, 0x31, 0xe3, 0x30,
+	0x85, 0xc5, 0x2b, 0x8d, 0x21, 0xba, 0x8e, 0xae, 0x38, 0x64, 0x34, 0xc5, 0x5e, 0xac, 0x0e, 0x75,
+	0xfa, 0xc4, 0xcd, 0x61, 0x1d, 0x71, 0xe8, 0xac, 0xac, 0x76, 0xb7, 0xe7, 0x52, 0x6f, 0x21, 0x65,
+	0xde, 0xa7, 0x2b, 0xe2, 0x5a, 0x1f, 0x43, 0xe6, 0x96, 0xcc, 0x9c, 0x90, 0xb9, 0x82, 0x1e, 0x65,
+	0xfe, 0x28, 0xf3, 0x47, 0x99, 0xff, 0x77, 0x32, 0xff, 0x2d, 0x0d, 0x85, 0xa9, 0x94, 0xe7, 0xff,
+	0x2e, 0x73, 0x7d, 0x13, 0xc9, 0x3f, 0xec, 0x26, 0x12, 0x53, 0x6b, 0x21, 0xae, 0xd6, 0xb6, 0x0d,
+	0x46, 0x48, 0x2e, 0xaa, 0x9a, 0x2f, 0x1d, 0xea, 0xca, 0xaa, 0xd4, 0x4a, 0x8a, 0x0a, 0x88, 0x55,
+	0x95, 0xb9, 0xb7, 0xaa, 0xf8, 0x79, 0x91, 0x4d, 0x9c, 0x17, 0xed, 0xef, 0x20, 0x77, 0x31, 0x5b,
+	0xf3, 0xfb, 0xb3, 0xbc, 0xf7, 0xe2, 0x75, 0x0f, 0xf1, 0xef, 0x69, 0x30, 0x04, 0xf3, 0x05, 0xb7,
+	0xd1, 0x3e, 0x14, 0x56, 0xdc, 0xde, 0x30, 0xe7, 0x57, 0xdc, 0x1e, 0xfd, 0x9b, 0x97, 0x11, 0x2b,
+	0x28, 0xb7, 0x5d, 0x90, 0xc8, 0x24, 0x7b, 0x22, 0xde, 0x41, 0x15, 0x1b, 0x2b, 0x6e, 0x4f, 0xc3,
+	0x26, 0xc8, 0x22, 0xdc, 0x85, 0x27, 0x9b, 0x5d, 0x92, 0xa6, 0x91, 0xbb, 0xf0, 0xee, 0x39, 0x4f,
+	0x9f, 0xfd, 0x91, 0x86, 0x72, 0xac, 0xa1, 0xa8, 0x08, 0xb9, 0xf1, 0xe5, 0x78, 0xd0, 0x48, 0xa1,
+	0x1a, 0x00, 0x1e, 0xf5, 0x07, 0xd7, 0x93, 0x61, 0x17, 0x0f, 0x1a, 0x69, 0x31, 0xef, 0xf6, 0xaf,
+	0x27, 0x03, 0xfc, 0xed, 0xa8, 0x37, 0x68, 0x64, 0x50, 0x1d, 0xca, 0xe7, 0xa3, 0xb3, 0x08, 0xc8,
+	0x0a, 0x87, 0xab, 0x69, 0x34, 0xcf, 0xa1, 0x5d, 0xa8, 0xe3, 0xcb, 0x6f, 0xa6, 0xa3, 0xf1, 0x9b,
+	0x08, 0xcc, 0xa3, 0x7d, 0xd8, 0xb9, 0xe8, 0xe2, 0xb7, 0x83, 0x04, 0x5c, 0x40, 0x3b, 0x50, 0xed,
+	0x9d, 0x5f, 0xf6, 0xde, 0x46, 0x90, 0x81, 0x1a, 0x50, 0xe9, 0xe2, 0x41, 0x37, 0x42, 0x8a, 0xc2,
+	0xa9, 0xfb, 0x66, 0x30, 0xde, 0xe4, 0x28, 0x21, 0x03, 0xb2, 0x83, 0x71, 0xbf, 0x01, 0xa7, 0xbf,
+	0xe6, 0xc1, 0x98, 0xa8, 0xcf, 0x18, 0xd4, 0x81, 0x1a, 0xa6, 0xb6, 0xc3, 0x03, 0xca, 0xc2, 0x7f,
+	0xc3, 0xb2, 0xdc, 0x38, 0x6a, 0xd2, 0xaa, 0xca, 0x89, 0xbe, 0x85, 0xb7, 0x53, 0x71, 0xff, 0xf0,
+	0x92, 0xac, 0xfc, 0xd5, 0xe4, 0xae, 0xff, 0x0b, 0xa8, 0x5e, 0x31, 0xcf, 0xf7, 0x38, 0x7d, 0x10,
+	0xfd, 0xc6, 0xfd, 0x41, 0xec, 0x9f, 0x41, 0x15, 0x53, 0xf1, 0xe7, 0x91, 0x74, 0x57, 0x82, 0x6f,
+	0xa9, 0x93, 0x6f, 0xeb, 0x4b, 0x22, 0x11, 0x95, 0xa8, 0xe9, 0x1f, 0xa2, 0x5e, 0x41, 0x65, 0x42,
+	0x97, 0x74, 0x1e, 0x7c, 0x48, 0xaa, 0x28, 0xe8, 0x43, 0x32, 0x3d, 0x05, 0x23, 0x04, 0x93, 0xfe,
+	0x77, 0x96, 0xff, 0x12, 0xea, 0x93, 0xf5, 0x8c, 0xcf, 0x99, 0x33, 0xd3, 0x4b, 0xa9, 0xc4, 0x65,
+	0xdf, 0x8a, 0x37, 0xbb, 0x9d, 0x7a, 0x99, 0x4e, 0x44, 0x84, 0xeb, 0xf8, 0xbb, 0x08, 0x65, 0x92,
+	0x11, 0xcf, 0xa1, 0x1a, 0x45, 0xc8, 0xd3, 0xa1, 0x24, 0x3d, 0xc4, 0xb0, 0x55, 0x89, 0x86, 0x17,
+	0xdc, 0x96, 0xde, 0x27, 0x60, 0x4c, 0xa8, 0x6b, 0x09, 0xa1, 0x27, 0x8c, 0x77, 0x6b, 0x7f, 0x0a,
+	0xa5, 0xde, 0xd2, 0xe3, 0x77, 0x38, 0xb7, 0x1d, 0xcf, 0xf2, 0xdf, 0x8b, 0x8f, 0xec, 0x59, 0x41,
+	0x9e, 0x9b, 0xaf, 0xfe, 0x0a, 0x00, 0x00, 0xff, 0xff, 0x20, 0xc5, 0x39, 0x5b, 0x81, 0x0f, 0x00,
+	0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1528,6 +1372,53 @@ type SynerexServer interface {
 	SubscribeMbus(*Mbus, Synerex_SubscribeMbusServer) error
 	SendMsg(context.Context, *MbusMsg) (*Response, error)
 	CloseMbus(context.Context, *Mbus) (*Response, error)
+}
+
+// UnimplementedSynerexServer can be embedded to have forward compatible implementations.
+type UnimplementedSynerexServer struct {
+}
+
+func (*UnimplementedSynerexServer) RegisterDemand(ctx context.Context, req *Demand) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterDemand not implemented")
+}
+func (*UnimplementedSynerexServer) RegisterSupply(ctx context.Context, req *Supply) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterSupply not implemented")
+}
+func (*UnimplementedSynerexServer) ProposeDemand(ctx context.Context, req *Demand) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProposeDemand not implemented")
+}
+func (*UnimplementedSynerexServer) ProposeSupply(ctx context.Context, req *Supply) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProposeSupply not implemented")
+}
+func (*UnimplementedSynerexServer) ReserveSupply(ctx context.Context, req *Target) (*ConfirmResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReserveSupply not implemented")
+}
+func (*UnimplementedSynerexServer) ReserveDemand(ctx context.Context, req *Target) (*ConfirmResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReserveDemand not implemented")
+}
+func (*UnimplementedSynerexServer) SelectSupply(ctx context.Context, req *Target) (*ConfirmResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SelectSupply not implemented")
+}
+func (*UnimplementedSynerexServer) SelectDemand(ctx context.Context, req *Target) (*ConfirmResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SelectDemand not implemented")
+}
+func (*UnimplementedSynerexServer) Confirm(ctx context.Context, req *Target) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Confirm not implemented")
+}
+func (*UnimplementedSynerexServer) SubscribeDemand(req *Channel, srv Synerex_SubscribeDemandServer) error {
+	return status.Errorf(codes.Unimplemented, "method SubscribeDemand not implemented")
+}
+func (*UnimplementedSynerexServer) SubscribeSupply(req *Channel, srv Synerex_SubscribeSupplyServer) error {
+	return status.Errorf(codes.Unimplemented, "method SubscribeSupply not implemented")
+}
+func (*UnimplementedSynerexServer) SubscribeMbus(req *Mbus, srv Synerex_SubscribeMbusServer) error {
+	return status.Errorf(codes.Unimplemented, "method SubscribeMbus not implemented")
+}
+func (*UnimplementedSynerexServer) SendMsg(ctx context.Context, req *MbusMsg) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendMsg not implemented")
+}
+func (*UnimplementedSynerexServer) CloseMbus(ctx context.Context, req *Mbus) (*Response, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CloseMbus not implemented")
 }
 
 func RegisterSynerexServer(s *grpc.Server, srv SynerexServer) {
@@ -1862,75 +1753,4 @@ var _Synerex_serviceDesc = grpc.ServiceDesc{
 		},
 	},
 	Metadata: "synerex.proto",
-}
-
-func init() { proto.RegisterFile("synerex.proto", fileDescriptor_synerex_95a9cfc6fc70cd46) }
-
-var fileDescriptor_synerex_95a9cfc6fc70cd46 = []byte{
-	// 1031 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x57, 0xdd, 0x6e, 0xe3, 0x44,
-	0x14, 0xce, 0xaf, 0x9d, 0x9c, 0x34, 0x69, 0x3a, 0xbb, 0x55, 0xdd, 0xac, 0x44, 0xab, 0x08, 0x69,
-	0xab, 0xd5, 0x6e, 0xb2, 0xea, 0xc2, 0x2d, 0xd0, 0x36, 0x81, 0x04, 0x9a, 0x6c, 0x35, 0x09, 0x20,
-	0x71, 0x13, 0x39, 0xf5, 0xc4, 0x6b, 0x1a, 0xff, 0x68, 0xc6, 0x01, 0x22, 0x9e, 0x81, 0x5b, 0x5e,
-	0x82, 0x97, 0xe0, 0x82, 0x07, 0x43, 0x73, 0xc6, 0x76, 0xec, 0x84, 0x2d, 0x5d, 0x21, 0xb1, 0x37,
-	0x7b, 0xd3, 0xcc, 0xf9, 0xfb, 0xce, 0x8f, 0xcf, 0x67, 0x4f, 0xa1, 0x2e, 0xd6, 0x1e, 0xe3, 0xec,
-	0x97, 0x4e, 0xc0, 0xfd, 0xd0, 0x27, 0x45, 0x33, 0x70, 0x5a, 0x27, 0xb6, 0xef, 0xdb, 0x4b, 0xd6,
-	0x45, 0xd5, 0x7c, 0xb5, 0xe8, 0x86, 0x8e, 0xcb, 0x44, 0x68, 0xba, 0x81, 0xf2, 0x6a, 0x7d, 0xb4,
-	0xed, 0x60, 0xad, 0xb8, 0x19, 0x3a, 0xbe, 0x17, 0xd9, 0x0f, 0x16, 0x4b, 0xc6, 0xc2, 0x2e, 0xfe,
-	0x8d, 0x54, 0xc7, 0xdc, 0xb1, 0x98, 0x78, 0x63, 0x72, 0xd6, 0x4d, 0x4e, 0xb1, 0xc9, 0xb4, 0x04,
-	0xe3, 0x3f, 0x39, 0xb7, 0xac, 0x9b, 0x9c, 0x22, 0xd3, 0xe1, 0xd2, 0x99, 0x73, 0x93, 0xaf, 0xbb,
-	0xd1, 0x6f, 0xa4, 0x3e, 0x0a, 0x42, 0x6e, 0x7a, 0xc2, 0x09, 0xbb, 0xf1, 0x21, 0xf6, 0xe7, 0xfe,
-	0x2a, 0x74, 0x3c, 0xbb, 0x1b, 0xfd, 0xc6, 0x19, 0x5c, 0x93, 0xdf, 0x31, 0x34, 0x24, 0x27, 0x65,
-	0x6a, 0x3f, 0x87, 0x0a, 0x65, 0x22, 0xf0, 0x3d, 0xc1, 0x48, 0x03, 0x0a, 0xfe, 0x9d, 0x91, 0x3f,
-	0xcd, 0x9f, 0x55, 0x68, 0xc1, 0xbf, 0x23, 0x4d, 0x28, 0x32, 0xce, 0x8d, 0xc2, 0x69, 0xfe, 0xac,
-	0x4a, 0xe5, 0xb1, 0xfd, 0x2b, 0xec, 0x5f, 0xf9, 0xde, 0xc2, 0xe1, 0xee, 0x5b, 0x83, 0x8e, 0x40,
-	0x77, 0xe7, 0x2b, 0x31, 0x73, 0x2c, 0x0c, 0xd4, 0xa8, 0x26, 0xc5, 0xa1, 0x45, 0x5e, 0x40, 0xe9,
-	0x67, 0xd3, 0x09, 0x8d, 0xe2, 0x69, 0xfe, 0xac, 0x76, 0x7e, 0xdc, 0x51, 0x33, 0xec, 0xc4, 0x33,
-	0xec, 0xf4, 0xa2, 0x19, 0x52, 0x74, 0x8b, 0x93, 0x97, 0x36, 0xc9, 0x7f, 0xd7, 0x40, 0x9b, 0xac,
-	0x82, 0x60, 0xb9, 0x96, 0x49, 0x1d, 0x0b, 0x93, 0x6a, 0xb4, 0xe0, 0x58, 0xe4, 0x09, 0x54, 0x05,
-	0xf3, 0x2c, 0xc6, 0x37, 0x69, 0x2b, 0x4a, 0x31, 0x44, 0x63, 0x68, 0x72, 0x9b, 0x85, 0xd2, 0x58,
-	0x54, 0x46, 0xa5, 0x18, 0x5a, 0xe4, 0x63, 0x28, 0x85, 0xeb, 0x80, 0x61, 0x9e, 0xc6, 0x79, 0xb3,
-	0x63, 0x06, 0x4e, 0xe7, 0xea, 0x8d, 0xe9, 0x79, 0x6c, 0x39, 0x5d, 0x07, 0x8c, 0xa2, 0x95, 0x9c,
-	0x40, 0x4d, 0x60, 0xe6, 0x99, 0x67, 0xba, 0xcc, 0x28, 0x63, 0x51, 0xa0, 0x54, 0x63, 0xd3, 0x65,
-	0xe4, 0x19, 0x14, 0x42, 0x61, 0x68, 0xd8, 0x5a, 0x6b, 0xa7, 0xb5, 0x69, 0xbc, 0x3f, 0xb4, 0x10,
-	0x0a, 0x72, 0x0c, 0x15, 0x93, 0xdb, 0xb3, 0x1f, 0x85, 0xef, 0x19, 0x3a, 0x22, 0xe9, 0x26, 0xb7,
-	0xbf, 0x16, 0xbe, 0x97, 0x1e, 0x5e, 0x25, 0x33, 0xbc, 0x2e, 0x54, 0x65, 0xcc, 0x97, 0x72, 0xa3,
-	0x0c, 0xc0, 0x34, 0xaa, 0x56, 0xb5, 0x63, 0xa8, 0x1f, 0xe4, 0xa8, 0x04, 0xc6, 0x33, 0xf9, 0x1c,
-	0xea, 0x32, 0x80, 0x3a, 0x16, 0x9b, 0xc8, 0x5d, 0x33, 0x6a, 0x18, 0x64, 0x60, 0xd0, 0x66, 0x03,
-	0x13, 0xfb, 0x20, 0x47, 0xf7, 0x4c, 0x6e, 0x27, 0x72, 0x0c, 0x70, 0x61, 0x4d, 0xd4, 0x46, 0x1a,
-	0x7b, 0x29, 0x80, 0xcd, 0x9e, 0x26, 0xf6, 0x08, 0x20, 0x91, 0xc9, 0x17, 0xd0, 0x90, 0x00, 0xd7,
-	0xce, 0x3c, 0x46, 0xa8, 0x23, 0xc2, 0x11, 0x22, 0xc4, 0x0b, 0xbd, 0x31, 0x0f, 0x72, 0x54, 0x66,
-	0xdc, 0x28, 0xc8, 0x67, 0xaa, 0x84, 0x9b, 0x69, 0x0c, 0xd0, 0x48, 0x01, 0x24, 0x9b, 0x9f, 0x98,
-	0xa3, 0x0a, 0x12, 0x99, 0x5c, 0x03, 0xc1, 0x19, 0x28, 0x2e, 0xc4, 0x20, 0xfb, 0x08, 0xf2, 0x44,
-	0x0d, 0x22, 0xa2, 0x49, 0xd6, 0x65, 0x90, 0xa3, 0x07, 0x72, 0x16, 0x19, 0x25, 0x99, 0xc2, 0x63,
-	0x89, 0x36, 0x8a, 0x09, 0x14, 0xe3, 0x35, 0x11, 0xef, 0x04, 0xf1, 0x36, 0xec, 0xda, 0x76, 0x1b,
-	0xe4, 0xe8, 0x23, 0x93, 0xdb, 0xdb, 0x6a, 0xf2, 0x29, 0x80, 0xea, 0xd1, 0x0e, 0x17, 0xc2, 0x38,
-	0x40, 0xac, 0xc7, 0xdb, 0x0d, 0x4a, 0xdb, 0x20, 0x47, 0xab, 0xd8, 0x9d, 0x14, 0x2e, 0x6b, 0x6a,
-	0x1f, 0x7c, 0x8f, 0xf9, 0x0b, 0x24, 0x46, 0x8f, 0xb9, 0xa6, 0x67, 0xbd, 0x0f, 0x62, 0x58, 0x98,
-	0x39, 0x43, 0x0c, 0xa5, 0xfa, 0x40, 0x8c, 0x0f, 0xc4, 0x78, 0xbf, 0xc4, 0xf8, 0x33, 0x0f, 0xda,
-	0x14, 0x17, 0xfa, 0x7f, 0x27, 0x46, 0xfc, 0xb5, 0x2b, 0x3f, 0xec, 0x6b, 0x97, 0xda, 0x6f, 0x2d,
-	0xbd, 0xdf, 0x6d, 0x1b, 0xf4, 0x08, 0x5c, 0x56, 0x75, 0xbb, 0x74, 0x98, 0x87, 0x55, 0xa9, 0x4e,
-	0x2a, 0x4a, 0x91, 0xaa, 0xaa, 0x70, 0x6f, 0x55, 0x69, 0x86, 0x15, 0x33, 0x0c, 0x6b, 0x7f, 0x0f,
-	0xa5, 0xd1, 0x7c, 0x25, 0xee, 0xcf, 0xf2, 0xd6, 0x8f, 0xfb, 0x3d, 0xc0, 0x7f, 0xe5, 0x41, 0x97,
-	0xc8, 0x23, 0x61, 0x93, 0x43, 0xd0, 0x5c, 0x61, 0x6f, 0x90, 0xcb, 0xae, 0xb0, 0x87, 0xff, 0xe5,
-	0x61, 0xa4, 0x0a, 0x2a, 0x6d, 0x17, 0x24, 0x33, 0xe1, 0x4c, 0xe4, 0x33, 0xa8, 0x53, 0xdd, 0x15,
-	0xf6, 0x34, 0x1a, 0x02, 0x16, 0xe1, 0x2d, 0x7c, 0x1c, 0x76, 0x15, 0x4d, 0x43, 0x6f, 0xe1, 0xdf,
-	0xf3, 0x06, 0x7a, 0xf6, 0x5b, 0x1e, 0x6a, 0xa9, 0x81, 0x92, 0x0a, 0x94, 0xc6, 0xaf, 0xc7, 0xfd,
-	0x66, 0x8e, 0x34, 0x00, 0xe8, 0xb0, 0xd7, 0x9f, 0x4d, 0x06, 0x17, 0xb4, 0xdf, 0xcc, 0x4b, 0xf9,
-	0xa2, 0x37, 0x9b, 0xf4, 0xe9, 0x77, 0xc3, 0xab, 0x7e, 0xb3, 0x40, 0xf6, 0xa1, 0x76, 0x3d, 0xbc,
-	0x4c, 0x14, 0x45, 0xe9, 0x70, 0x33, 0x4d, 0xe4, 0x12, 0x79, 0x04, 0xfb, 0xf4, 0xf5, 0xb7, 0xd3,
-	0xe1, 0xf8, 0xab, 0x44, 0x59, 0x26, 0x87, 0x70, 0x30, 0xba, 0xa0, 0xdf, 0xf4, 0x33, 0x6a, 0x8d,
-	0xe8, 0x50, 0xec, 0x8f, 0x7b, 0x4d, 0x38, 0xff, 0xa3, 0x0c, 0xfa, 0x44, 0xdd, 0x5d, 0x49, 0x07,
-	0x1a, 0x94, 0xd9, 0x8e, 0x08, 0x19, 0x8f, 0xbe, 0x03, 0x35, 0x5c, 0x00, 0x25, 0xb4, 0xea, 0x28,
-	0xc4, 0x37, 0xb6, 0x76, 0x2e, 0xed, 0x1f, 0x5d, 0xa8, 0x94, 0xbf, 0x12, 0x76, 0xfd, 0x5f, 0x40,
-	0xfd, 0x86, 0xfb, 0x81, 0x2f, 0xd8, 0x83, 0xe0, 0x37, 0xee, 0x0f, 0x42, 0xff, 0x04, 0xea, 0x94,
-	0xc9, 0xd7, 0x66, 0xd6, 0x5d, 0x11, 0xb7, 0xa5, 0x38, 0xbf, 0x75, 0xeb, 0xcc, 0x44, 0x65, 0x6a,
-	0xfa, 0x97, 0xa8, 0x57, 0xb0, 0x37, 0x61, 0x4b, 0x76, 0x1b, 0xbe, 0x4b, 0xaa, 0x24, 0xe8, 0x5d,
-	0x32, 0x3d, 0x05, 0x3d, 0x52, 0x66, 0xfd, 0x77, 0xda, 0x7f, 0x09, 0xfb, 0x93, 0xd5, 0x5c, 0xdc,
-	0x72, 0x67, 0x1e, 0xb7, 0xb2, 0x97, 0xa6, 0x6f, 0x2b, 0x3d, 0xec, 0x76, 0xee, 0x65, 0x3e, 0x13,
-	0x11, 0xf5, 0xf1, 0x4f, 0x11, 0xca, 0x84, 0x11, 0xcf, 0xa1, 0x9e, 0x44, 0x20, 0xcb, 0xab, 0xe8,
-	0x21, 0x8f, 0xad, 0xbd, 0xe4, 0x38, 0x12, 0x36, 0x7a, 0x9f, 0x81, 0x3e, 0x61, 0x9e, 0x25, 0x09,
-	0x9b, 0x31, 0xee, 0xd6, 0xfe, 0x14, 0xaa, 0x57, 0x4b, 0x5f, 0xec, 0x60, 0x6e, 0x3b, 0x5e, 0x96,
-	0x7f, 0x90, 0xff, 0x59, 0xcd, 0x35, 0x7c, 0xff, 0xbd, 0xfa, 0x3b, 0x00, 0x00, 0xff, 0xff, 0x0e,
-	0xb3, 0x83, 0xed, 0x76, 0x0d, 0x00, 0x00,
 }
