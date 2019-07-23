@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.agent;
 
-option go_package="agent";
+option go_package="github.com/synerex/synerex_alpha/api/agent";
 
 message AgentService {
     uint32 num_adult = 5;
