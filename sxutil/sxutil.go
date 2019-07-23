@@ -445,7 +445,7 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 		ArgJson:    dmo.JSON,
 	}
 	switch clt.MType {
-	case api.ChannelType_CLOCK_SERVICE:
+/*	case api.ChannelType_CLOCK_SERVICE:
 		if dmo.ClockService != nil{
 			dm.WithClockService(dmo.ClockService)
 		}else{
@@ -462,7 +462,7 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 			dm.WithAgentService(dmo.AgentService)
 		}else{
 			log.Printf("AgentService info is nil")
-		}
+		}*/
 	case api.ChannelType_ROUTING_SERVICE:
 		rsp := api.Demand_Arg_RoutingService{
 			dmo.RoutingService,
@@ -515,7 +515,7 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 	}
 
 	switch clt.MType {
-	case api.ChannelType_CLOCK_SERVICE:
+/*	case api.ChannelType_CLOCK_SERVICE:
 		if smo.ClockService != nil{
 			sp.WithClockService(smo.ClockService)
 		}else{
@@ -532,7 +532,7 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 			sp.WithAgentService(smo.AgentService)
 		}else{
 			log.Printf("AgentService info is nil")
-		}
+		} */
 	case api.ChannelType_RIDE_SHARE:
 		sp := api.Supply_Arg_Fleet{
 			smo.Fleet,
