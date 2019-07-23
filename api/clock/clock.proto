@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package api.clock;
 
-option go_package="clock";
+option go_package="github.com/synerex/synerex_alpha/api/clock";
 
 
 message ClockService {
