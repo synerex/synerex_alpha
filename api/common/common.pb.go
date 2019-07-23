@@ -39,7 +39,7 @@ func (x OtherTime) String() string {
 	return proto.EnumName(OtherTime_name, int32(x))
 }
 func (OtherTime) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_common_04d42b75788e8e8f, []int{0}
+	return fileDescriptor_common_9bdbb22f5c9a5c38, []int{0}
 }
 
 type Place struct {
@@ -56,7 +56,7 @@ func (m *Place) Reset()         { *m = Place{} }
 func (m *Place) String() string { return proto.CompactTextString(m) }
 func (*Place) ProtoMessage()    {}
 func (*Place) Descriptor() ([]byte, []int) {
-	return fileDescriptor_common_04d42b75788e8e8f, []int{0}
+	return fileDescriptor_common_9bdbb22f5c9a5c38, []int{0}
 }
 func (m *Place) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Place.Unmarshal(m, b)
@@ -200,7 +200,7 @@ func (m *Point) Reset()         { *m = Point{} }
 func (m *Point) String() string { return proto.CompactTextString(m) }
 func (*Point) ProtoMessage()    {}
 func (*Point) Descriptor() ([]byte, []int) {
-	return fileDescriptor_common_04d42b75788e8e8f, []int{1}
+	return fileDescriptor_common_9bdbb22f5c9a5c38, []int{1}
 }
 func (m *Point) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Point.Unmarshal(m, b)
@@ -252,7 +252,7 @@ func (m *Areas) Reset()         { *m = Areas{} }
 func (m *Areas) String() string { return proto.CompactTextString(m) }
 func (*Areas) ProtoMessage()    {}
 func (*Areas) Descriptor() ([]byte, []int) {
-	return fileDescriptor_common_04d42b75788e8e8f, []int{2}
+	return fileDescriptor_common_9bdbb22f5c9a5c38, []int{2}
 }
 func (m *Areas) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Areas.Unmarshal(m, b)
@@ -290,7 +290,7 @@ func (m *Area) Reset()         { *m = Area{} }
 func (m *Area) String() string { return proto.CompactTextString(m) }
 func (*Area) ProtoMessage()    {}
 func (*Area) Descriptor() ([]byte, []int) {
-	return fileDescriptor_common_04d42b75788e8e8f, []int{3}
+	return fileDescriptor_common_9bdbb22f5c9a5c38, []int{3}
 }
 func (m *Area) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Area.Unmarshal(m, b)
@@ -332,7 +332,7 @@ func (m *Time) Reset()         { *m = Time{} }
 func (m *Time) String() string { return proto.CompactTextString(m) }
 func (*Time) ProtoMessage()    {}
 func (*Time) Descriptor() ([]byte, []int) {
-	return fileDescriptor_common_04d42b75788e8e8f, []int{4}
+	return fileDescriptor_common_9bdbb22f5c9a5c38, []int{4}
 }
 func (m *Time) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Time.Unmarshal(m, b)
@@ -501,7 +501,7 @@ func (m *Periods) Reset()         { *m = Periods{} }
 func (m *Periods) String() string { return proto.CompactTextString(m) }
 func (*Periods) ProtoMessage()    {}
 func (*Periods) Descriptor() ([]byte, []int) {
-	return fileDescriptor_common_04d42b75788e8e8f, []int{5}
+	return fileDescriptor_common_9bdbb22f5c9a5c38, []int{5}
 }
 func (m *Periods) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Periods.Unmarshal(m, b)
@@ -541,7 +541,7 @@ func (m *Period) Reset()         { *m = Period{} }
 func (m *Period) String() string { return proto.CompactTextString(m) }
 func (*Period) ProtoMessage()    {}
 func (*Period) Descriptor() ([]byte, []int) {
-	return fileDescriptor_common_04d42b75788e8e8f, []int{6}
+	return fileDescriptor_common_9bdbb22f5c9a5c38, []int{6}
 }
 func (m *Period) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Period.Unmarshal(m, b)
@@ -595,7 +595,7 @@ func (m *RepeatOption) Reset()         { *m = RepeatOption{} }
 func (m *RepeatOption) String() string { return proto.CompactTextString(m) }
 func (*RepeatOption) ProtoMessage()    {}
 func (*RepeatOption) Descriptor() ([]byte, []int) {
-	return fileDescriptor_common_04d42b75788e8e8f, []int{7}
+	return fileDescriptor_common_9bdbb22f5c9a5c38, []int{7}
 }
 func (m *RepeatOption) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RepeatOption.Unmarshal(m, b)
@@ -648,9 +648,9 @@ func init() {
 	proto.RegisterEnum("api.common.OtherTime", OtherTime_name, OtherTime_value)
 }
 
-func init() { proto.RegisterFile("common/common.proto", fileDescriptor_common_04d42b75788e8e8f) }
+func init() { proto.RegisterFile("common/common.proto", fileDescriptor_common_9bdbb22f5c9a5c38) }
 
-var fileDescriptor_common_04d42b75788e8e8f = []byte{
+var fileDescriptor_common_9bdbb22f5c9a5c38 = []byte{
 	// 479 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x93, 0xdf, 0x8e, 0xd2, 0x40,
 	0x14, 0xc6, 0x29, 0xb4, 0xfc, 0x39, 0xab, 0x1b, 0x3c, 0xab, 0x49, 0x43, 0x4c, 0x24, 0x4d, 0x4c,

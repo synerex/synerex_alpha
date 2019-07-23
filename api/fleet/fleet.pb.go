@@ -32,7 +32,7 @@ func (m *FleetService) Reset()         { *m = FleetService{} }
 func (m *FleetService) String() string { return proto.CompactTextString(m) }
 func (*FleetService) ProtoMessage()    {}
 func (*FleetService) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fleet_ad046652bdc8cb0c, []int{0}
+	return fileDescriptor_fleet_4e98e79d1010b3ba, []int{0}
 }
 func (m *FleetService) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_FleetService.Unmarshal(m, b)
@@ -178,7 +178,7 @@ func (m *FleetService_ShareRideSerivce) Reset()         { *m = FleetService_Shar
 func (m *FleetService_ShareRideSerivce) String() string { return proto.CompactTextString(m) }
 func (*FleetService_ShareRideSerivce) ProtoMessage()    {}
 func (*FleetService_ShareRideSerivce) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fleet_ad046652bdc8cb0c, []int{0, 0}
+	return fileDescriptor_fleet_4e98e79d1010b3ba, []int{0, 0}
 }
 func (m *FleetService_ShareRideSerivce) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_FleetService_ShareRideSerivce.Unmarshal(m, b)
@@ -248,7 +248,7 @@ func (m *FleetService_DeliverSerivce) Reset()         { *m = FleetService_Delive
 func (m *FleetService_DeliverSerivce) String() string { return proto.CompactTextString(m) }
 func (*FleetService_DeliverSerivce) ProtoMessage()    {}
 func (*FleetService_DeliverSerivce) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fleet_ad046652bdc8cb0c, []int{0, 1}
+	return fileDescriptor_fleet_4e98e79d1010b3ba, []int{0, 1}
 }
 func (m *FleetService_DeliverSerivce) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_FleetService_DeliverSerivce.Unmarshal(m, b)
@@ -320,7 +320,7 @@ func (m *Fleet) Reset()         { *m = Fleet{} }
 func (m *Fleet) String() string { return proto.CompactTextString(m) }
 func (*Fleet) ProtoMessage()    {}
 func (*Fleet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fleet_ad046652bdc8cb0c, []int{1}
+	return fileDescriptor_fleet_4e98e79d1010b3ba, []int{1}
 }
 func (m *Fleet) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Fleet.Unmarshal(m, b)
@@ -401,7 +401,7 @@ func (m *Fleet_Coord) Reset()         { *m = Fleet_Coord{} }
 func (m *Fleet_Coord) String() string { return proto.CompactTextString(m) }
 func (*Fleet_Coord) ProtoMessage()    {}
 func (*Fleet_Coord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fleet_ad046652bdc8cb0c, []int{1, 0}
+	return fileDescriptor_fleet_4e98e79d1010b3ba, []int{1, 0}
 }
 func (m *Fleet_Coord) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Fleet_Coord.Unmarshal(m, b)
@@ -443,9 +443,9 @@ func init() {
 	proto.RegisterType((*Fleet_Coord)(nil), "api.fleet.Fleet.Coord")
 }
 
-func init() { proto.RegisterFile("fleet/fleet.proto", fileDescriptor_fleet_ad046652bdc8cb0c) }
+func init() { proto.RegisterFile("fleet/fleet.proto", fileDescriptor_fleet_4e98e79d1010b3ba) }
 
-var fileDescriptor_fleet_ad046652bdc8cb0c = []byte{
+var fileDescriptor_fleet_4e98e79d1010b3ba = []byte{
 	// 495 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x93, 0xe1, 0x6e, 0xd3, 0x30,
 	0x10, 0xc7, 0x69, 0xb3, 0x74, 0xcd, 0x75, 0x94, 0x61, 0xa1, 0x11, 0x55, 0x42, 0x44, 0x93, 0x80,

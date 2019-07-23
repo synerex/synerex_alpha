@@ -38,7 +38,7 @@ func (m *RoutingService) Reset()         { *m = RoutingService{} }
 func (m *RoutingService) String() string { return proto.CompactTextString(m) }
 func (*RoutingService) ProtoMessage()    {}
 func (*RoutingService) Descriptor() ([]byte, []int) {
-	return fileDescriptor_routing_9090d29774498a9a, []int{0}
+	return fileDescriptor_routing_32560a1209e40b08, []int{0}
 }
 func (m *RoutingService) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_RoutingService.Unmarshal(m, b)
@@ -118,9 +118,9 @@ func init() {
 	proto.RegisterType((*RoutingService)(nil), "api.routing.RoutingService")
 }
 
-func init() { proto.RegisterFile("routing/routing.proto", fileDescriptor_routing_9090d29774498a9a) }
+func init() { proto.RegisterFile("routing/routing.proto", fileDescriptor_routing_32560a1209e40b08) }
 
-var fileDescriptor_routing_9090d29774498a9a = []byte{
+var fileDescriptor_routing_32560a1209e40b08 = []byte{
 	// 311 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x92, 0x4d, 0x4b, 0xc3, 0x40,
 	0x10, 0x86, 0x29, 0xb5, 0x55, 0x27, 0x7e, 0x56, 0x84, 0xd8, 0x83, 0x16, 0x4f, 0x15, 0x64, 0x83,

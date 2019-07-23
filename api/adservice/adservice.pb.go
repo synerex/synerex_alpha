@@ -33,7 +33,7 @@ func (m *AdService) Reset()         { *m = AdService{} }
 func (m *AdService) String() string { return proto.CompactTextString(m) }
 func (*AdService) ProtoMessage()    {}
 func (*AdService) Descriptor() ([]byte, []int) {
-	return fileDescriptor_adservice_a62272eaa827c207, []int{0}
+	return fileDescriptor_adservice_87d91af544aaa8b4, []int{0}
 }
 func (m *AdService) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AdService.Unmarshal(m, b)
@@ -93,7 +93,7 @@ func (m *AdTarget) Reset()         { *m = AdTarget{} }
 func (m *AdTarget) String() string { return proto.CompactTextString(m) }
 func (*AdTarget) ProtoMessage()    {}
 func (*AdTarget) Descriptor() ([]byte, []int) {
-	return fileDescriptor_adservice_a62272eaa827c207, []int{1}
+	return fileDescriptor_adservice_87d91af544aaa8b4, []int{1}
 }
 func (m *AdTarget) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AdTarget.Unmarshal(m, b)
@@ -133,10 +133,10 @@ func init() {
 }
 
 func init() {
-	proto.RegisterFile("adservice/adservice.proto", fileDescriptor_adservice_a62272eaa827c207)
+	proto.RegisterFile("adservice/adservice.proto", fileDescriptor_adservice_87d91af544aaa8b4)
 }
 
-var fileDescriptor_adservice_a62272eaa827c207 = []byte{
+var fileDescriptor_adservice_87d91af544aaa8b4 = []byte{
 	// 262 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x90, 0x41, 0x4b, 0xc3, 0x30,
 	0x14, 0xc7, 0xc9, 0xaa, 0x63, 0x4b, 0x1d, 0x48, 0x10, 0xcc, 0x3c, 0x48, 0xdd, 0xa9, 0xa7, 0x17,
