@@ -7,6 +7,7 @@ require (
 )
 replace (
 	github.com/synerex/synerex_alpha/api => ./../../api
+	github.com/synerex/synerex_alpha/api/adservice => ../../api/adservice
 	github.com/synerex/synerex_alpha/api/agent => ./../../api/agent
 	github.com/synerex/synerex_alpha/api/area => ./../../api/area
 	github.com/synerex/synerex_alpha/api/clock => ./../../api/clock
