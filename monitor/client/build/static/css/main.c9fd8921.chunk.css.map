@@ -1,0 +1,1 @@
+{"version":3,"sources":["/Users/rui_hirano/MyProjects/LabProjects/synerex_alpha/monitor/client/src/index.css"],"names":[],"mappings":"AAAA,KACE,SAAU,AACV,UAAW,AACX,sBAAwB,CACzB","file":"main.c9fd8921.chunk.css","sourcesContent":["body {\n  margin: 0;\n  padding: 0;\n  font-family: sans-serif;\n}\n"]}
