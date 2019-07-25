@@ -138,12 +138,16 @@ func main() {
 
 	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:User}")
-	sclient := sxutil.NewSMServiceClient(client, pb.ChannelType_RIDE_SHARE,argJson)
+	sclient := sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
+	sclient2 := sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
+	sclient3 := sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
 
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
 	go subscribeSupply(sclient)
+	go subscribeSupply(sclient2)
+	go subscribeSupply(sclient3)
 
 	for {
 		sendDemand(sclient, "Share Ride to Home", "{Destination:{Latitude:36.5, Longitude:135.6}, Duration: 1200}")

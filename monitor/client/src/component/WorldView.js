@@ -63,7 +63,8 @@ export default class WorldView extends React.Component {
   rotateObjects(angle) {}
 
   onAnimate() {
-    const namesMap = [0, 1, 0, 0, 0, 2, 3, 0];
+    // chanell type
+    const namesMap = [0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 0];
 
     if (!this.visible) return;
     if (this.controls) {
