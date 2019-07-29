@@ -5,6 +5,7 @@ require (
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
 	google.golang.org/grpc v1.17.0
 )
+
 replace (
 	github.com/synerex/synerex_alpha/api => ./../../api
 	github.com/synerex/synerex_alpha/api/adservice => ../../api/adservice

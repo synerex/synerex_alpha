@@ -10,9 +10,10 @@ import (
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
-	"time"
-	"encoding/json"
+	//"time"
+	//"encoding/json"
 	"fmt"
+	//"reflect"
 	//"os"
 	//"os/exec"
 )
@@ -25,6 +26,9 @@ var (
 	spMap		map[uint64]*pb.Supply
 	selection 	bool
 	mu	sync.Mutex
+	sclientArea *sxutil.SMServiceClient
+	sclientAgent *sxutil.SMServiceClient
+	sclientClock *sxutil.SMServiceClient
 )
 
 func init() {
@@ -47,7 +51,7 @@ type TaxiDemand struct {
 	Position LonLat
 }
 
-// this function waits
+/*// this function waits
 func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
 	var sid uint64
 
@@ -74,33 +78,38 @@ func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
 	log.Printf("Select supply %v", spMap[sid])
 	clt.SelectSupply(spMap[sid])
 	// we have to cleanup all info.
+}*/
+
+func startUpAreaAgentProvider(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	// start up area-agent-provider with area property
+	// but now, run case provider is already running
+	sendDemand(sclientArea, "START_UP_A", "{Area:{Latitude:36.5, Longitude:135.6}}")
+	sendDemand(sclientArea, "START_UP_B", "{Area:{Latitude:40.5, Longitude:140.6}}")
+
+}
+
+func startUpOK(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	log.Println("start up and set area ok")
+	log.Printf("supply is %v",sp)
+}
+
+func setAgentOK(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	log.Println("set agent ok")
+	log.Printf("supply is %v",sp)
 }
 
 // callback for each Supply
 func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	// check if supply is match with my demand.
-	log.Println("Got Ride_Share supply callback")
-	// choice is supply for me? or not.
-	mu.Lock()
-	if clt.IsSupplyTarget(sp, idlist) { //
-		// always select Supply
-		// this is not good..
-//		clt.SelectSupply(sp)
-		// just show the supply Information
-		opts :=	dmMap[sp.TargetId]
-		log.Printf("Got Supply for %v as '%v'",opts, sp )
-		spMap[sp.TargetId] = sp
-		// should wait several seconds to find the best proposal.
-		// if there is no selection .. lets start
-		if !selection {
-			selection = true
-			go startSelection(clt, time.Second*5)
-		}
-	}else{
-//		log.Printf("This is not my supply id %v, %v",sp,idlist)
-		// do not need to say.
+	log.Println("Got supply callback")
+	log.Printf("supply is %v",sp)
+	switch sp.SupplyName{
+		case "SEND_AREA": startUpAreaAgentProvider(clt, sp)
+		case "SET_AGENT_OK": setAgentOK(clt, sp)
+		case "START_UP_OK": startUpOK(clt, sp)
+		default: log.Println("demand callback is valid.")
+
 	}
-	mu.Unlock()
 }
 
 func subscribeSupply(client *sxutil.SMServiceClient) {
@@ -122,7 +131,7 @@ func sendDemand(sclient *sxutil.SMServiceClient, nm string, js string) {
 }
 
 func userSelect() string{
-	Options := []string{"SET_CLOCK", "START_CLOCK", "3.FORWARD_CLOCK", "BACK_CLOCK", "SKIP_CLOCK",
+	Options := []string{"SET_CLOCK", "START_CLOCK", "FORWARD_CLOCK", "BACK_CLOCK", "SKIP_CLOCK",
 						"SET_AGENT", "SET_AREA"}
 	for i, s := range Options {
 		fmt.Printf("%d. %s\n", i, s)
@@ -132,6 +141,10 @@ func userSelect() string{
 	fmt.Scan(&selectNum)
 	fmt.Printf("命令: %d, %s\n", selectNum, Options[selectNum])
 	return Options[selectNum]
+}
+
+func setClock(){
+
 }
 
 func main() {
@@ -156,21 +169,42 @@ func main() {
 
 	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Scenario}")
-	sclient := sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
-	sclient2 := sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
-	sclient3 := sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
+	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
+	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
+	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
 
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
-	go subscribeSupply(sclient)
-	go subscribeSupply(sclient2)
-	go subscribeSupply(sclient3)
+	go subscribeSupply(sclientAgent)
+	go subscribeSupply(sclientClock)
+	go subscribeSupply(sclientArea)
 
 	for {
 		order := userSelect()
 		fmt.Printf("命令: %s\n", order)
-		sendDemand(sclient, order, "{Destination:{Latitude:36.5, Longitude:135.6}, Duration: 1200}")
+		switch order {
+		case "SET_CLOCK":
+			fmt.Println("set clock")
+			sendDemand(sclientClock, order, "{Date: '2019-7-29T22:32:13.234252Z'")
+		case "START_CLOCK":
+			fmt.Println("start clock")
+		case "FORWARD_CLOCK":
+			fmt.Println("forward clock")
+		case "BACK_CLOCK":
+			fmt.Println("back clock")
+		case "SKIP_CLOCK":
+			fmt.Println("skip clock")
+		case "SET_AGENT":
+			fmt.Println("set agent")
+			sendDemand(sclientAgent, order, "{Principle: {}, Position, {36.5, 138.5}, Agent: 'Pedestrian'}")
+		case "SET_AREA":
+			fmt.Println("set area")
+			sendDemand(sclientArea, order, "{Area:{Latitude:36.5, Longitude:135.6}}")
+		default:
+			fmt.Println("error")
+		}
+		
 		//time.Sleep(time.Second * time.Duration(10 + rand.Int()%10))
 	}
 	wg.Wait()

@@ -5,13 +5,13 @@ import (
 	"flag"
 	"log"
 	"sync"
-	"math/rand"
+	//"math/rand"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
-	"time"
-	"encoding/json"
+	//"time"
+	//"encoding/json"
 	"fmt"
 )
 
@@ -20,7 +20,7 @@ var (
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
-	spMap		map[uint64]*pb.Supply
+	spMap		map[uint64]*sxutil.SupplyOpts
 	selection 	bool
 	mu	sync.Mutex
 )
@@ -28,7 +28,7 @@ var (
 func init() {
 	idlist = make([]uint64, 0)
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
-	spMap = make(map[uint64]*pb.Supply)
+	spMap = make(map[uint64]*sxutil.SupplyOpts)
 	selection = false
 }
 
@@ -46,7 +46,7 @@ type TaxiDemand struct {
 }
 
 // this function waits
-func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
+/*func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
 	var sid uint64
 
 	for i := 0; i < 5; i++{
@@ -72,41 +72,46 @@ func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
 	log.Printf("Select supply %v", spMap[sid])
 	clt.SelectSupply(spMap[sid])
 	// we have to cleanup all info.
+}*/
+
+func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("setArea")
+	sendSupply(clt, "SEND_AREA", "{Area:[{Latitude:36.5, Longitude:135.6},{Latitude:40.5, Longitude:140.6}]}")
+}
+
+func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
+
 }
 
 // callback for each Supply
-func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
+func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	// check if supply is match with my demand.
-	log.Println("Got Ride_Share supply callback")
-	// choice is supply for me? or not.
-	mu.Lock()
-	if clt.IsSupplyTarget(sp, idlist) { //
-		// always select Supply
-		// this is not good..
-//		clt.SelectSupply(sp)
-		// just show the supply Information
-		opts :=	dmMap[sp.TargetId]
-		log.Printf("Got Supply for %v as '%v'",opts, sp )
-		spMap[sp.TargetId] = sp
-		// should wait several seconds to find the best proposal.
-		// if there is no selection .. lets start
-		if !selection {
-			selection = true
-			go startSelection(clt, time.Second*5)
-		}
-	}else{
-//		log.Printf("This is not my supply id %v, %v",sp,idlist)
-		// do not need to say.
+	log.Println("Got demand callback")
+	log.Printf("demand is %v",dm.DemandName)
+	switch dm.DemandName{
+	case "SET_AREA": setArea(clt, dm)
+	case "GET_AREA": getArea(clt, dm)
+	default: log.Println("demand callback is valid.")
+
 	}
-	mu.Unlock()
 }
 
-func subscribeSupply(client *sxutil.SMServiceClient) {
+func subscribeDemand(client *sxutil.SMServiceClient) {
 	//called as goroutine
 	ctx := context.Background() // should check proper context
-	client.SubscribeSupply(ctx, supplyCallback)
+	client.SubscribeDemand(ctx, demandCallback)
 	// comes here if channel closed
 	log.Printf("SMarket Server Closed?")
+}
+
+func sendSupply(sclient *sxutil.SMServiceClient, nm string, js string) {
+	opts := &sxutil.SupplyOpts{Name: nm, JSON: js}
+	mu.Lock()
+	id := sclient.RegisterSupply(opts)
+	idlist = append(idlist, id) // my demand list
+	spMap[id] = opts            // my demand options
+	mu.Unlock()
+	log.Printf("Register my supply as id %v, %v",id,idlist)
 }
 
 func sendDemand(sclient *sxutil.SMServiceClient, nm string, js string) {
@@ -122,7 +127,7 @@ func sendDemand(sclient *sxutil.SMServiceClient, nm string, js string) {
 func main() {
 	flag.Parse()
 
-	sxutil.RegisterNodeName(*nodesrv, "UserProvider", false)
+	sxutil.RegisterNodeName(*nodesrv, "AreaProvider", false)
 
 	go sxutil.HandleSigInt()
 	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
@@ -137,22 +142,22 @@ func main() {
 	sxutil.RegisterDeferFunction(func() { conn.Close() })
 
 	client := pb.NewSynerexClient(conn)
-	argJson := fmt.Sprintf("{Client:User}")
-	sclient := sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
-	sclient2 := sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
-	sclient3 := sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
+	argJson := fmt.Sprintf("{Client:Area}")
+	sclientAgent := sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
+	sclientClock := sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
+	sclientArea := sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
 
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
-	go subscribeSupply(sclient)
-	go subscribeSupply(sclient2)
-	go subscribeSupply(sclient3)
+	go subscribeDemand(sclientAgent)
+	go subscribeDemand(sclientClock)
+	go subscribeDemand(sclientArea)
 
-	for {
+	/*for {
 		sendDemand(sclient, "Share Ride to Home", "{Destination:{Latitude:36.5, Longitude:135.6}, Duration: 1200}")
 		time.Sleep(time.Second * time.Duration(10 + rand.Int()%10))
-	}
+	}*/
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
 
