@@ -77,6 +77,11 @@ func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
 	// we have to cleanup all info.
 }*/
 
+func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("setClock")
+	sendDemand(clt, "SET_CLOCK_OK", "{Date: '2019-7-29T22:32:13.234252Z'")
+}
+
 func startUp(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("start up")
 	sendSupply(clt, "START_UP_OK", "{Area:{Latitude:36.5, Longitude:135.6}}")
@@ -89,6 +94,29 @@ func setAgent(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	sendSupply(clt, "AET_AGENT_OK", "{Position:{Latitude:40.5, Longitude:140.6}}")
 }
 
+func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	if(dm.DemandName=="FORWARD_CLOCK"){
+	log.Println("forwardClock")
+	sendDemand(sclientArea, "GET_AREA", "{Area:{Latitude:36.5, Longitude:135.6}}")
+	}else if(dm.DemandName=="SEND_AREA"){
+		// here is forward function
+		//
+
+		// forward area ok
+		sendDemand(sclientArea, "FORWARD_AREA_OK", "{Area:{Latitude:36.5, Longitude:135.6}}")
+		sendSupply(sclientArea, "FORWARD_AREA_OK", "{Area:{Latitude:36.5, Longitude:135.6}}")
+
+		// forward agent ok
+		sendDemand(sclientAgent, "FORWARD_AGENT_OK", "{Position:{Latitude:36.5, Longitude:135.6}}")
+		sendSupply(sclientAgent, "FORWARD_AGENT_OK", "{Position:{Latitude:36.5, Longitude:135.6}}")
+
+		// forward area ok
+		sendDemand(sclientClock, "FORWARD_CLOCK_OK", "{Date: '2019-7-29T22:32:13.234252Z'}")
+		sendSupply(sclientClock, "FORWARD_CLOCK_OK", "{Date: '2019-7-29T22:32:13.234252Z'}")
+
+	}
+}
+
 // callback for each Supply
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	// check if supply is match with my demand.
@@ -97,6 +125,9 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	switch dm.DemandName{
 	case "START_UP_A": startUp(clt, dm)
 	case "SET_AGENT": setAgent(clt, dm)
+	case "SET_CLOCK_ALL": setClock(clt, dm)
+	case "FORWARD_CLOCK": forwardClock(clt, dm)
+	case "SEND_AREA": forwardClock(clt, dm)
 	default: log.Println("demand callback is valid.")
 
 	}
@@ -120,6 +151,16 @@ func sendSupply(sclient *sxutil.SMServiceClient, nm string, js string) {
 	spMap[id] = opts            // my demand options
 	mu.Unlock()
 	log.Printf("Register my supply as id %v, %v",id,idlist)
+}
+
+func sendDemand(sclient *sxutil.SMServiceClient, nm string, js string) {
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js}
+	mu.Lock()
+	id := sclient.RegisterDemand(opts)
+	idlist = append(idlist, id) // my demand list
+	dmMap[id] = opts            // my demand options
+	mu.Unlock()
+	log.Printf("Register my demand as id %v, %v",id,idlist)
 }
 
 func main() {

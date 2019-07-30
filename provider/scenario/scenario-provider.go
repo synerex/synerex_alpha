@@ -98,6 +98,23 @@ func setAgentOK(clt *sxutil.SMServiceClient, sp *pb.Supply){
 	log.Printf("supply is %v",sp)
 }
 
+func setClockOK(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	log.Println("set clock ok")
+	log.Printf("supply is %v",sp)
+}
+
+func forwardClockOK(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	log.Println("forwardClock OK")
+}
+
+func forwardAgentOK(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	log.Println("forwardAgent OK")
+}
+
+func forwardAreaOK(clt *sxutil.SMServiceClient,sp *pb.Supply){
+	log.Println("forwardArea OK")
+}
+
 // callback for each Supply
 func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	// check if supply is match with my demand.
@@ -107,6 +124,10 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		case "SEND_AREA": startUpAreaAgentProvider(clt, sp)
 		case "SET_AGENT_OK": setAgentOK(clt, sp)
 		case "START_UP_OK": startUpOK(clt, sp)
+		case "SET_CLOCK_ALL_OK": setClockOK(clt, sp)
+		case "FORWARD_CLOCK_OK": forwardClockOK(clt, sp)
+		case "FORWARD_AGENT_OK": forwardAgentOK(clt, sp)
+		case "FORWARD_AREA_OK": forwardAreaOK(clt, sp)
 		default: log.Println("demand callback is valid.")
 
 	}
@@ -189,6 +210,7 @@ func main() {
 			sendDemand(sclientClock, order, "{Date: '2019-7-29T22:32:13.234252Z'")
 		case "START_CLOCK":
 			fmt.Println("start clock")
+			sendDemand(sclientClock, order, "Start Clock")
 		case "FORWARD_CLOCK":
 			fmt.Println("forward clock")
 		case "BACK_CLOCK":

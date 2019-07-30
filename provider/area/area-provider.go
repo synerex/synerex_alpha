@@ -23,6 +23,9 @@ var (
 	spMap		map[uint64]*sxutil.SupplyOpts
 	selection 	bool
 	mu	sync.Mutex
+	sclientArea *sxutil.SMServiceClient
+	sclientAgent *sxutil.SMServiceClient
+	sclientClock *sxutil.SMServiceClient
 )
 
 func init() {
@@ -45,34 +48,7 @@ type TaxiDemand struct {
 	Position LonLat
 }
 
-// this function waits
-/*func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
-	var sid uint64
 
-	for i := 0; i < 5; i++{
-		time.Sleep(d / 5)
-		log.Printf("waiting... %v",i)
-	}
-	mu.Lock()
-	log.Printf("From now, let's find best taxi..")
-	lowest := 99999
-	// find most valuable proposal
-	for k, sp := range spMap {
-		dat := TaxiDemand{}
-		js := sp.ArgJson
-		err := json.Unmarshal([]byte(js),&dat)
-		if err != nil {
-			log.Printf("Err JSON %v",err)
-		}
-		if dat.Price < lowest { // we should check some ...
-			sid = k
-		}
-	}
-	mu.Unlock()
-	log.Printf("Select supply %v", spMap[sid])
-	clt.SelectSupply(spMap[sid])
-	// we have to cleanup all info.
-}*/
 
 func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setArea")
@@ -80,7 +56,18 @@ func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 }
 
 func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("getArea")
+	sendSupply(clt, "SEND_AREA", "{Area:[{Latitude:36.5, Longitude:135.6},{Latitude:40.5, Longitude:140.6}]}")
+}
 
+func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("setClock")
+	sendDemand(clt, "SET_CLOCK_OK", "{Date: '2019-7-29T22:32:13.234252Z'")
+}
+
+
+func forwardAreaOK(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("forwardArea OK")
 }
 
 // callback for each Supply
@@ -91,6 +78,8 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	switch dm.DemandName{
 	case "SET_AREA": setArea(clt, dm)
 	case "GET_AREA": getArea(clt, dm)
+	case "SET_CLOCK_ALL": setClock(clt, dm)
+	case "FORWARD_AREA_OK": forwardAreaOK(clt, dm)
 	default: log.Println("demand callback is valid.")
 
 	}
@@ -143,9 +132,9 @@ func main() {
 
 	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Area}")
-	sclientAgent := sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
-	sclientClock := sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
-	sclientArea := sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
+	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
+	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
+	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
 
 	wg := sync.WaitGroup{}
 
