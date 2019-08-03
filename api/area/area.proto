@@ -6,7 +6,12 @@ option go_package="github.com/synerex/synerex_alpha/api/area";
 
 
 message AreaService {
-    uint32 num_adult = 5;
-    uint32 num_child = 6;
-    uint32 amount_price = 8;
+    message Coord {
+        float s_lat = 1;
+        float s_lon = 2;
+        float e_lat = 3;
+        float e_lon = 4;
+    }
+    uint32 area_id = 1;
+    string area_name = 2;
 }

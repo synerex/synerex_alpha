@@ -3,10 +3,23 @@ syntax = "proto3";
 package api.clock;
 
 option go_package="github.com/synerex/synerex_alpha/api/clock";
-
+//import "common/common.proto";
 
 message ClockService {
-    uint32 num_adult = 5;
-    uint32 num_child = 6;
-    uint32 amount_price = 8;
+    //api.common.Time time_ = 1;
+    ClockType clock_type = 2;
+    uint32 num_cycle = 3;
+    StatusType status_type = 4;
 }
+
+enum ClockType {
+    FORWARD = 0;
+    BACK = 1;
+    SET = 2;
+}
+
+enum StatusType {
+    WILL = 0;
+    DONE = 1;
+}
+

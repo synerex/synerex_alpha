@@ -5,7 +5,20 @@ package api.agent;
 option go_package="github.com/synerex/synerex_alpha/api/agent";
 
 message AgentService {
-    uint32 num_adult = 5;
-    uint32 num_child = 6;
-    uint32 amount_price = 8;
+    message Coord {
+        float lat = 1;
+        float lon = 2;
+        float height = 3;
+    }
+    uint32 agent_id = 1;
+    uint32 direction = 2;
+    uint32 speed = 3;
+    AgentType agent_type = 4;
+}
+
+enum AgentType {
+    WALK = 0;
+    CAR = 1;
+    TRAIN = 2;
+    BICYCLE = 3;
 }
