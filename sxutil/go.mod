@@ -16,9 +16,9 @@ require (
 	github.com/synerex/synerex_alpha/api/ptransit v0.0.0
 	github.com/synerex/synerex_alpha/api/rideshare v0.0.0
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
-	github.com/synerex/synerex_alpha/api/clock v0.0.0
-	github.com/synerex/synerex_alpha/api/area v0.0.0
-	github.com/synerex/synerex_alpha/api/agent v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0
 	github.com/synerex/synerex_alpha/nodeapi v0.0.0
 	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
 	golang.org/x/net v0.0.0-20181220203305-927f97764cc3 // indirect
@@ -34,9 +34,9 @@ require (
 
 replace (
 	github.com/synerex/synerex_alpha/api => ../api
-	github.com/synerex/synerex_alpha/api/clock => ../api/clock
-	github.com/synerex/synerex_alpha/api/area => ../api/area
-	github.com/synerex/synerex_alpha/api/agent => ../api/agent
+	github.com/synerex/synerex_alpha/api/simulation/clock => ../api/simulation/clock
+	github.com/synerex/synerex_alpha/api/simulation/area => ../api/simulation/area
+	github.com/synerex/synerex_alpha/api/simulation/agent => ../api/simulation/agent
 	github.com/synerex/synerex_alpha/api/adservice => ../api/adservice
 	github.com/synerex/synerex_alpha/api/common => ../api/common
 	github.com/synerex/synerex_alpha/api/fleet => ../api/fleet

@@ -10,9 +10,9 @@ require (
 	github.com/synerex/synerex_alpha/api/ptransit v0.0.0
 	github.com/synerex/synerex_alpha/api/rideshare v0.0.0
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
-	github.com/synerex/synerex_alpha/api/clock v0.0.0
-	github.com/synerex/synerex_alpha/api/area v0.0.0
-	github.com/synerex/synerex_alpha/api/agent v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0
 	golang.org/x/net v0.0.0-20181102091132-c10e9556a7bc
 	google.golang.org/grpc v1.16.0
 )
@@ -25,8 +25,8 @@ replace (
 	github.com/synerex/synerex_alpha/api/ptransit => ./ptransit
 	github.com/synerex/synerex_alpha/api/rideshare => ./rideshare
 	github.com/synerex/synerex_alpha/api/routing => ./routing
-	github.com/synerex/synerex_alpha/api/clock => ./clock
-	github.com/synerex/synerex_alpha/api/area => ./area
-	github.com/synerex/synerex_alpha/api/agent => ./agent
+	github.com/synerex/synerex_alpha/api/simulation/clock => ./simulation/clock
+	github.com/synerex/synerex_alpha/api/simulation/area => ./simulation/area
+	github.com/synerex/synerex_alpha/api/simulation/agent => ./simulation/agent
 	github.com/synerex/synerex_alpha/api/common => ./common
 )

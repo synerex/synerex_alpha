@@ -21,9 +21,6 @@ require (
 	github.com/synerex/synerex_alpha/api/library v0.0.0
 	github.com/synerex/synerex_alpha/api/fleet v0.0.0
 	github.com/synerex/synerex_alpha/api/adservice v0.0.0
-	github.com/synerex/synerex_alpha/api/clock v0.0.0
-	github.com/synerex/synerex_alpha/api/area v0.0.0
-	github.com/synerex/synerex_alpha/api/agent v0.0.0
 )
 
 replace (

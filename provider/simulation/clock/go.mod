@@ -9,9 +9,9 @@ require (
 replace (
 	github.com/synerex/synerex_alpha/api => ./../../../api
 	github.com/synerex/synerex_alpha/api/adservice => ../../../api/adservice
-	github.com/synerex/synerex_alpha/api/agent => ./../../../api/agent
-	github.com/synerex/synerex_alpha/api/area => ./../../../api/area
-	github.com/synerex/synerex_alpha/api/clock => ./../../../api/clock
+	github.com/synerex/synerex_alpha/api/simulation/agent => ./../../../api/simulation/agent
+	github.com/synerex/synerex_alpha/api/simulation/area => ./../../../api/simulation/area
+	github.com/synerex/synerex_alpha/api/simulation/clock => ./../../../api/simulation/clock
 	github.com/synerex/synerex_alpha/api/common => ./../../../api/common
 	github.com/synerex/synerex_alpha/api/fleet => ../../../api/fleet
 	github.com/synerex/synerex_alpha/api/library => ../../../api/library

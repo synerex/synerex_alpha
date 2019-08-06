@@ -8,9 +8,9 @@ import (
 	"github.com/synerex/synerex_alpha/api/ptransit"
 	"github.com/synerex/synerex_alpha/api/rideshare"
 	"github.com/synerex/synerex_alpha/api/routing"
-	"github.com/synerex/synerex_alpha/api/clock"
-	"github.com/synerex/synerex_alpha/api/area"
-	"github.com/synerex/synerex_alpha/api/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/agent"
 )
 
 // NewDemand returns empty Demand.
