@@ -13,9 +13,9 @@ import "library/library.proto";
 import "ptransit/ptransit.proto";
 import "routing/routing.proto";
 import "marketing/marketing.proto";
-import "area/area.proto";
-import "agent/agent.proto";
-import "clock/clock.proto";
+import "simulation/area/area.proto";
+import "simulation/agent/agent.proto";
+import "simulation/clock/clock.proto";
 
 service Synerex {
     rpc RegisterDemand(Demand) returns (Response) {}
