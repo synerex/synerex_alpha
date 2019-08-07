@@ -161,6 +161,24 @@ func init() {
 			BinName: "routing-provider",
 			GoFiles: []string{"routing-provider.go","timetable.go", "busTimetable.go"},
 		},
+		{
+			CmdName: "SimArea",
+			SrcDir: "provider/simulation/area",
+			BinName: "area-provider",
+			GoFiles: []string{"area-provider.go"},
+		},
+		{
+			CmdName: "SimClock",
+			SrcDir: "provider/simulation/clock",
+			BinName: "clock-provider",
+			GoFiles: []string{"clock-provider.go"},
+		},
+		{
+			CmdName: "SimAgent",
+			SrcDir: "provider/simulation/agent",
+			BinName: "agent-provider",
+			GoFiles: []string{"agent-provider.go"},
+		},
 	}
 }
 
