@@ -12,8 +12,8 @@ require (
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
 
-	golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8
-	google.golang.org/grpc v1.16.0
+	golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
+	google.golang.org/grpc v1.22.1
 )
 
 replace (
@@ -25,6 +25,10 @@ replace (
 	github.com/synerex/synerex_alpha/api/ptransit => ../../api/ptransit
 	github.com/synerex/synerex_alpha/api/rideshare => ../../api/rideshare
 	github.com/synerex/synerex_alpha/api/routing => ../../api/routing
+	github.com/synerex/synerex_alpha/api/simulation/agent => ../../api/simulation/agent
+	github.com/synerex/synerex_alpha/api/simulation/area => ../../api/simulation/area
+	github.com/synerex/synerex_alpha/api/simulation/clock => ../../api/simulation/clock
+
 	github.com/synerex/synerex_alpha/nodeapi => ../../nodeapi
 	github.com/synerex/synerex_alpha/sxutil => ../../sxutil
 )

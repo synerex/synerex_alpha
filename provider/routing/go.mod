@@ -1,7 +1,7 @@
 module routing-provider
 
 require (
-	github.com/golang/protobuf v1.2.0
+	github.com/golang/protobuf v1.3.2
 	github.com/google/gops v0.3.5
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/kardianos/service v0.0.0-20180910224244-b1866cf76903
@@ -13,8 +13,8 @@ require (
 	github.com/synerex/synerex_alpha/api/rideshare v0.0.0
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
-	golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8
-	google.golang.org/grpc v1.16.0
+	golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
+	google.golang.org/grpc v1.22.1
 )
 
 replace (
@@ -26,6 +26,9 @@ replace (
 	github.com/synerex/synerex_alpha/api/ptransit => ../../api/ptransit
 	github.com/synerex/synerex_alpha/api/rideshare => ../../api/rideshare
 	github.com/synerex/synerex_alpha/api/routing => ../../api/routing
+	github.com/synerex/synerex_alpha/api/simulation/agent => ../../api/simulation/agent
+	github.com/synerex/synerex_alpha/api/simulation/area => ../../api/simulation/area
+	github.com/synerex/synerex_alpha/api/simulation/clock => ../../api/simulation/clock
 	github.com/synerex/synerex_alpha/nodeapi => ../../nodeapi
 	github.com/synerex/synerex_alpha/sxutil => ../../sxutil
 )

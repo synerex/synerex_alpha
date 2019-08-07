@@ -1,7 +1,7 @@
 module onemile-provider
 
 require (
-	github.com/golang/protobuf v1.2.0
+	github.com/golang/protobuf v1.3.2
 	github.com/googollee/go-engine.io v0.0.0-20180829091931-e2f255711dcb // indirect
 	github.com/googollee/go-socket.io v0.0.0-20181101151912-c8aeb1ed9b49
 	github.com/gorilla/websocket v1.4.0 // indirect
@@ -14,8 +14,7 @@ require (
 	github.com/synerex/synerex_alpha/api/rideshare v0.0.0
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
-	golang.org/x/net v0.0.0-20181114220301-adae6a3d119a // indirect
-	google.golang.org/grpc v1.16.0
+	google.golang.org/grpc v1.22.1
 )
 
 replace (
@@ -27,6 +26,9 @@ replace (
 	github.com/synerex/synerex_alpha/api/ptransit => ../../api/ptransit
 	github.com/synerex/synerex_alpha/api/rideshare => ../../api/rideshare
 	github.com/synerex/synerex_alpha/api/routing => ../../api/routing
+	github.com/synerex/synerex_alpha/api/simulation/agent => ../../api/simulation/agent
+	github.com/synerex/synerex_alpha/api/simulation/area => ../../api/simulation/area
+	github.com/synerex/synerex_alpha/api/simulation/clock => ../../api/simulation/clock
 
 	github.com/synerex/synerex_alpha/nodeapi => ../../nodeapi
 	github.com/synerex/synerex_alpha/sxutil => ../../sxutil

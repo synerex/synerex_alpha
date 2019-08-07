@@ -4,7 +4,7 @@ require (
 	github.com/synerex/synerex_alpha/api v0.0.0
 	github.com/synerex/synerex_alpha/provider/marketing/data v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
-	google.golang.org/grpc v1.16.0
+	google.golang.org/grpc v1.22.1
 )
 
 replace (
@@ -16,6 +16,9 @@ replace (
 	github.com/synerex/synerex_alpha/api/ptransit => ../../api/ptransit
 	github.com/synerex/synerex_alpha/api/rideshare => ../../api/rideshare
 	github.com/synerex/synerex_alpha/api/routing => ../../api/routing
+	github.com/synerex/synerex_alpha/api/simulation/agent => ../../api/simulation/agent
+	github.com/synerex/synerex_alpha/api/simulation/area => ../../api/simulation/area
+	github.com/synerex/synerex_alpha/api/simulation/clock => ../../api/simulation/clock
 
 	github.com/synerex/synerex_alpha/nodeapi => ../../nodeapi
 	github.com/synerex/synerex_alpha/provider/marketing/data => ./data
