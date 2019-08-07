@@ -5,7 +5,7 @@ require (
 	github.com/bwmarrin/snowflake v0.0.0-20180412010544-68117e6bbede
 	github.com/golang/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
 	github.com/golang/mock v1.2.0 // indirect
-	github.com/golang/protobuf v1.2.0
+	github.com/golang/protobuf v1.3.2
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
 	github.com/synerex/synerex_alpha/api v0.0.0

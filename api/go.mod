@@ -1,7 +1,7 @@
 module github.com/synerex/synerex_alpha/api
 
 require (
-	github.com/golang/protobuf v1.2.0
+	github.com/golang/protobuf v1.3.2
 	github.com/stretchr/testify v1.2.2
 	github.com/synerex/synerex_alpha/api/adservice v0.0.0
 	github.com/synerex/synerex_alpha/api/common v0.0.0-20181104051513-17262833074c
@@ -14,7 +14,7 @@ require (
 	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0
 	golang.org/x/net v0.0.0-20181102091132-c10e9556a7bc
-	google.golang.org/grpc v1.16.0
+	google.golang.org/grpc v1.22.1
 )
 
 replace (
