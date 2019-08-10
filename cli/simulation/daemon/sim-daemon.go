@@ -126,6 +126,48 @@ func init() {
 			GoFiles: []string{"ped-area-b-provider.go"},
 		},
 
+		{
+			CmdName: "SetTime",
+			SrcDir: "provider/simulation/ped-area-b",
+			BinName: "ped-area-b-provider",
+			GoFiles: []string{"ped-area-b-provider.go"},
+		},
+		{
+			CmdName: "SetArea",
+			SrcDir: "provider/simulation/ped-area-b",
+			BinName: "ped-area-b-provider",
+			GoFiles: []string{"ped-area-b-provider.go"},
+		},
+		{
+			CmdName: "SetAgent",
+			SrcDir: "provider/simulation/ped-area-b",
+			BinName: "ped-area-b-provider",
+			GoFiles: []string{"ped-area-b-provider.go"},
+		},
+		{
+			CmdName: "Start",
+			SrcDir: "provider/simulation/ped-area-b",
+			BinName: "ped-area-b-provider",
+			GoFiles: []string{"ped-area-b-provider.go"},
+		},
+		{
+			CmdName: "Stop",
+			SrcDir: "provider/simulation/ped-area-b",
+			BinName: "ped-area-b-provider",
+			GoFiles: []string{"ped-area-b-provider.go"},
+		},
+		{
+			CmdName: "Forward",
+			SrcDir: "provider/simulation/ped-area-b",
+			BinName: "ped-area-b-provider",
+			GoFiles: []string{"ped-area-b-provider.go"},
+		},
+		{
+			CmdName: "Back",
+			SrcDir: "provider/simulation/ped-area-b",
+			BinName: "ped-area-b-provider",
+			GoFiles: []string{"ped-area-b-provider.go"},
+		},
 	}
 }
 
@@ -628,6 +670,26 @@ func handleRun(target string) string {
 	return "Can't find command " + target
 }
 
+func handleOrder(target string) string {
+	for _, sc := range cmdArray {
+		if sc.CmdName == target {
+			var res string
+			/*if sc.RunFunc == nil {
+				res = runProp(sc)
+			} else {
+				//			res = sc.RunFunc()
+				res = "ok"
+				sc.RunFunc()
+			}*/
+			res = "ok"
+			logger.Infof("your order is %s", target)
+			return res
+		}
+	}
+	logger.Infof("Can't find command %s", target)
+	return "Can't find command " + target
+}
+
 func killCmd(target string) string {
 	res := "no"
 	providerMutex.RLock()
@@ -781,6 +843,13 @@ func (sesrv *SynerexService) run() error {
 		//		fmt.Printf("Get Run Command %s\n", nid)
 		logger.Infof("Get run command %s", nid)
 		return handleRun(nid)
+	})
+
+	server.On("order", func(c *gosocketio.Channel, param interface{}) string {
+		nid := param.(string)
+		//		fmt.Printf("Get Run Command %s\n", nid)
+		logger.Infof("Get order command %s", nid)
+		return handleOrder(nid)
 	})
 
 	serveMux := http.NewServeMux()

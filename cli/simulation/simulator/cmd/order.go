@@ -21,65 +21,46 @@ import (
 )
 
 // cmdInfo represents the run command aliases
-type cmdInfo struct {
+type orderCmdInfo struct {
 	Aliases []string
 	CmdName string
 }
 
-var cmds =[...]cmdInfo{
+var orderCmds =[...]orderCmdInfo{
 	{
-		Aliases: []string{"All", "all" },
-		CmdName: "All",
-	},
-	{
-		Aliases: []string{"nodeserv", "nodesrv", "ndsrv","NodeIDServer"},
-		CmdName: "NodeIDServer",
-	},
-	{
-		Aliases: []string{"Synerex","smarket", "server", "synerex","SynerexServer"},
-		CmdName: "SynerexServer",
-	},
-	{
-		Aliases: []string{"monitor", "MonitorServer", "mon",},
-		CmdName: "MonitorServer",
-	},
-	{
-		Aliases: []string{"Clock", "clock",},
-		CmdName: "Clock",
-	},
-	{
-		Aliases: []string{"Area", "area" },
-		CmdName: "Area",
-	},
-	{
-		Aliases: []string{"Scenario", "scenario" },
-		CmdName: "Scenario",
-	},
-	{
-		Aliases: []string{"Log", "log" },
-		CmdName: "Log",
-	},
-	{
-		Aliases: []string{"PedArea", "Ped-Area", "ped-area" },
-		CmdName: "PedArea",
-	},
-	{
-		Aliases: []string{"PedAreaA", "Ped-Area-A" ,"ped-area-a" },
-		CmdName: "PedAreaA",
-	},
-	{
-		Aliases: []string{"PedAreaB", "Ped-Area-B" ,"ped-area-b" },
-		CmdName: "PedAreaB",
-	},
-	{
-		Aliases: []string{"SetTime" },
+		Aliases: []string{"SetTime", "setTime", "settime", "set-time" },
 		CmdName: "SetTime",
 	},
+	{
+		Aliases: []string{"SetArea", "setArea", "setarea", "set-area" },
+		CmdName: "SetArea",
+	},
+	{
+		Aliases: []string{"SetAgent", "setAgent", "setagent", "set-agent" },
+		CmdName: "SetAgent",
+	},
+	{
+		Aliases: []string{"Start", "start"},
+		CmdName: "Start",
+	},
+	{
+		Aliases: []string{"Stop", "stop"},
+		CmdName: "Stop",
+	},
+	{
+		Aliases: []string{"Forward", "forward"},
+		CmdName: "Forward",
+	},
+	{
+		Aliases: []string{"Back", "back"},
+		CmdName: "Back",
+	},
+	
 }
 
 
-func getCmdName(alias string)  string{
-	for _, ci  := range cmds {
+func getOrderCmdName(alias string)  string{
+	for _, ci  := range orderCmds {
 		for _,str := range ci.Aliases {
 			if alias == str {
 				return ci.CmdName
@@ -89,18 +70,17 @@ func getCmdName(alias string)  string{
 	return "" // can'f find alias
 }
 
-func handleProvider(cmd *cobra.Command, args []string){
+func handleOrder(cmd *cobra.Command, args []string){
 	if len(args) > 0 {
 		for n := range args{
 			findflag := false
-			fmt.Printf("cmd is:'%s'\n", cmds)
-			for _, ci  := range cmds {
+			for _, ci  := range orderCmds {
 				for _,str := range ci.Aliases {
 					if args[n] == str {
 						fmt.Printf("simulator: Starting '%s'\n", ci.CmdName)
 
 						//todo: we should use ack for this. but its not working....
-						res, err := sioClient.Ack("run", ci.CmdName, 20*time.Second)
+						res, err := sioClient.Ack("order", ci.CmdName, 20*time.Second)
 						//					err := sioClient.Emit("run",ci.CmdName) //, 20*time.Second)
 						time.Sleep(3 * time.Second)
 
@@ -118,8 +98,8 @@ func handleProvider(cmd *cobra.Command, args []string){
 
 			}
 			if !findflag {
-				fmt.Printf("simulator: Can't find command run '%s'.\n",args[n])
-				fmt.Printf("cmd is:'%s'\n", cmds)
+				fmt.Printf("simulation: Can't find command run '%s'.\n",args[n])
+				fmt.Printf("cmd is:'%s'\n", orderCmds)
 				break
 			}
 		}
@@ -128,22 +108,19 @@ func handleProvider(cmd *cobra.Command, args []string){
 
 
 
-var runCmd = &cobra.Command{
-	Use:   "run [provider name] [options..]",
+var orderCmd = &cobra.Command{
+	Use:   "order [order name] [options..]",
 	Short: "Start a provider",
 	Long: `Start a provider with options 
 For example:
-    se run nodeserv   // start a node server
-	se run server     // start a synergic exchange server
-    se run taxi       // start a taxi provider
-
-    se run all        // start all basic providers
-
+    simulation order start   
+	simulation order set-time   
+	simulation order set-area   
 `,
-	Run: handleProvider,
+	Run: handleOrder,
 }
 
 
 func init() {
-	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(orderCmd)
 }
