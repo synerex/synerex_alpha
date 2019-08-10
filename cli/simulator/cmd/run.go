@@ -28,6 +28,10 @@ type cmdInfo struct {
 
 var cmds =[...]cmdInfo{
 	{
+		Aliases: []string{"All", "all" },
+		CmdName: "All",
+	},
+	{
 		Aliases: []string{"nodeserv", "nodesrv", "ndsrv","NodeIDServer"},
 		CmdName: "NodeIDServer",
 	},
@@ -40,49 +44,33 @@ var cmds =[...]cmdInfo{
 		CmdName: "MonitorServer",
 	},
 	{
-		Aliases: []string{"Taxi", "taxi",},
-		CmdName: "Taxi",
+		Aliases: []string{"Clock", "clock",},
+		CmdName: "Clock",
 	},
-	{Aliases: []string{"Ad", "ad" },
-		CmdName: "Ad",
+	{
+		Aliases: []string{"Area", "area" },
+		CmdName: "Area",
 	},
-	{Aliases: []string{"Multi", "multi" },
-		CmdName: "Multi",
+	{
+		Aliases: []string{"Scenario", "scenario" },
+		CmdName: "Scenario",
 	},
-	{Aliases: []string{"All", "all" },
-		CmdName: "All",
+	{
+		Aliases: []string{"Log", "log" },
+		CmdName: "Log",
 	},
-	{Aliases: []string{"User", "user" },
-		CmdName: "User",
+	{
+		Aliases: []string{"PedArea", "Ped-Area", "ped-area" },
+		CmdName: "PedArea",
 	},
-	{Aliases: []string{"Fleet", "fleet" },
-		CmdName: "Fleet",
+	{
+		Aliases: []string{"PedAreaA", "Ped-Area-A" ,"ped-area-a" },
+		CmdName: "PedAreaA",
 	},
-	{Aliases: []string{"Ecotan", "ecotan"},
-		CmdName: "Ecotan",
+	{
+		Aliases: []string{"PedAreaB", "Ped-Area-B" ,"ped-area-b" },
+		CmdName: "PedAreaB",
 	},
-	{Aliases: []string{"Onemile", "onemile", "OneMile" },
-		CmdName: "Onemile",
-	},
-	{Aliases: []string{"Routing", "routing" },
-		CmdName: "Routing",
-	},
-	{Aliases: []string{"Marketing", "marketing", "market" },
-		CmdName: "Marketing",
-	},
-	{Aliases: []string{"SimpleRouting", "srouting", "sroute" },
-		CmdName: "SimpleRouting",
-	},
-	{Aliases: []string{"SimArea" },
-		CmdName: "SimArea",
-	},
-	{Aliases: []string{"SimClock"},
-		CmdName: "SimClock",
-	},
-	{Aliases: []string{"SimAgent"},
-		CmdName: "SimAgent",
-	},
-
 }
 
 
