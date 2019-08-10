@@ -201,7 +201,7 @@ func main() {
 	go subscribeSupply(sclientClock)
 	go subscribeSupply(sclientArea)
 
-	for {
+	/*for {
 		order := userSelect()
 		fmt.Printf("命令: %s\n", order)
 		switch order {
@@ -228,7 +228,7 @@ func main() {
 		}
 		
 		//time.Sleep(time.Second * time.Duration(10 + rand.Int()%10))
-	}
+	}*/
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
 

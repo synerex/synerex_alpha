@@ -73,16 +73,6 @@ var cmds =[...]cmdInfo{
 	{Aliases: []string{"SimpleRouting", "srouting", "sroute" },
 		CmdName: "SimpleRouting",
 	},
-	{Aliases: []string{"SimArea" },
-		CmdName: "SimArea",
-	},
-	{Aliases: []string{"SimClock"},
-		CmdName: "SimClock",
-	},
-	{Aliases: []string{"SimAgent"},
-		CmdName: "SimAgent",
-	},
-
 }
 
 
