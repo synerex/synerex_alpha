@@ -194,6 +194,10 @@ type data struct {
 	Repository  repository
 }
 
+type sioChannel struct {
+	Scenario     *gosocketio.Channel
+}
+var sioCh sioChannel
 
 func githubHandler(w http.ResponseWriter, r *http.Request) {
 	status := 400
@@ -801,14 +805,25 @@ func (sesrv *SynerexService) run() error {
 	assetsDir = http.Dir(d)
 	server = gosocketio.NewServer()
 
-	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
+	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel, param interface{}) {
 		logger.Infof("Connected from %s as %s", c.IP(), c.Id())
 		// we need to send providers array
 		// send Provider info to the web client
 		c.Emit("providers", getCmdArray())
+
 	})
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		logger.Infof("Disconnected from %s as %s", c.IP(), c.Id())
+	})
+
+	server.On("setCh", func(c *gosocketio.Channel, param interface{}) string {
+		// need to check param short or long
+		opt, ok := param.(string)
+		logger.Infof("param is %s as %s", ok, opt)
+		if(ok && opt == "Scenario"){
+			sioCh.Scenario = c
+		}
+		return "ok"
 	})
 
 	server.On("ps", func(c *gosocketio.Channel, param interface{}) []string {
@@ -848,7 +863,9 @@ func (sesrv *SynerexService) run() error {
 	server.On("order", func(c *gosocketio.Channel, param interface{}) string {
 		nid := param.(string)
 		//		fmt.Printf("Get Run Command %s\n", nid)
+		logger.Infof("order from %s as %s", c.IP(), c.Id())
 		logger.Infof("Get order command %s", nid)
+		sioCh.Scenario.Emit("scenario", nid)
 		return handleOrder(nid)
 	})
 

@@ -16,6 +16,9 @@ import (
 	//"reflect"
 	//"os"
 	//"os/exec"
+	"github.com/mtfelian/golang-socketio/transport"
+	"github.com/mtfelian/golang-socketio"
+	"os"
 )
 
 var (
@@ -29,6 +32,7 @@ var (
 	sclientArea *sxutil.SMServiceClient
 	sclientAgent *sxutil.SMServiceClient
 	sclientClock *sxutil.SMServiceClient
+	sioClient *gosocketio.Client
 )
 
 func init() {
@@ -168,9 +172,14 @@ func setClock(){
 
 }
 
+type Message struct {
+	Name string `json:"name"`
+	Message string `json:"message"`
+}
+
+
+
 func main() {
-	
-	
 
 	flag.Parse()
 
@@ -201,34 +210,50 @@ func main() {
 	go subscribeSupply(sclientClock)
 	go subscribeSupply(sclientArea)
 
-	/*for {
-		order := userSelect()
-		fmt.Printf("命令: %s\n", order)
+	var sioErr error
+	sioClient, sioErr = gosocketio.Dial("ws://localhost:9995/socket.io/?EIO=3&transport=websocket", transport.DefaultWebsocketTransport())
+	if sioErr != nil {
+		fmt.Println("se: Error to connect with se-daemon. You have to start se-daemon first.") //,err)
+		os.Exit(1)
+	}else{
+		fmt.Println("se: connect OK")
+	}
+	sioClient.On(gosocketio.OnConnection, func(c *gosocketio.Channel,param interface{}) {
+		fmt.Println("Go socket.io connected ")
+		c.Emit("setCh", "Scenario")
+	})
+
+	sioClient.On("scenario", func(c *gosocketio.Channel, order string) {
+		fmt.Printf("get order is: %s\n", order)
 		switch order {
-		case "SET_CLOCK":
+		case "SetTime":
+			fmt.Println("forward clock")
+		case "SetArea":
+			fmt.Println("back clock")
+		case "SetAgent":
+			fmt.Println("skip clock")
+		case "Start":
 			fmt.Println("set clock")
 			sendDemand(sclientClock, order, "{Date: '2019-7-29T22:32:13.234252Z'")
-		case "START_CLOCK":
+		case "Stop":
 			fmt.Println("start clock")
 			sendDemand(sclientClock, order, "Start Clock")
-		case "FORWARD_CLOCK":
-			fmt.Println("forward clock")
-		case "BACK_CLOCK":
-			fmt.Println("back clock")
-		case "SKIP_CLOCK":
-			fmt.Println("skip clock")
-		case "SET_AGENT":
+		case "Forward":
 			fmt.Println("set agent")
 			sendDemand(sclientAgent, order, "{Principle: {}, Position, {36.5, 138.5}, Agent: 'Pedestrian'}")
-		case "SET_AREA":
+		case "Back":
 			fmt.Println("set area")
 			sendDemand(sclientArea, order, "{Area:{Latitude:36.5, Longitude:135.6}}")
 		default:
 			fmt.Println("error")
 		}
 		
-		//time.Sleep(time.Second * time.Duration(10 + rand.Int()%10))
-	}*/
+	})
+
+	sioClient.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel,param interface{}) {
+		fmt.Println("Go socket.io disconnected ",c)
+	})
+
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
 
