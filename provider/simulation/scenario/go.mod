@@ -3,6 +3,8 @@ module github.com/synerex/synerex_alpha/provider/simulation/scenario-provider
 require (
 	github.com/mtfelian/golang-socketio v1.5.2
 	github.com/synerex/synerex_alpha/api v0.0.0
+	github.com/synerex/synerex_alpha/api/fleet v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
 	google.golang.org/grpc v1.22.1
 )

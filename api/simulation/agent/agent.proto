@@ -14,6 +14,7 @@ message AgentService {
     uint32 direction = 2;
     uint32 speed = 3;
     AgentType agent_type = 4;
+    Coord coord = 3;
 }
 
 enum AgentType {

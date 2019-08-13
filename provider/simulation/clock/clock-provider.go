@@ -74,7 +74,7 @@ func forwardClockOK(clt *sxutil.SMServiceClient, dm *pb.Demand){
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	// check if supply is match with my demand.
 	log.Println("Got demand callback")
-	log.Printf("demand is %v",dm.DemandName)
+	log.Printf("demand is %v",dm)
 	switch dm.DemandName{
 	case "SET_CLOCK": setClock(clt, dm)
 	case "SET_CLOCK_OK": setClockOK(clt, dm)

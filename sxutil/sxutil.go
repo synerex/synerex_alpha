@@ -47,6 +47,7 @@ type DemandOpts struct {
 	Target uint64
 	Name   string
 	JSON   string
+	Fleet     *fleet.Fleet
 	RoutingService *routing.RoutingService
 	RideShare *rideshare.RideShare
 	ClockService *clock.ClockService
@@ -445,7 +446,7 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 		ArgJson:    dmo.JSON,
 	}
 	switch clt.MType {
-/*	case api.ChannelType_CLOCK_SERVICE:
+	case api.ChannelType_CLOCK_SERVICE:
 		if dmo.ClockService != nil{
 			dm.WithClockService(dmo.ClockService)
 		}else{
@@ -462,23 +463,23 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 			dm.WithAgentService(dmo.AgentService)
 		}else{
 			log.Printf("AgentService info is nil")
-		}*/
-	case api.ChannelType_ROUTING_SERVICE:
+		}
+	/*case api.ChannelType_ROUTING_SERVICE:
 		rsp := api.Demand_Arg_RoutingService{
 			dmo.RoutingService,
 		}
 		dm.ArgOneof = &rsp
-	case api.ChannelType_RIDE_SHARE:
+	case api.ChannelType_CLOCK_SERVICE:
+		log.Printf("in Clock Service")
 		if dmo.RideShare != nil{
 			dm.WithRideShare(dmo.RideShare)
-//			rsp := api.Demand_Arg_RideShare{
-//				dmo.RideShare,
-//			}
-//			dm.ArgOneof = &rsp
+		}
+		if dmo.Fleet != nil {
+			log.Printf("in Fleet")
+			dm.WithFleet(dmo.Fleet)
 		}else{
 			log.Printf("Rideshare info is nil")
-		}
-
+		}*/
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -505,7 +506,7 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 	id := GenerateIntID()
 	ts := ptypes.TimestampNow()
-	dm := api.Supply{
+	sp := api.Supply{
 		Id:         id,
 		SenderId:   uint64(clt.ClientID),
 		Type:       clt.MType,
@@ -515,7 +516,7 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 	}
 
 	switch clt.MType {
-/*	case api.ChannelType_CLOCK_SERVICE:
+	case api.ChannelType_CLOCK_SERVICE:
 		if smo.ClockService != nil{
 			sp.WithClockService(smo.ClockService)
 		}else{
@@ -532,8 +533,8 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 			sp.WithAgentService(smo.AgentService)
 		}else{
 			log.Printf("AgentService info is nil")
-		} */
-	case api.ChannelType_RIDE_SHARE:
+		} 
+	/*case api.ChannelType_RIDE_SHARE:
 		sp := api.Supply_Arg_Fleet{
 			smo.Fleet,
 		}
@@ -547,14 +548,14 @@ func (clt *SMServiceClient) RegisterSupply(smo *SupplyOpts) uint64 {
 		sp := api.Supply_Arg_RoutingService{
 			smo.RoutingService,
 		}
-		dm.ArgOneof = &sp
+		dm.ArgOneof = &sp*/
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 //	resp , err := clt.Client.RegisterSupply(ctx, &dm)
 
-	_, err := clt.Client.RegisterSupply(ctx, &dm)
+	_, err := clt.Client.RegisterSupply(ctx, &sp)
 	if err != nil {
 		log.Printf("Error for sending:RegisterSupply to  Synerex Server as %v ", err)
 		return 0

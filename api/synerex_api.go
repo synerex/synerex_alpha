@@ -65,6 +65,24 @@ func (dm *Demand) WithMarketingService(m *marketing.MarketingService) *Demand {
 	return dm
 }
 
+// WithClockService set a given ClockService to Demand.Demand_Arg_ClockService.Arg_ClockService .
+func (dm *Demand) WithClockService(c *clock.ClockService) *Demand {
+	dm.ArgOneof = &Demand_Arg_ClockService{c}
+	return dm
+}
+
+// WithAreaService set a given AreaService to Demand.Demand_Arg_AreaService.Arg_AreaService.
+func (dm *Demand) WithAreaService(a *area.AreaService) *Demand {
+	dm.ArgOneof = &Demand_Arg_AreaService{a}
+	return dm
+}
+
+// WithAgentService set a given AgentService to Demand.Demand_Arg_AgentService.Arg_AgentService.
+func (dm *Demand) WithAgentService(a *agent.AgentService) *Demand {
+	dm.ArgOneof = &Demand_Arg_AgentService{a}
+	return dm
+}
+
 // WithFleet set a given Fleet to Supply.Supply_Arg_Fleet.Arg_Fleet.
 func (sp *Supply) WithFleet(f *fleet.Fleet) *Supply {
 	sp.ArgOneof = &Supply_Arg_Fleet{f}

@@ -9,6 +9,8 @@ import (
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
+	//"github.com/synerex/synerex_alpha/api/fleet"
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"google.golang.org/grpc"
 	//"time"
 	//"encoding/json"
@@ -146,7 +148,25 @@ func subscribeSupply(client *sxutil.SMServiceClient) {
 }
 
 func sendDemand(sclient *sxutil.SMServiceClient, nm string, js string) {
-	opts := &sxutil.DemandOpts{Name: nm, JSON: js}
+
+	/*fleet := fleet.Fleet{
+		VehicleId: int32(10),
+		Angle:     float32(100),
+		Speed:     int32(20),
+		Status:    int32(0),
+		Coord: &fleet.Fleet_Coord{
+			Lat: float32(34.874364),
+			Lon: float32(137.1474168),
+		},
+	}*/
+
+	clockService := clock.ClockService{
+		ClockType: 0,
+		NumCycle: uint32(1),
+		StatusType: 1,
+	}
+
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, ClockService: &clockService}
 	mu.Lock()
 	id := sclient.RegisterDemand(opts)
 	idlist = append(idlist, id) // my demand list
