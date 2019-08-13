@@ -1,4 +1,4 @@
-module github.com/synerex/synerex_alpha/provider/simulation/ped-area-b
+module github.com/synerex/synerex_alpha/provider/simulation/ped-area-b-provider
 
 require (
 	github.com/synerex/synerex_alpha/api v0.0.0
