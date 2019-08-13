@@ -1,4 +1,4 @@
-module github.com/synerex/synerex_alpha/provider/simulation/scenario
+module github.com/synerex/synerex_alpha/provider/simulation/scenario-provider
 
 require (
 	github.com/mtfelian/golang-socketio v1.5.2
