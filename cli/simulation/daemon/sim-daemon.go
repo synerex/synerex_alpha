@@ -114,59 +114,38 @@ func init() {
 			GoFiles: []string{"ped-area-provider.go"},
 		},
 		{
-			CmdName: "PedAreaA",
-			SrcDir: "provider/simulation/ped-area-a",
-			BinName: "ped-area-a-provider",
-			GoFiles: []string{"ped-area-a-provider.go"},
+			CmdName: "CarArea",
+			SrcDir: "provider/simulation/car-area",
+			BinName: "car-area-provider",
+			GoFiles: []string{"car-area-provider.go"},
 		},
-		{
-			CmdName: "PedAreaB",
-			SrcDir: "provider/simulation/ped-area-b",
-			BinName: "ped-area-b-provider",
-			GoFiles: []string{"ped-area-b-provider.go"},
-		},
-
 		{
 			CmdName: "SetTime",
-			SrcDir: "provider/simulation/ped-area-b",
-			BinName: "ped-area-b-provider",
-			GoFiles: []string{"ped-area-b-provider.go"},
+			Description: "Order",
 		},
 		{
 			CmdName: "SetArea",
-			SrcDir: "provider/simulation/ped-area-b",
-			BinName: "ped-area-b-provider",
-			GoFiles: []string{"ped-area-b-provider.go"},
+			Description: "Order",
 		},
 		{
 			CmdName: "SetAgent",
-			SrcDir: "provider/simulation/ped-area-b",
-			BinName: "ped-area-b-provider",
-			GoFiles: []string{"ped-area-b-provider.go"},
+			Description: "Order",
 		},
 		{
 			CmdName: "Start",
-			SrcDir: "provider/simulation/ped-area-b",
-			BinName: "ped-area-b-provider",
-			GoFiles: []string{"ped-area-b-provider.go"},
+			Description: "Order",
 		},
 		{
 			CmdName: "Stop",
-			SrcDir: "provider/simulation/ped-area-b",
-			BinName: "ped-area-b-provider",
-			GoFiles: []string{"ped-area-b-provider.go"},
+			Description: "Order",
 		},
 		{
 			CmdName: "Forward",
-			SrcDir: "provider/simulation/ped-area-b",
-			BinName: "ped-area-b-provider",
-			GoFiles: []string{"ped-area-b-provider.go"},
+			Description: "Order",
 		},
 		{
 			CmdName: "Back",
-			SrcDir: "provider/simulation/ped-area-b",
-			BinName: "ped-area-b-provider",
-			GoFiles: []string{"ped-area-b-provider.go"},
+			Description: "Order",
 		},
 	}
 }
@@ -598,7 +577,10 @@ func runSubCmd(cmd string) {
 
 func buildSubCmd(cmd string) string {
 	for _, sc := range cmdArray {
-		if sc.CmdName == cmd {
+		// part of commands don't enter .. by RH 
+		if sc.Description == "Order"{
+			return "order"
+		} else if sc.CmdName == cmd{
 			return buildCmd(sc)
 		}
 	}

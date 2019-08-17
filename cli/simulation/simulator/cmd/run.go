@@ -64,16 +64,8 @@ var cmds =[...]cmdInfo{
 		CmdName: "PedArea",
 	},
 	{
-		Aliases: []string{"PedAreaA", "Ped-Area-A" ,"ped-area-a" },
-		CmdName: "PedAreaA",
-	},
-	{
-		Aliases: []string{"PedAreaB", "Ped-Area-B" ,"ped-area-b" },
-		CmdName: "PedAreaB",
-	},
-	{
-		Aliases: []string{"SetTime" },
-		CmdName: "SetTime",
+		Aliases: []string{"CarArea", "Car-Area", "car-area" },
+		CmdName: "CarArea",
 	},
 }
 

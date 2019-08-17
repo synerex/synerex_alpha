@@ -161,48 +161,6 @@ func init() {
 			BinName: "routing-provider",
 			GoFiles: []string{"routing-provider.go","timetable.go", "busTimetable.go"},
 		},
-		{
-			CmdName: "Area",
-			SrcDir: "provider/simulation/area",
-			BinName: "area-provider",
-			GoFiles: []string{"area-provider.go"},
-		},
-		{
-			CmdName: "Clock",
-			SrcDir: "provider/simulation/clock",
-			BinName: "clock-provider",
-			GoFiles: []string{"clock-provider.go"},
-		},
-		{
-			CmdName: "Scenario",
-			SrcDir: "provider/simulation/scenario",
-			BinName: "scenario-provider",
-			GoFiles: []string{"scenario-provider.go"},
-		},
-		{
-			CmdName: "Log",
-			SrcDir: "provider/simulation/log",
-			BinName: "log-provider",
-			GoFiles: []string{"log-provider.go"},
-		},
-		{
-			CmdName: "PedArea",
-			SrcDir: "provider/simulation/ped-area",
-			BinName: "ped-area-provider",
-			GoFiles: []string{"ped-area-provider.go"},
-		},
-		{
-			CmdName: "PedAreaA",
-			SrcDir: "provider/simulation/ped-area-a",
-			BinName: "ped-area-a-provider",
-			GoFiles: []string{"ped-area-a-provider.go"},
-		},
-		{
-			CmdName: "PedAreaB",
-			SrcDir: "provider/simulation/ped-area-b",
-			BinName: "ped-area-b-provider",
-			GoFiles: []string{"ped-area-b-provider.go"},
-		},
 
 	}
 }

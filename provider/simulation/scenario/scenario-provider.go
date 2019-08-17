@@ -10,7 +10,9 @@ import (
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	//"github.com/synerex/synerex_alpha/api/fleet"
-	"github.com/synerex/synerex_alpha/api/simulation/clock"
+	//"github.com/synerex/synerex_alpha/api/simulation/clock"
+	//"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"google.golang.org/grpc"
 	//"time"
 	//"encoding/json"
@@ -89,8 +91,8 @@ func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
 func startUpAreaAgentProvider(clt *sxutil.SMServiceClient, sp *pb.Supply){
 	// start up area-agent-provider with area property
 	// but now, run case provider is already running
-	sendDemand(sclientArea, "START_UP_A", "{Area:{Latitude:36.5, Longitude:135.6}}")
-	sendDemand(sclientArea, "START_UP_B", "{Area:{Latitude:40.5, Longitude:140.6}}")
+	//sendDemand(sclientArea, "START_UP_A", "{Area:{Latitude:36.5, Longitude:135.6}}")
+	//sendDemand(sclientArea, "START_UP_B", "{Area:{Latitude:40.5, Longitude:140.6}}")
 
 }
 
@@ -147,26 +149,9 @@ func subscribeSupply(client *sxutil.SMServiceClient) {
 	log.Printf("SMarket Server Closed?")
 }
 
-func sendDemand(sclient *sxutil.SMServiceClient, nm string, js string) {
+func sendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts) {
 
-	/*fleet := fleet.Fleet{
-		VehicleId: int32(10),
-		Angle:     float32(100),
-		Speed:     int32(20),
-		Status:    int32(0),
-		Coord: &fleet.Fleet_Coord{
-			Lat: float32(34.874364),
-			Lon: float32(137.1474168),
-		},
-	}*/
-
-	clockService := clock.ClockService{
-		ClockType: 0,
-		NumCycle: uint32(1),
-		StatusType: 1,
-	}
-
-	opts := &sxutil.DemandOpts{Name: nm, JSON: js, ClockService: &clockService}
+	//opts := &sxutil.DemandOpts{Name: nm, JSON: js, ClockService: &clockService}
 	mu.Lock()
 	id := sclient.RegisterDemand(opts)
 	idlist = append(idlist, id) // my demand list
@@ -192,9 +177,27 @@ func setClock(){
 
 }
 
-type Message struct {
-	Name string `json:"name"`
-	Message string `json:"message"`
+func setArea(){
+	
+	
+	areaRequestAction := area.AreaService_AreaRequest_{
+		AreaRequest: &area.AreaService_AreaRequest{
+			Time: uint32(1),
+			AreaId: uint32(1),	// area a: 1, b: 2
+		},
+	}
+	areaService := area.AreaService{
+		AreaServiceAction: &areaRequestAction,
+	}
+	nm := "setArea order by scenario"
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, AreaService: &areaService}
+
+	sendDemand(sclientArea, opts)
+}
+
+func setAgent(){
+
 }
 
 
@@ -249,21 +252,22 @@ func main() {
 		case "SetTime":
 			fmt.Println("forward clock")
 		case "SetArea":
+			setArea()
 			fmt.Println("back clock")
 		case "SetAgent":
 			fmt.Println("skip clock")
 		case "Start":
 			fmt.Println("set clock")
-			sendDemand(sclientClock, order, "{Date: '2019-7-29T22:32:13.234252Z'")
+			//sendDemand(sclientClock, order, "{Date: '2019-7-29T22:32:13.234252Z'")
 		case "Stop":
 			fmt.Println("start clock")
-			sendDemand(sclientClock, order, "Start Clock")
+			//sendDemand(sclientClock, order, "Start Clock")
 		case "Forward":
 			fmt.Println("set agent")
-			sendDemand(sclientAgent, order, "{Principle: {}, Position, {36.5, 138.5}, Agent: 'Pedestrian'}")
+			//sendDemand(sclientAgent, order, "{Principle: {}, Position, {36.5, 138.5}, Agent: 'Pedestrian'}")
 		case "Back":
 			fmt.Println("set area")
-			sendDemand(sclientArea, order, "{Area:{Latitude:36.5, Longitude:135.6}}")
+			//sendDemand(sclientArea, order, "{Area:{Latitude:36.5, Longitude:135.6}}")
 		default:
 			fmt.Println("error")
 		}
