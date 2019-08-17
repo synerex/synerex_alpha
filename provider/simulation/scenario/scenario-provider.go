@@ -179,15 +179,13 @@ func setClock(){
 
 func setArea(){
 	
-	
-	areaRequestAction := area.AreaService_AreaRequest_{
-		AreaRequest: &area.AreaService_AreaRequest{
-			Time: uint32(1),
-			AreaId: uint32(1),	// area a: 1, b: 2
-		},
+	areaRequest := area.AreaService_AreaRequest{
+		Time: uint32(1),
+		AreaId: uint32(1),	// area a: 1, b: 2
 	}
+	
 	areaService := area.AreaService{
-		AreaServiceAction: &areaRequestAction,
+		AreaRequest: &areaRequest,
 	}
 	nm := "setArea order by scenario"
 	js := ""

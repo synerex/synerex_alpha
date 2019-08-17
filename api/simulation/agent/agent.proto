@@ -33,11 +33,10 @@ message AgentService {
         Rule rule = 6;
     }
 
-    oneof AreaServiceAction {
-        AgentInfo agent_info  = 1;
-        AgentsInfo agents_info  = 2;
-        AgentRequest agent_request = 3;
-    }
+    AgentInfo agent_info  = 1;
+    AgentsInfo agents_info  = 2;
+    AgentRequest agent_request = 3;
+    
 }
 
 message Route {

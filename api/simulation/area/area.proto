@@ -22,10 +22,9 @@ message AreaService {
         uint32 area_id = 2;
     }
 
-    oneof AreaServiceAction {
-        AreaInfo area_info  = 1;
-        AreaRequest area_request = 2;
-    }
+    AreaInfo area_info  = 1;
+    AreaRequest area_request = 2;
+    
 }
 
 message Signal {

@@ -23,10 +23,9 @@ message ClockService {
         StatusType status_type = 6;
     }
 
-    oneof ClockServiceAction {
-        ClockInfo clock_info  = 1;
-        ClockRequest clock_request = 2;
-    }
+    ClockInfo clock_info  = 1;
+    ClockRequest clock_request = 2;
+    
 }
 
 
