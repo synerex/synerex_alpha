@@ -36,8 +36,8 @@ message GetArea{
     message Coord {
         float start_lat = 1;	
         float start_lon = 2;	
-        float eend_lat = 3;	
-        float eend_lon = 4;	
+        float end_lat = 3;	
+        float end_lon = 4;	
     }
     MessageType message_type = 1;
     uint32 area_id = 2;
