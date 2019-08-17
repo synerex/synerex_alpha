@@ -93,8 +93,17 @@ message Supply{
         marketing.MarketingService arg_MarketingService = 16;
         ptransit.PTgtfs arg_PTgtfs = 17;
         clock.ClockService arg_ClockService = 18;
-        area.AreaService arg_AreaService = 19;
-        agent.AgentService arg_AgentService = 20;
+        clock.ClockInfo arg_ClockInfo = 19;
+        clock.SetClock arg_SetClock = 20; 
+        clock.ClockStatus arg_ClockStatus = 21;
+        area.AreaService arg_AreaService = 22;
+        area.AreaInfo arg_AreaInfo = 23;
+        area.GetArea arg_GetArea = 24;
+        area.AreaStatus arg_AreaStatus = 25;
+        agent.AgentService arg_AgentService = 26;
+        agent.AgentInfo arg_AgentInfo = 27;
+        agent.SetAgent arg_SetAgent = 28;
+        agent.AgentStatus arg_AgentStatus = 29;
     }
 }
 
@@ -117,9 +126,18 @@ message Demand {
         routing.RoutingService arg_RoutingService = 15;
         marketing.MarketingService arg_MarketingService = 16;
         ptransit.PTgtfs arg_PTgtfs = 17;
-        clock.ClockService arg_ClockService = 18; 
-        area.AreaService arg_AreaService = 19;
-        agent.AgentService arg_AgentService = 20;
+        clock.ClockService arg_ClockService = 18;
+        clock.ClockInfo arg_ClockInfo = 19;
+        clock.SetClock arg_SetClock = 20; 
+        clock.ClockStatus arg_ClockStatus = 21;
+        area.AreaService arg_AreaService = 22;
+        area.AreaInfo arg_AreaInfo = 23;
+        area.GetArea arg_GetArea = 24;
+        area.AreaStatus arg_AreaStatus = 25;
+        agent.AgentService arg_AgentService = 26;
+        agent.AgentInfo arg_AgentInfo = 27;
+        agent.SetAgent arg_SetAgent = 28;
+        agent.AgentStatus arg_AgentStatus = 29;
     }
 }
 

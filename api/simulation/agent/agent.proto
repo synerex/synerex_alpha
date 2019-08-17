@@ -10,16 +10,65 @@ message AgentService {
         float lon = 2;
         float height = 3;
     }
-    uint32 agent_id = 1;
-    uint32 direction = 2;
-    uint32 speed = 3;
-    AgentType agent_type = 4;
-    Coord coord = 3;
+    MessageType message_type = 1;
+    uint32 agent_id = 2;
+    uint32 direction = 3;
+    uint32 speed = 4;
+    AgentType agent_type = 5;
+    Coord coord = 6;
+}
+
+
+message AgentInfo {
+    message Coord {
+        float lat = 1;
+        float lon = 2;
+    }
+    MessageType message_type = 1;
+    uint32 agent_id = 2;
+    float direction = 3;
+    float speed = 4;
+    AgentType agent_type = 5;
+    Coord coord = 6;
+    uint32 controlled = 7;
+}
+
+message SetAgent {
+    message Coord {
+        float lat = 1;
+        float lon = 2;
+    }
+    MessageType message_type = 1;
+    uint32 agent_id = 2;
+    float direction = 3;
+    float speed = 4;
+    AgentType agent_type = 5;
+    Coord coord = 6;
+}
+
+message AgentStatus{
+    MessageType message_type = 1;
+    uint32 agent_id = 2;
+    string agent_name = 3;
+    StatusType status_type = 4;
+	string meta = 5;
+    AgentType agent_type = 6;
+}
+
+enum StatusType {
+    OK = 0;
+    NG = 1;
 }
 
 enum AgentType {
-    WALK = 0;
+    PEDESTRIAN = 0;
     CAR = 1;
     TRAIN = 2;
     BICYCLE = 3;
+}
+
+enum MessageType {
+    SET_AGENT = 0;
+    AGENT_INFO = 1;
+    AGENT_STATUS = 2;
 }

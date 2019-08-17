@@ -7,12 +7,59 @@ option go_package="github.com/synerex/synerex_alpha/api/simulation/area";
 
 message AreaService {
     message Coord {
-        float s_lat = 1;
-        float s_lon = 2;
-        float e_lat = 3;
-        float e_lon = 4;
+        float start_lat = 1;
+        float start_lon = 2;	
+        float end_lat = 3;	
+        float end_lon = 4;	
     }
-    uint32 area_id = 1;
-    string area_name = 2;
+    MessageType message_type = 1;
+    uint32 area_id = 2;
+    string area_name = 3;
+    Coord coord = 4;
+}
+
+
+message AreaInfo{
+    message Coord {
+        float start_lat = 1;
+        float start_lon = 2;	
+        float end_lat = 3;	
+        float end_lon = 4;	
+    }
+    MessageType message_type = 1;
+    uint32 area_id = 2;
+    string area_name = 3;
+    Coord coord = 4;
+}
+
+message GetArea{
+    message Coord {
+        float start_lat = 1;	
+        float start_lon = 2;	
+        float eend_lat = 3;	
+        float eend_lon = 4;	
+    }
+    MessageType message_type = 1;
+    uint32 area_id = 2;
     Coord coord = 3;
+}
+
+message AreaStatus{
+    MessageType message_type = 1;
+    uint32 area_id = 2;
+    string area_name = 3;
+    StatusType status_type = 4;
+	string meta = 5;
+}
+
+enum StatusType {
+    OK = 0;
+    NG = 1;
+}
+
+enum MessageType {
+    SET_AREA = 0;
+    GET_AREA = 1;
+    AREA_INFO = 2;
+    AREA_STATUS = 3;
 }
