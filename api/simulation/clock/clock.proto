@@ -33,6 +33,7 @@ message ClockService {
 enum StatusType {
     OK = 0;
     NG = 1;
+    NONE = 2;
 }
 
 
