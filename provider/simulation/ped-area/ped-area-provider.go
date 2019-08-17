@@ -18,6 +18,7 @@ import (
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
+	areaId    = flag.Int("areaId", 1, "Area Id")
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
 	spMap		map[uint64]*sxutil.SupplyOpts
@@ -131,7 +132,7 @@ func main() {
 	sxutil.RegisterDeferFunction(func() { conn.Close() })
 
 	client := pb.NewSynerexClient(conn)
-	argJson := fmt.Sprintf("{Client:Area}")
+	argJson := fmt.Sprintf("{Client:PedArea, AreaId: %d}", *areaId)
 	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
 	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
 	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
