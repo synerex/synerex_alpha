@@ -5,54 +5,42 @@ package api.clock;
 option go_package="github.com/synerex/synerex_alpha/api/simulation/clock";
 //import "common/common.proto";
 
+
 message ClockService {
-    MessageType message_type = 1;
-    uint32 time = 2;
-    ClockType clock_type = 3;
-    uint32 num_cycle = 4;
-    StatusType status_type = 5;
+    message ClockInfo {
+        uint32 time = 1;
+        ClockType clock_type = 2;
+        StatusType status_type = 3;
+	    string meta = 4;
+    }
+
+    message ClockRequest {
+        uint32 time = 1;
+        ClockType clock_type = 2;
+        uint32 num_cycle = 3;
+	    uint32 cycle_duration = 4;	
+	    uint32 cycle_time = 5;
+        StatusType status_type = 6;
+    }
+
+    oneof ClockServiceAction {
+        ClockInfo clock_info  = 1;
+        ClockRequest clock_request = 2;
+    }
 }
 
-message ClockInfo {
-    MessageType message_type = 1;
-    uint32 time = 2;
-    ClockType clock_type = 3;
-    uint32 num_cycle = 4;
-    StatusType status_type = 5;
-}
-
-message SetClock {
-    MessageType message_type = 1;
-    uint32 time = 2;
-    ClockType clock_type = 3;
-    uint32 num_cycle = 4;
-	uint32 cycle_duration = 5;	
-	uint32 cycle_time = 6;
-    StatusType status_type = 7;
-}
-
-message ClockStatus{
-    MessageType message_type = 1;
-    uint32 time = 2;
-    StatusType status_type = 3;
-	string meta = 4;
-	ClockType clockType = 5;
-}
-
-enum ClockType {
-    FORWARD = 0;
-    BACK = 1;
-    SET = 2;
-}
 
 enum StatusType {
     OK = 0;
     NG = 1;
 }
 
-enum MessageType {
-    SET_CLOCK = 0;
-    CLOCK_INFO = 1;
-    CLOCK_STATUS = 2;
+
+enum ClockType {
+    FORWARD = 0;
+    BACK = 1;
+    SET = 2;
+    START = 3;
+    STOP = 4;
 }
 

@@ -20,34 +20,6 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type ClockType int32
-
-const (
-	ClockType_FORWARD ClockType = 0
-	ClockType_BACK    ClockType = 1
-	ClockType_SET     ClockType = 2
-)
-
-var ClockType_name = map[int32]string{
-	0: "FORWARD",
-	1: "BACK",
-	2: "SET",
-}
-
-var ClockType_value = map[string]int32{
-	"FORWARD": 0,
-	"BACK":    1,
-	"SET":     2,
-}
-
-func (x ClockType) String() string {
-	return proto.EnumName(ClockType_name, int32(x))
-}
-
-func (ClockType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_e96fed1976809896, []int{0}
-}
-
 type StatusType int32
 
 const (
@@ -70,46 +42,51 @@ func (x StatusType) String() string {
 }
 
 func (StatusType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_e96fed1976809896, []int{0}
+}
+
+type ClockType int32
+
+const (
+	ClockType_FORWARD ClockType = 0
+	ClockType_BACK    ClockType = 1
+	ClockType_SET     ClockType = 2
+	ClockType_START   ClockType = 3
+	ClockType_STOP    ClockType = 4
+)
+
+var ClockType_name = map[int32]string{
+	0: "FORWARD",
+	1: "BACK",
+	2: "SET",
+	3: "START",
+	4: "STOP",
+}
+
+var ClockType_value = map[string]int32{
+	"FORWARD": 0,
+	"BACK":    1,
+	"SET":     2,
+	"START":   3,
+	"STOP":    4,
+}
+
+func (x ClockType) String() string {
+	return proto.EnumName(ClockType_name, int32(x))
+}
+
+func (ClockType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_e96fed1976809896, []int{1}
 }
 
-type MessageType int32
-
-const (
-	MessageType_SET_CLOCK    MessageType = 0
-	MessageType_CLOCK_INFO   MessageType = 1
-	MessageType_CLOCK_STATUS MessageType = 2
-)
-
-var MessageType_name = map[int32]string{
-	0: "SET_CLOCK",
-	1: "CLOCK_INFO",
-	2: "CLOCK_STATUS",
-}
-
-var MessageType_value = map[string]int32{
-	"SET_CLOCK":    0,
-	"CLOCK_INFO":   1,
-	"CLOCK_STATUS": 2,
-}
-
-func (x MessageType) String() string {
-	return proto.EnumName(MessageType_name, int32(x))
-}
-
-func (MessageType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_e96fed1976809896, []int{2}
-}
-
 type ClockService struct {
-	MessageType          MessageType `protobuf:"varint,1,opt,name=message_type,json=messageType,proto3,enum=api.clock.MessageType" json:"message_type,omitempty"`
-	Time                 uint32      `protobuf:"varint,2,opt,name=time,proto3" json:"time,omitempty"`
-	ClockType            ClockType   `protobuf:"varint,3,opt,name=clock_type,json=clockType,proto3,enum=api.clock.ClockType" json:"clock_type,omitempty"`
-	NumCycle             uint32      `protobuf:"varint,4,opt,name=num_cycle,json=numCycle,proto3" json:"num_cycle,omitempty"`
-	StatusType           StatusType  `protobuf:"varint,5,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
+	// Types that are valid to be assigned to ClockServiceAction:
+	//	*ClockService_ClockInfo_
+	//	*ClockService_ClockRequest_
+	ClockServiceAction   isClockService_ClockServiceAction `protobuf_oneof:"ClockServiceAction"`
+	XXX_NoUnkeyedLiteral struct{}                          `json:"-"`
+	XXX_unrecognized     []byte                            `json:"-"`
+	XXX_sizecache        int32                             `json:"-"`
 }
 
 func (m *ClockService) Reset()         { *m = ClockService{} }
@@ -137,310 +114,230 @@ func (m *ClockService) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ClockService proto.InternalMessageInfo
 
-func (m *ClockService) GetMessageType() MessageType {
-	if m != nil {
-		return m.MessageType
-	}
-	return MessageType_SET_CLOCK
+type isClockService_ClockServiceAction interface {
+	isClockService_ClockServiceAction()
 }
 
-func (m *ClockService) GetTime() uint32 {
+type ClockService_ClockInfo_ struct {
+	ClockInfo *ClockService_ClockInfo `protobuf:"bytes,1,opt,name=clock_info,json=clockInfo,proto3,oneof"`
+}
+
+type ClockService_ClockRequest_ struct {
+	ClockRequest *ClockService_ClockRequest `protobuf:"bytes,2,opt,name=clock_request,json=clockRequest,proto3,oneof"`
+}
+
+func (*ClockService_ClockInfo_) isClockService_ClockServiceAction() {}
+
+func (*ClockService_ClockRequest_) isClockService_ClockServiceAction() {}
+
+func (m *ClockService) GetClockServiceAction() isClockService_ClockServiceAction {
+	if m != nil {
+		return m.ClockServiceAction
+	}
+	return nil
+}
+
+func (m *ClockService) GetClockInfo() *ClockService_ClockInfo {
+	if x, ok := m.GetClockServiceAction().(*ClockService_ClockInfo_); ok {
+		return x.ClockInfo
+	}
+	return nil
+}
+
+func (m *ClockService) GetClockRequest() *ClockService_ClockRequest {
+	if x, ok := m.GetClockServiceAction().(*ClockService_ClockRequest_); ok {
+		return x.ClockRequest
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*ClockService) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*ClockService_ClockInfo_)(nil),
+		(*ClockService_ClockRequest_)(nil),
+	}
+}
+
+type ClockService_ClockInfo struct {
+	Time                 uint32     `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	ClockType            ClockType  `protobuf:"varint,2,opt,name=clock_type,json=clockType,proto3,enum=api.clock.ClockType" json:"clock_type,omitempty"`
+	StatusType           StatusType `protobuf:"varint,3,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
+	Meta                 string     `protobuf:"bytes,4,opt,name=meta,proto3" json:"meta,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
+}
+
+func (m *ClockService_ClockInfo) Reset()         { *m = ClockService_ClockInfo{} }
+func (m *ClockService_ClockInfo) String() string { return proto.CompactTextString(m) }
+func (*ClockService_ClockInfo) ProtoMessage()    {}
+func (*ClockService_ClockInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e96fed1976809896, []int{0, 0}
+}
+
+func (m *ClockService_ClockInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ClockService_ClockInfo.Unmarshal(m, b)
+}
+func (m *ClockService_ClockInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ClockService_ClockInfo.Marshal(b, m, deterministic)
+}
+func (m *ClockService_ClockInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ClockService_ClockInfo.Merge(m, src)
+}
+func (m *ClockService_ClockInfo) XXX_Size() int {
+	return xxx_messageInfo_ClockService_ClockInfo.Size(m)
+}
+func (m *ClockService_ClockInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_ClockService_ClockInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ClockService_ClockInfo proto.InternalMessageInfo
+
+func (m *ClockService_ClockInfo) GetTime() uint32 {
 	if m != nil {
 		return m.Time
 	}
 	return 0
 }
 
-func (m *ClockService) GetClockType() ClockType {
+func (m *ClockService_ClockInfo) GetClockType() ClockType {
 	if m != nil {
 		return m.ClockType
 	}
 	return ClockType_FORWARD
 }
 
-func (m *ClockService) GetNumCycle() uint32 {
-	if m != nil {
-		return m.NumCycle
-	}
-	return 0
-}
-
-func (m *ClockService) GetStatusType() StatusType {
+func (m *ClockService_ClockInfo) GetStatusType() StatusType {
 	if m != nil {
 		return m.StatusType
 	}
 	return StatusType_OK
 }
 
-type ClockInfo struct {
-	MessageType          MessageType `protobuf:"varint,1,opt,name=message_type,json=messageType,proto3,enum=api.clock.MessageType" json:"message_type,omitempty"`
-	Time                 uint32      `protobuf:"varint,2,opt,name=time,proto3" json:"time,omitempty"`
-	ClockType            ClockType   `protobuf:"varint,3,opt,name=clock_type,json=clockType,proto3,enum=api.clock.ClockType" json:"clock_type,omitempty"`
-	NumCycle             uint32      `protobuf:"varint,4,opt,name=num_cycle,json=numCycle,proto3" json:"num_cycle,omitempty"`
-	StatusType           StatusType  `protobuf:"varint,5,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
-}
-
-func (m *ClockInfo) Reset()         { *m = ClockInfo{} }
-func (m *ClockInfo) String() string { return proto.CompactTextString(m) }
-func (*ClockInfo) ProtoMessage()    {}
-func (*ClockInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e96fed1976809896, []int{1}
-}
-
-func (m *ClockInfo) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ClockInfo.Unmarshal(m, b)
-}
-func (m *ClockInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ClockInfo.Marshal(b, m, deterministic)
-}
-func (m *ClockInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ClockInfo.Merge(m, src)
-}
-func (m *ClockInfo) XXX_Size() int {
-	return xxx_messageInfo_ClockInfo.Size(m)
-}
-func (m *ClockInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_ClockInfo.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ClockInfo proto.InternalMessageInfo
-
-func (m *ClockInfo) GetMessageType() MessageType {
-	if m != nil {
-		return m.MessageType
-	}
-	return MessageType_SET_CLOCK
-}
-
-func (m *ClockInfo) GetTime() uint32 {
-	if m != nil {
-		return m.Time
-	}
-	return 0
-}
-
-func (m *ClockInfo) GetClockType() ClockType {
-	if m != nil {
-		return m.ClockType
-	}
-	return ClockType_FORWARD
-}
-
-func (m *ClockInfo) GetNumCycle() uint32 {
-	if m != nil {
-		return m.NumCycle
-	}
-	return 0
-}
-
-func (m *ClockInfo) GetStatusType() StatusType {
-	if m != nil {
-		return m.StatusType
-	}
-	return StatusType_OK
-}
-
-type SetClock struct {
-	MessageType          MessageType `protobuf:"varint,1,opt,name=message_type,json=messageType,proto3,enum=api.clock.MessageType" json:"message_type,omitempty"`
-	Time                 uint32      `protobuf:"varint,2,opt,name=time,proto3" json:"time,omitempty"`
-	ClockType            ClockType   `protobuf:"varint,3,opt,name=clock_type,json=clockType,proto3,enum=api.clock.ClockType" json:"clock_type,omitempty"`
-	NumCycle             uint32      `protobuf:"varint,4,opt,name=num_cycle,json=numCycle,proto3" json:"num_cycle,omitempty"`
-	CycleDuration        uint32      `protobuf:"varint,5,opt,name=cycle_duration,json=cycleDuration,proto3" json:"cycle_duration,omitempty"`
-	CycleTime            uint32      `protobuf:"varint,6,opt,name=cycle_time,json=cycleTime,proto3" json:"cycle_time,omitempty"`
-	StatusType           StatusType  `protobuf:"varint,7,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
-}
-
-func (m *SetClock) Reset()         { *m = SetClock{} }
-func (m *SetClock) String() string { return proto.CompactTextString(m) }
-func (*SetClock) ProtoMessage()    {}
-func (*SetClock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e96fed1976809896, []int{2}
-}
-
-func (m *SetClock) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SetClock.Unmarshal(m, b)
-}
-func (m *SetClock) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SetClock.Marshal(b, m, deterministic)
-}
-func (m *SetClock) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SetClock.Merge(m, src)
-}
-func (m *SetClock) XXX_Size() int {
-	return xxx_messageInfo_SetClock.Size(m)
-}
-func (m *SetClock) XXX_DiscardUnknown() {
-	xxx_messageInfo_SetClock.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_SetClock proto.InternalMessageInfo
-
-func (m *SetClock) GetMessageType() MessageType {
-	if m != nil {
-		return m.MessageType
-	}
-	return MessageType_SET_CLOCK
-}
-
-func (m *SetClock) GetTime() uint32 {
-	if m != nil {
-		return m.Time
-	}
-	return 0
-}
-
-func (m *SetClock) GetClockType() ClockType {
-	if m != nil {
-		return m.ClockType
-	}
-	return ClockType_FORWARD
-}
-
-func (m *SetClock) GetNumCycle() uint32 {
-	if m != nil {
-		return m.NumCycle
-	}
-	return 0
-}
-
-func (m *SetClock) GetCycleDuration() uint32 {
-	if m != nil {
-		return m.CycleDuration
-	}
-	return 0
-}
-
-func (m *SetClock) GetCycleTime() uint32 {
-	if m != nil {
-		return m.CycleTime
-	}
-	return 0
-}
-
-func (m *SetClock) GetStatusType() StatusType {
-	if m != nil {
-		return m.StatusType
-	}
-	return StatusType_OK
-}
-
-type ClockStatus struct {
-	MessageType          MessageType `protobuf:"varint,1,opt,name=message_type,json=messageType,proto3,enum=api.clock.MessageType" json:"message_type,omitempty"`
-	Time                 uint32      `protobuf:"varint,2,opt,name=time,proto3" json:"time,omitempty"`
-	StatusType           StatusType  `protobuf:"varint,3,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
-	Meta                 string      `protobuf:"bytes,4,opt,name=meta,proto3" json:"meta,omitempty"`
-	ClockType            ClockType   `protobuf:"varint,5,opt,name=clockType,proto3,enum=api.clock.ClockType" json:"clockType,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
-	XXX_unrecognized     []byte      `json:"-"`
-	XXX_sizecache        int32       `json:"-"`
-}
-
-func (m *ClockStatus) Reset()         { *m = ClockStatus{} }
-func (m *ClockStatus) String() string { return proto.CompactTextString(m) }
-func (*ClockStatus) ProtoMessage()    {}
-func (*ClockStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e96fed1976809896, []int{3}
-}
-
-func (m *ClockStatus) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ClockStatus.Unmarshal(m, b)
-}
-func (m *ClockStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ClockStatus.Marshal(b, m, deterministic)
-}
-func (m *ClockStatus) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ClockStatus.Merge(m, src)
-}
-func (m *ClockStatus) XXX_Size() int {
-	return xxx_messageInfo_ClockStatus.Size(m)
-}
-func (m *ClockStatus) XXX_DiscardUnknown() {
-	xxx_messageInfo_ClockStatus.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ClockStatus proto.InternalMessageInfo
-
-func (m *ClockStatus) GetMessageType() MessageType {
-	if m != nil {
-		return m.MessageType
-	}
-	return MessageType_SET_CLOCK
-}
-
-func (m *ClockStatus) GetTime() uint32 {
-	if m != nil {
-		return m.Time
-	}
-	return 0
-}
-
-func (m *ClockStatus) GetStatusType() StatusType {
-	if m != nil {
-		return m.StatusType
-	}
-	return StatusType_OK
-}
-
-func (m *ClockStatus) GetMeta() string {
+func (m *ClockService_ClockInfo) GetMeta() string {
 	if m != nil {
 		return m.Meta
 	}
 	return ""
 }
 
-func (m *ClockStatus) GetClockType() ClockType {
+type ClockService_ClockRequest struct {
+	Time                 uint32     `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	ClockType            ClockType  `protobuf:"varint,2,opt,name=clock_type,json=clockType,proto3,enum=api.clock.ClockType" json:"clock_type,omitempty"`
+	NumCycle             uint32     `protobuf:"varint,3,opt,name=num_cycle,json=numCycle,proto3" json:"num_cycle,omitempty"`
+	CycleDuration        uint32     `protobuf:"varint,4,opt,name=cycle_duration,json=cycleDuration,proto3" json:"cycle_duration,omitempty"`
+	CycleTime            uint32     `protobuf:"varint,5,opt,name=cycle_time,json=cycleTime,proto3" json:"cycle_time,omitempty"`
+	StatusType           StatusType `protobuf:"varint,6,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
+}
+
+func (m *ClockService_ClockRequest) Reset()         { *m = ClockService_ClockRequest{} }
+func (m *ClockService_ClockRequest) String() string { return proto.CompactTextString(m) }
+func (*ClockService_ClockRequest) ProtoMessage()    {}
+func (*ClockService_ClockRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_e96fed1976809896, []int{0, 1}
+}
+
+func (m *ClockService_ClockRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ClockService_ClockRequest.Unmarshal(m, b)
+}
+func (m *ClockService_ClockRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ClockService_ClockRequest.Marshal(b, m, deterministic)
+}
+func (m *ClockService_ClockRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ClockService_ClockRequest.Merge(m, src)
+}
+func (m *ClockService_ClockRequest) XXX_Size() int {
+	return xxx_messageInfo_ClockService_ClockRequest.Size(m)
+}
+func (m *ClockService_ClockRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ClockService_ClockRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ClockService_ClockRequest proto.InternalMessageInfo
+
+func (m *ClockService_ClockRequest) GetTime() uint32 {
+	if m != nil {
+		return m.Time
+	}
+	return 0
+}
+
+func (m *ClockService_ClockRequest) GetClockType() ClockType {
 	if m != nil {
 		return m.ClockType
 	}
 	return ClockType_FORWARD
 }
 
+func (m *ClockService_ClockRequest) GetNumCycle() uint32 {
+	if m != nil {
+		return m.NumCycle
+	}
+	return 0
+}
+
+func (m *ClockService_ClockRequest) GetCycleDuration() uint32 {
+	if m != nil {
+		return m.CycleDuration
+	}
+	return 0
+}
+
+func (m *ClockService_ClockRequest) GetCycleTime() uint32 {
+	if m != nil {
+		return m.CycleTime
+	}
+	return 0
+}
+
+func (m *ClockService_ClockRequest) GetStatusType() StatusType {
+	if m != nil {
+		return m.StatusType
+	}
+	return StatusType_OK
+}
+
 func init() {
-	proto.RegisterEnum("api.clock.ClockType", ClockType_name, ClockType_value)
 	proto.RegisterEnum("api.clock.StatusType", StatusType_name, StatusType_value)
-	proto.RegisterEnum("api.clock.MessageType", MessageType_name, MessageType_value)
+	proto.RegisterEnum("api.clock.ClockType", ClockType_name, ClockType_value)
 	proto.RegisterType((*ClockService)(nil), "api.clock.ClockService")
-	proto.RegisterType((*ClockInfo)(nil), "api.clock.ClockInfo")
-	proto.RegisterType((*SetClock)(nil), "api.clock.SetClock")
-	proto.RegisterType((*ClockStatus)(nil), "api.clock.ClockStatus")
+	proto.RegisterType((*ClockService_ClockInfo)(nil), "api.clock.ClockService.ClockInfo")
+	proto.RegisterType((*ClockService_ClockRequest)(nil), "api.clock.ClockService.ClockRequest")
 }
 
 func init() { proto.RegisterFile("simulation/clock/clock.proto", fileDescriptor_e96fed1976809896) }
 
 var fileDescriptor_e96fed1976809896 = []byte{
-	// 443 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x54, 0xdd, 0x8a, 0xd3, 0x40,
-	0x14, 0xde, 0x49, 0x6b, 0xdb, 0x9c, 0x34, 0x65, 0x18, 0x54, 0x0a, 0xae, 0xb0, 0x2c, 0x08, 0x4b,
-	0x85, 0x04, 0x76, 0x51, 0xf1, 0x46, 0xe8, 0x66, 0x77, 0x65, 0x59, 0x6d, 0x20, 0x89, 0x08, 0xde,
-	0x84, 0x69, 0x1c, 0xdb, 0x60, 0x26, 0x09, 0xc9, 0x44, 0xcc, 0x23, 0xf9, 0x4e, 0x5e, 0x0a, 0xbe,
-	0x86, 0xe4, 0xa4, 0x7f, 0xf4, 0xc6, 0x5e, 0x78, 0x21, 0x7b, 0x33, 0xf3, 0x9d, 0x9f, 0xf9, 0xce,
-	0x39, 0x1f, 0x87, 0x81, 0xe3, 0x32, 0x96, 0x55, 0xc2, 0x55, 0x9c, 0xa5, 0x76, 0x94, 0x64, 0xd1,
-	0xd7, 0xf6, 0xb4, 0xf2, 0x22, 0x53, 0x19, 0xd3, 0x79, 0x1e, 0x5b, 0xe8, 0x38, 0xfd, 0x4d, 0x60,
-	0xe8, 0x34, 0xc8, 0x17, 0xc5, 0xb7, 0x38, 0x12, 0xec, 0x35, 0x0c, 0xa5, 0x28, 0x4b, 0xbe, 0x10,
-	0xa1, 0xaa, 0x73, 0x31, 0x26, 0x27, 0xe4, 0x6c, 0x74, 0xfe, 0xd8, 0xda, 0x3c, 0xb1, 0xde, 0xb7,
-	0xe1, 0xa0, 0xce, 0x85, 0x67, 0xc8, 0xad, 0xc1, 0x18, 0x74, 0x55, 0x2c, 0xc5, 0x58, 0x3b, 0x21,
-	0x67, 0xa6, 0x87, 0x98, 0x5d, 0x00, 0xe0, 0xab, 0x96, 0xac, 0x83, 0x64, 0x0f, 0x77, 0xc8, 0xb0,
-	0x36, 0x52, 0xe9, 0xd1, 0x1a, 0xb2, 0x27, 0xa0, 0xa7, 0x95, 0x0c, 0xa3, 0x3a, 0x4a, 0xc4, 0xb8,
-	0x8b, 0x6c, 0x83, 0xb4, 0x92, 0x4e, 0x63, 0xb3, 0x97, 0x60, 0x94, 0x8a, 0xab, 0xaa, 0x6c, 0x29,
-	0x1f, 0x20, 0xe5, 0xa3, 0x1d, 0x4a, 0x1f, 0xa3, 0xc8, 0x09, 0xe5, 0x06, 0x9f, 0xfe, 0x22, 0xa0,
-	0x63, 0xb5, 0xdb, 0xf4, 0x4b, 0x76, 0x7f, 0xc7, 0xfc, 0xa1, 0xc1, 0xc0, 0x17, 0x0a, 0x0b, 0xfe,
-	0xff, 0x53, 0x3e, 0x83, 0x11, 0x06, 0xc2, 0xcf, 0x55, 0x81, 0xdb, 0x8a, 0x83, 0x9a, 0x9e, 0x89,
-	0xde, 0xab, 0x95, 0x93, 0x3d, 0x05, 0x68, 0xd3, 0xb0, 0xa5, 0x1e, 0xa6, 0xe8, 0xe8, 0x09, 0x9a,
-	0xbe, 0xf6, 0xb4, 0xea, 0x1f, 0xaa, 0xd5, 0x4f, 0x02, 0x46, 0xbb, 0xfc, 0xe8, 0xfb, 0xd7, 0x72,
-	0xed, 0xb5, 0xd5, 0x39, 0xb0, 0xad, 0x86, 0x4b, 0x0a, 0xc5, 0x51, 0x2c, 0xdd, 0x43, 0xcc, 0xce,
-	0x61, 0x2b, 0xe9, 0x6a, 0x19, 0xfe, 0xa6, 0xfc, 0xe4, 0xf9, 0x6a, 0xe1, 0x91, 0xd4, 0x80, 0xfe,
-	0x8d, 0xeb, 0x7d, 0x9c, 0x7a, 0x57, 0xf4, 0x88, 0x0d, 0xa0, 0x7b, 0x39, 0x75, 0xee, 0x28, 0x61,
-	0x7d, 0xe8, 0xf8, 0xd7, 0x01, 0xd5, 0x26, 0xc7, 0x00, 0xdb, 0x76, 0x58, 0x0f, 0x34, 0xf7, 0x8e,
-	0x1e, 0x35, 0xf7, 0xec, 0x2d, 0x25, 0x93, 0x37, 0x60, 0xec, 0x8c, 0xce, 0x4c, 0xd0, 0xfd, 0xeb,
-	0x20, 0x74, 0xde, 0xb9, 0x4e, 0x93, 0x35, 0x02, 0x40, 0x18, 0xde, 0xce, 0x6e, 0x5c, 0x4a, 0x18,
-	0x85, 0x61, 0x6b, 0xfb, 0xc1, 0x34, 0xf8, 0xe0, 0x53, 0xed, 0xf2, 0xd5, 0xa7, 0x17, 0x8b, 0x58,
-	0x2d, 0xab, 0xb9, 0x15, 0x65, 0xd2, 0x2e, 0xeb, 0x54, 0x14, 0xe2, 0xfb, 0xfa, 0x0e, 0x79, 0x92,
-	0x2f, 0xb9, 0xcd, 0xf3, 0xd8, 0xde, 0xff, 0xb6, 0xe6, 0x3d, 0xfc, 0xb1, 0x2e, 0xfe, 0x04, 0x00,
-	0x00, 0xff, 0xff, 0x7f, 0x67, 0xe0, 0x45, 0xd1, 0x04, 0x00, 0x00,
+	// 419 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x92, 0xdd, 0x8a, 0xd3, 0x40,
+	0x14, 0xc7, 0x93, 0x36, 0xdb, 0xdd, 0x9c, 0x6e, 0x96, 0x30, 0xac, 0x50, 0xd6, 0x15, 0x56, 0x51,
+	0x58, 0xf6, 0x22, 0x81, 0x16, 0xf5, 0xd6, 0xa4, 0x55, 0x2b, 0x05, 0x2b, 0x93, 0x80, 0xe0, 0x4d,
+	0x48, 0xc7, 0xa9, 0x1d, 0xcc, 0x97, 0xc9, 0x44, 0xcc, 0xdb, 0xf8, 0x42, 0xbe, 0x8c, 0x4f, 0x20,
+	0x73, 0x92, 0xd6, 0xd0, 0x0b, 0xf1, 0x62, 0x6f, 0x92, 0xf3, 0xf5, 0x3f, 0xe7, 0xc7, 0x39, 0x03,
+	0xd7, 0x95, 0x48, 0xeb, 0x24, 0x96, 0x22, 0xcf, 0x5c, 0x96, 0xe4, 0xec, 0x6b, 0xfb, 0x75, 0x8a,
+	0x32, 0x97, 0x39, 0x31, 0xe3, 0x42, 0x38, 0x18, 0x78, 0xf2, 0xcb, 0x80, 0xf3, 0xb9, 0xb2, 0x02,
+	0x5e, 0x7e, 0x17, 0x8c, 0x13, 0x1f, 0x00, 0x33, 0x91, 0xc8, 0xb6, 0xf9, 0x44, 0xbf, 0xd1, 0x6f,
+	0xc7, 0xd3, 0xc7, 0xce, 0x41, 0xe0, 0xf4, 0x8b, 0x5b, 0xe7, 0x5d, 0xb6, 0xcd, 0x97, 0x1a, 0x35,
+	0xd9, 0xde, 0x21, 0x2b, 0xb0, 0xda, 0x1e, 0x25, 0xff, 0x56, 0xf3, 0x4a, 0x4e, 0x06, 0xd8, 0xe6,
+	0xe9, 0x3f, 0xdb, 0xd0, 0xb6, 0x76, 0xa9, 0xd1, 0x73, 0xd6, 0xf3, 0xaf, 0x7e, 0xea, 0x60, 0x1e,
+	0xe6, 0x10, 0x02, 0x86, 0x14, 0x29, 0x47, 0x30, 0x8b, 0xa2, 0x4d, 0x66, 0x7b, 0x64, 0xd9, 0x14,
+	0x1c, 0x67, 0x5d, 0x4c, 0x2f, 0x8f, 0x67, 0x85, 0x4d, 0xc1, 0x3b, 0x46, 0x65, 0x92, 0x17, 0x30,
+	0xae, 0x64, 0x2c, 0xeb, 0xaa, 0x55, 0x0d, 0x51, 0xf5, 0xa0, 0xa7, 0x0a, 0x30, 0x8b, 0x32, 0xa8,
+	0x0e, 0xb6, 0x02, 0x48, 0xb9, 0x8c, 0x27, 0xc6, 0x8d, 0x7e, 0x6b, 0x52, 0xb4, 0xaf, 0x7e, 0xeb,
+	0xdd, 0x12, 0x3b, 0xe6, 0xfb, 0xa3, 0x7c, 0x08, 0x66, 0x56, 0xa7, 0x11, 0x6b, 0x58, 0xd2, 0x32,
+	0x5a, 0xf4, 0x2c, 0xab, 0xd3, 0xb9, 0xf2, 0xc9, 0x33, 0xb8, 0xc0, 0x44, 0xf4, 0xb9, 0x2e, 0xf1,
+	0xd4, 0x08, 0x65, 0x51, 0x0b, 0xa3, 0x8b, 0x2e, 0x48, 0x1e, 0x01, 0xb4, 0x65, 0x88, 0x74, 0x82,
+	0x25, 0x26, 0x46, 0x42, 0xc5, 0x75, 0xb4, 0x88, 0xd1, 0x7f, 0x2e, 0xc2, 0xbf, 0x04, 0xd2, 0x3f,
+	0xa2, 0xc7, 0xd4, 0xb0, 0xbb, 0x6b, 0x80, 0xbf, 0xf5, 0x64, 0x04, 0x83, 0xf5, 0xca, 0xd6, 0xd4,
+	0xff, 0xfd, 0x5b, 0x5b, 0xbf, 0x7b, 0xd5, 0x9d, 0x12, 0x93, 0x63, 0x38, 0x7d, 0xb3, 0xa6, 0x1f,
+	0x3d, 0xba, 0xb0, 0x35, 0x72, 0x06, 0x86, 0xef, 0xcd, 0x57, 0xb6, 0x4e, 0x4e, 0x61, 0x18, 0xbc,
+	0x0e, 0xed, 0x01, 0x31, 0xe1, 0x24, 0x08, 0x3d, 0x1a, 0xda, 0x43, 0x95, 0x0d, 0xc2, 0xf5, 0x07,
+	0xdb, 0xf0, 0x5f, 0x7e, 0x7a, 0xfe, 0x45, 0xc8, 0x5d, 0xbd, 0x71, 0x58, 0x9e, 0xba, 0x55, 0x93,
+	0xf1, 0x92, 0xff, 0xd8, 0xff, 0xa3, 0x38, 0x29, 0x76, 0xb1, 0x1b, 0x17, 0xc2, 0x3d, 0x7e, 0xff,
+	0x9b, 0x11, 0x3e, 0xfd, 0xd9, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x19, 0x8d, 0x6e, 0x5f, 0x1a,
+	0x03, 0x00, 0x00,
 }

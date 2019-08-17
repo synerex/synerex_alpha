@@ -4,60 +4,62 @@ package api.agent;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/agent";
 
+
 message AgentService {
+    message AgentInfo {
+        uint32 time = 1;
+        uint32 agent_id = 2;
+        string agent_name = 3;
+        AgentType agent_type = 4;
+        Route route = 5;
+        Rule rule = 6;
+        StatusType status_type = 7;
+	    string meta = 8;
+    }
+
+    message AgentsInfo {
+        uint32 time = 1;
+        repeated AgentInfo agent_info = 2;
+        StatusType status_type = 3;
+	    string meta = 4;
+    }
+
+    message AgentRequest {
+        uint32 time = 1;
+        uint32 agent_id = 2;
+        string agent_name = 3;
+        AgentType agent_type = 4;
+        Route route = 5;
+        Rule rule = 6;
+    }
+
+    oneof AreaServiceAction {
+        AgentInfo agent_info  = 1;
+        AgentsInfo agents_info  = 2;
+        AgentRequest agent_request = 3;
+    }
+}
+
+message Route {
     message Coord {
         float lat = 1;
         float lon = 2;
-        float height = 3;
-    }
-    MessageType message_type = 1;
-    uint32 agent_id = 2;
-    uint32 direction = 3;
-    uint32 speed = 4;
-    AgentType agent_type = 5;
-    Coord coord = 6;
+        }
+    Coord coord = 1;
+    float direction = 2;
+    float speed = 3;
+    float destination = 4;
+    float departure = 5;
 }
 
-
-message AgentInfo {
-    message Coord {
-        float lat = 1;
-        float lon = 2;
-    }
-    MessageType message_type = 1;
-    uint32 agent_id = 2;
-    float direction = 3;
-    float speed = 4;
-    AgentType agent_type = 5;
-    Coord coord = 6;
-    uint32 controlled = 7;
-}
-
-message SetAgent {
-    message Coord {
-        float lat = 1;
-        float lon = 2;
-    }
-    MessageType message_type = 1;
-    uint32 agent_id = 2;
-    float direction = 3;
-    float speed = 4;
-    AgentType agent_type = 5;
-    Coord coord = 6;
-}
-
-message AgentStatus{
-    MessageType message_type = 1;
-    uint32 agent_id = 2;
-    string agent_name = 3;
-    StatusType status_type = 4;
-	string meta = 5;
-    AgentType agent_type = 6;
+message Rule {
+    string RuleInfo = 1;
 }
 
 enum StatusType {
     OK = 0;
     NG = 1;
+    NONE = 2;
 }
 
 enum AgentType {
@@ -65,10 +67,4 @@ enum AgentType {
     CAR = 1;
     TRAIN = 2;
     BICYCLE = 3;
-}
-
-enum MessageType {
-    SET_AGENT = 0;
-    AGENT_INFO = 1;
-    AGENT_STATUS = 2;
 }

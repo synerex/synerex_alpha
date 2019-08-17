@@ -6,60 +6,52 @@ option go_package="github.com/synerex/synerex_alpha/api/simulation/area";
 
 
 message AreaService {
+    message AreaInfo {
+        uint32 time = 1;
+        uint32 area_id = 2;
+        string area_name = 3;
+        Signal signal = 4;
+        Map map = 5;
+        Climate climate = 6;
+        StatusType status_type = 7;
+        string meta = 8;
+    }
+
+    message AreaRequest {
+        uint32 time = 1;
+        uint32 area_id = 2;
+    }
+
+    oneof AreaServiceAction {
+        AreaInfo area_info  = 1;
+        AreaRequest area_request = 2;
+    }
+}
+
+message Signal {
+    uint32 signal_info = 1;
+}
+
+message Map {
     message Coord {
         float start_lat = 1;
-        float start_lon = 2;	
-        float end_lat = 3;	
-        float end_lon = 4;	
+        float start_lon = 2;
+        float end_lat = 3;
+        float end_lon = 4;
     }
-    MessageType message_type = 1;
-    uint32 area_id = 2;
-    string area_name = 3;
-    Coord coord = 4;
+    Coord coord = 1;
+    uint32 map_info = 2;
 }
 
-
-message AreaInfo{
-    message Coord {
-        float start_lat = 1;
-        float start_lon = 2;	
-        float end_lat = 3;	
-        float end_lon = 4;	
-    }
-    MessageType message_type = 1;
-    uint32 area_id = 2;
-    string area_name = 3;
-    Coord coord = 4;
-}
-
-message GetArea{
-    message Coord {
-        float start_lat = 1;	
-        float start_lon = 2;	
-        float end_lat = 3;	
-        float end_lon = 4;	
-    }
-    MessageType message_type = 1;
-    uint32 area_id = 2;
-    Coord coord = 3;
-}
-
-message AreaStatus{
-    MessageType message_type = 1;
-    uint32 area_id = 2;
-    string area_name = 3;
-    StatusType status_type = 4;
-	string meta = 5;
+message Climate {
+    uint32 Weather = 1;
+    uint32 Temperature = 2;
+    uint32 Humidity = 3;
 }
 
 enum StatusType {
     OK = 0;
     NG = 1;
+    NONE = 2;
 }
 
-enum MessageType {
-    SET_AREA = 0;
-    GET_AREA = 1;
-    AREA_INFO = 2;
-    AREA_STATUS = 3;
-}
