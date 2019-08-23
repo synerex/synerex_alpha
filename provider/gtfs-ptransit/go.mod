@@ -2,11 +2,11 @@ module ptransit-provider
 
 require (
 	github.com/nkawa/gtfsparser v0.0.0-20181118053010-0f0c06281a7e
-	github.com/synerex/synerex_alpha/api v0.0.0
-	github.com/synerex/synerex_alpha/api/common v0.0.0
-	github.com/synerex/synerex_alpha/api/ptransit v0.0.0
-	github.com/synerex/synerex_alpha/sxutil v0.0.0-20181116053009-a95f29211ec1
-	google.golang.org/grpc v1.16.0
+	github.com/synerex/synerex_alpha/api v0.0.2
+	github.com/synerex/synerex_alpha/api/common v0.0.2
+	github.com/synerex/synerex_alpha/api/ptransit v0.0.2
+	github.com/synerex/synerex_alpha/sxutil v0.0.2
+	google.golang.org/grpc v1.23.0
 )
 
 replace (

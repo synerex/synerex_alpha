@@ -1,11 +1,11 @@
 module taxi-provider
 
 require (
-	github.com/synerex/synerex_alpha/api v0.0.0
-	github.com/synerex/synerex_alpha/api/fleet v0.0.0
-	github.com/synerex/synerex_alpha/api/routing v0.0.0
-	github.com/synerex/synerex_alpha/sxutil v0.0.0
-	google.golang.org/grpc v1.16.0
+	github.com/synerex/synerex_alpha/api v0.0.2
+	github.com/synerex/synerex_alpha/api/fleet v0.0.2
+	github.com/synerex/synerex_alpha/api/routing v0.0.2
+	github.com/synerex/synerex_alpha/sxutil v0.0.2
+	google.golang.org/grpc v1.23.0
 )
 
 replace (

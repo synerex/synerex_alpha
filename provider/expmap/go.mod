@@ -7,13 +7,13 @@ require (
 	github.com/mtfelian/golang-socketio v0.0.0-20181017124241-8d8ec6f9bb4c
 	github.com/mtfelian/synced v0.0.0-20181026093311-f1dd911faaa7 // indirect
 	github.com/sirupsen/logrus v1.2.0 // indirect
-	github.com/synerex/synerex_alpha/api v0.0.0
-	github.com/synerex/synerex_alpha/api/common v0.0.0
-	github.com/synerex/synerex_alpha/api/routing v0.0.0
-	github.com/synerex/synerex_alpha/sxutil v0.0.0
+	github.com/synerex/synerex_alpha/api v0.0.2
+	github.com/synerex/synerex_alpha/api/common v0.0.2
+	github.com/synerex/synerex_alpha/api/routing v0.0.2
+	github.com/synerex/synerex_alpha/sxutil v0.0.2
 
 	golang.org/x/sys v0.0.0-20181107165924-66b7b1311ac8
-	google.golang.org/grpc v1.16.0
+	google.golang.org/grpc v1.23.0
 )
 
 replace (
