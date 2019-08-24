@@ -4,7 +4,6 @@ require (
 	github.com/sirupsen/logrus v1.2.0
 	github.com/synerex/synerex_alpha/api v0.0.2
 	github.com/synerex/synerex_alpha/monitor/monitorapi v0.0.2
-	github.com/synerex/synerex_alpha/nodeapi v0.0.2
 	github.com/synerex/synerex_alpha/sxutil v0.0.2
 	google.golang.org/grpc v1.23.0
 )
