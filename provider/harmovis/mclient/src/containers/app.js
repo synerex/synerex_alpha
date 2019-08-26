@@ -79,8 +79,8 @@ class App extends Container {
     let dataModify = false;
     const compareTime = settime - maxKeepSecond;
     for (let i = 0, lengthi = movesbasedata.length; i < lengthi; i += 1) {
-	const { departuretime:propsdepaturetime, operation:propsoperation } = movesbasedata[i];
-//      let departuretime = propsdeparturetime;
+	const { departuretime:propsdeparturetime, operation:propsoperation } = movesbasedata[i];
+      let departuretime = propsdeparturetime;
       let startIndex = propsoperation.length;
       for (let j = 0, lengthj = propsoperation.length; j < lengthj; j += 1) {
         if(propsoperation[j].elapsedtime > compareTime){
@@ -94,7 +94,8 @@ class App extends Container {
       }else
       if(startIndex < propsoperation.length){
         setMovesbase.push(Object.assign({}, movesbasedata[i], {
-          operation: propsoperation.slice(startIndex), departuretime }));
+            operation: propsoperation.slice(startIndex), departuretime
+	}));
         dataModify = true;  
       }else{
         dataModify = true;
