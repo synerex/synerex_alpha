@@ -177,8 +177,8 @@ export default class Controller extends React.Component {
               再現中日時&nbsp;<SimulationDateTime settime={settime} />
             </li>
             <li>
-              <label htmlFor="ElapsedTimeRange">経過時間<ElapsedTimeValue settime={settime} timeBegin={timeBegin} timeLength={timeLength} actions={actions} />秒&nbsp;/&nbsp;全体&nbsp;{Math.floor(timeLength)}&nbsp;秒</label>
-              <ElapsedTimeRange settime={settime} timeLength={timeLength} timeBegin={timeBegin} min={-leading} actions={actions} id="ElapsedTimeRange" className="form-control-range" />
+            <label htmlFor="ElapsedTimeRange">経過時間<ElapsedTimeValue settime={settime} timeBegin={timeBegin} timeLength={Math.floor(timeLength)} actions={actions} />秒&nbsp;/&nbsp;全体&nbsp;{Math.floor(timeLength)}&nbsp;秒</label>
+            <ElapsedTimeRange settime={settime} timeLength={Math.floor(timeLength)} timeBegin={timeBegin} min={-leading} actions={actions} id="ElapsedTimeRange" className="form-control-range" />
             </li>
             <li>
               <label htmlFor="SpeedRange">スピード<SpeedValue secperhour={secperhour} actions={actions} />秒/時</label>
