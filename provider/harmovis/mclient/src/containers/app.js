@@ -43,17 +43,19 @@ class App extends Container {
 	const setMovesbase = [];
 	
 	for( let i = 0, lengthi = movesbasedata.length; i < lengthi; i+=1){
-	    let setMovedata = Object.assign({}, movesbasedata[i]);
+	    //	    let setMovedata = Object.assign({}, movesbasedata[i]);
+	    let setMovedata = movesbasedata[i];
 	    if(mtype === setMovedata.mtype && id === setMovedata.id){
 		hit = true;
-		const {operation } = setMovedata;
-		const arrivaltime = time;
-		operation.push({
+//		const {operation } = setMovedata;
+		//		const arrivaltime = time;
+		setMovedata.arrivaltime = time;		
+		setMovedata.operation.push({
 		    elapsedtime: time,
 		    position:[lon, lat, 0],
 		    angle,speed
 		});
-		setMovedata = Object.assign({}, setMovedata, {arrivaltime, operation});
+//		setMovedata = Object.assign({}, setMovedata, {arrivaltime, operation});
 	    }
 	    setMovesbase.push(setMovedata);
 	}
