@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+*~
 
 # Test binary, build with `go test -c`
 *.test
@@ -28,3 +29,7 @@ server/synerex-server
 
 # Go module file
 go.sum
+
+
+#node lock
+package-lock.json
