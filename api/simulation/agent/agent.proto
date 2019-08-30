@@ -5,39 +5,46 @@ package api.agent;
 option go_package="github.com/synerex/synerex_alpha/api/simulation/agent";
 
 
-message AgentService {
-    message AgentInfo {
+message AgentInfo {
+        // agent info
         uint32 time = 1;
         uint32 agent_id = 2;
         string agent_name = 3;
         AgentType agent_type = 4;
         Route route = 5;
         Rule rule = 6;
+
+        // meta data
         StatusType status_type = 7;
 	    string meta = 8;
     }
 
     message AgentsInfo {
+        // agents info
         uint32 time = 1;
         repeated AgentInfo agent_info = 2;
+        
+        // meta data
         StatusType status_type = 3;
 	    string meta = 4;
     }
 
-    message AgentRequest {
+    message AgentDemand {
+        // demand info
         uint32 time = 1;
         uint32 agent_id = 2;
         string agent_name = 3;
         AgentType agent_type = 4;
         Route route = 5;
         Rule rule = 6;
-    }
+        
+        // demand info
+        DemandType demand_type = 7;
 
-    AgentInfo agent_info  = 1;
-    AgentsInfo agents_info  = 2;
-    AgentRequest agent_request = 3;
-    
-}
+        // meta data
+        StatusType status_type = 8;
+	    string meta = 9;
+    }
 
 message Route {
     message Coord {
@@ -52,7 +59,7 @@ message Route {
 }
 
 message Rule {
-    string RuleInfo = 1;
+    string rule_info = 1;
 }
 
 enum StatusType {
@@ -66,4 +73,8 @@ enum AgentType {
     CAR = 1;
     TRAIN = 2;
     BICYCLE = 3;
+}
+
+enum DemandType {
+    SET = 0;
 }

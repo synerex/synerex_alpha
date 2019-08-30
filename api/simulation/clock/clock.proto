@@ -6,28 +6,29 @@ option go_package="github.com/synerex/synerex_alpha/api/simulation/clock";
 //import "common/common.proto";
 
 
-message ClockService {
-    message ClockInfo {
+message ClockInfo {
+        // clock info
         uint32 time = 1;
-        ClockType clock_type = 2;
-        StatusType status_type = 3;
-	    string meta = 4;
+
+        // meta data
+        StatusType status_type = 2;
+	    string meta = 3;
     }
 
-    message ClockRequest {
+ message ClockDemand {
+        // demand info
         uint32 time = 1;
-        ClockType clock_type = 2;
-        uint32 num_cycle = 3;
-	    uint32 cycle_duration = 4;	
-	    uint32 cycle_time = 5;
+        uint32 num_cycle = 2;
+	    uint32 cycle_duration = 3;	
+	    uint32 cycle_time = 4;
+
+        // demand type
+        DemandType demand_type = 5;
+
+        // meta data
         StatusType status_type = 6;
+        string meta = 7;
     }
-
-    ClockInfo clock_info  = 1;
-    ClockRequest clock_request = 2;
-    
-}
-
 
 enum StatusType {
     OK = 0;
@@ -36,7 +37,7 @@ enum StatusType {
 }
 
 
-enum ClockType {
+enum DemandType {
     FORWARD = 0;
     BACK = 1;
     SET = 2;

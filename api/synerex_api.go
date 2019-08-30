@@ -13,6 +13,7 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 )
 
+// Demand
 // NewDemand returns empty Demand.
 func NewDemand() *Demand {
 	return &Demand{}
@@ -65,24 +66,49 @@ func (dm *Demand) WithMarketingService(m *marketing.MarketingService) *Demand {
 	return dm
 }
 
-// WithClockService set a given ClockService to Demand.Demand_Arg_ClockService.Arg_ClockService .
-func (dm *Demand) WithClockService(c *clock.ClockService) *Demand {
-	dm.ArgOneof = &Demand_Arg_ClockService{c}
+// WithClockInfo set a given ClockInfo to Demand.Demand_Arg_ClockInfo.Arg_ClockInfo .
+//func (dm *Demand) WithClockInfo(c *clock.ClockInfo) *Demand {
+//	dm.ArgOneof = &Demand_Arg_ClockInfo{c}
+//	return dm
+//}
+
+// WithClockDemand set a given ClockDemand to Demand.Demand_Arg_ClockDemand.Arg_ClockDemand .
+func (dm *Demand) WithClockDemand(c *clock.ClockDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_ClockDemand{c}
 	return dm
 }
 
-// WithAreaService set a given AreaService to Demand.Demand_Arg_AreaService.Arg_AreaService.
-func (dm *Demand) WithAreaService(a *area.AreaService) *Demand {
-	dm.ArgOneof = &Demand_Arg_AreaService{a}
+// WithAreaInfo set a given AreaInfo to Demand.Demand_Arg_AreaInfo.Arg_AreaInfo.
+//func (dm *Demand) WithAreaInfo(a *area.AreaInfo) *Demand {
+//	dm.ArgOneof = &Demand_Arg_AreaInfo{a}
+//	return dm
+//}
+
+// WithAreaDemand set a given AreaDemand to Demand.Demand_Arg_AreaDemand.Arg_AreaDemand.
+func (dm *Demand) WithAreaDemand(a *area.AreaDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_AreaDemand{a}
 	return dm
 }
 
-// WithAgentService set a given AgentService to Demand.Demand_Arg_AgentService.Arg_AgentService.
-func (dm *Demand) WithAgentService(a *agent.AgentService) *Demand {
-	dm.ArgOneof = &Demand_Arg_AgentService{a}
+// WithAgentInfo set a given AgentInfo to Demand.Demand_Arg_AgentInfo.Arg_AgentInfo.
+//func (dm *Demand) WithAgentInfo(a *agent.AgentInfo) *Demand {
+//	dm.ArgOneof = &Demand_Arg_AgentInfo{a}
+//	return dm
+//}
+
+// WithAgentsInfo set a given AgentsInfo to Demand.Demand_Arg_AgentsInfo.Arg_AgentsInfo.
+//func (dm *Demand) WithAgentsInfo(a *agent.AgentsInfo) *Demand {
+//	dm.ArgOneof = &Demand_Arg_AgentsInfo{a}
+//	return dm
+//}
+
+// WithAgentDemand set a given AgentDemand to Demand.Demand_Arg_AgentDemand.Arg_AgentDemand.
+func (dm *Demand) WithAgentDemand(a *agent.AgentDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_AgentDemand{a}
 	return dm
 }
 
+// Supply
 // WithFleet set a given Fleet to Supply.Supply_Arg_Fleet.Arg_Fleet.
 func (sp *Supply) WithFleet(f *fleet.Fleet) *Supply {
 	sp.ArgOneof = &Supply_Arg_Fleet{f}
@@ -125,20 +151,44 @@ func (sp *Supply) WithMarketingService(m *marketing.MarketingService) *Supply {
 	return sp
 }
 
-// WithClockService set a given ClockService to Supply.Supply_Arg_ClockService.Arg_ClockService .
-func (sp *Supply) WithClockService(c *clock.ClockService) *Supply {
-	sp.ArgOneof = &Supply_Arg_ClockService{c}
+// WithClockInfo set a given ClockInfo to Supply.Supply_Arg_ClockInfo.Arg_ClockInfo .
+func (sp *Supply) WithClockInfo(c *clock.ClockInfo) *Supply {
+	sp.ArgOneof = &Supply_Arg_ClockInfo{c}
 	return sp
 }
 
-// WithAreaService set a given AreaService to Supply.Supply_Arg_AreaService.Arg_AreaService.
-func (sp *Supply) WithAreaService(a *area.AreaService) *Supply {
-	sp.ArgOneof = &Supply_Arg_AreaService{a}
+// WithClockDemand set a given ClockDemand to Supply.Supply_Arg_ClockDemand.Arg_ClockDemand .
+//func (sp *Supply) WithClockDemand(c *clock.ClockDemand) *Supply {
+//	sp.ArgOneof = &Supply_Arg_ClockDemand{c}
+//	return sp
+//}
+
+// WithAreaInfo set a given AreaInfo to Supply.Supply_Arg_AreaInfo.Arg_AreaInfo.
+func (sp *Supply) WithAreaInfo(a *area.AreaInfo) *Supply {
+	sp.ArgOneof = &Supply_Arg_AreaInfo{a}
 	return sp
 }
 
-// WithAgentService set a given AgentService to Supply.Supply_Arg_AgentService.Arg_AgentService.
-func (sp *Supply) WithAgentService(a *agent.AgentService) *Supply {
-	sp.ArgOneof = &Supply_Arg_AgentService{a}
+// WithAreaDemand set a given AreaDemand to Supply.Supply_Arg_AreaDemand.Arg_AreaDemand.
+//func (sp *Supply) WithAreaDemand(a *area.AreaDemand) *Supply {
+//	sp.ArgOneof = &Supply_Arg_AreaDemand{a}
+//	return sp
+//}
+
+// WithAgentInfo set a given AgentInfo to Supply.Supply_Arg_AgentInfo.Arg_AgentInfo.
+func (sp *Supply) WithAgentInfo(a *agent.AgentInfo) *Supply {
+	sp.ArgOneof = &Supply_Arg_AgentInfo{a}
 	return sp
 }
+
+// WithAgentsInfo set a given AgentsInfo to Supply.Supply_Arg_AgentsInfo.Arg_AgentsInfo.
+func (sp *Supply) WithAgentsInfo(a *agent.AgentsInfo) *Supply {
+	sp.ArgOneof = &Supply_Arg_AgentsInfo{a}
+	return sp
+}
+
+// WithAgentDemand set a given AgentDemand to Supply.Supply_Arg_AgentDemand.Arg_AgentDemand.
+//func (sp *Supply) WithAgentDemand(a *agent.AgentDemand) *Supply {
+//	sp.ArgOneof = &Supply_Arg_AgentDemand{a}
+//	return sp
+//}

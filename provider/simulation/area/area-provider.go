@@ -26,6 +26,7 @@ var (
 	sclientArea *sxutil.SMServiceClient
 	sclientAgent *sxutil.SMServiceClient
 	sclientClock *sxutil.SMServiceClient
+	areaInfo map[string]map[string]int
 )
 
 func init() {
@@ -33,6 +34,10 @@ func init() {
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 	selection = false
+	areaInfo = map[string]map[string]int{
+		"A": map[string]int{"s_len": 0, "e_len":100, "s_lat": 0, "e_lat": 100}, 
+		"B": map[string]int{"s_len": 50, "e_len":150, "s_lat": 0, "e_lat": 100},
+	}
 }
 
 type LonLat struct{

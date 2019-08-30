@@ -12,7 +12,7 @@ import (
 	//"github.com/synerex/synerex_alpha/api/fleet"
 	//"github.com/synerex/synerex_alpha/api/simulation/clock"
 	//"github.com/synerex/synerex_alpha/api/simulation/agent"
-	"github.com/synerex/synerex_alpha/api/simulation/area"
+	//"github.com/synerex/synerex_alpha/api/simulation/area"
 	"google.golang.org/grpc"
 	//"time"
 	//"encoding/json"
@@ -174,22 +174,37 @@ func userSelect() string{
 }
 
 func setClock(){
+	/*clockRequest := clock.ClockService_ClockRequest{
+		Time: uint32(1),
+		ClockType: 2, // SET
+		NumCycle: uint32(1),
+		CycleDuration: uint32(1),
+		CycleTime: uint32(1),
+		StatusType: 2, // NONE
+	}
+	clockService := clock.ClockService{
+		ClockRequest: &clockRequest,
+	}*/
+	nm := "setClock order by scenario"
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js}
 
+	sendDemand(sclientClock, opts)
 }
 
 func setArea(){
 	
-	areaRequest := area.AreaService_AreaRequest{
+	/*areaRequest := area.AreaService_AreaRequest{
 		Time: uint32(1),
 		AreaId: uint32(1),	// area a: 1, b: 2
 	}
 	
 	areaService := area.AreaService{
 		AreaRequest: &areaRequest,
-	}
+	}*/
 	nm := "setArea order by scenario"
 	js := ""
-	opts := &sxutil.DemandOpts{Name: nm, JSON: js, AreaService: &areaService}
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js}
 
 	sendDemand(sclientArea, opts)
 }
@@ -248,10 +263,11 @@ func main() {
 		fmt.Printf("get order is: %s\n", order)
 		switch order {
 		case "SetTime":
-			fmt.Println("forward clock")
+			setClock()
+			fmt.Println("setClock")
 		case "SetArea":
 			setArea()
-			fmt.Println("back clock")
+			fmt.Println("setArea")
 		case "SetAgent":
 			fmt.Println("skip clock")
 		case "Start":

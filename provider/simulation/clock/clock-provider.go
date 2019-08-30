@@ -13,6 +13,7 @@ import (
 	//"time"
 	//"encoding/json"
 	"fmt"
+	//"reflect"
 )
 
 var (
@@ -74,14 +75,14 @@ func forwardClockOK(clt *sxutil.SMServiceClient, dm *pb.Demand){
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	// check if supply is match with my demand.
 	log.Println("Got demand callback")
-	log.Printf("demand is %v",dm.ArgOneof)
+	//a := dm.ArgOneof
+	//log.Printf("demand is %v",a.ArgClockService)
 	switch dm.DemandName{
-	case "SET_CLOCK": setClock(clt, dm)
-	case "SET_CLOCK_OK": setClockOK(clt, dm)
-	case "START_CLOCK": startClock(clt, dm)
-	case "FORWARD_CLOCK_OK": forwardClockOK(clt, dm)
-	default: log.Println("demand callback is valid.")
-
+		case "SET_CLOCK": setClock(clt, dm)
+		case "SET_CLOCK_OK": setClockOK(clt, dm)
+		case "START_CLOCK": startClock(clt, dm)
+		case "FORWARD_CLOCK_OK": forwardClockOK(clt, dm)
+		default: log.Println("demand callback is valid.")
 	}
 }
 

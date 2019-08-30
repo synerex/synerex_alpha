@@ -4,27 +4,36 @@ package api.area;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/area";
 
+message AreaInfo {
+    // area info
+    uint32 time = 1;
+    uint32 area_id = 2;
+    string area_name = 3;
+    Signal signal = 4;
+    Map map = 5;
+    Climate climate = 6;
 
-message AreaService {
-    message AreaInfo {
-        uint32 time = 1;
-        uint32 area_id = 2;
-        string area_name = 3;
-        Signal signal = 4;
-        Map map = 5;
-        Climate climate = 6;
-        StatusType status_type = 7;
-        string meta = 8;
-    }
+    // meta data
+    StatusType status_type = 7;
+    string meta = 8;
+}
 
-    message AreaRequest {
-        uint32 time = 1;
-        uint32 area_id = 2;
-    }
+message AreaDemand {
+    // demand info
+    uint32 time = 1;
+    uint32 area_id = 2;
 
-    AreaInfo area_info  = 1;
-    AreaRequest area_request = 2;
-    
+    // demand type
+    DemandType demand_type = 3;
+
+    // meta data
+    StatusType status_type = 4;
+    string meta = 5;
+}
+
+enum DemandType {
+    SET = 0;
+    GET = 1;
 }
 
 message Signal {
@@ -53,4 +62,3 @@ enum StatusType {
     NG = 1;
     NONE = 2;
 }
-

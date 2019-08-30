@@ -79,68 +79,37 @@ func (AgentType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_fce67ac898dc274e, []int{1}
 }
 
-type AgentService struct {
-	AgentInfo            *AgentService_AgentInfo    `protobuf:"bytes,1,opt,name=agent_info,json=agentInfo,proto3" json:"agent_info,omitempty"`
-	AgentsInfo           *AgentService_AgentsInfo   `protobuf:"bytes,2,opt,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
-	AgentRequest         *AgentService_AgentRequest `protobuf:"bytes,3,opt,name=agent_request,json=agentRequest,proto3" json:"agent_request,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                   `json:"-"`
-	XXX_unrecognized     []byte                     `json:"-"`
-	XXX_sizecache        int32                      `json:"-"`
+type DemandType int32
+
+const (
+	DemandType_SET DemandType = 0
+)
+
+var DemandType_name = map[int32]string{
+	0: "SET",
 }
 
-func (m *AgentService) Reset()         { *m = AgentService{} }
-func (m *AgentService) String() string { return proto.CompactTextString(m) }
-func (*AgentService) ProtoMessage()    {}
-func (*AgentService) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{0}
+var DemandType_value = map[string]int32{
+	"SET": 0,
 }
 
-func (m *AgentService) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AgentService.Unmarshal(m, b)
-}
-func (m *AgentService) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AgentService.Marshal(b, m, deterministic)
-}
-func (m *AgentService) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AgentService.Merge(m, src)
-}
-func (m *AgentService) XXX_Size() int {
-	return xxx_messageInfo_AgentService.Size(m)
-}
-func (m *AgentService) XXX_DiscardUnknown() {
-	xxx_messageInfo_AgentService.DiscardUnknown(m)
+func (x DemandType) String() string {
+	return proto.EnumName(DemandType_name, int32(x))
 }
 
-var xxx_messageInfo_AgentService proto.InternalMessageInfo
-
-func (m *AgentService) GetAgentInfo() *AgentService_AgentInfo {
-	if m != nil {
-		return m.AgentInfo
-	}
-	return nil
+func (DemandType) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_fce67ac898dc274e, []int{2}
 }
 
-func (m *AgentService) GetAgentsInfo() *AgentService_AgentsInfo {
-	if m != nil {
-		return m.AgentsInfo
-	}
-	return nil
-}
-
-func (m *AgentService) GetAgentRequest() *AgentService_AgentRequest {
-	if m != nil {
-		return m.AgentRequest
-	}
-	return nil
-}
-
-type AgentService_AgentInfo struct {
-	Time                 uint32     `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	AgentId              uint32     `protobuf:"varint,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	AgentName            string     `protobuf:"bytes,3,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"`
-	AgentType            AgentType  `protobuf:"varint,4,opt,name=agent_type,json=agentType,proto3,enum=api.agent.AgentType" json:"agent_type,omitempty"`
-	Route                *Route     `protobuf:"bytes,5,opt,name=route,proto3" json:"route,omitempty"`
-	Rule                 *Rule      `protobuf:"bytes,6,opt,name=rule,proto3" json:"rule,omitempty"`
+type AgentInfo struct {
+	// agent info
+	Time      uint32    `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	AgentId   uint32    `protobuf:"varint,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	AgentName string    `protobuf:"bytes,3,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"`
+	AgentType AgentType `protobuf:"varint,4,opt,name=agent_type,json=agentType,proto3,enum=api.agent.AgentType" json:"agent_type,omitempty"`
+	Route     *Route    `protobuf:"bytes,5,opt,name=route,proto3" json:"route,omitempty"`
+	Rule      *Rule     `protobuf:"bytes,6,opt,name=rule,proto3" json:"rule,omitempty"`
+	// meta data
 	StatusType           StatusType `protobuf:"varint,7,opt,name=status_type,json=statusType,proto3,enum=api.agent.StatusType" json:"status_type,omitempty"`
 	Meta                 string     `protobuf:"bytes,8,opt,name=meta,proto3" json:"meta,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
@@ -148,227 +117,256 @@ type AgentService_AgentInfo struct {
 	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *AgentService_AgentInfo) Reset()         { *m = AgentService_AgentInfo{} }
-func (m *AgentService_AgentInfo) String() string { return proto.CompactTextString(m) }
-func (*AgentService_AgentInfo) ProtoMessage()    {}
-func (*AgentService_AgentInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{0, 0}
+func (m *AgentInfo) Reset()         { *m = AgentInfo{} }
+func (m *AgentInfo) String() string { return proto.CompactTextString(m) }
+func (*AgentInfo) ProtoMessage()    {}
+func (*AgentInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_fce67ac898dc274e, []int{0}
 }
 
-func (m *AgentService_AgentInfo) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AgentService_AgentInfo.Unmarshal(m, b)
+func (m *AgentInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AgentInfo.Unmarshal(m, b)
 }
-func (m *AgentService_AgentInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AgentService_AgentInfo.Marshal(b, m, deterministic)
+func (m *AgentInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AgentInfo.Marshal(b, m, deterministic)
 }
-func (m *AgentService_AgentInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AgentService_AgentInfo.Merge(m, src)
+func (m *AgentInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AgentInfo.Merge(m, src)
 }
-func (m *AgentService_AgentInfo) XXX_Size() int {
-	return xxx_messageInfo_AgentService_AgentInfo.Size(m)
+func (m *AgentInfo) XXX_Size() int {
+	return xxx_messageInfo_AgentInfo.Size(m)
 }
-func (m *AgentService_AgentInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_AgentService_AgentInfo.DiscardUnknown(m)
+func (m *AgentInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_AgentInfo.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AgentService_AgentInfo proto.InternalMessageInfo
+var xxx_messageInfo_AgentInfo proto.InternalMessageInfo
 
-func (m *AgentService_AgentInfo) GetTime() uint32 {
+func (m *AgentInfo) GetTime() uint32 {
 	if m != nil {
 		return m.Time
 	}
 	return 0
 }
 
-func (m *AgentService_AgentInfo) GetAgentId() uint32 {
+func (m *AgentInfo) GetAgentId() uint32 {
 	if m != nil {
 		return m.AgentId
 	}
 	return 0
 }
 
-func (m *AgentService_AgentInfo) GetAgentName() string {
+func (m *AgentInfo) GetAgentName() string {
 	if m != nil {
 		return m.AgentName
 	}
 	return ""
 }
 
-func (m *AgentService_AgentInfo) GetAgentType() AgentType {
+func (m *AgentInfo) GetAgentType() AgentType {
 	if m != nil {
 		return m.AgentType
 	}
 	return AgentType_PEDESTRIAN
 }
 
-func (m *AgentService_AgentInfo) GetRoute() *Route {
+func (m *AgentInfo) GetRoute() *Route {
 	if m != nil {
 		return m.Route
 	}
 	return nil
 }
 
-func (m *AgentService_AgentInfo) GetRule() *Rule {
+func (m *AgentInfo) GetRule() *Rule {
 	if m != nil {
 		return m.Rule
 	}
 	return nil
 }
 
-func (m *AgentService_AgentInfo) GetStatusType() StatusType {
+func (m *AgentInfo) GetStatusType() StatusType {
 	if m != nil {
 		return m.StatusType
 	}
 	return StatusType_OK
 }
 
-func (m *AgentService_AgentInfo) GetMeta() string {
+func (m *AgentInfo) GetMeta() string {
 	if m != nil {
 		return m.Meta
 	}
 	return ""
 }
 
-type AgentService_AgentsInfo struct {
-	Time                 uint32                    `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	AgentInfo            []*AgentService_AgentInfo `protobuf:"bytes,2,rep,name=agent_info,json=agentInfo,proto3" json:"agent_info,omitempty"`
-	StatusType           StatusType                `protobuf:"varint,3,opt,name=status_type,json=statusType,proto3,enum=api.agent.StatusType" json:"status_type,omitempty"`
-	Meta                 string                    `protobuf:"bytes,4,opt,name=meta,proto3" json:"meta,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                  `json:"-"`
-	XXX_unrecognized     []byte                    `json:"-"`
-	XXX_sizecache        int32                     `json:"-"`
+type AgentsInfo struct {
+	// agents info
+	Time      uint32       `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	AgentInfo []*AgentInfo `protobuf:"bytes,2,rep,name=agent_info,json=agentInfo,proto3" json:"agent_info,omitempty"`
+	// meta data
+	StatusType           StatusType `protobuf:"varint,3,opt,name=status_type,json=statusType,proto3,enum=api.agent.StatusType" json:"status_type,omitempty"`
+	Meta                 string     `protobuf:"bytes,4,opt,name=meta,proto3" json:"meta,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *AgentService_AgentsInfo) Reset()         { *m = AgentService_AgentsInfo{} }
-func (m *AgentService_AgentsInfo) String() string { return proto.CompactTextString(m) }
-func (*AgentService_AgentsInfo) ProtoMessage()    {}
-func (*AgentService_AgentsInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{0, 1}
+func (m *AgentsInfo) Reset()         { *m = AgentsInfo{} }
+func (m *AgentsInfo) String() string { return proto.CompactTextString(m) }
+func (*AgentsInfo) ProtoMessage()    {}
+func (*AgentsInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_fce67ac898dc274e, []int{1}
 }
 
-func (m *AgentService_AgentsInfo) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AgentService_AgentsInfo.Unmarshal(m, b)
+func (m *AgentsInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AgentsInfo.Unmarshal(m, b)
 }
-func (m *AgentService_AgentsInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AgentService_AgentsInfo.Marshal(b, m, deterministic)
+func (m *AgentsInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AgentsInfo.Marshal(b, m, deterministic)
 }
-func (m *AgentService_AgentsInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AgentService_AgentsInfo.Merge(m, src)
+func (m *AgentsInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AgentsInfo.Merge(m, src)
 }
-func (m *AgentService_AgentsInfo) XXX_Size() int {
-	return xxx_messageInfo_AgentService_AgentsInfo.Size(m)
+func (m *AgentsInfo) XXX_Size() int {
+	return xxx_messageInfo_AgentsInfo.Size(m)
 }
-func (m *AgentService_AgentsInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_AgentService_AgentsInfo.DiscardUnknown(m)
+func (m *AgentsInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_AgentsInfo.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AgentService_AgentsInfo proto.InternalMessageInfo
+var xxx_messageInfo_AgentsInfo proto.InternalMessageInfo
 
-func (m *AgentService_AgentsInfo) GetTime() uint32 {
+func (m *AgentsInfo) GetTime() uint32 {
 	if m != nil {
 		return m.Time
 	}
 	return 0
 }
 
-func (m *AgentService_AgentsInfo) GetAgentInfo() []*AgentService_AgentInfo {
+func (m *AgentsInfo) GetAgentInfo() []*AgentInfo {
 	if m != nil {
 		return m.AgentInfo
 	}
 	return nil
 }
 
-func (m *AgentService_AgentsInfo) GetStatusType() StatusType {
+func (m *AgentsInfo) GetStatusType() StatusType {
 	if m != nil {
 		return m.StatusType
 	}
 	return StatusType_OK
 }
 
-func (m *AgentService_AgentsInfo) GetMeta() string {
+func (m *AgentsInfo) GetMeta() string {
 	if m != nil {
 		return m.Meta
 	}
 	return ""
 }
 
-type AgentService_AgentRequest struct {
-	Time                 uint32    `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	AgentId              uint32    `protobuf:"varint,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
-	AgentName            string    `protobuf:"bytes,3,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"`
-	AgentType            AgentType `protobuf:"varint,4,opt,name=agent_type,json=agentType,proto3,enum=api.agent.AgentType" json:"agent_type,omitempty"`
-	Route                *Route    `protobuf:"bytes,5,opt,name=route,proto3" json:"route,omitempty"`
-	Rule                 *Rule     `protobuf:"bytes,6,opt,name=rule,proto3" json:"rule,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+type AgentDemand struct {
+	// demand info
+	Time      uint32    `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	AgentId   uint32    `protobuf:"varint,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	AgentName string    `protobuf:"bytes,3,opt,name=agent_name,json=agentName,proto3" json:"agent_name,omitempty"`
+	AgentType AgentType `protobuf:"varint,4,opt,name=agent_type,json=agentType,proto3,enum=api.agent.AgentType" json:"agent_type,omitempty"`
+	Route     *Route    `protobuf:"bytes,5,opt,name=route,proto3" json:"route,omitempty"`
+	Rule      *Rule     `protobuf:"bytes,6,opt,name=rule,proto3" json:"rule,omitempty"`
+	// demand info
+	DemandType DemandType `protobuf:"varint,7,opt,name=demand_type,json=demandType,proto3,enum=api.agent.DemandType" json:"demand_type,omitempty"`
+	// meta data
+	StatusType           StatusType `protobuf:"varint,8,opt,name=status_type,json=statusType,proto3,enum=api.agent.StatusType" json:"status_type,omitempty"`
+	Meta                 string     `protobuf:"bytes,9,opt,name=meta,proto3" json:"meta,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *AgentService_AgentRequest) Reset()         { *m = AgentService_AgentRequest{} }
-func (m *AgentService_AgentRequest) String() string { return proto.CompactTextString(m) }
-func (*AgentService_AgentRequest) ProtoMessage()    {}
-func (*AgentService_AgentRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{0, 2}
+func (m *AgentDemand) Reset()         { *m = AgentDemand{} }
+func (m *AgentDemand) String() string { return proto.CompactTextString(m) }
+func (*AgentDemand) ProtoMessage()    {}
+func (*AgentDemand) Descriptor() ([]byte, []int) {
+	return fileDescriptor_fce67ac898dc274e, []int{2}
 }
 
-func (m *AgentService_AgentRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_AgentService_AgentRequest.Unmarshal(m, b)
+func (m *AgentDemand) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AgentDemand.Unmarshal(m, b)
 }
-func (m *AgentService_AgentRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_AgentService_AgentRequest.Marshal(b, m, deterministic)
+func (m *AgentDemand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AgentDemand.Marshal(b, m, deterministic)
 }
-func (m *AgentService_AgentRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AgentService_AgentRequest.Merge(m, src)
+func (m *AgentDemand) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AgentDemand.Merge(m, src)
 }
-func (m *AgentService_AgentRequest) XXX_Size() int {
-	return xxx_messageInfo_AgentService_AgentRequest.Size(m)
+func (m *AgentDemand) XXX_Size() int {
+	return xxx_messageInfo_AgentDemand.Size(m)
 }
-func (m *AgentService_AgentRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_AgentService_AgentRequest.DiscardUnknown(m)
+func (m *AgentDemand) XXX_DiscardUnknown() {
+	xxx_messageInfo_AgentDemand.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AgentService_AgentRequest proto.InternalMessageInfo
+var xxx_messageInfo_AgentDemand proto.InternalMessageInfo
 
-func (m *AgentService_AgentRequest) GetTime() uint32 {
+func (m *AgentDemand) GetTime() uint32 {
 	if m != nil {
 		return m.Time
 	}
 	return 0
 }
 
-func (m *AgentService_AgentRequest) GetAgentId() uint32 {
+func (m *AgentDemand) GetAgentId() uint32 {
 	if m != nil {
 		return m.AgentId
 	}
 	return 0
 }
 
-func (m *AgentService_AgentRequest) GetAgentName() string {
+func (m *AgentDemand) GetAgentName() string {
 	if m != nil {
 		return m.AgentName
 	}
 	return ""
 }
 
-func (m *AgentService_AgentRequest) GetAgentType() AgentType {
+func (m *AgentDemand) GetAgentType() AgentType {
 	if m != nil {
 		return m.AgentType
 	}
 	return AgentType_PEDESTRIAN
 }
 
-func (m *AgentService_AgentRequest) GetRoute() *Route {
+func (m *AgentDemand) GetRoute() *Route {
 	if m != nil {
 		return m.Route
 	}
 	return nil
 }
 
-func (m *AgentService_AgentRequest) GetRule() *Rule {
+func (m *AgentDemand) GetRule() *Rule {
 	if m != nil {
 		return m.Rule
 	}
 	return nil
+}
+
+func (m *AgentDemand) GetDemandType() DemandType {
+	if m != nil {
+		return m.DemandType
+	}
+	return DemandType_SET
+}
+
+func (m *AgentDemand) GetStatusType() StatusType {
+	if m != nil {
+		return m.StatusType
+	}
+	return StatusType_OK
+}
+
+func (m *AgentDemand) GetMeta() string {
+	if m != nil {
+		return m.Meta
+	}
+	return ""
 }
 
 type Route struct {
@@ -386,7 +384,7 @@ func (m *Route) Reset()         { *m = Route{} }
 func (m *Route) String() string { return proto.CompactTextString(m) }
 func (*Route) ProtoMessage()    {}
 func (*Route) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{1}
+	return fileDescriptor_fce67ac898dc274e, []int{3}
 }
 
 func (m *Route) XXX_Unmarshal(b []byte) error {
@@ -454,7 +452,7 @@ func (m *Route_Coord) Reset()         { *m = Route_Coord{} }
 func (m *Route_Coord) String() string { return proto.CompactTextString(m) }
 func (*Route_Coord) ProtoMessage()    {}
 func (*Route_Coord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{1, 0}
+	return fileDescriptor_fce67ac898dc274e, []int{3, 0}
 }
 
 func (m *Route_Coord) XXX_Unmarshal(b []byte) error {
@@ -490,7 +488,7 @@ func (m *Route_Coord) GetLon() float32 {
 }
 
 type Rule struct {
-	RuleInfo             string   `protobuf:"bytes,1,opt,name=RuleInfo,proto3" json:"RuleInfo,omitempty"`
+	RuleInfo             string   `protobuf:"bytes,1,opt,name=rule_info,json=ruleInfo,proto3" json:"rule_info,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -500,7 +498,7 @@ func (m *Rule) Reset()         { *m = Rule{} }
 func (m *Rule) String() string { return proto.CompactTextString(m) }
 func (*Rule) ProtoMessage()    {}
 func (*Rule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{2}
+	return fileDescriptor_fce67ac898dc274e, []int{4}
 }
 
 func (m *Rule) XXX_Unmarshal(b []byte) error {
@@ -531,10 +529,10 @@ func (m *Rule) GetRuleInfo() string {
 func init() {
 	proto.RegisterEnum("api.agent.StatusType", StatusType_name, StatusType_value)
 	proto.RegisterEnum("api.agent.AgentType", AgentType_name, AgentType_value)
-	proto.RegisterType((*AgentService)(nil), "api.agent.AgentService")
-	proto.RegisterType((*AgentService_AgentInfo)(nil), "api.agent.AgentService.AgentInfo")
-	proto.RegisterType((*AgentService_AgentsInfo)(nil), "api.agent.AgentService.AgentsInfo")
-	proto.RegisterType((*AgentService_AgentRequest)(nil), "api.agent.AgentService.AgentRequest")
+	proto.RegisterEnum("api.agent.DemandType", DemandType_name, DemandType_value)
+	proto.RegisterType((*AgentInfo)(nil), "api.agent.AgentInfo")
+	proto.RegisterType((*AgentsInfo)(nil), "api.agent.AgentsInfo")
+	proto.RegisterType((*AgentDemand)(nil), "api.agent.AgentDemand")
 	proto.RegisterType((*Route)(nil), "api.agent.Route")
 	proto.RegisterType((*Route_Coord)(nil), "api.agent.Route.Coord")
 	proto.RegisterType((*Rule)(nil), "api.agent.Rule")
@@ -543,42 +541,40 @@ func init() {
 func init() { proto.RegisterFile("simulation/agent/agent.proto", fileDescriptor_fce67ac898dc274e) }
 
 var fileDescriptor_fce67ac898dc274e = []byte{
-	// 577 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x54, 0xcb, 0x6e, 0xd3, 0x40,
-	0x14, 0xad, 0x5f, 0x49, 0x7c, 0xd3, 0x14, 0x6b, 0x54, 0x90, 0x89, 0x8a, 0x14, 0x02, 0xaa, 0xaa,
-	0x82, 0x1c, 0xa9, 0x15, 0xb0, 0x61, 0x41, 0x1a, 0x22, 0x64, 0x81, 0x5c, 0x34, 0xc9, 0x06, 0x36,
-	0xd5, 0x34, 0x9e, 0xb6, 0x96, 0xe2, 0x07, 0xf6, 0x18, 0x91, 0x7f, 0x61, 0xcf, 0x8e, 0xcf, 0x61,
-	0xc9, 0xb7, 0xa0, 0xb9, 0x63, 0x27, 0x26, 0x42, 0x95, 0xba, 0x65, 0x93, 0x39, 0xf7, 0x31, 0x27,
-	0xe7, 0xcc, 0x8c, 0x2f, 0x1c, 0x14, 0x51, 0x5c, 0x2e, 0x99, 0x88, 0xd2, 0x64, 0xc4, 0xae, 0x79,
-	0x22, 0xd4, 0xaf, 0x97, 0xe5, 0xa9, 0x48, 0x89, 0xcd, 0xb2, 0xc8, 0xc3, 0xc4, 0xf0, 0x7b, 0x1b,
-	0x76, 0xc7, 0x12, 0xcd, 0x78, 0xfe, 0x35, 0x5a, 0x70, 0xf2, 0x06, 0x00, 0x2b, 0x17, 0x51, 0x72,
-	0x95, 0xba, 0xda, 0x40, 0x3b, 0xea, 0x9e, 0x3c, 0xf6, 0xd6, 0x1b, 0xbc, 0x66, 0xb3, 0x0a, 0xfc,
-	0xe4, 0x2a, 0xa5, 0x36, 0xab, 0x21, 0x99, 0x40, 0x17, 0x83, 0x42, 0x51, 0xe8, 0x48, 0x31, 0xbc,
-	0x95, 0xa2, 0x40, 0x0e, 0xf5, 0xc7, 0x88, 0x89, 0x0f, 0x3d, 0x25, 0x23, 0xe7, 0x5f, 0x4a, 0x5e,
-	0x08, 0xd7, 0x40, 0x9a, 0xa7, 0xb7, 0xd2, 0x50, 0xd5, 0x4b, 0x77, 0x59, 0x23, 0xea, 0xff, 0xd0,
-	0xc1, 0x5e, 0x0b, 0x25, 0x04, 0x4c, 0x11, 0xc5, 0x1c, 0x9d, 0xf5, 0x28, 0x62, 0xf2, 0x10, 0x3a,
-	0x95, 0xe7, 0x10, 0xe5, 0xf6, 0x68, 0x5b, 0xd9, 0x09, 0xc9, 0xa3, 0xfa, 0x38, 0x12, 0x16, 0x73,
-	0x14, 0x61, 0x57, 0x5e, 0x03, 0x16, 0x73, 0x72, 0x5a, 0x97, 0xc5, 0x2a, 0xe3, 0xae, 0x39, 0xd0,
-	0x8e, 0xf6, 0x4e, 0xf6, 0xb7, 0x35, 0xce, 0x57, 0x19, 0xaf, 0x36, 0x49, 0x48, 0x0e, 0xc1, 0xca,
-	0xd3, 0x52, 0x70, 0xd7, 0x42, 0x4f, 0x4e, 0xa3, 0x9f, 0xca, 0x3c, 0x55, 0x65, 0xf2, 0x04, 0xcc,
-	0xbc, 0x5c, 0x72, 0xb7, 0x85, 0x6d, 0xf7, 0x9a, 0x6d, 0xe5, 0x92, 0x53, 0x2c, 0x92, 0x97, 0xd0,
-	0x2d, 0x04, 0x13, 0x65, 0xa1, 0x24, 0xb4, 0x51, 0xc2, 0xfd, 0x46, 0xef, 0x0c, 0xab, 0xa8, 0x01,
-	0x8a, 0x35, 0x96, 0xe7, 0x10, 0x73, 0xc1, 0xdc, 0x0e, 0x5a, 0x42, 0xdc, 0xff, 0xa9, 0x01, 0x6c,
-	0xee, 0xe3, 0x9f, 0x47, 0xf5, 0xf7, 0xf3, 0xd0, 0x07, 0xc6, 0x9d, 0x9f, 0xc7, 0x96, 0x60, 0xe3,
-	0xae, 0x82, 0xcd, 0x86, 0xe0, 0xdf, 0x5a, 0xf5, 0x7a, 0xab, 0xbb, 0xfe, 0xdf, 0x6e, 0x77, 0xf8,
-	0x4b, 0x03, 0x0b, 0x77, 0x91, 0xe7, 0x60, 0x2d, 0xd2, 0x34, 0x0f, 0xab, 0x4f, 0xf2, 0xc1, 0x36,
-	0xad, 0x37, 0x91, 0x55, 0xaa, 0x9a, 0xc8, 0x01, 0xd8, 0x61, 0x94, 0xf3, 0x85, 0x1c, 0x00, 0x68,
-	0x5a, 0xa7, 0x9b, 0x04, 0xd9, 0x07, 0xab, 0xc8, 0x38, 0x0f, 0xd1, 0xb1, 0x4e, 0x55, 0x40, 0x06,
-	0xd0, 0x0d, 0x79, 0x21, 0xa2, 0x04, 0xc7, 0x06, 0xda, 0xd5, 0x69, 0x33, 0x85, 0xac, 0x3c, 0x63,
-	0xb9, 0x28, 0x73, 0x65, 0x4f, 0xb2, 0xd6, 0x89, 0xfe, 0x33, 0xb0, 0x50, 0x03, 0x71, 0xc0, 0x58,
-	0x32, 0x81, 0x42, 0x75, 0x2a, 0x21, 0x66, 0xd6, 0x42, 0x24, 0x1c, 0x0e, 0xc1, 0x94, 0x36, 0x49,
-	0x1f, 0x3a, 0x72, 0xf5, 0xeb, 0x61, 0x63, 0xd3, 0x75, 0x7c, 0x7c, 0x08, 0xb0, 0x79, 0x0b, 0xa4,
-	0x05, 0xfa, 0xf9, 0x7b, 0x67, 0x47, 0xae, 0xc1, 0x3b, 0x47, 0x23, 0x1d, 0x30, 0x83, 0xf3, 0x60,
-	0xea, 0xe8, 0xc7, 0xaf, 0xab, 0xef, 0x1b, 0xdb, 0xf6, 0x00, 0x3e, 0x4e, 0xdf, 0x4e, 0x67, 0x73,
-	0xea, 0x8f, 0x03, 0x67, 0x87, 0xb4, 0xc1, 0x98, 0x8c, 0xa9, 0xa3, 0x11, 0x1b, 0xac, 0x39, 0x1d,
-	0xfb, 0x81, 0xa3, 0x93, 0x2e, 0xb4, 0xcf, 0xfc, 0xc9, 0xa7, 0xc9, 0x87, 0xa9, 0x63, 0x9c, 0xbd,
-	0xfa, 0xfc, 0xe2, 0x3a, 0x12, 0x37, 0xe5, 0xa5, 0xb7, 0x48, 0xe3, 0x51, 0xb1, 0x4a, 0x78, 0xce,
-	0xbf, 0xd5, 0xeb, 0x05, 0x5b, 0x66, 0x37, 0x6c, 0xc4, 0xb2, 0x68, 0xb4, 0x3d, 0x51, 0x2f, 0x5b,
-	0x38, 0x4c, 0x4f, 0xff, 0x04, 0x00, 0x00, 0xff, 0xff, 0xbf, 0xbc, 0x4f, 0x9a, 0x6c, 0x05, 0x00,
-	0x00,
+	// 558 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x54, 0xcd, 0x6a, 0xdb, 0x4c,
+	0x14, 0xb5, 0x46, 0x92, 0x6d, 0x5d, 0xf1, 0xe5, 0x13, 0x43, 0x52, 0xd4, 0x36, 0x05, 0xe1, 0x40,
+	0x30, 0x6e, 0x91, 0xc1, 0xa1, 0xed, 0xa6, 0x1b, 0xc7, 0x31, 0xc5, 0xb4, 0x28, 0x65, 0xec, 0x4d,
+	0xbb, 0x09, 0x13, 0x6b, 0x92, 0x08, 0xac, 0x1f, 0xa4, 0x11, 0xd4, 0x8f, 0xd3, 0x55, 0xdf, 0xa8,
+	0xfb, 0xbe, 0x49, 0x99, 0x3b, 0xfe, 0x11, 0x2e, 0x59, 0x64, 0xdb, 0x8d, 0x74, 0x75, 0xee, 0xd1,
+	0xcc, 0x39, 0x67, 0x7e, 0xe0, 0xb4, 0x4a, 0xd2, 0x7a, 0xc5, 0x65, 0x92, 0x67, 0x43, 0x7e, 0x2f,
+	0x32, 0xa9, 0x9f, 0x61, 0x51, 0xe6, 0x32, 0xa7, 0x0e, 0x2f, 0x92, 0x10, 0x81, 0xde, 0x4f, 0x02,
+	0xce, 0x58, 0x55, 0xb3, 0xec, 0x2e, 0xa7, 0x14, 0x2c, 0x99, 0xa4, 0xc2, 0x37, 0x02, 0xa3, 0xff,
+	0x1f, 0xc3, 0x9a, 0x3e, 0x87, 0x2e, 0x52, 0x6f, 0x92, 0xd8, 0x27, 0x88, 0x77, 0xf0, 0x7b, 0x16,
+	0xd3, 0x57, 0x00, 0xba, 0x95, 0xf1, 0x54, 0xf8, 0x66, 0x60, 0xf4, 0x1d, 0xe6, 0x20, 0x12, 0xf1,
+	0x54, 0xd0, 0x8b, 0x6d, 0x5b, 0xae, 0x0b, 0xe1, 0x5b, 0x81, 0xd1, 0x3f, 0x1a, 0x1d, 0x87, 0xbb,
+	0xb9, 0x43, 0x9c, 0x77, 0xb1, 0x2e, 0xc4, 0xe6, 0x27, 0x55, 0xd2, 0x73, 0xb0, 0xcb, 0xbc, 0x96,
+	0xc2, 0xb7, 0x03, 0xa3, 0xef, 0x8e, 0xbc, 0x06, 0x9f, 0x29, 0x9c, 0xe9, 0x36, 0x3d, 0x03, 0xab,
+	0xac, 0x57, 0xc2, 0x6f, 0x23, 0xed, 0xff, 0x26, 0xad, 0x5e, 0x09, 0x86, 0x4d, 0xfa, 0x0e, 0xdc,
+	0x4a, 0x72, 0x59, 0x57, 0x5a, 0x42, 0x07, 0x25, 0x9c, 0x34, 0xb8, 0x73, 0xec, 0xa2, 0x06, 0xa8,
+	0x76, 0xb5, 0xca, 0x21, 0x15, 0x92, 0xfb, 0x5d, 0xb4, 0x84, 0x75, 0xef, 0x87, 0x01, 0x80, 0x8a,
+	0xab, 0x47, 0xa3, 0xda, 0x19, 0x4e, 0xb2, 0xbb, 0xdc, 0x27, 0x81, 0xd9, 0x77, 0xff, 0x36, 0xac,
+	0xfe, 0xde, 0x18, 0xc6, 0x81, 0x0e, 0x34, 0x9a, 0x4f, 0xd5, 0x68, 0x35, 0x34, 0xfe, 0x26, 0xe0,
+	0xe2, 0x24, 0x57, 0x22, 0xe5, 0x59, 0xfc, 0x2f, 0xae, 0x67, 0x8c, 0xce, 0x1e, 0x5b, 0x4f, 0xed,
+	0x5b, 0x67, 0x15, 0xef, 0xea, 0xc3, 0x8c, 0xbb, 0x4f, 0xcd, 0xd8, 0x69, 0x64, 0xfc, 0xcb, 0x00,
+	0x1b, 0x95, 0xd3, 0x37, 0x60, 0x2f, 0xf3, 0xbc, 0x8c, 0x31, 0x5e, 0x77, 0xf4, 0xec, 0xd0, 0x5a,
+	0x38, 0x51, 0x5d, 0xa6, 0x49, 0xf4, 0x14, 0x9c, 0x38, 0x29, 0xc5, 0x52, 0x9d, 0x49, 0x0c, 0x9e,
+	0xb0, 0x3d, 0x40, 0x8f, 0xc1, 0xae, 0x0a, 0x21, 0x62, 0x4c, 0x9d, 0x30, 0xfd, 0x41, 0x03, 0xe5,
+	0xb7, 0x92, 0x49, 0x86, 0x27, 0x19, 0x23, 0x27, 0xac, 0x09, 0xe1, 0xa8, 0xa2, 0xe0, 0xa5, 0xac,
+	0x4b, 0x1d, 0xb1, 0x1a, 0x75, 0x0b, 0xbc, 0x78, 0x0d, 0x36, 0x6a, 0xa0, 0x1e, 0x98, 0x2b, 0x2e,
+	0x51, 0x28, 0x61, 0xaa, 0x44, 0x64, 0x27, 0x44, 0x95, 0xbd, 0x33, 0xb0, 0x54, 0xd4, 0xf4, 0x25,
+	0x38, 0x2a, 0x6c, 0xbd, 0x89, 0x0d, 0x74, 0xde, 0x55, 0x80, 0xda, 0xad, 0x83, 0x73, 0x80, 0x7d,
+	0x56, 0xb4, 0x0d, 0xe4, 0xfa, 0x93, 0xd7, 0x52, 0xef, 0xe8, 0xa3, 0x67, 0xd0, 0x2e, 0x58, 0xd1,
+	0x75, 0x34, 0xf5, 0xc8, 0xe0, 0xc3, 0xe6, 0x5a, 0x41, 0xda, 0x11, 0xc0, 0x97, 0xe9, 0xd5, 0x74,
+	0xbe, 0x60, 0xb3, 0x71, 0xe4, 0xb5, 0x68, 0x07, 0xcc, 0xc9, 0x98, 0x79, 0x06, 0x75, 0xc0, 0x5e,
+	0xb0, 0xf1, 0x2c, 0xf2, 0x08, 0x75, 0xa1, 0x73, 0x39, 0x9b, 0x7c, 0x9d, 0x7c, 0x9e, 0x7a, 0xe6,
+	0xe0, 0x04, 0x60, 0xbf, 0x92, 0x8a, 0x3e, 0x9f, 0x2e, 0xbc, 0xd6, 0xe5, 0xfb, 0x6f, 0x6f, 0xef,
+	0x13, 0xf9, 0x50, 0xdf, 0x86, 0xcb, 0x3c, 0x1d, 0x56, 0xeb, 0x4c, 0x94, 0xe2, 0xfb, 0xf6, 0x7d,
+	0xc3, 0x57, 0xc5, 0x03, 0x1f, 0xf2, 0x22, 0x19, 0x1e, 0x5e, 0x7e, 0xb7, 0x6d, 0xbc, 0xf7, 0x2e,
+	0xfe, 0x04, 0x00, 0x00, 0xff, 0xff, 0x0a, 0xb4, 0x5a, 0x25, 0x17, 0x05, 0x00, 0x00,
 }
