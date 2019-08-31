@@ -10,7 +10,7 @@ import (
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	//"github.com/synerex/synerex_alpha/api/fleet"
-	//"github.com/synerex/synerex_alpha/api/simulation/clock"
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	//"github.com/synerex/synerex_alpha/api/simulation/agent"
 	//"github.com/synerex/synerex_alpha/api/simulation/area"
 	"google.golang.org/grpc"
@@ -150,8 +150,6 @@ func subscribeSupply(client *sxutil.SMServiceClient) {
 }
 
 func sendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts) {
-
-	//opts := &sxutil.DemandOpts{Name: nm, JSON: js, ClockService: &clockService}
 	mu.Lock()
 	id := sclient.RegisterDemand(opts)
 	idlist = append(idlist, id) // my demand list
@@ -174,20 +172,19 @@ func userSelect() string{
 }
 
 func setClock(){
-	/*clockRequest := clock.ClockService_ClockRequest{
+	clockDemand := clock.ClockDemand{
 		Time: uint32(1),
-		ClockType: 2, // SET
+		DemandType: 2, // SET
 		NumCycle: uint32(1),
 		CycleDuration: uint32(1),
 		CycleTime: uint32(1),
 		StatusType: 2, // NONE
+		Meta: "",
 	}
-	clockService := clock.ClockService{
-		ClockRequest: &clockRequest,
-	}*/
+	
 	nm := "setClock order by scenario"
 	js := ""
-	opts := &sxutil.DemandOpts{Name: nm, JSON: js}
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, ClockDemand: &clockDemand}
 
 	sendDemand(sclientClock, opts)
 }

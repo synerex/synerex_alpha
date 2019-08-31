@@ -6,7 +6,7 @@ import (
 	"log"
 	"sync"
 	//"math/rand"
-
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
@@ -36,35 +36,78 @@ func init() {
 	selection = false
 }
 
-type LonLat struct{
-	Latitude	float32
-	Longitude	float32
+type ClockConfig struct {
+	Time	uint32
+	NumCycle	uint32
+	CycleDuration uint32
+	CycleTime uint32
 }
 
-type TaxiDemand struct {
-	Price	int
-	Distance	int
-	Arrival int
-	Destination int
-	Position LonLat
+func checkDemandArgOneOf(dm *pb.Demand) string {
+	//demandType := ""
+	log.Printf("demandType1.5 is %v", dm)
+	if(dm.GetArg_ClockDemand() != nil){
+		argOneof := dm.GetArg_ClockDemand()
+		log.Printf("demandType2 is %v", argOneof.DemandType.String())
+		switch(argOneof.DemandType.String()){
+			case "SET": return "SET_CLOCK"
+			case "FORWARD": return "FORWARD_CLOCK"
+			case "STOP": return "STOP_CLOCK"
+			case "BACK": return "BACK_CLOCK"
+			case "START": return "START_CLOCK"
+		}
+	}
+	if(dm.GetArg_AreaDemand() != nil){
+		argOneof := dm.GetArg_AreaDemand()
+		switch(argOneof.DemandType.String()){
+			case "SET": return "SET_AREA"
+			case "GET": return "GET_AREA"
+		}
+	}
+	if(dm.GetArg_AgentDemand() != nil){
+		argOneof := dm.GetArg_AreaDemand()
+		switch(argOneof.DemandType.String()){
+			case "SET": return "SET_AGENT"
+		}
+	}
+	return "INVALID_TYPE"
 }
 
 
 func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setClock")
-	sendDemand(clt, "SET_CLOCK_ALL", "{Date: '2019-7-29T22:32:13.234252Z'")
+	argOneof := dm.GetArg_ClockDemand()
+	clockConfig := &ClockConfig{
+		Time: argOneof.Time,
+		NumCycle: argOneof.NumCycle,
+		CycleDuration: argOneof.CycleDuration,
+		CycleTime: argOneof.CycleTime,
+	}
+	clockInfo := clock.ClockInfo{
+		Time: argOneof.Time,
+		StatusType: 0, // OK
+		Meta: "",
+	}
+	
+	nm := "setClock respnse by clock provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{Name: nm, JSON: js, ClockInfo: &clockInfo}
+
+	log.Printf("clockConfig is %v", clockConfig)
+	log.Printf("clockInfo is %v", clockInfo)
+	sendSupply(sclientClock, opts)
 }
 
 func setClockOK(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	// wait untill receive 3 SET_CLOCK_OK
 	log.Println("setClockAllOK")
-	sendSupply(clt, "SET_CLOCK_ALL_OK", "{Date: '2019-7-29T22:32:13.234252Z'")
+	//sendSupply(clt, "SET_CLOCK_ALL_OK", "{Date: '2019-7-29T22:32:13.234252Z'")
 }
 
 func startClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("startClock")
 	// every 1 cycle
-	sendDemand(clt, "FORWARD_CLOCK", "{Forward: 1}")
+	//sendDemand(clt, "FORWARD_CLOCK", "{Forward: 1}")
 }
 
 func forwardClockOK(clt *sxutil.SMServiceClient, dm *pb.Demand){
@@ -75,14 +118,16 @@ func forwardClockOK(clt *sxutil.SMServiceClient, dm *pb.Demand){
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	// check if supply is match with my demand.
 	log.Println("Got demand callback")
-	//a := dm.ArgOneof
-	//log.Printf("demand is %v",a.ArgClockService)
-	switch dm.DemandName{
+	//a := dm.GetArg_AreaDemand()
+	log.Printf("demand is %v", dm)
+	demandType := checkDemandArgOneOf(dm)
+	log.Printf("demandType is %v", demandType)
+	switch demandType{
 		case "SET_CLOCK": setClock(clt, dm)
 		case "SET_CLOCK_OK": setClockOK(clt, dm)
 		case "START_CLOCK": startClock(clt, dm)
 		case "FORWARD_CLOCK_OK": forwardClockOK(clt, dm)
-		default: log.Println("demand callback is valid.")
+		default: log.Println("demand callback is invalid.")
 	}
 }
 
@@ -94,8 +139,7 @@ func subscribeDemand(client *sxutil.SMServiceClient) {
 	log.Printf("SMarket Server Closed?")
 }
 
-func sendSupply(sclient *sxutil.SMServiceClient, nm string, js string) {
-	opts := &sxutil.SupplyOpts{Name: nm, JSON: js}
+func sendSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts) {
 	mu.Lock()
 	id := sclient.RegisterSupply(opts)
 	idlist = append(idlist, id) // my demand list
@@ -104,8 +148,7 @@ func sendSupply(sclient *sxutil.SMServiceClient, nm string, js string) {
 	log.Printf("Register my supply as id %v, %v",id,idlist)
 }
 
-func sendDemand(sclient *sxutil.SMServiceClient, nm string, js string) {
-	opts := &sxutil.DemandOpts{Name: nm, JSON: js}
+func sendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts) {
 	mu.Lock()
 	id := sclient.RegisterDemand(opts)
 	idlist = append(idlist, id) // my demand list
