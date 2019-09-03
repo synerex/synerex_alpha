@@ -2,8 +2,9 @@ $(() => {
     var socket = io();
 
     socket.on("server_to_client", (data) => {
+        console.log(data.arg_json)
         var booking_results = $("#booking_results");
-        var list = `<li>${data}</li>`;
+        var list = `<li>Success booking: ${data.arg_json}</li>`;
         booking_results.append(list);
 
         $("#booking_options").empty();
@@ -12,11 +13,13 @@ $(() => {
         changeAllProps();
     });
 
-    socket.on("check_booking", (msg) => {
+    socket.on("check_booking", (json) => {
         var booking_options = $("#booking_options");
 
+        var obj = JSON.parse(json)
+
         var contents = `
-            <p>${msg}<span><button type="button" id="yes" class="btn btn-primary">Select</button></span></p>
+            <p>${obj.room}<span><button type="button" id="yes" data-id="${obj.id}" class="btn btn-primary">Select</button></span></p>
         `;
         booking_options.append(contents);
     });
@@ -24,7 +27,7 @@ $(() => {
     $(document).on("click", "#yes", (e) => {
         $(e.target).prop("disabled", true);
         $("button").prop("disabled", true);
-        socket.emit("confirm_booking", "yes");
+        socket.emit("confirm_booking", e.target.dataset.id);
     });
 
     $("#send").on("click", (e) => {

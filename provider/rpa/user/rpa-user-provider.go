@@ -35,20 +35,26 @@ func init() {
 }
 
 func confirmBooking(clt *sxutil.SMServiceClient, sp *api.Supply) {
+	spMap[sp.Id] = sp
+
 	// emit to client
 	channel, err := server.GetChannel(rm.Cid)
 	if err != nil {
 		fmt.Println("Failed to get socket channel:", err)
 	}
-	channel.Emit("check_booking", rm.Room)
+	js := `{"id":"` + strconv.FormatUint(sp.Id, 10) + `","room":"` + rm.Room + `"}`
+	channel.Emit("check_booking", js)
 
 	server.On("confirm_booking", func(c *gosocketio.Channel, data interface{}) {
-		msg := ""
-		if data == "yes" {
-			clt.SelectSupply(sp)
-			msg = "SUCCESS from id:" + strconv.FormatUint(sp.Id, 10)[15:] + " " + rm.Year + "/" + rm.Month + "/" + rm.Day + " " + rm.Start + "~" + rm.End + " " + rm.Title + " with " + rm.People + " people in " + rm.Room + "."
+		switch d := data.(type) {
+		case string:
+			uintData, err := strconv.ParseUint(d, 0, 64)
+			if err != nil {
+				fmt.Println("Failed to parse uint64:", err)
+			}
+			clt.SelectSupply(spMap[uintData])
+			channel.Emit("server_to_client", spMap[uintData])
 		}
-		channel.Emit("server_to_client", msg)
 	})
 }
 
