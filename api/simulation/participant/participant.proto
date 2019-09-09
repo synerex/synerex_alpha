@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package api.participant;
+
+option go_package="github.com/synerex/synerex_alpha/api/simulation/participant";
+//import "common/common.proto";
+
+
+message ParticipantInfo {
+        // participant info
+        uint32 client_id = 1;
+        ClientType client_type = 2;
+        uint32 area_id = 3;
+        AgentType agent_type = 4;
+
+        // meta data
+        StatusType status_type = 5;
+	    string meta = 6;
+    }
+
+ message ParticipantDemand {
+        // demand info
+        uint32 client_id = 1;
+
+        // demand type
+        DemandType demand_type = 2;
+
+        // meta data
+        StatusType status_type = 3;
+        string meta = 4;
+    }
+
+enum StatusType {
+    OK = 0;
+    NG = 1;
+    NONE = 2;
+}
+
+enum AgentType {
+    PEDESTRIAN = 0;
+    CAR = 1;
+    TRAIN = 2;
+    BICYCLE = 3;
+}
+
+enum ClientType {
+    AREA = 0;
+    LOG = 1;
+    CARAREA = 2;
+    PEDAREA = 3;
+}
+
+
+enum DemandType {
+    GET = 0;
+}
+

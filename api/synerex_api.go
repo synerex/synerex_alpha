@@ -11,6 +11,7 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
 )
 
 // Demand
@@ -102,6 +103,15 @@ func (dm *Demand) WithAreaDemand(a *area.AreaDemand) *Demand {
 //	return dm
 //}
 
+// WithParticipantDemand set a given ParticipantDemand to Supply.Supply_Arg_ParticipantDemand.Arg_ParticipantDemand.
+func (dm *Demand) WithParticipantDemand(a *participant.ParticipantDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_ParticipantDemand{a}
+	return dm
+}
+
+
+
+
 // WithAgentDemand set a given AgentDemand to Demand.Demand_Arg_AgentDemand.Arg_AgentDemand.
 func (dm *Demand) WithAgentDemand(a *agent.AgentDemand) *Demand {
 	dm.ArgOneof = &Demand_Arg_AgentDemand{a}
@@ -192,3 +202,9 @@ func (sp *Supply) WithAgentsInfo(a *agent.AgentsInfo) *Supply {
 //	sp.ArgOneof = &Supply_Arg_AgentDemand{a}
 //	return sp
 //}
+
+// WithParticipantInfo set a given ParticipantInfo to Supply.Supply_Arg_ParticipantInfo.Arg_ParticipantInfo.
+func (sp *Supply) WithParticipantInfo(a *participant.ParticipantInfo) *Supply {
+	sp.ArgOneof = &Supply_Arg_ParticipantInfo{a}
+	return sp
+}

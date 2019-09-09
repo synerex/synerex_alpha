@@ -15,7 +15,7 @@ export default class WorldView extends React.Component {
     super(props, context);
     this.cpw = 10; // core line location
     this.lpw = 50; // node location
-    this.coreCount = 4;
+    this.coreCount = 5;
     this.ndCount = 6;
     this.yaw = 0;
     this.rotation = 0;
@@ -64,7 +64,7 @@ export default class WorldView extends React.Component {
 
   onAnimate() {
     // chanell type
-    const namesMap = [0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 0];
+    const namesMap = [0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 0];
 
     if (!this.visible) return;
     if (this.controls) {
@@ -230,7 +230,7 @@ export default class WorldView extends React.Component {
     let innerLoopGeom = new THREE.Geometry();
     const lpw = this.lpw;
     const cpw = this.cpw;
-    const names = ["other", "Clock", "Area", "Agent"];
+    const names = ["other", "Clock", "Area", "Agent", "Participant"];
 
     // core lines
     for (let i = 0; i < this.coreCount; i++) {

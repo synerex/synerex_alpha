@@ -13,6 +13,7 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"io"
 	"log"
 	"sync"
@@ -50,13 +51,14 @@ type DemandOpts struct {
 	Fleet     *fleet.Fleet
 	RoutingService *routing.RoutingService
 	RideShare *rideshare.RideShare
-	ClockInfo *clock.ClockInfo
+	//ClockInfo *clock.ClockInfo
 	ClockDemand *clock.ClockDemand
-	AreaInfo *area.AreaInfo
+	//AreaInfo *area.AreaInfo
 	AreaDemand *area.AreaDemand
-	AgentInfo *agent.AgentInfo
-	AgentsInfo *agent.AgentsInfo
+	//AgentInfo *agent.AgentInfo
+	//AgentsInfo *agent.AgentsInfo
 	AgentDemand *agent.AgentDemand
+	ParticipantDemand *participant.ParticipantDemand
 }
 
 // SupplyOpts is sender options for Supply
@@ -70,12 +72,13 @@ type SupplyOpts struct {
 	RoutingService *routing.RoutingService
 	RideShare *rideshare.RideShare
 	ClockInfo *clock.ClockInfo
-	ClockDemand *clock.ClockDemand
+	//ClockDemand *clock.ClockDemand
 	AreaInfo *area.AreaInfo
-	AreaDemand *area.AreaDemand
+	//AreaDemand *area.AreaDemand
 	AgentInfo *agent.AgentInfo
 	AgentsInfo *agent.AgentsInfo
-	AgentDemand *agent.AgentDemand
+	//AgentDemand *agent.AgentDemand
+	ParticipantInfo *participant.ParticipantInfo
 }
 
 func init() {

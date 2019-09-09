@@ -16,6 +16,7 @@ import "marketing/marketing.proto";
 import "simulation/area/area.proto";
 import "simulation/agent/agent.proto";
 import "simulation/clock/clock.proto";
+import "simulation/participant/participant.proto";
 
 service Synerex {
     rpc RegisterDemand(Demand) returns (Response) {}
@@ -70,7 +71,8 @@ enum ChannelType {
     CLOCK_SERVICE = 7;  // Simulation Clock Service Information
     AREA_SERVICE = 8;  // Simulation Area Service Information
     AGENT_SERVICE = 9; // Simulation Agent Service Information
-    END = 10;
+    PARTICIPANT_SERVICE = 10; // Simulation Agent Service Information
+    END = 11;
 }
 
 message Supply{
@@ -99,6 +101,7 @@ message Supply{
         agent.AgentInfo arg_AgentInfo = 22;
         agent.AgentsInfo arg_AgentsInfo = 23;
         // agent.AgentDemand arg_AgentDemand = 24;
+        participant.ParticipantInfo arg_ParticipantInfo = 25;
     }
 }
 
@@ -128,6 +131,7 @@ message Demand {
         // agent.AgentInfo arg_AgentInfo = 22;
         // agent.AgentsInfo arg_AgentsInfo = 23;
         agent.AgentDemand arg_AgentDemand = 24;
+        participant.ParticipantDemand arg_ParticipantDemand = 25;
     }
 }
 
