@@ -11,11 +11,11 @@ import (
 	"github.com/synerex/synerex_alpha/sxutil"
 	//"github.com/synerex/synerex_alpha/api/fleet"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
-	//"github.com/synerex/synerex_alpha/api/simulation/agent"
-	//"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"google.golang.org/grpc"
 	//"time"
-	//"encoding/json"
+	//s"encoding/json"
 	"fmt"
 	//"reflect"
 	//"os"
@@ -46,21 +46,8 @@ func init() {
 	selection = false
 }
 
-type LonLat struct{
-	Latitude	float32
-	Longitude	float32
-}
-
-type TaxiDemand struct {
-	Price	int
-	Distance	int
-	Arrival int
-	Destination int
-	Position LonLat
-}
-
-/*// this function waits
-func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
+// this function waits
+/*func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
 	var sid uint64
 
 	for i := 0; i < 5; i++{
@@ -72,6 +59,7 @@ func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
 	lowest := 99999
 	// find most valuable proposal
 	for k, sp := range spMap {
+		log.Printf("Select supply2 is:  %v", sp)
 		dat := TaxiDemand{}
 		js := sp.ArgJson
 		err := json.Unmarshal([]byte(js),&dat)
@@ -84,7 +72,8 @@ func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
 	}
 	mu.Unlock()
 	log.Printf("Select supply %v", spMap[sid])
-	clt.SelectSupply(spMap[sid])
+	selection=false
+	//clt.SelectSupply(spMap[sid])
 	// we have to cleanup all info.
 }*/
 
@@ -128,7 +117,27 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	// check if supply is match with my demand.
 	log.Println("Got supply callback")
 	log.Printf("supply is %v",sp)
-	switch sp.SupplyName{
+	/*mu.Lock()
+	if clt.IsSupplyTarget(sp, idlist) { //
+		// always select Supply
+		// this is not good..
+//		clt.SelectSupply(sp)
+		// just show the supply Information
+		opts :=	dmMap[sp.TargetId]
+		log.Printf("Got Supply for %v as '%v'",opts, sp )
+		spMap[sp.TargetId] = sp
+		// should wait several seconds to find the best proposal.
+		// if there is no selection .. lets start
+		if !selection {
+			selection = true
+			go startSelection(clt, time.Second*5)
+		}
+	}else{
+//		log.Printf("This is not my supply id %v, %v",sp,idlist)
+		// do not need to say.
+	}
+	mu.Unlock()*/
+	/*switch sp.SupplyName{
 		case "SEND_AREA": startUpAreaAgentProvider(clt, sp)
 		case "SET_AGENT_OK": setAgentOK(clt, sp)
 		case "START_UP_OK": startUpOK(clt, sp)
@@ -136,9 +145,9 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		case "FORWARD_CLOCK_OK": forwardClockOK(clt, sp)
 		case "FORWARD_AGENT_OK": forwardAgentOK(clt, sp)
 		case "FORWARD_AREA_OK": forwardAreaOK(clt, sp)
-		default: log.Println("demand callback is valid.")
+		default: log.Println("demand callback is invalid.")
 
-	}
+	}*/
 }
 
 func subscribeSupply(client *sxutil.SMServiceClient) {
@@ -190,24 +199,53 @@ func setClock(){
 }
 
 func setArea(){
-	
-	/*areaRequest := area.AreaService_AreaRequest{
+	areaDemand := area.AreaDemand{
 		Time: uint32(1),
-		AreaId: uint32(1),	// area a: 1, b: 2
+		AreaId: 0, // B
+		DemandType: 0, // SET
+		StatusType: 2, // NONE
+		Meta: "",
 	}
 	
-	areaService := area.AreaService{
-		AreaRequest: &areaRequest,
-	}*/
 	nm := "setArea order by scenario"
 	js := ""
-	opts := &sxutil.DemandOpts{Name: nm, JSON: js}
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, AreaDemand: &areaDemand}
 
 	sendDemand(sclientArea, opts)
 }
 
 func setAgent(){
+	route := agent.Route{
+		Coord: &agent.Route_Coord{
+			Lat: float32(0),
+			Lon: float32(0), 
+		},
+		Direction: float32(0),
+		Speed: float32(10),
+		Destination: float32(10),
+		Departure: float32(100),
+	}
+	rule := agent.Rule{
+		RuleInfo: "nothing",
+	}
 
+	agentDemand := agent.AgentDemand{
+		Time: uint32(1),
+		AgentId: 1,
+		AgentName: "Agent1",
+		AgentType: 0,
+		Route: &route,
+		Rule: &rule,
+		DemandType: 0, // SET
+		StatusType: 2, // NONE
+		Meta: "",
+	}
+	
+	nm := "setAgent order by scenario"
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, AgentDemand: &agentDemand}
+
+	sendDemand(sclientAgent, opts)
 }
 
 
@@ -266,6 +304,7 @@ func main() {
 			setArea()
 			fmt.Println("setArea")
 		case "SetAgent":
+			setAgent()
 			fmt.Println("skip clock")
 		case "Start":
 			fmt.Println("set clock")

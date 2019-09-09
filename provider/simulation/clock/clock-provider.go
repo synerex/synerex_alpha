@@ -131,10 +131,26 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	}
 }
 
+// callback for each Supply
+func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
+	// check if supply is match with my demand.
+	log.Println("Got supply callback")
+	log.Printf("supply is %v",sp)
+	
+}
+
 func subscribeDemand(client *sxutil.SMServiceClient) {
 	//called as goroutine
 	ctx := context.Background() // should check proper context
 	client.SubscribeDemand(ctx, demandCallback)
+	// comes here if channel closed
+	log.Printf("SMarket Server Closed?")
+}
+
+func subscribeSupply(client *sxutil.SMServiceClient) {
+	//called as goroutine
+	ctx := context.Background() // should check proper context
+	client.SubscribeSupply(ctx, supplyCallback)
 	// comes here if channel closed
 	log.Printf("SMarket Server Closed?")
 }
@@ -186,6 +202,9 @@ func main() {
 	go subscribeDemand(sclientAgent)
 	go subscribeDemand(sclientClock)
 	go subscribeDemand(sclientArea)
+	go subscribeSupply(sclientAgent)
+	go subscribeSupply(sclientClock)
+	go subscribeSupply(sclientArea)
 
 	/*for {
 		sendDemand(sclient, "Share Ride to Home", "{Destination:{Latitude:36.5, Longitude:135.6}, Duration: 1200}")

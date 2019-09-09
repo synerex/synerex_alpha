@@ -6,45 +6,61 @@ option go_package="github.com/synerex/synerex_alpha/api/simulation/agent";
 
 
 message AgentInfo {
-        // agent info
-        uint32 time = 1;
-        uint32 agent_id = 2;
-        string agent_name = 3;
-        AgentType agent_type = 4;
-        Route route = 5;
-        Rule rule = 6;
+    // agent info
+    uint32 time = 1;
+    uint32 agent_id = 2;
+    string agent_name = 3;
+    AgentStatus agent_status = 4;
+    AgentType agent_type = 5;
+    Route route = 6;
+    Rule rule = 7;
 
-        // meta data
-        StatusType status_type = 7;
-	    string meta = 8;
-    }
+    // meta data
+    StatusType status_type = 8;
+	string meta = 9;
+}
 
-    message AgentsInfo {
-        // agents info
-        uint32 time = 1;
-        repeated AgentInfo agent_info = 2;
+message AgentsInfo {
+    // agents info
+    uint32 time = 1;
+    AgentType agent_type = 2;
+    repeated AgentInfo agent_info = 3;
         
-        // meta data
-        StatusType status_type = 3;
-	    string meta = 4;
-    }
+    // meta data
+    StatusType status_type = 4;
+	string meta = 5;
+}
 
-    message AgentDemand {
-        // demand info
-        uint32 time = 1;
-        uint32 agent_id = 2;
-        string agent_name = 3;
-        AgentType agent_type = 4;
-        Route route = 5;
-        Rule rule = 6;
+message AgentDemand {
+    // demand info
+    uint32 time = 1;
+    uint32 agent_id = 2;
+    string agent_name = 3;
+    AgentType agent_type = 4;
+    AgentStatus agent_status = 5;
+    Route route = 6;
+    Rule rule = 7;
         
-        // demand info
-        DemandType demand_type = 7;
+    // demand info
+    DemandType demand_type = 8;
 
-        // meta data
-        StatusType status_type = 8;
-	    string meta = 9;
-    }
+    // meta data
+    StatusType status_type = 9;
+	string meta = 10;
+}
+
+message AgentsDemand {
+    // demand info
+    uint32 area_id = 1;
+    AgentType agent_type = 2;
+        
+    // demand info
+    DemandType demand_type = 3;
+
+    // meta data
+    StatusType status_type = 4;
+	string meta = 5;
+}
 
 message Route {
     message Coord {
@@ -62,6 +78,11 @@ message Rule {
     string rule_info = 1;
 }
 
+message AgentStatus {
+    string age = 1;
+    string sex = 2;
+}
+
 enum StatusType {
     OK = 0;
     NG = 1;
@@ -77,4 +98,5 @@ enum AgentType {
 
 enum DemandType {
     SET = 0;
+    GET = 1;
 }

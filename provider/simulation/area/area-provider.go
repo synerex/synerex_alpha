@@ -27,7 +27,7 @@ var (
 	sclientArea *sxutil.SMServiceClient
 	sclientAgent *sxutil.SMServiceClient
 	sclientClock *sxutil.SMServiceClient
-	areaInfo map[string]map[string]int
+	areaInfo map[uint32]map[string]int
 )
 
 func init() {
@@ -35,9 +35,9 @@ func init() {
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 	selection = false
-	areaInfo = map[string]map[string]int{
-		"A": map[string]int{"s_len": 0, "e_len":100, "s_lat": 0, "e_lat": 100}, 
-		"B": map[string]int{"s_len": 50, "e_len":150, "s_lat": 0, "e_lat": 100},
+	areaInfo = map[uint32]map[string]int{
+		0: map[string]int{"s_len": 0, "e_len":100, "s_lat": 0, "e_lat": 100}, 
+		1: map[string]int{"s_len": 50, "e_len":150, "s_lat": 0, "e_lat": 100},
 	}
 }
 
@@ -50,7 +50,7 @@ type ClockConfig struct {
 
 func checkDemandArgOneOf(dm *pb.Demand) string {
 	//demandType := ""
-	log.Printf("demandType1.5 is %v", dm)
+	log.Printf("demandType1.5 is %v", dm.GetArg_AgentDemand() == nil)
 	if(dm.GetArg_ClockDemand() != nil){
 		argOneof := dm.GetArg_ClockDemand()
 		log.Printf("demandType2 is %v", argOneof.DemandType.String())
@@ -70,7 +70,7 @@ func checkDemandArgOneOf(dm *pb.Demand) string {
 		}
 	}
 	if(dm.GetArg_AgentDemand() != nil){
-		argOneof := dm.GetArg_AreaDemand()
+		argOneof := dm.GetArg_AgentDemand()
 		switch(argOneof.DemandType.String()){
 			case "SET": return "SET_AGENT"
 		}
@@ -81,6 +81,21 @@ func checkDemandArgOneOf(dm *pb.Demand) string {
 
 func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setArea")
+	argOneof := dm.GetArg_AreaDemand()
+	if(areaInfo[argOneof.AreaId] != nil){
+		// send area info
+		areaInfo := area.AreaInfo{
+			Time: argOneof.Time,
+			StatusType: 0, // OK
+			Meta: "",
+		}
+		
+		nm := "setArea respnse by area-provider"
+		js := ""
+		opts := &sxutil.SupplyOpts{Name: nm, JSON: js, AreaInfo: &areaInfo}
+	
+		sendSupply(sclientArea, opts)
+	}
 	//sendSupply(clt, "SEND_AREA", "{Area:[{Latitude:36.5, Longitude:135.6},{Latitude:40.5, Longitude:140.6}]}")
 }
 
@@ -128,7 +143,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		log.Printf("demandType is %v", demandType)
 		switch demandType{
 			case "SET_CLOCK": setClock(clt, dm)
-			//case "SET_CLOCK_OK": setClockOK(clt, dm)
+			case "SET_AREA": setArea(clt, dm)
 			//case "START_CLOCK": startClock(clt, dm)
 			//case "FORWARD_CLOCK_OK": forwardClockOK(clt, dm)
 			default: log.Println("demand callback is invalid.")

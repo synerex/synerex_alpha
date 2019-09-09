@@ -18,9 +18,9 @@ message ClockInfo {
  message ClockDemand {
         // demand info
         uint32 time = 1;
-        uint32 num_cycle = 2;
+        uint32 cycle_num = 2;
 	    uint32 cycle_duration = 3;	
-	    uint32 cycle_time = 4;
+	    uint32 cycle_interval = 4;
 
         // demand type
         DemandType demand_type = 5;

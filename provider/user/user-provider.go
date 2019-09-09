@@ -91,6 +91,7 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		// should wait several seconds to find the best proposal.
 		// if there is no selection .. lets start
 		if !selection {
+			log.Println("start selection")
 			selection = true
 			go startSelection(clt, time.Second*5)
 		}
