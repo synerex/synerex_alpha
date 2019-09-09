@@ -28,6 +28,10 @@ type orderCmdInfo struct {
 
 var orderCmds =[...]orderCmdInfo{
 	{
+		Aliases: []string{"GetParticipant", "getParticipant", "getparticipant", "get-participant" },
+		CmdName: "GetParticipant",
+	},
+	{
 		Aliases: []string{"SetTime", "setTime", "settime", "set-time" },
 		CmdName: "SetTime",
 	},

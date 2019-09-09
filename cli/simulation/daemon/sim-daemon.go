@@ -120,6 +120,10 @@ func init() {
 			GoFiles: []string{"car-area-provider.go"},
 		},
 		{
+			CmdName: "GetParticipant",
+			Description: "Order",
+		},
+		{
 			CmdName: "SetTime",
 			Description: "Order",
 		},
