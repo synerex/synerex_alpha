@@ -8,14 +8,17 @@ option go_package="github.com/synerex/synerex_alpha/api/simulation/participant";
 
 message ParticipantInfo {
         // participant info
-        uint64 client_id = 1;
-        ClientType client_type = 2;
-        uint32 area_id = 3;
-        AgentType agent_type = 4;
+        uint64 client_participant_id = 1;
+        uint64 client_area_id = 2;
+        uint64 client_agent_id = 3;
+        uint64 client_clock_id = 4;
+        ClientType client_type = 5;
+        uint32 area_id = 6;
+        AgentType agent_type = 7;
 
         // meta data
-        StatusType status_type = 5;
-	    string meta = 6;
+        StatusType status_type = 8;
+	    string meta = 9;
     }
 
  message ParticipantDemand {
