@@ -6,6 +6,9 @@ import (
 	"log"
 	"sync"
 	//"math/rand"
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
+	"github.com/synerex/synerex_alpha/provider/simulation/simutil"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
@@ -26,6 +29,7 @@ var (
 	sclientArea *sxutil.SMServiceClient
 	sclientAgent *sxutil.SMServiceClient
 	sclientClock *sxutil.SMServiceClient
+	sclientParticipant *sxutil.SMServiceClient
 )
 
 func init() {
@@ -35,53 +39,78 @@ func init() {
 	selection = false
 }
 
-type LonLat struct{
-	Latitude	float32
-	Longitude	float32
-}
-
-type TaxiDemand struct {
-	Price	int
-	Distance	int
-	Arrival int
-	Destination int
-	Position LonLat
-}
-
-
-
-func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
-	log.Println("setArea")
-	sendSupply(clt, "SEND_AREA", "{Area:[{Latitude:36.5, Longitude:135.6},{Latitude:40.5, Longitude:140.6}]}")
-}
-
-func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
-	log.Println("getArea")
-	sendSupply(clt, "SEND_AREA", "{Area:[{Latitude:36.5, Longitude:135.6},{Latitude:40.5, Longitude:140.6}]}")
+type ClockConfig struct {
+	Time	uint32
+	CycleNum	uint32
+	CycleDuration uint32
+	CycleInterval uint32
 }
 
 func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setClock")
-	sendDemand(clt, "SET_CLOCK_OK", "{Date: '2019-7-29T22:32:13.234252Z'")
+	argOneof := dm.GetArg_ClockDemand()
+	/*clockConfig := &ClockConfig{
+		Time: argOneof.Time,
+		CycleNum: argOneof.CycleNum,
+		CycleDuration: argOneof.CycleDuration,
+		CycleInterval: argOneof.CycleInterval,
+	}*/
+	clockInfo := clock.ClockInfo{
+		Time: argOneof.Time,
+		StatusType: 0, // OK
+		Meta: "",
+	}
+	
+	nm := "setClock respnse by ped-area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		Name: nm, 
+		JSON: js, 
+		ClockInfo: &clockInfo,
+	}
+
+	simutil.SendProposeSupply(sclientClock, opts, spMap, idlist)
 }
 
 
-func forwardAreaOK(clt *sxutil.SMServiceClient, dm *pb.Demand){
-	log.Println("forwardArea OK")
+func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("getParticipant")
+	//argOneof := dm.GetArg_ParticipantDemand()
+	participantInfo := participant.ParticipantInfo{
+		ClientParticipantId: uint64(sclientParticipant.ClientID),
+		ClientAreaId: uint64(sclientArea.ClientID),
+		ClientAgentId: uint64(sclientAgent.ClientID),
+		ClientClockId: uint64(sclientClock.ClientID),
+		ClientType: 3, // PedArea
+		AreaId: uint32(0), // Area A
+		AgentType: 0, // Pedestrian
+		StatusType: 0, // OK
+		Meta: "",
+	}
+	
+	nm := "getParticipant respnse by ped-area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(), 
+		Name: nm, 
+		JSON: js, 
+		ParticipantInfo: &participantInfo,
+	}
+
+	simutil.SendProposeSupply(sclientParticipant, opts, spMap, idlist)
 }
 
 // callback for each Supply
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
-	// check if supply is match with my demand.
-	log.Println("Got demand callback")
-	log.Printf("demand is %v",dm.DemandName)
-	switch dm.DemandName{
-	case "SET_AREA": setArea(clt, dm)
-	case "GET_AREA": getArea(clt, dm)
-	case "SET_CLOCK_ALL": setClock(clt, dm)
-	case "FORWARD_AREA_OK": forwardAreaOK(clt, dm)
-	default: log.Println("demand callback is valid.")
-
+	demandType := simutil.CheckDemandArgOneOf(dm)
+	switch demandType{
+		case "GET_PARTICIPANT": getParticipant(clt, dm)
+		case "SET_CLOCK": setClock(clt, dm)
+		//case "SET_CLOCK_OK": setClockOK(clt, dm)
+		//case "START_CLOCK": startClock(clt, dm)
+		//case "FORWARD_CLOCK_OK": forwardClockOK(clt, dm)
+		default: log.Println("demand callback is invalid.")
 	}
 }
 
@@ -91,26 +120,6 @@ func subscribeDemand(client *sxutil.SMServiceClient) {
 	client.SubscribeDemand(ctx, demandCallback)
 	// comes here if channel closed
 	log.Printf("SMarket Server Closed?")
-}
-
-func sendSupply(sclient *sxutil.SMServiceClient, nm string, js string) {
-	opts := &sxutil.SupplyOpts{Name: nm, JSON: js}
-	mu.Lock()
-	id := sclient.RegisterSupply(opts)
-	idlist = append(idlist, id) // my demand list
-	spMap[id] = opts            // my demand options
-	mu.Unlock()
-	log.Printf("Register my supply as id %v, %v",id,idlist)
-}
-
-func sendDemand(sclient *sxutil.SMServiceClient, nm string, js string) {
-	opts := &sxutil.DemandOpts{Name: nm, JSON: js}
-	mu.Lock()
-	id := sclient.RegisterDemand(opts)
-	idlist = append(idlist, id) // my demand list
-	dmMap[id] = opts            // my demand options
-	mu.Unlock()
-	log.Printf("Register my demand as id %v, %v",id,idlist)
 }
 
 func main() {
@@ -135,6 +144,7 @@ func main() {
 	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
 	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
 	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
+	sclientParticipant = sxutil.NewSMServiceClient(client, pb.ChannelType_PARTICIPANT_SERVICE,argJson)
 
 	wg := sync.WaitGroup{}
 
@@ -142,11 +152,9 @@ func main() {
 	go subscribeDemand(sclientAgent)
 	go subscribeDemand(sclientClock)
 	go subscribeDemand(sclientArea)
+	go subscribeDemand(sclientParticipant)
 
-	/*for {
-		sendDemand(sclient, "Share Ride to Home", "{Destination:{Latitude:36.5, Longitude:135.6}, Duration: 1200}")
-		time.Sleep(time.Second * time.Duration(10 + rand.Int()%10))
-	}*/
+	
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
 

@@ -318,6 +318,7 @@ func supplyServerFunc(ch chan *api.Supply, stream api.Synerex_SubscribeSupplySer
 	for {
 		select {
 		case sp := <-ch:
+			log.Printf("in supply server func id %v",sp)
 			err := stream.Send(sp)
 			if err != nil {
 				//				log.Printf("Error SupplyServer Error %v", err)

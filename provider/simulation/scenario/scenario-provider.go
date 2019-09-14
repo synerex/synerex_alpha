@@ -9,12 +9,14 @@ import (
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
+	"github.com/synerex/synerex_alpha/provider/simulation/simutil"
 	//"github.com/synerex/synerex_alpha/api/fleet"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"google.golang.org/grpc"
-	//"time"
+	"time"
 	//s"encoding/json"
 	"fmt"
 	//"reflect"
@@ -31,51 +33,84 @@ var (
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
 	spMap		map[uint64]*pb.Supply
-	selection 	bool
+	pspMap		map[uint64]*pb.Supply
+	ch 			chan *pb.Supply
+	startSync 	bool
+	startCollectId bool
+	participantIdList  []uint64
+	Order string
 	mu	sync.Mutex
 	sclientArea *sxutil.SMServiceClient
 	sclientAgent *sxutil.SMServiceClient
 	sclientClock *sxutil.SMServiceClient
+	sclientParticipant *sxutil.SMServiceClient
 	sioClient *gosocketio.Client
+	idListByChannel *simutil.IdListByChannel
 )
 
 func init() {
+	Order = ""
 	idlist = make([]uint64, 0)
+	participantIdList = make([]uint64, 0)
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
 	spMap = make(map[uint64]*pb.Supply)
-	selection = false
+	pspMap = make(map[uint64]*pb.Supply)
+	startSync = false
+	ch = make(chan *pb.Supply)
 }
 
 // this function waits
-/*func startSelection(clt *sxutil.SMServiceClient,d time.Duration){
-	var sid uint64
+func collectParticipantId(clt *sxutil.SMServiceClient, d int){
 
-	for i := 0; i < 5; i++{
-		time.Sleep(d / 5)
-		log.Printf("waiting... %v",i)
+	for i := 0; i < d; i++{
+		time.Sleep(1 * time.Second)
+		log.Printf("waiting... %v",i+1)
 	}
+
 	mu.Lock()
-	log.Printf("From now, let's find best taxi..")
-	lowest := 99999
-	// find most valuable proposal
-	for k, sp := range spMap {
-		log.Printf("Select supply2 is:  %v", sp)
-		dat := TaxiDemand{}
-		js := sp.ArgJson
-		err := json.Unmarshal([]byte(js),&dat)
-		if err != nil {
-			log.Printf("Err JSON %v",err)
-		}
-		if dat.Price < lowest { // we should check some ...
-			sid = k
-		}
-	}
+	idListByChannel = simutil.CreateIdListByChannel(pspMap)
 	mu.Unlock()
-	log.Printf("Select supply %v", spMap[sid])
-	selection=false
-	//clt.SelectSupply(spMap[sid])
-	// we have to cleanup all info.
-}*/
+	log.Printf("finish collecting Id %v", idListByChannel)
+	startCollectId = false
+	pspMap = make(map[uint64]*pb.Supply)
+}
+
+func callback(){
+	fmt.Printf("Callback! return OK to Simulation Synerex Engine")
+}
+
+func syncProposeSupply(sp *pb.Supply, idList []uint64){
+	go func() { 
+		log.Println("Send Supply")
+		ch <- sp
+	}()
+	if !startSync {
+		log.Println("Start Sync")
+		startSync = true
+
+		go func(){		
+
+		for {
+			select {
+				case psp := <- ch:
+					log.Println("recieve ProposeSupply")
+					pspMap[psp.SenderId] = psp
+			
+				if simutil.IsFinishSync(pspMap, idList){
+					fmt.Printf("Finish Sync")
+					startSync = false
+					pspMap = make(map[uint64]*pb.Supply)
+					// if you need, return response
+					callback()
+					break
+				}
+			}
+		}
+		
+		}()
+	}	
+}
+
 
 func startUpAreaAgentProvider(clt *sxutil.SMServiceClient, sp *pb.Supply){
 	// start up area-agent-provider with area property
@@ -112,81 +147,15 @@ func forwardAreaOK(clt *sxutil.SMServiceClient,sp *pb.Supply){
 	log.Println("forwardArea OK")
 }
 
-// callback for each Supply
-func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	// check if supply is match with my demand.
-	log.Println("Got supply callback")
-	log.Printf("supply is %v",sp)
-	/*mu.Lock()
-	if clt.IsSupplyTarget(sp, idlist) { //
-		// always select Supply
-		// this is not good..
-//		clt.SelectSupply(sp)
-		// just show the supply Information
-		opts :=	dmMap[sp.TargetId]
-		log.Printf("Got Supply for %v as '%v'",opts, sp )
-		spMap[sp.TargetId] = sp
-		// should wait several seconds to find the best proposal.
-		// if there is no selection .. lets start
-		if !selection {
-			selection = true
-			go startSelection(clt, time.Second*5)
-		}
-	}else{
-//		log.Printf("This is not my supply id %v, %v",sp,idlist)
-		// do not need to say.
-	}
-	mu.Unlock()*/
-	/*switch sp.SupplyName{
-		case "SEND_AREA": startUpAreaAgentProvider(clt, sp)
-		case "SET_AGENT_OK": setAgentOK(clt, sp)
-		case "START_UP_OK": startUpOK(clt, sp)
-		case "SET_CLOCK_ALL_OK": setClockOK(clt, sp)
-		case "FORWARD_CLOCK_OK": forwardClockOK(clt, sp)
-		case "FORWARD_AGENT_OK": forwardAgentOK(clt, sp)
-		case "FORWARD_AREA_OK": forwardAreaOK(clt, sp)
-		default: log.Println("demand callback is invalid.")
 
-	}*/
-}
-
-func subscribeSupply(client *sxutil.SMServiceClient) {
-	//called as goroutine
-	ctx := context.Background() // should check proper context
-	client.SubscribeSupply(ctx, supplyCallback)
-	// comes here if channel closed
-	log.Printf("SMarket Server Closed?")
-}
-
-func sendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts) {
-	mu.Lock()
-	id := sclient.RegisterDemand(opts)
-	idlist = append(idlist, id) // my demand list
-	dmMap[id] = opts            // my demand options
-	mu.Unlock()
-	log.Printf("Register my demand as id %v, %v",id,idlist)
-}
-
-func userSelect() string{
-	Options := []string{"SET_CLOCK", "START_CLOCK", "FORWARD_CLOCK", "BACK_CLOCK", "SKIP_CLOCK",
-						"SET_AGENT", "SET_AREA"}
-	for i, s := range Options {
-		fmt.Printf("%d. %s\n", i, s)
-	} 
-	fmt.Print("\n命令を指定してください[int]\n")
-	var selectNum int
-	fmt.Scan(&selectNum)
-	fmt.Printf("命令: %d, %s\n", selectNum, Options[selectNum])
-	return Options[selectNum]
-}
 
 func setClock(){
 	clockDemand := clock.ClockDemand{
 		Time: uint32(1),
 		DemandType: 2, // SET
-		NumCycle: uint32(1),
+		CycleNum: uint32(1),
 		CycleDuration: uint32(1),
-		CycleTime: uint32(1),
+		CycleInterval: uint32(1),
 		StatusType: 2, // NONE
 		Meta: "",
 	}
@@ -248,6 +217,124 @@ func setAgent(){
 	sendDemand(sclientAgent, opts)
 }
 
+func getParticipant(){
+	participantDemand := participant.ParticipantDemand {
+		ClientId: uint64(sclientParticipant.ClientID),
+		DemandType: 0, // GET
+		StatusType: 2, // NONE
+		Meta: "",
+	}
+	
+	nm := "getParticipant order by scenario"
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, ParticipantDemand: &participantDemand}
+
+	sendDemand(sclientParticipant, opts)
+}
+
+
+func callbackForSetClock(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	log.Println("Got for set_clock callback")
+	if clt.IsSupplyTarget(sp, idlist) { 
+
+		opts :=	dmMap[sp.TargetId]
+		log.Printf("Got Supply for %v as '%v'",opts, sp )
+		spMap[sp.SenderId] = sp
+		
+
+		if idListByChannel != nil{
+			clockIdList := idListByChannel.ClockIdList
+			syncProposeSupply(sp, clockIdList)
+		}else{
+			log.Printf("Error... please order getParticipantId")
+		}
+
+	}else{
+
+	}
+}
+
+func callbackForGetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	log.Println("Got for get_participant callback")
+	
+	if idListByChannel != nil{
+		log.Println("already corrected IdList!")
+	}else{
+		mu.Lock()
+		if clt.IsSupplyTarget(sp, idlist) { 
+
+			opts :=	dmMap[sp.TargetId]
+			log.Printf("Got Supply for %v as '%v'",opts, sp )
+			spMap[sp.SenderId] = sp
+			pspMap[sp.SenderId] = sp
+
+			if !startCollectId {
+				log.Println("start selection")
+				startCollectId = true
+				go collectParticipantId(clt, 3)
+			}
+		}else{
+			//log.Printf("This is not my supply id %v, %v",sp,idlist)
+			// do not need to say.
+		}
+		mu.Unlock()
+		log.Println("finish participant")
+	}
+}
+
+// callback for each Supply
+func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
+	// check if supply is match with my demand.
+	log.Println("Got supply callback")
+	log.Printf("supply is %v",sp)
+	switch Order {
+		case "GetParticipant":
+			callbackForGetParticipant(clt, sp)
+			fmt.Println("getParticipant")
+		case "SetTime":
+			callbackForSetClock(clt, sp)
+			fmt.Println("setClock")
+		/*case "SetArea":
+			setArea()
+			fmt.Println("setArea")
+		case "SetAgent":
+			setAgent()
+			fmt.Println("skip clock")
+		case "Start":
+			fmt.Println("set clock")
+			//sendDemand(sclientClock, order, "{Date: '2019-7-29T22:32:13.234252Z'")
+		case "Stop":
+			fmt.Println("start clock")
+			//sendDemand(sclientClock, order, "Start Clock")
+		case "Forward":
+			fmt.Println("set agent")
+			//sendDemand(sclientAgent, order, "{Principle: {}, Position, {36.5, 138.5}, Agent: 'Pedestrian'}")
+		case "Back":
+			fmt.Println("set area")
+			//sendDemand(sclientArea, order, "{Area:{Latitude:36.5, Longitude:135.6}}")*/
+		default:
+			fmt.Println("error")
+	}
+
+	
+}
+
+func subscribeSupply(client *sxutil.SMServiceClient) {
+	//called as goroutine
+	ctx := context.Background() // should check proper context
+	client.SubscribeSupply(ctx, supplyCallback)
+	// comes here if channel closed
+	log.Printf("SMarket Server Closed?")
+}
+
+func sendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts) {
+	mu.Lock()
+	id := sclient.RegisterDemand(opts)
+	idlist = append(idlist, id) // my demand list
+	dmMap[id] = opts            // my demand options
+	mu.Unlock()
+	log.Printf("Register my demand as id %v, %v",id,idlist)
+}
 
 
 func main() {
@@ -273,6 +360,7 @@ func main() {
 	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
 	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
 	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
+	sclientParticipant = sxutil.NewSMServiceClient(client, pb.ChannelType_PARTICIPANT_SERVICE,argJson)
 
 	wg := sync.WaitGroup{}
 
@@ -280,6 +368,7 @@ func main() {
 	go subscribeSupply(sclientAgent)
 	go subscribeSupply(sclientClock)
 	go subscribeSupply(sclientArea)
+	go subscribeSupply(sclientParticipant)
 
 	var sioErr error
 	sioClient, sioErr = gosocketio.Dial("ws://localhost:9995/socket.io/?EIO=3&transport=websocket", transport.DefaultWebsocketTransport())
@@ -296,7 +385,11 @@ func main() {
 
 	sioClient.On("scenario", func(c *gosocketio.Channel, order string) {
 		fmt.Printf("get order is: %s\n", order)
+		Order = order
 		switch order {
+		case "GetParticipant":
+			getParticipant()
+			fmt.Println("getParticipant")
 		case "SetTime":
 			setClock()
 			fmt.Println("setClock")

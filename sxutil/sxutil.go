@@ -213,6 +213,25 @@ func (clt SMServiceClient) getChannel() *api.Channel {
 	return &api.Channel{ClientId: uint64(clt.ClientID), Type: clt.MType, ArgJson: clt.ArgJson}
 }
 
+/*// IsFinishSync is a helper function to check if synchronization finish or not 
+func (clt *SMServiceClient) IsFinishSync(pspMap map[uint64]*api.Supply, idlist []uint64) bool {
+	for _, id := range idlist {
+		isMatch := false
+		for _, sp := range pspMap {
+			senderId := sp.SenderId
+			if id == senderId{
+				log.Printf("match! %v %v",id, senderId)
+				isMatch = true
+			}
+		}
+		if isMatch == false {
+			log.Printf("false")
+			return false
+		} 
+	}
+	return true
+}*/
+
 // IsSupplyTarget is a helper function to check target
 func (clt *SMServiceClient) IsSupplyTarget(sp *api.Supply, idlist []uint64) bool {
 	spid := sp.TargetId
@@ -248,6 +267,13 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 	}
 
 	switch clt.MType {
+	case api.ChannelType_PARTICIPANT_SERVICE:
+		if spo.ParticipantInfo != nil {
+			sp.WithParticipantInfo(spo.ParticipantInfo)
+			log.Printf("ParticipantInfo is nil %v", sp)
+		}else{
+			log.Printf("ParticipantInfo is nil")
+		}
 	case api.ChannelType_CLOCK_SERVICE:
 		if spo.ClockInfo != nil {
 			sp.WithClockInfo(spo.ClockInfo)
@@ -379,7 +405,7 @@ func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMSe
 			}
 			break
 		}
-		log.Println("Receive SS:", *sp)
+		log.Println("Receive SS:", sp)
 		// call Callback!
 		spcb(clt, sp)
 	}
@@ -484,6 +510,12 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 	}
 
 	switch clt.MType {
+	case api.ChannelType_PARTICIPANT_SERVICE:
+		if dmo.ParticipantDemand != nil {
+			dm.WithParticipantDemand(dmo.ParticipantDemand)
+		}else{
+			log.Printf("ParticipantDemand is nil")
+		}
 	case api.ChannelType_CLOCK_SERVICE:
 //		if spo.ClockInfo != nil {
 //			sp.WithClockInfo(spo.ClockInfo)
@@ -574,6 +606,12 @@ func (clt *SMServiceClient) RegisterSupply(spo *SupplyOpts) uint64 {
 	}
 
 	switch clt.MType {
+	case api.ChannelType_PARTICIPANT_SERVICE:
+		if spo.ParticipantInfo != nil {
+			sp.WithParticipantInfo(spo.ParticipantInfo)
+		}else{
+			log.Printf("ParticipantInfo is nil")
+		}
 	case api.ChannelType_CLOCK_SERVICE:
 		if spo.ClockInfo != nil {
 			sp.WithClockInfo(spo.ClockInfo)
