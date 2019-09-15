@@ -13,9 +13,12 @@ message AreaInfo {
     Map map = 5;
     Climate climate = 6;
 
+    // supply type
+    SupplyType supply_type = 7;
+
     // meta data
-    StatusType status_type = 7;
-    string meta = 8;
+    StatusType status_type = 8;
+    string meta = 9;
 }
 
 message AreaDemand {
@@ -34,6 +37,11 @@ message AreaDemand {
 enum DemandType {
     SET = 0;
     GET = 1;
+}
+
+enum SupplyType {
+    RES_SET = 0;
+    RES_GET = 1;
 }
 
 message Signal {

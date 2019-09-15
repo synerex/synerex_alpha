@@ -15,9 +15,12 @@ message AgentInfo {
     Route route = 6;
     Rule rule = 7;
 
+    // supply type
+    SupplyType supply_type = 8;
+
     // meta data
-    StatusType status_type = 8;
-	string meta = 9;
+    StatusType status_type = 9;
+	string meta = 10;
 }
 
 message AgentsInfo {
@@ -25,10 +28,13 @@ message AgentsInfo {
     uint32 time = 1;
     AgentType agent_type = 2;
     repeated AgentInfo agent_info = 3;
+
+    // supply type
+    SupplyType supply_type = 4;
         
     // meta data
-    StatusType status_type = 4;
-	string meta = 5;
+    StatusType status_type = 5;
+	string meta = 6;
 }
 
 message AgentDemand {
@@ -99,4 +105,9 @@ enum AgentType {
 enum DemandType {
     SET = 0;
     GET = 1;
+}
+
+enum SupplyType {
+    RES_SET = 0;
+    RES_GET = 1;
 }

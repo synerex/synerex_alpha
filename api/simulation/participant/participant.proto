@@ -16,9 +16,11 @@ message ParticipantInfo {
         uint32 area_id = 6;
         AgentType agent_type = 7;
 
+        SupplyType supply_type = 8;
+
         // meta data
-        StatusType status_type = 8;
-	    string meta = 9;
+        StatusType status_type = 9;
+	    string meta = 10;
     }
 
  message ParticipantDemand {
@@ -56,5 +58,9 @@ enum ClientType {
 
 enum DemandType {
     GET = 0;
+}
+
+enum SupplyType {
+    RES_GET = 0;
 }
 

@@ -10,9 +10,12 @@ message ClockInfo {
         // clock info
         uint32 time = 1;
 
+        // supply type
+        SupplyType supply_type = 2;
+
         // meta data
-        StatusType status_type = 2;
-	    string meta = 3;
+        StatusType status_type = 3;
+	    string meta = 4;
     }
 
  message ClockDemand {
@@ -43,5 +46,13 @@ enum DemandType {
     SET = 2;
     START = 3;
     STOP = 4;
+}
+
+enum SupplyType {
+    RES_FORWARD = 0;
+    RES_BACK = 1;
+    RES_SET = 2;
+    RES_START = 3;
+    RES_STOP = 4;
 }
 
