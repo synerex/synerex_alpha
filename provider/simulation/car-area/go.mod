@@ -2,6 +2,8 @@ module github.com/synerex/synerex_alpha/provider/simulation/car-area-provider
 
 require (
 	github.com/synerex/synerex_alpha/api v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
 	github.com/synerex/synerex_alpha/provider/simulation/simutil v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0

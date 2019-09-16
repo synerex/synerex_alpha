@@ -1,7 +1,7 @@
 package main
 
 import (
-	"context"
+	//"context"
 	"flag"
 	"log"
 	"sync"
@@ -31,7 +31,8 @@ var (
 	sclientAgent *sxutil.SMServiceClient
 	sclientClock *sxutil.SMServiceClient
 	sclientParticipant *sxutil.SMServiceClient
-	areaInfo map[uint32]map[string]int
+	AreaData map[uint32]map[string]float32
+	data *Data
 )
 
 func init() {
@@ -39,18 +40,29 @@ func init() {
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 	selection = false
-	areaInfo = map[uint32]map[string]int{
-		0: map[string]int{"s_len": 0, "e_len":100, "s_lat": 0, "e_lat": 100}, 
-		1: map[string]int{"s_len": 50, "e_len":150, "s_lat": 0, "e_lat": 100},
+	AreaData = map[uint32]map[string]float32{
+		uint32(0): map[string]float32{"sLon": float32(0), "eLon":float32(100), "sLat": float32(0), "eLat": float32(100)}, 	// A
+		uint32(1): map[string]float32{"sLon": float32(50), "eLon":float32(150), "sLat": float32(0), "eLat": float32(100)},  // B
 	}
+	data = new(Data)
 }
 
-type ClockConfig struct {
-	Time	uint32
-	NumCycle	uint32
-	CycleDuration uint32
-	CycleTime uint32
+type Data struct {
+	AreaInfo *area.AreaInfo
+	ClockInfo *clock.ClockInfo
 }
+
+type Coord struct {
+	StartLat float32
+	EndLat float32
+	StartLon float32
+	EndLon float32
+}
+
+/*type AreaData struct {
+	AreaId uint32
+	AreaName string
+}*/
 
 func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("getParticipant")
@@ -76,26 +88,84 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
 		ParticipantInfo: &participantInfo,
 	}
 
-	simutil.SendProposeSupply(sclientParticipant, opts, spMap, idlist)
+	spMap, idlist = simutil.SendProposeSupply(sclientParticipant, opts, spMap, idlist)
 }
 
 
 func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setArea")
 	argOneof := dm.GetArg_AreaDemand()
-	if(areaInfo[argOneof.AreaId] != nil){
+	if(AreaData[argOneof.AreaId] != nil){
 		// send area info
-		areaInfo := area.AreaInfo{
-			Time: argOneof.Time,
-			StatusType: 0, // OK
+		areaInfo := &area.AreaInfo{
+			Time: argOneof.Time, // uint32(1)
+			StatusType: 2, // NONE
 			Meta: "",
 		}
 		
 		nm := "setArea respnse by area-provider"
 		js := ""
-		opts := &sxutil.SupplyOpts{Name: nm, JSON: js, AreaInfo: &areaInfo}
+		opts := &sxutil.SupplyOpts{
+			Target: dm.GetId(),
+			Name: nm, 
+			JSON: js, 
+			AreaInfo: areaInfo,
+		}
 	
-		simutil.SendSupply(sclientArea, opts, spMap, idlist)
+		spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)
+	}
+}
+
+func setAgent(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("setAgent")
+		
+	nm := "setAgent respnse by area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		Name: nm, 
+		JSON: js, 
+	}
+	
+	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts, spMap, idlist)
+}
+
+
+func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("getArea")
+	argOneof := dm.GetArg_AreaDemand()
+	if(AreaData[argOneof.AreaId] != nil){
+		areaData := AreaData[argOneof.AreaId]
+		mapInfo := area.Map{
+			Coord: &area.Map_Coord{
+				StartLat: areaData["sLat"],
+				StartLon: areaData["sLon"], 
+				EndLat: areaData["eLat"],
+				EndLon: areaData["eLon"], 
+			},
+			MapInfo: uint32(0),
+		}
+
+		// send area info
+		areaInfo := &area.AreaInfo{
+			Time: argOneof.Time,
+			AreaId: argOneof.AreaId, // A
+			AreaName: "A",
+			Map: &mapInfo,
+			SupplyType: 1, // RES_GET
+			StatusType: 0, // OK
+			Meta: "",
+		}
+
+		// store AreaInfo data
+		data.AreaInfo = areaInfo
+		log.Printf("data.AreaInfo %v\n\n", data)
+		
+		nm := "getArea respnse by area-provider"
+		js := ""
+		opts := &sxutil.SupplyOpts{Name: nm, JSON: js, AreaInfo: areaInfo}
+	
+		spMap, idlist = simutil.SendSupply(sclientArea, opts, spMap, idlist)
 	}
 }
 
@@ -103,28 +173,89 @@ func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setClock")
 	argOneof := dm.GetArg_ClockDemand()
-	/*clockConfig := &ClockConfig{
+
+	clockInfo := &clock.ClockInfo{
 		Time: argOneof.Time,
-		CycleNum: argOneof.CycleNum,
-		CycleDuration: argOneof.CycleDuration,
-		CycleInterval: argOneof.CycleInterval,
-	}*/
-	clockInfo := clock.ClockInfo{
-		Time: argOneof.Time,
+		SupplyType: 2,
 		StatusType: 0, // OK
 		Meta: "",
 	}
+
+	// store ClockInfo data
+	data.ClockInfo = clockInfo
+	log.Printf("data.ClockInfo %v\n\n", data)
 	
-	nm := "setClock respnse by ped-area-provider"
+	nm := "setClock respnse by area-provider"
 	js := ""
 	opts := &sxutil.SupplyOpts{
 		Target: dm.GetId(),
 		Name: nm, 
 		JSON: js, 
-		ClockInfo: &clockInfo,
+		ClockInfo: clockInfo,
 	}
 
-	simutil.SendProposeSupply(sclientClock, opts, spMap, idlist)
+	spMap, idlist = simutil.SendProposeSupply(sclientClock, opts, spMap, idlist)
+}
+
+func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("forwardClock")
+	dmArgOneof := dm.GetArg_ClockDemand()
+	time := dmArgOneof.Time
+	nextTime := time + 1
+	// calculation  area here
+
+	// propose next area
+	areaInfo := data.AreaInfo
+	mapInfo := area.Map{
+		Coord: &area.Map_Coord{
+			StartLat: areaInfo.Map.Coord.StartLat,
+			StartLon: areaInfo.Map.Coord.StartLon, 
+			EndLat: areaInfo.Map.Coord.EndLat,
+			EndLon: areaInfo.Map.Coord.EndLon, 
+		},
+		MapInfo: uint32(0),
+	}
+
+	nextAreaInfo := &area.AreaInfo{
+		Time: nextTime,
+		AreaId: areaInfo.AreaId, // A
+		AreaName: areaInfo.AreaName,
+		Map: &mapInfo,
+		SupplyType: 0, // RES_SET
+		StatusType: 0, // OK
+		Meta: "",
+	}
+
+	nm := "forwardClock to AreaCh respnse by area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		Name: nm, 
+		JSON: js, 
+		AreaInfo: nextAreaInfo,
+	}
+
+	spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)
+
+
+	// propose next clock
+	nextClockInfo := clock.ClockInfo{
+		Time: nextTime,
+		SupplyType: 0,
+		StatusType: 0, // OK
+		Meta: "",
+	}
+	
+	nm2 := "forwardClock to ClockCh respnse by area-provider"
+	js2 := ""
+	opts2 := &sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		Name: nm2, 
+		JSON: js2, 
+		ClockInfo: &nextClockInfo,
+	}
+
+	spMap, idlist = simutil.SendProposeSupply(sclientClock, opts2, spMap, idlist)
 }
 
 
@@ -134,20 +265,16 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	switch demandType{
 		case "GET_PARTICIPANT": getParticipant(clt, dm)
 		case "SET_CLOCK": setClock(clt, dm)
-		//case "SET_CLOCK_OK": setClockOK(clt, dm)
+		case "FORWARD_CLOCK": forwardClock(clt, dm)
+		case "SET_AREA": setArea(clt, dm)
+		case "GET_AREA": getArea(clt, dm)
+		case "SET_AGENT": setAgent(clt, dm)
 		//case "START_CLOCK": startClock(clt, dm)
 		//case "FORWARD_CLOCK_OK": forwardClockOK(clt, dm)
 		default: log.Println("demand callback is invalid.")
 	}
 }
 
-func subscribeDemand(client *sxutil.SMServiceClient) {
-	//called as goroutine
-	ctx := context.Background() // should check proper context
-	client.SubscribeDemand(ctx, demandCallback)
-	// comes here if channel closed
-	log.Printf("SMarket Server Closed?")
-}
 
 func main() {
 	flag.Parse()
@@ -176,11 +303,10 @@ func main() {
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
-	go subscribeDemand(sclientAgent)
-	go subscribeDemand(sclientClock)
-	go subscribeDemand(sclientArea)
-	go subscribeDemand(sclientParticipant)
-
+	go simutil.SubscribeDemand(sclientAgent, demandCallback)
+	go simutil.SubscribeDemand(sclientClock, demandCallback)
+	go simutil.SubscribeDemand(sclientArea, demandCallback)
+	go simutil.SubscribeDemand(sclientParticipant, demandCallback)
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!

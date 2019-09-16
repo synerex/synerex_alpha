@@ -7,6 +7,7 @@ import (
     //"time"
     "log"
     "sync"
+    "context"
 )
 
 var (
@@ -72,11 +73,8 @@ func IsFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint64) bool {
 }
 
 func CheckDemandArgOneOf(dm *pb.Demand) string {
-	//demandType := ""
-	log.Printf("demandType1.5 is %v", dm)
 	if(dm.GetArg_ClockDemand() != nil){
 		argOneof := dm.GetArg_ClockDemand()
-		log.Printf("demandType2 is %v", argOneof.DemandType.String())
 		switch(argOneof.DemandType.String()){
 			case "SET": return "SET_CLOCK"
 			case "FORWARD": return "FORWARD_CLOCK"
@@ -93,11 +91,11 @@ func CheckDemandArgOneOf(dm *pb.Demand) string {
 		}
 	}
 	if(dm.GetArg_AgentDemand() != nil){
-		argOneof := dm.GetArg_AreaDemand()
+		argOneof := dm.GetArg_AgentDemand()
 		switch(argOneof.DemandType.String()){
 			case "SET": return "SET_AGENT"
 		}
-	}
+    }
 	if(dm.GetArg_ParticipantDemand() != nil){
 		argOneof := dm.GetArg_ParticipantDemand()
 		switch(argOneof.DemandType.String()){
@@ -107,29 +105,87 @@ func CheckDemandArgOneOf(dm *pb.Demand) string {
 	return "INVALID_TYPE"
 }
 
-func SendProposeSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap map[uint64]*sxutil.SupplyOpts, idlist []uint64) {
+func CheckSupplyArgOneOf(sp *pb.Supply) string {
+	if(sp.GetArg_ClockInfo() != nil){
+		argOneof := sp.GetArg_ClockInfo()
+		switch(argOneof.SupplyType.String()){
+			case "RES_SET": return "RES_SET_CLOCK"
+			case "RES_FORWARD": return "RES_FORWARD_CLOCK"
+			case "RES_STOP": return "RES_STOP_CLOCK"
+			case "RES_BACK": return "RES_BACK_CLOCK"
+			case "RES_START": return "RES_START_CLOCK"
+		}
+	}
+	if(sp.GetArg_AreaInfo() != nil){
+		argOneof := sp.GetArg_AreaInfo()
+		switch(argOneof.SupplyType.String()){
+			case "RES_SET": return "RES_SET_AREA"
+			case "RES_GET": return "RES_GET_AREA"
+		}
+	}
+	if(sp.GetArg_AgentInfo() != nil){
+		argOneof := sp.GetArg_AgentInfo()
+		switch(argOneof.SupplyType.String()){
+			case "RES_SET": return "RES_SET_AGENT"
+		}
+    }
+    if(sp.GetArg_AgentsInfo() != nil){
+		argOneof := sp.GetArg_AgentsInfo()
+		switch(argOneof.SupplyType.String()){
+			case "RES_SET": return "RES_SET_AGENTS"
+		}
+	}
+	if(sp.GetArg_ParticipantInfo() != nil){
+		argOneof := sp.GetArg_ParticipantInfo()
+		switch(argOneof.SupplyType.String()){
+			case "RES_GET": return "RES_GET_PARTICIPANT"
+		}
+	}
+	return "INVALID_TYPE"
+}
+
+func SendProposeSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap map[uint64]*sxutil.SupplyOpts, idlist []uint64) (map[uint64]*sxutil.SupplyOpts, []uint64){
 	mu.Lock()
 	id := sclient.ProposeSupply(opts)
 	idlist = append(idlist, id) // my demand list
 	spMap[id] = opts            // my demand options
 	mu.Unlock()
-	log.Printf("Propose my supply as id %v, %v",id,idlist)
+    log.Printf("Propose my supply as id %v, %v",id,idlist)
+    return spMap, idlist
 }
 
-func SendSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap map[uint64]*sxutil.SupplyOpts, idlist []uint64) {
+func SendSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap map[uint64]*sxutil.SupplyOpts, idlist []uint64) (map[uint64]*sxutil.SupplyOpts, []uint64){
 	mu.Lock()
 	id := sclient.RegisterSupply(opts)
 	idlist = append(idlist, id) // my demand list
 	spMap[id] = opts            // my demand options
 	mu.Unlock()
-	log.Printf("Register my supply as id %v, %v",id,idlist)
+    log.Printf("Register my supply as id %v, %v",id,idlist)
+    return spMap, idlist
 }
 
-func SendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts, dmMap map[uint64]*sxutil.DemandOpts, idlist []uint64) {
+func SendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts, dmMap map[uint64]*sxutil.DemandOpts, idlist []uint64) (map[uint64]*sxutil.DemandOpts, []uint64){
 	mu.Lock()
 	id := sclient.RegisterDemand(opts)
 	idlist = append(idlist, id) // my demand list
 	dmMap[id] = opts            // my demand options
 	mu.Unlock()
-	log.Printf("Register my demand as id %v, %v",id,idlist)
+    log.Printf("Register my demand as id %v, %v",id,idlist)
+    return dmMap, idlist
+}
+
+func SubscribeSupply(client *sxutil.SMServiceClient, supplyCallback func(*sxutil.SMServiceClient, *pb.Supply)) {
+	//called as goroutine
+	ctx := context.Background() // should check proper context
+	client.SubscribeSupply(ctx, supplyCallback)
+	// comes here if channel closed
+	log.Printf("SMarket Server Closed?")
+}
+
+func SubscribeDemand(client *sxutil.SMServiceClient, demandCallback func(*sxutil.SMServiceClient, *pb.Demand)) {
+	//called as goroutine
+	ctx := context.Background() // should check proper context
+	client.SubscribeDemand(ctx, demandCallback)
+	// comes here if channel closed
+	log.Printf("SMarket Server Closed?")
 }

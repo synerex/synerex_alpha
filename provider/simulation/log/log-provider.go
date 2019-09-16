@@ -1,12 +1,13 @@
 package main
 
 import (
-	"context"
+	//"context"
 	"flag"
 	"log"
 	"sync"
-	//"math/rand"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/provider/simulation/simutil"
 
@@ -30,6 +31,8 @@ var (
 	sclientAgent *sxutil.SMServiceClient
 	sclientClock *sxutil.SMServiceClient
 	sclientParticipant *sxutil.SMServiceClient
+	//dataMap map[uint32]*AreaData
+	//areaData AreaData
 )
 
 func init() {
@@ -37,31 +40,32 @@ func init() {
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 	selection = false
+	//areaData = *AreaData{}
+	//dataMap = make(map[uint32]areaData)
 }
 
-type ClockConfig struct {
-	Time	uint32
-	CycleNum	uint32
-	CycleDuration uint32
-	CycleInterval uint32
+//type AreaData struct {
+//	AreaInfo map[string][]*agent
+//	AgentInfo map[string][]*Agent
+//}
+
+type AreaData struct {
+	AreaInfo *area.AreaInfo
+	AgentInfo map[string][]*agent.AgentInfo
 }
 
 func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setClock")
 	argOneof := dm.GetArg_ClockDemand()
-	/*clockConfig := &ClockConfig{
-		Time: argOneof.Time,
-		CycleNum: argOneof.CycleNum,
-		CycleDuration: argOneof.CycleDuration,
-		CycleInterval: argOneof.CycleInterval,
-	}*/
+	
 	clockInfo := clock.ClockInfo{
 		Time: argOneof.Time,
+		SupplyType: 2,
 		StatusType: 0, // OK
 		Meta: "",
 	}
 	
-	nm := "setClock respnse by ped-area-provider"
+	nm := "setClock respnse by log-provider"
 	js := ""
 	opts := &sxutil.SupplyOpts{
 		Target: dm.GetId(),
@@ -72,6 +76,48 @@ func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 
 	simutil.SendProposeSupply(sclientClock, opts, spMap, idlist)
 }
+
+func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("forwardClock")
+	nm := "forwardClock respnse by log-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		Name: nm, 
+		JSON: js, 
+	}
+	
+	spMap, idlist = simutil.SendProposeSupply(sclientClock, opts, spMap, idlist)
+}
+
+func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("setArea")
+		
+	nm := "setArea respnse by log-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		Name: nm, 
+		JSON: js, 
+	}
+	
+	spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)
+}
+
+func setAgent(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("setAgent")
+		
+	nm := "setAgent respnse by log-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		Name: nm, 
+		JSON: js, 
+	}
+	
+	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts, spMap, idlist)
+}
+
 
 
 func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
@@ -89,7 +135,7 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
 		Meta: "",
 	}
 	
-	nm := "getParticipant respnse by ped-area-provider"
+	nm := "getParticipant respnse by log-provider"
 	js := ""
 	opts := &sxutil.SupplyOpts{
 		Target: dm.GetId(), 
@@ -107,6 +153,9 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	switch demandType{
 		case "GET_PARTICIPANT": getParticipant(clt, dm)
 		case "SET_CLOCK": setClock(clt, dm)
+		case "FORWARD_CLOCK": forwardClock(clt, dm)
+		case "SET_AREA": setArea(clt, dm)
+		case "SET_AGENT": setAgent(clt, dm)
 		//case "SET_CLOCK_OK": setClockOK(clt, dm)
 		//case "START_CLOCK": startClock(clt, dm)
 		//case "FORWARD_CLOCK_OK": forwardClockOK(clt, dm)
@@ -114,12 +163,72 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	}
 }
 
-func subscribeDemand(client *sxutil.SMServiceClient) {
-	//called as goroutine
-	ctx := context.Background() // should check proper context
-	client.SubscribeDemand(ctx, demandCallback)
-	// comes here if channel closed
-	log.Printf("SMarket Server Closed?")
+func registArea(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	spArgOneof := sp.GetArg_AreaInfo()
+	areaInfo := spArgOneof
+	time := areaInfo.Time
+	
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Time: ", time)
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Desc: ", sp.SupplyName)
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Info: ", areaInfo)
+}
+
+func registClock(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	spArgOneof := sp.GetArg_ClockInfo()
+	clockInfo := spArgOneof
+	time := clockInfo.Time
+	
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Time: ", time)
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Desc: ", sp.SupplyName)
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Info: ", clockInfo)
+}
+
+func registAgent(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	spArgOneof := sp.GetArg_AgentInfo()
+	agentInfo := spArgOneof
+	time := agentInfo.Time
+	
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Time: ", time)
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Desc: ", sp.SupplyName)
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Info: ", agentInfo)
+}
+
+func registAgents(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	spArgOneof := sp.GetArg_AgentsInfo()
+	agentsInfo := spArgOneof
+
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Desc: ", sp.SupplyName)
+	fmt.Printf("\x1b[30m\x1b[47m%s %v\x1b[0m\n", "Info: ", agentsInfo)
+}
+
+// callback for each Supply
+func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
+	fmt.Sprintf("getSupplyCallback, Regist supply data now")
+	//if clt.IsSupplyTarget(sp, idlist) { 
+		supplyType := simutil.CheckSupplyArgOneOf(sp)
+//		fmt.Printf("supplyType %v", supplyType)
+		switch supplyType{
+			case "RES_SET_AREA":
+				fmt.Println("registArea\n")
+				registArea(clt, sp)
+			case "RES_SET_CLOCK":
+				registClock(clt, sp)
+				fmt.Println("registClock")
+			case "RES_SET_AGENT":
+				registAgent(clt, sp)
+				fmt.Println("registAgent")
+			case "RES_SET_AGENTS":
+				registAgents(clt, sp)
+				fmt.Println("registAgents")
+			case "RES_FORWARD_CLOCK":
+				registClock(clt, sp)
+				fmt.Println("registFowardClock")
+			default:
+				fmt.Println("SupplyCallback SupplyType is invalid")
+		}
+	//}else{
+	//	fmt.Println("this is not propose supply")
+	//}
 }
 
 func main() {
@@ -149,12 +258,17 @@ func main() {
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
-	go subscribeDemand(sclientAgent)
-	go subscribeDemand(sclientClock)
-	go subscribeDemand(sclientArea)
-	go subscribeDemand(sclientParticipant)
 
-	
+	go simutil.SubscribeDemand(sclientAgent, demandCallback)
+	go simutil.SubscribeDemand(sclientClock, demandCallback)
+	go simutil.SubscribeDemand(sclientArea, demandCallback)
+	go simutil.SubscribeDemand(sclientParticipant, demandCallback)
+
+	go simutil.SubscribeSupply(sclientAgent, supplyCallback)
+	go simutil.SubscribeSupply(sclientClock, supplyCallback)
+	go simutil.SubscribeSupply(sclientArea, supplyCallback)
+	go simutil.SubscribeSupply(sclientParticipant, supplyCallback)
+
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
 

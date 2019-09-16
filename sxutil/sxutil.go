@@ -213,25 +213,6 @@ func (clt SMServiceClient) getChannel() *api.Channel {
 	return &api.Channel{ClientId: uint64(clt.ClientID), Type: clt.MType, ArgJson: clt.ArgJson}
 }
 
-/*// IsFinishSync is a helper function to check if synchronization finish or not 
-func (clt *SMServiceClient) IsFinishSync(pspMap map[uint64]*api.Supply, idlist []uint64) bool {
-	for _, id := range idlist {
-		isMatch := false
-		for _, sp := range pspMap {
-			senderId := sp.SenderId
-			if id == senderId{
-				log.Printf("match! %v %v",id, senderId)
-				isMatch = true
-			}
-		}
-		if isMatch == false {
-			log.Printf("false")
-			return false
-		} 
-	}
-	return true
-}*/
-
 // IsSupplyTarget is a helper function to check target
 func (clt *SMServiceClient) IsSupplyTarget(sp *api.Supply, idlist []uint64) bool {
 	spid := sp.TargetId
@@ -265,6 +246,7 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 		SupplyName: spo.Name,
 		ArgJson:    spo.JSON,
 	}
+//	log.Printf("spo Target %v", sp)
 
 	switch clt.MType {
 	case api.ChannelType_PARTICIPANT_SERVICE:
@@ -405,7 +387,7 @@ func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMSe
 			}
 			break
 		}
-		log.Println("Receive SS:", sp)
+//		log.Println("Receive SS:", sp)
 		// call Callback!
 		spcb(clt, sp)
 	}
@@ -431,7 +413,7 @@ func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMSe
 			}
 			break
 		}
-		log.Println("Receive SD:",*dm)
+//		log.Println("Receive SD:",*dm)
 		// call Callback!
 		dmcb(clt, dm)
 	}
@@ -462,7 +444,7 @@ func (clt *SMServiceClient) SubscribeMbus(ctx context.Context, mbcb func(*SMServ
 			}
 			break
 		}
-		log.Printf("Receive Mbus Message %v", *mes)
+//		log.Printf("Receive Mbus Message %v", *mes)
 		// call Callback!
 		mbcb(clt, mes)
 	}
@@ -517,59 +499,23 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 			log.Printf("ParticipantDemand is nil")
 		}
 	case api.ChannelType_CLOCK_SERVICE:
-//		if spo.ClockInfo != nil {
-//			sp.WithClockInfo(spo.ClockInfo)
-//		}else{
-//			log.Printf("ClockInfo is nil")
-//		}
 		if dmo.ClockDemand != nil {
 			dm.WithClockDemand(dmo.ClockDemand)
 		}else{
 			log.Printf("ClockDemand is nil")
 		}
 	case api.ChannelType_AREA_SERVICE:
-//		if spo.AreaInfo != nil {
-//			sp.WithAreaInfo(spo.AreaInfo)
-//		}else{
-//			log.Printf("AreaInfo is nil")
-//		}
 		if dmo.AreaDemand != nil {
 			dm.WithAreaDemand(dmo.AreaDemand)
 		}else{
 			log.Printf("AreaDemand is nil")
 		}
 	case api.ChannelType_AGENT_SERVICE:
-//		if spo.AgentInfo != nil {
-//			sp.WithAgentInfo(spo.AgentInfo)
-//		}else{
-//			log.Printf("AgentInfo is nil")
-//		} 
-//		if spo.AgentsInfo != nil {
-//			sp.WithAgentsInfo(spo.AgentsInfo)
-//		}else{
-//			log.Printf("AgentsInfo is nil")
-//		} 
 		if dmo.AgentDemand != nil {
 			dm.WithAgentDemand(dmo.AgentDemand)
 		}else{
 			log.Printf("AgentDemand is nil")
 		} 
-	
-	/*case api.ChannelType_RIDE_SHARE:
-		sp := api.Supply_Arg_Fleet{
-			smo.Fleet,
-		}
-		dm.ArgOneof = &sp
-	case api.ChannelType_PT_SERVICE:
-		sp := api.Supply_Arg_PTService{
-			smo.PTService,
-		}
-		dm.ArgOneof = &sp
-	case api.ChannelType_ROUTING_SERVICE:
-		sp := api.Supply_Arg_RoutingService{
-			smo.RoutingService,
-		}
-		dm.ArgOneof = &sp*/
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
