@@ -57,15 +57,16 @@ message AgentDemand {
 
 message AgentsDemand {
     // demand info
-    uint32 area_id = 1;
-    AgentType agent_type = 2;
+    uint32 time = 1;
+    uint32 area_id = 2;
+    AgentType agent_type = 3;
         
     // demand info
-    DemandType demand_type = 3;
+    DemandType demand_type = 4;
 
     // meta data
-    StatusType status_type = 4;
-	string meta = 5;
+    StatusType status_type = 5;
+	string meta = 6;
 }
 
 message Route {
