@@ -134,6 +134,7 @@ func setAgent(clt *sxutil.SMServiceClient, dm *pb.Demand){
 func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("getArea")
 	argOneof := dm.GetArg_AreaDemand()
+	log.Printf("demand: ", argOneof)
 	if(AreaData[argOneof.AreaId] != nil){
 		areaData := AreaData[argOneof.AreaId]
 		mapInfo := area.Map{
@@ -150,7 +151,7 @@ func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 		areaInfo := &area.AreaInfo{
 			Time: argOneof.Time,
 			AreaId: argOneof.AreaId, // A
-			AreaName: "A",
+			AreaName: "AorB",
 			Map: &mapInfo,
 			SupplyType: 1, // RES_GET
 			StatusType: 0, // OK

@@ -239,8 +239,8 @@ func setAgent(){
 	}else{
 		route := agent.Route{
 			Coord: &agent.Route_Coord{
-				Lat: float32(0),
-				Lon: float32(0), 
+				Lat: float32(10),
+				Lon: float32(10), 
 			},
 			Direction: float32(0),
 			Speed: float32(10),
@@ -405,7 +405,6 @@ func callbackForGetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply){
 			log.Printf("This is not propose supply \n")
 		}
 		mu.Unlock()
-		log.Println("finish participant")
 	}
 }
 

@@ -23,7 +23,8 @@ import (
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	areaId    = flag.Int("areaId", 1, "Area Id")
+	areaId    = flag.Int("areaId", 1, "Area Id")	// Area B
+	agentType    = flag.Int("agentType", 0, "Agent Type")	// PEDESTRIAN
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
 	spMap		map[uint64]*sxutil.SupplyOpts
@@ -61,7 +62,7 @@ func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 
 	areaDemand := area.AreaDemand{
 		Time: dmArgOneof.Time,
-		AreaId: dmArgOneof.AreaId, // A
+		AreaId: uint32(*areaId), // 
 		DemandType: 1, // GET
 		StatusType: 2, // NONE
 		Meta: "",
@@ -72,34 +73,66 @@ func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	opts := &sxutil.DemandOpts{Name: nm, JSON: js, AreaDemand: &areaDemand}
 	dmMap, idlist = simutil.SendDemand(sclientArea, opts, dmMap, idlist)
 
-	sp := <- ch
-	log.Println("getArea response")
-	spArgOneof := sp.GetArg_AreaInfo()
-
-	areaInfo := &area.AreaInfo{
-		Time: spArgOneof.Time,
-		AreaId: spArgOneof.AreaId, // A
-		AreaName: spArgOneof.AreaName,
-		Map: spArgOneof.Map,
-		SupplyType: 0, // RES_SET
-		StatusType: 0, // OK
-		Meta: "",
-	}
-
-	// store AreaInfo data
-	data.AreaInfo = areaInfo
-	log.Printf("data.AreaInfo %v\n\n", data)
+	callback := func(sp *pb.Supply){
+		log.Println("getArea response")
+		spArgOneof := sp.GetArg_AreaInfo()
+		areaInfo := &area.AreaInfo{
+			Time: spArgOneof.Time,
+			AreaId: spArgOneof.AreaId, // A
+			AreaName: spArgOneof.AreaName,
+			Map: spArgOneof.Map,
+			SupplyType: 0, // RES_SET
+			StatusType: 0, // OK
+			Meta: "",
+		}
+		// store AreaInfo data
+		data.AreaInfo = areaInfo
+		log.Printf("data.AreaInfo %v\n\n", data)
 	
-	nm2 := "setArea respnse by ped-area-provider"
-	js2 := ""
-	opts2 := &sxutil.SupplyOpts{
-		Target: dm.GetId(),
-		Name: nm2, 
-		JSON: js2, 
-		AreaInfo: areaInfo,
+		nm2 := "setArea respnse by ped-area-provider"
+		js2 := ""
+		opts2 := &sxutil.SupplyOpts{
+			Target: dm.GetId(),
+			Name: nm2, 
+			JSON: js2, 
+			AreaInfo: areaInfo,
+		}
+
+		spMap, idlist = simutil.SendProposeSupply(sclientArea, opts2, spMap, idlist)
 	}
 
-	spMap, idlist = simutil.SendProposeSupply(sclientArea, opts2, spMap, idlist)
+	go func(){		
+		for {
+			select {
+				case sp := <- ch:
+					log.Printf("getArea response: ", sp.GetArg_AreaInfo())
+					spArgOneof := sp.GetArg_AreaInfo()
+					if spArgOneof.AreaId == uint32(*areaId){
+						callback(sp)
+						return
+				}
+			}
+		}
+
+		}()
+	
+}
+
+// if agent type and coord satisfy, return true
+func isAgentInArea(agentInfo *agent.AgentInfo) bool{
+	lat := agentInfo.Route.Coord.Lat
+	lon := agentInfo.Route.Coord.Lon
+	slat := data.AreaInfo.Map.Coord.StartLat
+	elat := data.AreaInfo.Map.Coord.EndLat
+	slon := data.AreaInfo.Map.Coord.StartLon
+	elon := data.AreaInfo.Map.Coord.EndLon
+	log.Printf("isAgentInArea %v %v %v %v %v %v: %v %v %v\n\n", lat, lon, slat, slon, elat, elon, agentInfo.AgentType.String(), agent.AgentType_name[int32(*agentType)], agentInfo.AgentType.String() == agent.AgentType_name[int32(*agentType)])
+	if agentInfo.AgentType.String() == agent.AgentType_name[int32(*agentType)] && slat <= lat && lat <= elat &&  slon <= lon && lon <= elon {
+		return true
+	}else{
+		log.Printf("agent type and coord is not match...\n\n")
+		return false
+	}
 }
 
 func setAgent(clt *sxutil.SMServiceClient, dm *pb.Demand){
@@ -119,8 +152,10 @@ func setAgent(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	}
 
 	// store AgentInfo data
-	data.AgentsInfo = append(data.AgentsInfo, agentInfo)
-	log.Printf("data.AgentInfo %v\n\n", data)
+	if isAgentInArea(agentInfo){
+		data.AgentsInfo = append(data.AgentsInfo, agentInfo)
+		log.Printf("data.AgentInfo %v\n\n", data)
+	}
 		
 	nm := "setAgent respnse by ped-area-provider"
 	js := ""
@@ -163,8 +198,9 @@ func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	spMap, idlist = simutil.SendProposeSupply(sclientClock, opts, spMap, idlist)
 }
 
-func calcNextRoute(areaInfo *area.AreaInfo, route *agent.Route) *agent.Route{
+func calcNextRoute(areaInfo *area.AreaInfo, agentInfo *agent.AgentInfo, otherAgentsInfo *agent.AgentsInfo) *agent.Route{
 
+	route := agentInfo.Route
 	nextCoord := &agent.Route_Coord{
 		Lat: float32(float64(route.Coord.Lat) + float64(route.Speed) * 1 * math.Cos(float64(route.Direction))),
 		Lon: float32(float64(route.Coord.Lon) + float64(route.Speed) * 1 * math.Sin(float64(route.Direction))), 
@@ -185,6 +221,7 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	dmArgOneof := dm.GetArg_ClockDemand()
 	time := dmArgOneof.Time
 	nextTime := time + 1
+
 	// get area
 	areaDemand := area.AreaDemand{
 		Time: time,
@@ -207,22 +244,51 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("getArea response")
 	spArgOneof := sp.GetArg_AreaInfo()
 
-	areaInfo := &area.AreaInfo{
+
+	// get Agent
+//	agentsDemand := &agent.AgentsDemand{
+//		Time: uint32(1),
+//		AreaId: 1,
+//		AgentType: 0,
+//		DemandType: 1, // GET
+//		StatusType: 2, // NONE
+//		Meta: "",
+//	}
+//		
+//	nm := "getAgents order by ped-area-provider"
+//	js := ""
+//	opts := &sxutil.DemandOpts{
+//		Name: nm, 
+//		JSON: js, 
+//		AreaDemand: agentsDemand,
+//	}
+//	dmMap, idlist = simutil.SendDemand(sclientAgent, opts, dmMap, idlist)
+//
+//	spAgent := <- ch
+//	log.Println("getAgents response")
+//	spAgentsArgOneof := sp.GetArg_AgentsInfo()
+
+
+	/*areaInfo := &area.AreaInfo{
 		Time: spArgOneof.Time,
-		AreaId: spArgOneof.AreaId, // A
+		AgentId: spArgOneof.AreaId, // A
 		AreaName: spArgOneof.AreaName,
 		Map: spArgOneof.Map,
 		SupplyType: 0, // RES_GET
 		StatusType: 0, // OK
 		Meta: "",
-	}
+	}*/
+
 	// calc agent
 	agentsInfo := data.AgentsInfo
+//	otherAgentsInfo := spAgentArgOneof
+	otherAgentsInfo := &agent.AgentsInfo{}
+	areaInfo := spArgOneof
 	data.AgentsInfo = make([]*agent.AgentInfo, 0)
 	for k, agentInfo := range agentsInfo{
 		// calc next agentInfo
-		route := agentInfo.Route
-		nextRoute := calcNextRoute(areaInfo, route)
+//		route := agentInfo.Route
+		nextRoute := calcNextRoute(areaInfo, agentInfo, otherAgentsInfo)
 
 		nextAgentInfo := &agent.AgentInfo{
 			Time: nextTime,
@@ -355,7 +421,7 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 
 func main() {
 	flag.Parse()
-	log.Printf("area id is: %v",*areaId)
+	log.Printf("area id is: %v, agent type is %v",*areaId, *agentType)
 
 	sxutil.RegisterNodeName(*nodesrv, "PedAreaProvider", false)
 
