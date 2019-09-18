@@ -26,15 +26,16 @@ message AgentInfo {
 message AgentsInfo {
     // agents info
     uint32 time = 1;
-    AgentType agent_type = 2;
-    repeated AgentInfo agent_info = 3;
+    uint32 area_id = 2;
+    AgentType agent_type = 3;
+    repeated AgentInfo agent_info = 4;
 
     // supply type
-    SupplyType supply_type = 4;
+    SupplyType supply_type = 5;
         
     // meta data
-    StatusType status_type = 5;
-	string meta = 6;
+    StatusType status_type = 6;
+	string meta = 7;
 }
 
 message AgentDemand {
