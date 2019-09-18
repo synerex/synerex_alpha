@@ -58,6 +58,7 @@ type DemandOpts struct {
 	//AgentInfo *agent.AgentInfo
 	//AgentsInfo *agent.AgentsInfo
 	AgentDemand *agent.AgentDemand
+	AgentsDemand *agent.AgentsDemand
 	ParticipantDemand *participant.ParticipantDemand
 }
 
@@ -513,6 +514,8 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 	case api.ChannelType_AGENT_SERVICE:
 		if dmo.AgentDemand != nil {
 			dm.WithAgentDemand(dmo.AgentDemand)
+		}else if dmo.AgentsDemand != nil {
+			dm.WithAgentsDemand(dmo.AgentsDemand)
 		}else{
 			log.Printf("AgentDemand is nil")
 		} 

@@ -109,9 +109,11 @@ func (dm *Demand) WithParticipantDemand(a *participant.ParticipantDemand) *Deman
 	return dm
 }
 
-
-
-
+// WithAgentsDemand set a given AgentsDemand to Demand.Demand_Arg_AgentsDemand.Arg_AgentsDemand.
+func (dm *Demand) WithAgentsDemand(a *agent.AgentsDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_AgentsDemand{a}
+	return dm
+}
 // WithAgentDemand set a given AgentDemand to Demand.Demand_Arg_AgentDemand.Arg_AgentDemand.
 func (dm *Demand) WithAgentDemand(a *agent.AgentDemand) *Demand {
 	dm.ArgOneof = &Demand_Arg_AgentDemand{a}

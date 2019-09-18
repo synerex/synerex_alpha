@@ -124,7 +124,6 @@ func isAgentInArea(agentInfo *agent.AgentInfo) bool{
 	elat := data.AreaInfo.Map.Coord.EndLat
 	slon := data.AreaInfo.Map.Coord.StartLon
 	elon := data.AreaInfo.Map.Coord.EndLon
-	log.Printf("isAgentInArea %v %v %v %v %v %v: %v %v %v\n\n", lat, lon, slat, slon, elat, elon, agentInfo.AgentType.String(), agent.AgentType_name[int32(*agentType)], agentInfo.AgentType.String() == agent.AgentType_name[int32(*agentType)])
 	if agentInfo.AgentType.String() == agent.AgentType_name[int32(*agentType)] && slat <= lat && lat <= elat &&  slon <= lon && lon <= elon {
 		return true
 	}else{
@@ -289,6 +288,7 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	// propose agentInfo
 	nextAgentsInfo := &agent.AgentsInfo{
 		Time: nextTime,
+		AreaId: uint32(*areaId),
 		AgentType: 0,
 		AgentInfo: data.AgentsInfo,
 		SupplyType: 0, // RES_SET
@@ -353,6 +353,32 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	spMap, idlist = simutil.SendProposeSupply(sclientParticipant, opts, spMap, idlist)
 }
 
+func getAgents(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("getAgents")
+	dmArgOneof := dm.GetArg_AgentsDemand()
+
+	agentsInfo := &agent.AgentsInfo{
+		Time: dmArgOneof.Time,
+		AreaId: dmArgOneof.AreaId,
+		AgentType: dmArgOneof.AgentType,
+		AgentInfo: data.AgentsInfo,
+		SupplyType: 1,
+		StatusType: 0,
+		Meta: "",
+	}
+		
+	nm := "getAgent respnse by ped-area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		Name: nm, 
+		JSON: js, 
+		AgentsInfo: agentsInfo,
+	}
+	
+	spMap, idlist = simutil.SendSupply(sclientAgent, opts, spMap, idlist)
+}
+
 // callback for each Supply
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	demandType := simutil.CheckDemandArgOneOf(dm)
@@ -362,9 +388,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		case "FORWARD_CLOCK": forwardClock(clt, dm)
 		case "SET_AREA": setArea(clt, dm)
 		case "SET_AGENT": setAgent(clt, dm)
-		//case "SET_CLOCK_OK": setClockOK(clt, dm)
-		//case "START_CLOCK": startClock(clt, dm)
-		//case "FORWARD_CLOCK_OK": forwardClockOK(clt, dm)
+		case "GET_AGENTS": getAgents(clt, dm)
 		default: log.Println("demand callback is invalid.")
 	}
 }

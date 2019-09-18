@@ -95,6 +95,12 @@ func CheckDemandArgOneOf(dm *pb.Demand) string {
 		switch(argOneof.DemandType.String()){
 			case "SET": return "SET_AGENT"
 		}
+	}
+	if(dm.GetArg_AgentsDemand() != nil){
+		argOneof := dm.GetArg_AgentsDemand()
+		switch(argOneof.DemandType.String()){
+			case "GET": return "GET_AGENTS"
+		}
     }
 	if(dm.GetArg_ParticipantDemand() != nil){
 		argOneof := dm.GetArg_ParticipantDemand()
