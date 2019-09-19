@@ -234,7 +234,7 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 func main() {
 	flag.Parse()
 
-	sxutil.RegisterNodeName(*nodesrv, "AreaProvider", false)
+	sxutil.RegisterNodeName(*nodesrv, "LogProvider", false)
 
 	go sxutil.HandleSigInt()
 	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
@@ -249,7 +249,7 @@ func main() {
 	sxutil.RegisterDeferFunction(func() { conn.Close() })
 
 	client := pb.NewSynerexClient(conn)
-	argJson := fmt.Sprintf("{Client:Area}")
+	argJson := fmt.Sprintf("{Client:Log}")
 	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
 	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
 	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)

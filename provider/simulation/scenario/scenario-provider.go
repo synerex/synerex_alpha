@@ -322,7 +322,7 @@ func callbackForStartClock(clt *sxutil.SMServiceClient, sp *pb.Supply){
 		
 		callback := func (){
 			fmt.Printf("Callback StartClock! move next clock")
-			time.Sleep(5* time.Second)
+			time.Sleep(3* time.Second)
 			if isStop == false{
 				startClock()
 			}else{
