@@ -481,10 +481,10 @@ func main() {
 		c.Emit("setCh", "Scenario")
 	})
 
-	sioClient.On("scenario", func(c *gosocketio.Channel, order string) {
-		fmt.Printf("get order is: %s\n", order)
-		Order = order
-		switch order {
+	sioClient.On("scenario", func(c *gosocketio.Channel, test *simutil.Test) {
+		fmt.Printf("get order is: %v\n", test)
+		Order = test.Order
+		switch Order {
 		case "GetParticipant":
 			getParticipant()
 			fmt.Println("getParticipant")

@@ -28,6 +28,11 @@ type IdListByChannel struct {
 	AreaIdList    []uint64
 }
 
+type Test struct{
+	Order string 
+	Meta string
+}
+
 func CreateIdListByChannel(pspMap map[uint64]*pb.Supply) *IdListByChannel {
     participantIdList := make([]uint64, 0)
     clockIdList := make([]uint64, 0)

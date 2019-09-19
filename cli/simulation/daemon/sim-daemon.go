@@ -51,6 +51,11 @@ type SubCommands struct {
 	RunFunc     func()
 }
 
+type Test struct{
+	Order string 
+	Meta string
+}
+
 var cmdArray []SubCommands
 
 func init() {
@@ -846,12 +851,17 @@ func (sesrv *SynerexService) run() error {
 		return handleRun(nid)
 	})
 
-	server.On("order", func(c *gosocketio.Channel, param interface{}) string {
-		nid := param.(string)
+	server.On("order", func(c *gosocketio.Channel, test *Test) string {
+		nid := test.Order
 		//		fmt.Printf("Get Run Command %s\n", nid)
 		logger.Infof("order from %s as %s", c.IP(), c.Id())
-		logger.Infof("Get order command %s", nid)
-		sioCh.Scenario.Emit("scenario", nid)
+		logger.Infof("Get order command %s %v", nid, test)
+		/*type test struct{
+			Order string 
+			Meta string
+		}*/
+		//test :=  map[string]string{"Order": nid, "Meta": "test"}
+		sioCh.Scenario.Emit("scenario", &Test{Order: nid, Meta: "test"})
 		return handleOrder(nid)
 	})
 
