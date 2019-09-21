@@ -1,6 +1,6 @@
 
 import sys
-sys.path.append('..')
+sys.path.append('../..')
 
 import grpc
 import json, os
