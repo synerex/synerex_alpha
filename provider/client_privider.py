@@ -11,10 +11,10 @@ import sys
 from api import synerex_pb2, synerex_pb2_grpc
 from nodeapi import nodeid_pb2, nodeid_pb2_grpc
 
-NODE_URL = os.getenv('NODE_URL', 'onemile.synergic.mobi')
+NODE_URL = os.getenv('NODE_URL', '127.0.0.1')
 NODE_PORT = os.getenv('NODE_PORT', 9990)
 
-SYNEREX_URL = os.getenv('SYNEREX_URL', 'onemile.synergic.mobi')
+SYNEREX_URL = os.getenv('SYNEREX_URL', '127.0.0.1')
 SYNEREX_PORT = os.getenv('SYNEREX_PORT', 10000)
 
 
@@ -36,9 +36,9 @@ class NodeClient():
         nodeinfo = nodeid_pb2.NodeInfo()
 
         if 'runserver' in sys.argv:
-            self.node_name = "kotacivic-provider-test"
+            self.node_name = "test-provider"
         else:
-            self.node_name = "kotacivic-provider-test"
+            self.node_name = "test-provider"
 
         nodeinfo.node_name = self.node_name
 
@@ -94,7 +94,7 @@ class SynerexClient():
 
         self.channel = grpc.insecure_channel('%s:%d' % (url, port))
         self.stub = synerex_pb2_grpc.SynerexStub(self.channel)
-        threading.Thread(target=self.__subscribe_supply).start()
+        #threading.Thread(target=self.__subscribe_supply).start()
         print("Connected to Synerex Server.")
         self._machine_id = self.nodeclient.node_id
         self._epoch = 0
@@ -126,7 +126,7 @@ class SynerexClient():
         return int(ts + nodeid + i, 2)
 
 
-    def register_demand(self, user, *args):
+    def register_demand(self, *args):
         import time
 
         synerex_demand = synerex_pb2.Demand()
@@ -146,7 +146,7 @@ class SynerexClient():
             "ok": response.ok
         }
 
-        print("register_demand to sx:", smarket_demand)
+        print("register_demand to sx:", synerex_demand)
 
         return result
 
@@ -155,12 +155,10 @@ class SynerexClient():
 
 
 if __name__ == "__main__":
+    # connect synerex and nodeid 
 	sclient = SynerexClient()
-	# Regist To Node
 
-	# Regist To Synerex
-
-	# SendDemand
+	# send demand
 	sclient.register_demand()
 
-	time.Sleep(5)
+	time.sleep(5)

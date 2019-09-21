@@ -16,13 +16,13 @@ _sym_db = _symbol_database.Default()
 
 from google.protobuf import timestamp_pb2 as google_dot_protobuf_dot_timestamp__pb2
 from google.protobuf import duration_pb2 as google_dot_protobuf_dot_duration__pb2
-from fleet import fleet_pb2 as fleet_dot_fleet__pb2
-from rideshare import rideshare_pb2 as rideshare_dot_rideshare__pb2
-from adservice import adservice_pb2 as adservice_dot_adservice__pb2
-from library import library_pb2 as library_dot_library__pb2
-from ptransit import ptransit_pb2 as ptransit_dot_ptransit__pb2
-from routing import routing_pb2 as routing_dot_routing__pb2
-from marketing import marketing_pb2 as marketing_dot_marketing__pb2
+from api.fleet import fleet_pb2 as fleet_dot_fleet__pb2
+from api.rideshare import rideshare_pb2 as rideshare_dot_rideshare__pb2
+from api.adservice import adservice_pb2 as adservice_dot_adservice__pb2
+from api.library import library_pb2 as library_dot_library__pb2
+from api.ptransit import ptransit_pb2 as ptransit_dot_ptransit__pb2
+from api.routing import routing_pb2 as routing_dot_routing__pb2
+from api.marketing import marketing_pb2 as marketing_dot_marketing__pb2
 
 
 DESCRIPTOR = _descriptor.FileDescriptor(
