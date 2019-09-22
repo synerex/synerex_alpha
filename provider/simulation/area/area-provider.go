@@ -41,7 +41,7 @@ func init() {
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 	selection = false
 	AreaData = map[uint32]map[string]float32{
-		uint32(0): map[string]float32{"sLon": float32(0), "eLon":float32(100), "sLat": float32(0), "eLat": float32(100)}, 	// A
+		uint32(0): map[string]float32{"sLon": float32(0), "eLon":float32(200), "sLat": float32(0), "eLat": float32(100)}, 	// A
 		uint32(1): map[string]float32{"sLon": float32(50), "eLon":float32(150), "sLat": float32(0), "eLat": float32(100)},  // B
 	}
 	data = new(Data)

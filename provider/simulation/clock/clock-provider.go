@@ -170,7 +170,6 @@ func sendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts) {
 	idlist = append(idlist, id) // my demand list
 	dmMap[id] = opts            // my demand options
 	mu.Unlock()
-	log.Printf("Register my demand as id %v, %v",id,idlist)
 }
 
 func main() {

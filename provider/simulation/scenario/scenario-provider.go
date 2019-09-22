@@ -25,6 +25,8 @@ import (
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
+	port       = flag.Int("port", 10080, "HarmoVis Provider Listening Port")
+	version    = "0.01"
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
 	spMap		map[uint64]*pb.Supply
@@ -83,6 +85,32 @@ type MapMarker struct {
 	speed int32   `json:"speed"`
 }
 
+// assetsFileHandler for static Data
+func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		return
+	}
+
+	file := r.URL.Path
+	//	log.Printf("Open File '%s'",file)
+	if file == "/" {
+		file = "/index.html"
+	}
+	f, err := assetsDir.Open(file)
+	if err != nil {
+		log.Printf("can't open file %s: %v\n", file, err)
+		return
+	}
+	defer f.Close()
+
+	fi, err := f.Stat()
+	if err != nil {
+		log.Printf("can't open file %s: %v\n", file, err)
+		return
+	}
+	http.ServeContent(w, r, file, fi.ModTime(), f)
+}
+
 
 func syncProposeSupply(sp *pb.Supply, idList []uint64, callback func(pspMap map[uint64]*pb.Supply)){
 	go func() { 
@@ -100,7 +128,7 @@ func syncProposeSupply(sp *pb.Supply, idList []uint64, callback func(pspMap map[
 				case psp := <- ch:
 					log.Println("recieve ProposeSupply")
 					pspMap[psp.SenderId] = psp
-					log.Printf("waitidList %v %v", pspMap, idList)
+//					log.Printf("waitidList %v %v", pspMap, idList)
 			
 				if simutil.IsFinishSync(pspMap, idList){
 					fmt.Printf("Finish Sync\n")
@@ -228,11 +256,11 @@ func setAgent(){
 	}else{
 		route := agent.Route{
 			Coord: &agent.Route_Coord{
-				Lat: float32(10),
-				Lon: float32(10), 
+				Lat: float32(35.170915),
+				Lon: float32(136.881537), 
 			},
 			Direction: float32(0),
-			Speed: float32(10),
+			Speed: float32(0.0001),
 			Destination: float32(10),
 			Departure: float32(100),
 		}
@@ -288,8 +316,8 @@ func (m *MapMarker) GetJson() string {
 
 func sendToSimulator(psp *pb.Supply){
 	agentsInfo := psp.GetArg_AgentsInfo()
-	log.Printf("agentsInfo is: %v ", agentsInfo )
 	if agentsInfo != nil{
+		fmt.Printf("\x1b[30m\x1b[47m agentsInfo is : %v\x1b[0m\n", agentsInfo)
 		for _, agentInfo := range agentsInfo.AgentInfo{
 			mm := &MapMarker{
 				mtype: int32(agentInfo.AgentType), // depends on type of GTFS: 1 for Subway, 2, for Rail, 3 for bus
@@ -329,7 +357,7 @@ func callbackForStartClock(clt *sxutil.SMServiceClient, sp *pb.Supply){
 			
 
 			fmt.Printf("Callback StartClock! move next clock")
-			time.Sleep(3* time.Second)
+			time.Sleep(1* time.Second)
 			if isStop == false{
 				startClock()
 			}else{
@@ -353,8 +381,8 @@ func callbackForSetAgent(clt *sxutil.SMServiceClient, sp *pb.Supply){
 	log.Println("Got for set_agent callback")
 	if clt.IsSupplyTarget(sp, idlist) { 
 
-		opts :=	dmMap[sp.TargetId]
-		log.Printf("Got Supply for %v as '%v'",opts, sp )
+//		opts :=	dmMap[sp.TargetId]
+//		log.Printf("Got Supply for %v as '%v'",opts, sp )
 		spMap[sp.SenderId] = sp
 		
 		callback := func (pspMap map[uint64]*pb.Supply){
@@ -373,8 +401,8 @@ func callbackForSetClock(clt *sxutil.SMServiceClient, sp *pb.Supply){
 	log.Println("Got for set_clock callback")
 	if clt.IsSupplyTarget(sp, idlist) { 
 
-		opts :=	dmMap[sp.TargetId]
-		log.Printf("Got Supply for %v as '%v'",opts, sp )
+//		opts :=	dmMap[sp.TargetId]
+//		log.Printf("Got Supply for %v as '%v'",opts, sp )
 		spMap[sp.SenderId] = sp
 		
 		callback := func (pspMap map[uint64]*pb.Supply){
@@ -393,8 +421,8 @@ func callbackForSetArea(clt *sxutil.SMServiceClient, sp *pb.Supply){
 	log.Println("Got for set_area callback")
 	if clt.IsSupplyTarget(sp, idlist) { 
 
-		opts :=	dmMap[sp.TargetId]
-		log.Printf("Got Supply for %v as '%v'",opts, sp )
+//		opts :=	dmMap[sp.TargetId]
+//		log.Printf("Got Supply for %v as '%v'",opts, sp )
 		spMap[sp.SenderId] = sp
 		
 
@@ -440,8 +468,8 @@ func callbackForGetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply){
 		mu.Lock()
 		if clt.IsSupplyTarget(sp, idlist) { 
 
-			opts :=	dmMap[sp.TargetId]
-			log.Printf("Got Supply for %v as '%v'",opts, sp )
+//			opts :=	dmMap[sp.TargetId]
+//			log.Printf("Got Supply for %v as '%v'",opts, sp )
 			spMap[sp.SenderId] = sp
 			pspMap[sp.SenderId] = sp
 
@@ -608,6 +636,17 @@ func main() {
 	go simutil.SubscribeSupply(sclientClock, supplyCallback)
 	go simutil.SubscribeSupply(sclientArea, supplyCallback)
 	go simutil.SubscribeSupply(sclientParticipant, supplyCallback)
+
+	serveMux := http.NewServeMux()
+
+	serveMux.Handle("/socket.io/", ioserv)
+	serveMux.HandleFunc("/", assetsFileHandler)
+
+	log.Printf("Starting Harmoware VIS  Provider %s  on port %d", version, *port)
+	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", *port), serveMux)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!

@@ -24,7 +24,7 @@ import (
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	areaId    = flag.Int("areaId", 1, "Area Id")
+	areaId    = flag.Int("areaId", 0, "Area Id")
 	agentType    = flag.Int("agentType", 1, "Agent Type")	// CAR
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
@@ -203,8 +203,8 @@ func calcNextRoute(areaInfo *area.AreaInfo, route *agent.Route) *agent.Route{
 
 	nextRoute := &agent.Route{
 		Coord: nextCoord,
-		Direction: float32(0),
-		Speed: float32(10),
+		Direction: route.Direction,
+		Speed: route.Speed,
 		Destination: float32(10),
 		Departure: float32(100),
 	}

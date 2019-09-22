@@ -161,7 +161,7 @@ func SendProposeSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts,
 	idlist = append(idlist, id) // my demand list
 	spMap[id] = opts            // my demand options
 	mu.Unlock()
-    log.Printf("Propose my supply as id %v, %v",id,idlist)
+//    log.Printf("Propose my supply as id %v, %v",id,idlist)
     return spMap, idlist
 }
 
@@ -171,7 +171,7 @@ func SendSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap 
 	idlist = append(idlist, id) // my demand list
 	spMap[id] = opts            // my demand options
 	mu.Unlock()
-    log.Printf("Register my supply as id %v, %v",id,idlist)
+//    log.Printf("Register my supply as id %v, %v",id,idlist)
     return spMap, idlist
 }
 
@@ -181,7 +181,6 @@ func SendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts, dmMap 
 	idlist = append(idlist, id) // my demand list
 	dmMap[id] = opts            // my demand options
 	mu.Unlock()
-    log.Printf("Register my demand as id %v, %v",id,idlist)
     return dmMap, idlist
 }
 
