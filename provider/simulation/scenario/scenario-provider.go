@@ -1,30 +1,25 @@
 package main
 
 import (
-	//"context"
 	"flag"
 	"log"
 	"sync"
-	//"math/rand"
-	"runtime"
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"github.com/synerex/synerex_alpha/provider/simulation/simutil"
-	//"github.com/synerex/synerex_alpha/api/fleet"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"google.golang.org/grpc"
 	"time"
-	//s"encoding/json"
 	"fmt"
-	//"reflect"
-	//"os"
-	//"os/exec"
 	"github.com/mtfelian/golang-socketio/transport"
 	"github.com/mtfelian/golang-socketio"
 	"os"
+	"net/http"
+	"path/filepath"
+
 )
 
 var (
@@ -53,6 +48,8 @@ var (
 	sioClient *gosocketio.Client
 	idListByChannel *simutil.IdListByChannel
 	data *Data
+	assetsDir  http.FileSystem
+	ioserv     *gosocketio.Server
 )
 
 func init() {
@@ -77,27 +74,17 @@ type Data struct {
 	ClockInfo *clock.ClockInfo
 }
 
-// this function waits
-func collectParticipantId(clt *sxutil.SMServiceClient, d int){
-
-	for i := 0; i < d; i++{
-		time.Sleep(1 * time.Second)
-		log.Printf("waiting... %v",i+1)
-	}
-
-	mu.Lock()
-	idListByChannel = simutil.CreateIdListByChannel(pspMap)
-	mu.Unlock()
-	log.Printf("finish collecting Id %v", idListByChannel)
-	log.Printf("clock Id %v", idListByChannel.ClockIdList)
-	log.Printf("area Id %v", idListByChannel.AreaIdList)
-	log.Printf("agent Id %v", idListByChannel.AgentIdList)
-	startCollectId = false
-	isGetParticipant = true
-	pspMap = make(map[uint64]*pb.Supply)
+type MapMarker struct {
+	mtype int32   `json:"mtype"`
+	id    int32   `json:"id"`
+	lat   float32 `json:"lat"`
+	lon   float32 `json:"lon"`
+	angle float32 `json:"angle"`
+	speed int32   `json:"speed"`
 }
 
-func syncProposeSupply(sp *pb.Supply, idList []uint64, callback func()){
+
+func syncProposeSupply(sp *pb.Supply, idList []uint64, callback func(pspMap map[uint64]*pb.Supply)){
 	go func() { 
 		log.Println("Send Supply")
 		ch <- sp
@@ -117,11 +104,13 @@ func syncProposeSupply(sp *pb.Supply, idList []uint64, callback func()){
 			
 				if simutil.IsFinishSync(pspMap, idList){
 					fmt.Printf("Finish Sync\n")
-					log.Println(runtime.NumGoroutine())
-					startSync = false
-					pspMap = make(map[uint64]*pb.Supply)
 					// if you need, return response
-					callback()
+					callback(pspMap)
+					
+					// init pspMap
+					pspMap = make(map[uint64]*pb.Supply)
+					startSync = false
+					
 					return
 				}
 			}
@@ -291,24 +280,29 @@ func getParticipant(){
 	dmMap, idlist = simutil.SendDemand(sclientParticipant, opts, dmMap, idlist)
 }
 
+func (m *MapMarker) GetJson() string {
+	s := fmt.Sprintf("{\"mtype\":%d,\"id\":%d,\"lat\":%f,\"lon\":%f,\"angle\":%f,\"speed\":%d}",
+		m.mtype, m.id, m.lat, m.lon, m.angle, m.speed)
+	return s
+}
 
-func callbackForSetAgent(clt *sxutil.SMServiceClient, sp *pb.Supply){
-	log.Println("Got for set_agent callback")
-	if clt.IsSupplyTarget(sp, idlist) { 
-
-		opts :=	dmMap[sp.TargetId]
-		log.Printf("Got Supply for %v as '%v'",opts, sp )
-		spMap[sp.SenderId] = sp
-		
-		callback := func (){
-			fmt.Printf("Callback SetAgent! return OK to Simulation Synerex Engine")
-			isSetAgent = true
+func sendToSimulator(psp *pb.Supply){
+	agentsInfo := psp.GetArg_AgentsInfo()
+	log.Printf("agentsInfo is: %v ", agentsInfo )
+	if agentsInfo != nil{
+		for _, agentInfo := range agentsInfo.AgentInfo{
+			mm := &MapMarker{
+				mtype: int32(agentInfo.AgentType), // depends on type of GTFS: 1 for Subway, 2, for Rail, 3 for bus
+				id:    int32(agentInfo.AgentId),
+				lat:   float32(agentInfo.Route.Coord.Lat),
+				lon:   float32(agentInfo.Route.Coord.Lon),
+				angle: float32(agentInfo.Route.Direction),
+				speed: int32(agentInfo.Route.Speed),
+			}
+			mu.Lock()
+			ioserv.BroadcastToAll("event", mm.GetJson())
+			mu.Unlock()
 		}
-		agentIdList := idListByChannel.AgentIdList
-		syncProposeSupply(sp, agentIdList, callback)	
-
-	}else{
-		log.Printf("This is not propose supply \n")
 	}
 }
 
@@ -316,11 +310,24 @@ func callbackForStartClock(clt *sxutil.SMServiceClient, sp *pb.Supply){
 	log.Println("Got for start_clock callback")
 	if clt.IsSupplyTarget(sp, idlist) { 
 
-		opts :=	dmMap[sp.TargetId]
-		log.Printf("Got Supply for %v as '%v'",opts, sp )
+		//opts :=	dmMap[sp.TargetId]
+//		log.Printf("Got Supply for %v as '%v'",opts, sp )
 		spMap[sp.SenderId] = sp
 		
-		callback := func (){
+		callback := func (pspMap map[uint64]*pb.Supply){
+			fmt.Printf("Callback StartClock! Regist and Send Data to Simulator")
+			for _, psp := range pspMap{
+				supplyType := simutil.CheckSupplyArgOneOf(psp)
+				switch supplyType{
+				case "RES_SET_AGENTS":
+					fmt.Println("registAgents")
+					sendToSimulator(psp)
+				default:
+					fmt.Println("SupplyType is invalid")
+				}
+			}
+			
+
 			fmt.Printf("Callback StartClock! move next clock")
 			time.Sleep(3* time.Second)
 			if isStop == false{
@@ -331,9 +338,31 @@ func callbackForStartClock(clt *sxutil.SMServiceClient, sp *pb.Supply){
 				isStart = false
 			}
 		}
-	
+
 		clockIdList := idListByChannel.ClockIdList
-		syncProposeSupply(sp, clockIdList, callback)
+		agentIdList := idListByChannel.AgentIdList
+		idList := append(clockIdList, agentIdList...)
+		syncProposeSupply(sp, idList, callback)
+
+	}else{
+		log.Printf("This is not propose supply \n")
+	}
+}
+
+func callbackForSetAgent(clt *sxutil.SMServiceClient, sp *pb.Supply){
+	log.Println("Got for set_agent callback")
+	if clt.IsSupplyTarget(sp, idlist) { 
+
+		opts :=	dmMap[sp.TargetId]
+		log.Printf("Got Supply for %v as '%v'",opts, sp )
+		spMap[sp.SenderId] = sp
+		
+		callback := func (pspMap map[uint64]*pb.Supply){
+			fmt.Printf("Callback SetAgent! return OK to Simulation Synerex Engine")
+			isSetAgent = true
+		}
+		agentIdList := idListByChannel.AgentIdList
+		syncProposeSupply(sp, agentIdList, callback)	
 
 	}else{
 		log.Printf("This is not propose supply \n")
@@ -348,7 +377,7 @@ func callbackForSetClock(clt *sxutil.SMServiceClient, sp *pb.Supply){
 		log.Printf("Got Supply for %v as '%v'",opts, sp )
 		spMap[sp.SenderId] = sp
 		
-		callback := func (){
+		callback := func (pspMap map[uint64]*pb.Supply){
 			fmt.Printf("Callback SetClock! return OK to Simulation Synerex Engine")
 			isSetClock = true
 		}
@@ -369,7 +398,7 @@ func callbackForSetArea(clt *sxutil.SMServiceClient, sp *pb.Supply){
 		spMap[sp.SenderId] = sp
 		
 
-		callback := func (){
+		callback := func (pspMap map[uint64]*pb.Supply){
 			fmt.Printf("Callback SetArea! return OK to Simulation Synerex Engine")
 			isSetArea = true
 		}
@@ -380,6 +409,26 @@ func callbackForSetArea(clt *sxutil.SMServiceClient, sp *pb.Supply){
 	}else{
 		log.Printf("This is not propose supply \n")
 	}
+}
+
+
+func collectParticipantId(clt *sxutil.SMServiceClient, d int){
+
+	for i := 0; i < d; i++{
+		time.Sleep(1 * time.Second)
+		log.Printf("waiting... %v",i+1)
+	}
+
+	mu.Lock()
+	idListByChannel = simutil.CreateIdListByChannel(pspMap)
+	mu.Unlock()
+	log.Printf("finish collecting Id %v", idListByChannel)
+	log.Printf("clock Id %v", idListByChannel.ClockIdList)
+	log.Printf("area Id %v", idListByChannel.AreaIdList)
+	log.Printf("agent Id %v", idListByChannel.AgentIdList)
+	startCollectId = false
+	isGetParticipant = true
+	pspMap = make(map[uint64]*pb.Supply)
 }
 
 func callbackForGetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply){
@@ -434,40 +483,33 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	}
 }
 
+func runServer() *gosocketio.Server {
 
-func main() {
-
-	flag.Parse()
-
-	sxutil.RegisterNodeName(*nodesrv, "ScenarioProvider", false)
-
-	go sxutil.HandleSigInt()
-	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
-
-	var opts []grpc.DialOption
-
-	opts = append(opts, grpc.WithInsecure())
-	conn, err := grpc.Dial(*serverAddr, opts...)
+	currentRoot, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("fail to dial: %v", err)
+		log.Fatal(err)
 	}
-	sxutil.RegisterDeferFunction(func() { conn.Close() })
+	d := filepath.Join(currentRoot, "mclient", "build")
 
-	client := pb.NewSynerexClient(conn)
-	argJson := fmt.Sprintf("{Client:Scenario}")
-	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
-	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
-	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
-	sclientParticipant = sxutil.NewSMServiceClient(client, pb.ChannelType_PARTICIPANT_SERVICE,argJson)
+	assetsDir = http.Dir(d)
+	log.Println("AssetDir:", assetsDir)
 
-	wg := sync.WaitGroup{}
+	assetsDir = http.Dir(d)
+	server := gosocketio.NewServer()
 
-	wg.Add(1)
-	go simutil.SubscribeSupply(sclientAgent, supplyCallback)
-	go simutil.SubscribeSupply(sclientClock, supplyCallback)
-	go simutil.SubscribeSupply(sclientArea, supplyCallback)
-	go simutil.SubscribeSupply(sclientParticipant, supplyCallback)
+	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
+		log.Printf("Connected from %s as %s", c.IP(), c.Id())
+		// do something.
+	})
 
+	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
+		log.Printf("Disconnected from %s as %s", c.IP(), c.Id())
+	})
+
+	return server
+}
+
+func runClient() *gosocketio.Client{
 	var sioErr error
 	sioClient, sioErr = gosocketio.Dial("ws://localhost:9995/socket.io/?EIO=3&transport=websocket", transport.DefaultWebsocketTransport())
 	if sioErr != nil {
@@ -512,6 +554,60 @@ func main() {
 	sioClient.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel,param interface{}) {
 		fmt.Println("Go socket.io disconnected ",c)
 	})
+
+	return sioClient
+}
+
+
+
+func main() {
+
+	flag.Parse()
+
+	// connect to node server
+	sxutil.RegisterNodeName(*nodesrv, "ScenarioProvider", false)
+
+	go sxutil.HandleSigInt()
+	sxutil.RegisterDeferFunction(sxutil.UnRegisterNode)
+
+	var opts []grpc.DialOption
+
+	opts = append(opts, grpc.WithInsecure())
+	conn, err := grpc.Dial(*serverAddr, opts...)
+	if err != nil {
+		log.Fatalf("fail to dial: %v", err)
+	}
+	sxutil.RegisterDeferFunction(func() { conn.Close() })
+
+	// run socket.io server
+	ioserv = runServer()
+	fmt.Printf("Running Sio Server..\n")
+	if ioserv == nil {
+		os.Exit(1)
+	}
+
+	// run socket.io client
+	sioClient = runClient()
+	fmt.Printf("Running Sio Client..\n")
+	if sioClient == nil {
+		os.Exit(1)
+	}
+
+	// connect to synerex server
+	client := pb.NewSynerexClient(conn)
+	argJson := fmt.Sprintf("{Client:Scenario}")
+	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
+	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
+	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
+	sclientParticipant = sxutil.NewSMServiceClient(client, pb.ChannelType_PARTICIPANT_SERVICE,argJson)
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go simutil.SubscribeSupply(sclientAgent, supplyCallback)
+	go simutil.SubscribeSupply(sclientClock, supplyCallback)
+	go simutil.SubscribeSupply(sclientArea, supplyCallback)
+	go simutil.SubscribeSupply(sclientParticipant, supplyCallback)
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!

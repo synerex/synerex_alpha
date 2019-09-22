@@ -31,6 +31,7 @@ var (
 	sclientAgent *sxutil.SMServiceClient
 	sclientClock *sxutil.SMServiceClient
 	sclientParticipant *sxutil.SMServiceClient
+	//ioserv     *gosocketio.Server
 	//dataMap map[uint32]*AreaData
 	//areaData AreaData
 )
@@ -247,6 +248,13 @@ func main() {
 		log.Fatalf("fail to dial: %v", err)
 	}
 	sxutil.RegisterDeferFunction(func() { conn.Close() })
+
+	// socket io
+	/*ioserv = run_server()
+	fmt.Printf("Running Simulation Server..\n")
+	if ioserv == nil {
+		os.Exit(1)
+	}*/
 
 	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Log}")

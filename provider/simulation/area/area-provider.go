@@ -257,6 +257,16 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	}
 
 	spMap, idlist = simutil.SendProposeSupply(sclientClock, opts2, spMap, idlist)
+	
+	nm3 := "forwardClock to AgentCh respnse by area-provider"
+	js3 := ""
+	opts3 := &sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		Name: nm3, 
+		JSON: js3, 
+	}
+
+	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts3, spMap, idlist)
 }
 
 
