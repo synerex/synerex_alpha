@@ -18,9 +18,11 @@ def supply_callback(supply):
     print("Confirm the reservation?[Y/n]\n")
     answer = input('>> ')
     if answer == "n" or answer == "N":
+        print("Send demand again..")
         sclient.register_demand(demand_arg)
     else:
         print("Good Job! Finish your reservation. \n")
+        sys.exit(0)
 
 
 if __name__ == "__main__":

@@ -216,7 +216,7 @@ class SynerexClient():
             "ok": response.ok
         }
 
-        print("register_demand to sx:", synerex_supply)
+        print("register_supply to sx:", synerex_supply)
 
         return result
 

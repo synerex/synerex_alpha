@@ -17,7 +17,7 @@ def demand_callback(demand):
         "arrive_time": "2019/09/23 12:16:00",
         "available_sheets": 4,
         "price": 28000,
-        "traffic_type": "Taxi",
+        "traffic_type": "Bullet Train",
     }
     sclient.register_supply(supply_arg)
 
