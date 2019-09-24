@@ -15,7 +15,8 @@ import (
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 	//"time"
-	//"encoding/json"
+	"encoding/json"
+	"io/ioutil"
 	"fmt"
 )
 
@@ -31,7 +32,7 @@ var (
 	sclientAgent *sxutil.SMServiceClient
 	sclientClock *sxutil.SMServiceClient
 	sclientParticipant *sxutil.SMServiceClient
-	AreaData map[uint32]map[string]float32
+	AreaData []Area
 	data *Data
 )
 
@@ -40,11 +41,24 @@ func init() {
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 	selection = false
-	AreaData = map[uint32]map[string]float32{
-		uint32(0): map[string]float32{"sLon": float32(0), "eLon":float32(200), "sLat": float32(0), "eLat": float32(100)}, 	// A
-		uint32(1): map[string]float32{"sLon": float32(50), "eLon":float32(150), "sLat": float32(0), "eLat": float32(100)},  // B
-	}
+	AreaData = make([]Area, 0)
 	data = new(Data)
+}
+
+func readAreaData() []Area{
+	// JSONファイル読み込み
+	bytes, err := ioutil.ReadFile("area_data.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	// JSONデコード
+	var areaData []Area
+	
+	if err := json.Unmarshal(bytes, &areaData); err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("areaData is : %v\n", areaData)
+	return areaData
 }
 
 type Data struct {
@@ -53,16 +67,18 @@ type Data struct {
 }
 
 type Coord struct {
-	StartLat float32
-	EndLat float32
-	StartLon float32
-	EndLon float32
+	StartLat float32	`json:"slat"`
+	EndLat float32	`json:"elat"`
+	StartLon float32	`json:"slon"`
+	EndLon float32	`json:"elon"`
 }
 
-/*type AreaData struct {
-	AreaId uint32
-	AreaName string
-}*/
+type Area struct {
+	Id uint32	`json:"id"`
+	Name string	`json:"name"`
+	Coord Coord	`json:"coord"`
+}
+
 
 func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("getParticipant")
@@ -95,24 +111,26 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
 func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setArea")
 	argOneof := dm.GetArg_AreaDemand()
-	if(AreaData[argOneof.AreaId] != nil){
-		// send area info
-		areaInfo := &area.AreaInfo{
-			Time: argOneof.Time, // uint32(1)
-			StatusType: 2, // NONE
-			Meta: "",
-		}
-		
-		nm := "setArea respnse by area-provider"
-		js := ""
-		opts := &sxutil.SupplyOpts{
-			Target: dm.GetId(),
-			Name: nm, 
-			JSON: js, 
-			AreaInfo: areaInfo,
-		}
+	for _, areaData := range readAreaData(){
+		if(areaData.Id == argOneof.AreaId){
+			// send area info
+			areaInfo := &area.AreaInfo{
+				Time: argOneof.Time, // uint32(1)
+				StatusType: 2, // NONE
+				Meta: "",
+			}
+			
+			nm := "setArea respnse by area-provider"
+			js := ""
+			opts := &sxutil.SupplyOpts{
+				Target: dm.GetId(),
+				Name: nm, 
+				JSON: js, 
+				AreaInfo: areaInfo,
+			}
 	
-		spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)
+			spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)
+		}
 	}
 }
 
@@ -135,38 +153,40 @@ func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("getArea")
 	argOneof := dm.GetArg_AreaDemand()
 	log.Printf("demand: ", argOneof)
-	if(AreaData[argOneof.AreaId] != nil){
-		areaData := AreaData[argOneof.AreaId]
-		mapInfo := area.Map{
-			Coord: &area.Map_Coord{
-				StartLat: areaData["sLat"],
-				StartLon: areaData["sLon"], 
-				EndLat: areaData["eLat"],
-				EndLon: areaData["eLon"], 
-			},
-			MapInfo: uint32(0),
-		}
+	for _, areaData := range readAreaData(){
+		if(areaData.Id == argOneof.AreaId){
+			//areaData := AreaData[argOneof.AreaId]
+			mapInfo := area.Map{
+				Coord: &area.Map_Coord{
+					StartLat: areaData.Coord.StartLat,
+					StartLon: areaData.Coord.StartLon, 
+					EndLat: areaData.Coord.EndLat,
+					EndLon: areaData.Coord.EndLon, 
+				},
+				MapInfo: uint32(0),
+			}
 
-		// send area info
-		areaInfo := &area.AreaInfo{
-			Time: argOneof.Time,
-			AreaId: argOneof.AreaId, // A
-			AreaName: "AorB",
-			Map: &mapInfo,
-			SupplyType: 1, // RES_GET
-			StatusType: 0, // OK
-			Meta: "",
-		}
+			// send area info
+			areaInfo := &area.AreaInfo{
+				Time: argOneof.Time,
+				AreaId: argOneof.AreaId, // A
+				AreaName: areaData.Name,
+				Map: &mapInfo,
+				SupplyType: 1, // RES_GET
+				StatusType: 0, // OK
+				Meta: "",
+			}
 
-		// store AreaInfo data
-		data.AreaInfo = areaInfo
-		log.Printf("data.AreaInfo %v\n\n", data)
+			// store AreaInfo data
+			data.AreaInfo = areaInfo
+			log.Printf("data.AreaInfo %v\n\n", data)
 		
-		nm := "getArea respnse by area-provider"
-		js := ""
-		opts := &sxutil.SupplyOpts{Name: nm, JSON: js, AreaInfo: areaInfo}
+			nm := "getArea respnse by area-provider"
+			js := ""
+			opts := &sxutil.SupplyOpts{Name: nm, JSON: js, AreaInfo: areaInfo}
 	
-		spMap, idlist = simutil.SendSupply(sclientArea, opts, spMap, idlist)
+			spMap, idlist = simutil.SendSupply(sclientArea, opts, spMap, idlist)
+		}
 	}
 }
 

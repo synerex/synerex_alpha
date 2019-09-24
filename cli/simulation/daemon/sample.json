@@ -1,0 +1,61 @@
+{
+	"clock": {
+		"time": "2019-09-30T09:30:00"
+	},
+	"area": [
+		{
+			"id": 1,
+			"name": "東山動植物園西"
+		},
+		{
+			"id": 2,
+			"name": "東山動植物園東"
+		}
+	],
+	"agent": [
+		{
+			"id": 1,
+			"type": "pedestrian",
+			"status": {
+				"name": "rui",
+				"age": "30",
+				"sex": "female"
+			},
+			"route": {
+				"coord": {
+					"lat": 35.153000,
+					"lon": 136.990000
+				},
+				"direction": 180,
+				"speed": 10,
+				"departure": "",
+				"destination": ""
+			},
+			"rule": {
+
+			}
+		},
+		{
+			"id": 2,
+			"type": "pedestrian",
+			"status": {
+				"name": "hirano",
+				"age": "20",
+				"sex": "male"
+			},
+			"route": {
+				"coord": {
+					"lat": 35.159021,
+					"lon": 136.973190
+				},
+				"direction": 0,
+				"speed": 10,
+				"departure": "",
+				"destination": ""
+			},
+			"rule": {
+
+			}
+		}
+	]
+}

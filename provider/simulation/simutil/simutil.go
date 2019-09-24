@@ -28,9 +28,57 @@ type IdListByChannel struct {
 	AreaIdList    []uint64
 }
 
-type Test struct{
-	Order string 
-	Meta string
+type Order struct{
+	Type string 
+	ClockInfo ClockInfo
+	AreaInfo AreaInfo
+	AgentInfo AgentInfo
+}
+
+type Coord struct{
+	Lat float32 	`json:"lat"`
+	Lon float32		`json:"lon"`
+}
+
+type Route struct{
+	Coord Coord	`json:"coord"`
+	Direction float32	`json:"direction"`
+	Speed float32	`json:"speed"`
+	Departure string	`json:"departure"`
+	Destination string	`json:"destination"`
+}
+
+type Status struct{
+	Name string	`json:"name"`
+	Age string	`json:"age"`
+	Sex string	`json:"sex"`
+}
+
+type Rule struct{
+
+}
+
+type ClockInfo struct{
+	Time string `json:"time"`
+}
+
+type AreaInfo struct{
+	Id uint32	`json:"id"`
+	Name string 	`json:"name"`
+}
+
+type AgentInfo struct{
+	Id uint32	`json:"id"`
+	Type string		`json:"type"`
+	Status Status	`json:"status"`
+	Route Route	`json:"route"`
+	Rule Rule		`json:"rule"`
+}
+
+type SimData struct{
+	Time string 	`json:"time"`
+	Area []AreaInfo	`json:"area"`
+	Agent []AgentInfo	`json:"agent"`
 }
 
 func CreateIdListByChannel(pspMap map[uint64]*pb.Supply) *IdListByChannel {

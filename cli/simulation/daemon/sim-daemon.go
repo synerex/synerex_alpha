@@ -18,7 +18,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
-
+	"io/ioutil"
 	"github.com/mtfelian/golang-socketio"
 
 	"github.com/kardianos/service"
@@ -51,10 +51,90 @@ type SubCommands struct {
 	RunFunc     func()
 }
 
-type Test struct{
-	Order string 
-	Meta string
+type Order2 struct{
+	Type string 
+	ClockInfo ClockInfo
+	AreaInfo AreaInfo
+	AgentInfo AgentInfo
 }
+
+type Order struct{
+	Type string 
+	Arg string
+}
+
+type Coord struct{
+	Lat float32 	`json:"lat"`
+	Lon float32		`json:"lon"`
+}
+
+type Route struct{
+	Coord Coord	`json:"coord"`
+	Direction float32	`json:"direction"`
+	Speed float32	`json:"speed"`
+	Departure string	`json:"departure"`
+	Destination string	`json:"destination"`
+}
+
+type Status struct{
+	Name string	`json:"name"`
+	Age string	`json:"age"`
+	Sex string	`json:"sex"`
+}
+
+type Rule struct{
+
+}
+
+type ClockInfo struct{
+	Time string `json:"time"`
+}
+
+type AreaInfo struct{
+	Id uint32	`json:"id"`
+	Name string 	`json:"name"`
+}
+
+type AgentInfo struct{
+	Id uint32	`json:"id"`
+	Type string		`json:"type"`
+	Status Status	`json:"status"`
+	Route Route	`json:"route"`
+	Rule Rule		`json:"rule"`
+}
+
+type SimData struct{
+	Clock ClockInfo 	`json:"clock"`
+	Area []AreaInfo	`json:"area"`
+	Agent []AgentInfo	`json:"agent"`
+}
+
+// for Structures for Github json.
+type committer struct {
+	Name string
+}
+type headCommit struct {
+	Url       string
+	Timestamp string
+	Committer committer
+}
+type pusher struct {
+	Name string
+}
+type repository struct {
+	Name string
+}
+type data struct {
+	Ref         string
+	Head_commit headCommit
+	Pusher      pusher
+	Repository  repository
+}
+
+type sioChannel struct {
+	Scenario     *gosocketio.Channel
+}
+var sioCh sioChannel
 
 var cmdArray []SubCommands
 
@@ -156,36 +236,12 @@ func init() {
 			CmdName: "Back",
 			Description: "Order",
 		},
+		{
+			CmdName: "SetAll",
+			Description: "Order",
+		},
 	}
 }
-
-
-// for Structures for Github json.
-type committer struct {
-	Name string
-}
-type headCommit struct {
-	Url       string
-	Timestamp string
-	Committer committer
-}
-type pusher struct {
-	Name string
-}
-type repository struct {
-	Name string
-}
-type data struct {
-	Ref         string
-	Head_commit headCommit
-	Pusher      pusher
-	Repository  repository
-}
-
-type sioChannel struct {
-	Scenario     *gosocketio.Channel
-}
-var sioCh sioChannel
 
 func githubHandler(w http.ResponseWriter, r *http.Request) {
 	status := 400
@@ -665,17 +721,56 @@ func handleRun(target string) string {
 	return "Can't find command " + target
 }
 
-func handleOrder(target string) string {
+func handleOrder(order *Order) string {
+	target := order.Type
 	for _, sc := range cmdArray {
 		if sc.CmdName == target {
 			var res string
-			/*if sc.RunFunc == nil {
-				res = runProp(sc)
-			} else {
-				//			res = sc.RunFunc()
-				res = "ok"
-				sc.RunFunc()
-			}*/
+			if target == "SetAll"{
+				// JSONファイル読み込み
+	 			bytes, err := ioutil.ReadFile("sample.json")
+	 			if err != nil {
+		 			log.Fatal(err)
+	 			}
+	 			// JSONデコード
+				 var simData SimData
+				 
+	 			if err := json.Unmarshal(bytes, &simData); err != nil {
+		 			log.Fatal(err)
+	 			}
+				 fmt.Printf("simData is : %v\n", simData.Clock)
+				if simData.Clock.Time != "" && simData.Area != nil && simData.Agent != nil{
+					var order2 Order2
+					// getParticipant
+					order2.Type = "GetParticipant"
+					sioCh.Scenario.Emit("scenario", order2)
+					time.Sleep(4 * time.Second)
+					// setTime
+					order2.Type = "SetTime"
+					order2.ClockInfo = simData.Clock
+					sioCh.Scenario.Emit("scenario", order2)
+					time.Sleep(1 * time.Second)
+					// setArea
+					for _, areaInfo := range simData.Area{
+						order2.Type = "SetArea"
+						order2.AreaInfo = areaInfo
+						sioCh.Scenario.Emit("scenario", order2)
+						time.Sleep(1 * time.Second)
+					}
+					// setAgent
+					for _, agentInfo := range simData.Agent{
+						order2.Type = "SetAgent"
+						order2.AgentInfo = agentInfo
+						sioCh.Scenario.Emit("scenario", order2)
+						time.Sleep(1 * time.Second)
+					}
+				}
+			}else{
+				var order2 Order2
+				order2.Type = target
+				sioCh.Scenario.Emit("scenario", order2)
+			}
+			
 			res = "ok"
 			logger.Infof("your order is %s", target)
 			return res
@@ -851,18 +946,15 @@ func (sesrv *SynerexService) run() error {
 		return handleRun(nid)
 	})
 
-	server.On("order", func(c *gosocketio.Channel, test *Test) string {
-		nid := test.Order
+	server.On("order", func(c *gosocketio.Channel, order *Order) string {
+		nid := order.Type
 		//		fmt.Printf("Get Run Command %s\n", nid)
 		logger.Infof("order from %s as %s", c.IP(), c.Id())
-		logger.Infof("Get order command %s %v", nid, test)
-		/*type test struct{
-			Order string 
-			Meta string
-		}*/
+		logger.Infof("Get order command %s %v", nid, order)
+		
 		//test :=  map[string]string{"Order": nid, "Meta": "test"}
-		sioCh.Scenario.Emit("scenario", &Test{Order: nid, Meta: "test"})
-		return handleOrder(nid)
+		
+		return handleOrder(order)
 	})
 
 	serveMux := http.NewServeMux()

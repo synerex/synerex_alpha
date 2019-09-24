@@ -18,8 +18,9 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"time"
-	"strings"
-	"strconv"
+	//"strings"
+	//"strconv"
+	
 	//"os/exec"
 )
 
@@ -29,27 +30,18 @@ type orderCmdInfo struct {
 	CmdName string
 }
 
-type AgentInfo struct{
-	AgentId uint32
-	AgentType uint32
-	Coord map[string]float32
-	Direction float32
-	Speed float32
-}
 
-type SimData struct{
-	Order string 
-	Time uint32
-	AreaId []uint32
-	AgentsInfo []AgentInfo
-}
 
-type Test struct{
-	Order string 
-	Meta string
+type Order struct{
+	Type string 
+	Arg string
 }
 
 var orderCmds =[...]orderCmdInfo{
+	{
+		Aliases: []string{"SetAll", "setAll"},
+		CmdName: "SetAll",
+	},
 	{
 		Aliases: []string{"GetParticipant", "getParticipant", "getparticipant", "get-participant" },
 		CmdName: "GetParticipant",
@@ -97,7 +89,7 @@ func getOrderCmdName(alias string)  string{
 	return "" // can'f find alias
 }
 
-func handleUserDialogue() *SimData{
+/*func handleUserDialogue() *SimData{
 	simData := &SimData{}
 	fmt.Print("Enter Time \n")
 	var time uint32
@@ -161,9 +153,11 @@ func handleUserDialogue() *SimData{
 	}
 
 	return simData
-}
+}*/
 
 func handleOrder(cmd *cobra.Command, args []string){
+
+	 
 	//simData := handleUserDialogue()
 	//fmt.Printf("Dialogue Result: %v\n", simData)
 	if len(args) > 0 {
@@ -175,7 +169,7 @@ func handleOrder(cmd *cobra.Command, args []string){
 						fmt.Printf("simulator: Starting '%s'\n", ci.CmdName)
 
 						//todo: we should use ack for this. but its not working....
-						res, err := sioClient.Ack("order", &Test{Order: ci.CmdName, Meta: "test2"}, 20*time.Second)
+						res, err := sioClient.Ack("order", &Order{Type: ci.CmdName}, 20*time.Second)
 						//					err := sioClient.Emit("run",ci.CmdName) //, 20*time.Second)
 						time.Sleep(1 * time.Second)
 

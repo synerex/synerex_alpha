@@ -24,8 +24,8 @@ import (
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	areaId    = flag.Int("areaId", 0, "Area Id")
-	agentType    = flag.Int("agentType", 1, "Agent Type")	// CAR
+	areaId    = flag.Int("areaId", 2, "Area Id")
+	agentType    = flag.Int("agentType", 0, "Agent Type")	// PEDESTRIAN
 	idlist     []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
 	spMap		map[uint64]*sxutil.SupplyOpts
@@ -77,7 +77,7 @@ func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 		spArgOneof := sp.GetArg_AreaInfo()
 		areaInfo := &area.AreaInfo{
 			Time: spArgOneof.Time,
-			AreaId: spArgOneof.AreaId, // A
+			AreaId: uint32(*areaId), // A
 			AreaName: spArgOneof.AreaName,
 			Map: spArgOneof.Map,
 			SupplyType: 0, // RES_SET
@@ -124,6 +124,7 @@ func isAgentInArea(agentInfo *agent.AgentInfo) bool{
 	elat := data.AreaInfo.Map.Coord.EndLat
 	slon := data.AreaInfo.Map.Coord.StartLon
 	elon := data.AreaInfo.Map.Coord.EndLon
+	log.Printf("lat lon is %v, %v, %v, %v, %v, %v\n\n", lat, slat, elat, lon, slon, elon)
 	if agentInfo.AgentType.String() == agent.AgentType_name[int32(*agentType)] && slat <= lat && lat <= elat &&  slon <= lon && lon <= elon {
 		return true
 	}else{
@@ -197,8 +198,8 @@ func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 func calcNextRoute(areaInfo *area.AreaInfo, route *agent.Route) *agent.Route{
 
 	nextCoord := &agent.Route_Coord{
-		Lat: float32(float64(route.Coord.Lat) + float64(route.Speed) * 1 * math.Cos(float64(route.Direction))),
-		Lon: float32(float64(route.Coord.Lon) + float64(route.Speed) * 1 * math.Sin(float64(route.Direction))), 
+		Lat: float32(float64(route.Coord.Lat) + float64(0.0001) * 1 * math.Cos(float64(route.Direction))),
+		Lon: float32(float64(route.Coord.Lon) + float64(0.0001) * 1 * math.Sin(float64(route.Direction))), 
 	}
 
 	nextRoute := &agent.Route{

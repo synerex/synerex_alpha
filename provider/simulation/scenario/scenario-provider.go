@@ -19,7 +19,7 @@ import (
 	"os"
 	"net/http"
 	"path/filepath"
-
+//	"os/exec"
 )
 
 var (
@@ -148,7 +148,7 @@ func syncProposeSupply(sp *pb.Supply, idList []uint64, callback func(pspMap map[
 	}	
 }
 
-func setClock(){
+func setClock(clockInfo simutil.ClockInfo){
 	if isGetParticipant == false{
 		fmt.Printf("Error... please order getParticipant")
 	}else{
@@ -230,13 +230,13 @@ func stopClock(){
 	}
 }
 
-func setArea(){
+func setArea(areaInfo simutil.AreaInfo){
 	if isGetParticipant == false{
 		fmt.Printf("Error... please order getParticipant")
 	}else{
 		areaDemand := area.AreaDemand{
 			Time: uint32(1),
-			AreaId: 0, // A
+			AreaId: areaInfo.Id, // A
 			DemandType: 0, // SET
 			StatusType: 2, // NONE
 			Meta: "",
@@ -250,17 +250,17 @@ func setArea(){
 	}
 }
 
-func setAgent(){
+func setAgent(agentInfo simutil.AgentInfo){
 	if isGetParticipant == false{
 		fmt.Printf("Error... please order getParticipant")
 	}else{
 		route := agent.Route{
 			Coord: &agent.Route_Coord{
-				Lat: float32(35.170915),
-				Lon: float32(136.881537), 
+				Lat: float32(agentInfo.Route.Coord.Lat),
+				Lon: float32(agentInfo.Route.Coord.Lon), 
 			},
-			Direction: float32(0),
-			Speed: float32(0.0001),
+			Direction: float32(agentInfo.Route.Direction),
+			Speed: float32(agentInfo.Route.Speed),
 			Destination: float32(10),
 			Departure: float32(100),
 		}
@@ -274,7 +274,7 @@ func setAgent(){
 	
 		agentDemand := agent.AgentDemand{
 			Time: uint32(1),
-			AgentId: 1,
+			AgentId: agentInfo.Id,
 			AgentName: "Agent1",
 			AgentType: 0,
 			AgentStatus: &agentStatus,
@@ -551,28 +551,31 @@ func runClient() *gosocketio.Client{
 		c.Emit("setCh", "Scenario")
 	})
 
-	sioClient.On("scenario", func(c *gosocketio.Channel, test *simutil.Test) {
-		fmt.Printf("get order is: %v\n", test)
-		Order = test.Order
+	sioClient.On("scenario", func(c *gosocketio.Channel, order *simutil.Order) {
+		fmt.Printf("get order is: %v\n", order)
+		Order = order.Type
 		switch Order {
 		case "GetParticipant":
-			getParticipant()
 			fmt.Println("getParticipant")
+			getParticipant()
 		case "SetTime":
-			setClock()
 			fmt.Println("setClock")
+			clockInfo := order.ClockInfo
+			setClock(clockInfo)
 		case "SetArea":
-			setArea()
 			fmt.Println("setArea")
+			areaInfo := order.AreaInfo
+			setArea(areaInfo)
 		case "SetAgent":
-			setAgent()
 			fmt.Println("set agent")
+			agentInfo := order.AgentInfo
+			setAgent(agentInfo)
 		case "Start":
-			startClock()
 			fmt.Println("start clock")
+			startClock()
 		case "Stop":
-			stopClock()
 			fmt.Println("stop clock")
+			stopClock()
 		default:
 			fmt.Println("error")
 		}
@@ -589,6 +592,10 @@ func runClient() *gosocketio.Client{
 
 
 func main() {
+//	fmt.Printf("running test.go\n")
+//	time.Sleep(2)
+//	cmd := exec.Command("./scenario-provider")
+//	cmd.Start()
 
 	flag.Parse()
 
