@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package api.participant;
+
+option go_package="github.com/synerex/synerex_alpha/api/simulation/participant";
+//import "common/common.proto";
+import "simulation/agent/agent.proto"
+import "simulation/area/area.proto"
+import "simulation/clock/clock.proto"
+import "simulation/participant/participant.proto"
+
+message Demand {
+        // participant info
+        DemandType demand_type = 1;
+
+        // meta data
+        StatusType status_type = 2;
+	    string meta = 3;
+        oneof arg_oneof {
+            
+        }
+    }
+
+ message Supply {
+        // demand info
+        uint64 client_id = 1;
+
+        // demand type
+        DemandType demand_type = 2;
+
+        // meta data
+        StatusType status_type = 3;
+        string meta = 4;
+    }
+
+enum StatusType {
+    OK = 0;
+    NG = 1;
+    NONE = 2;
+}
+
+
+enum OrderType {
+    SET_CLOCK = 0;
+    FORWARD_CLOCK = 1;
+    BACK_CLOCK = 2;
+    START_CLOCK = 3;
+    STOP_CLOCK = 4;
+
+    SET_AREA = 5;
+    GET_AREA = 6;
+
+    SET_AGENT = 7;
+    GET_AGENTS = 8;
+
+    GET_PARTICIPANT = 9;
+    GET_AREA_PARTICIPANT = 10;
+}
+
+

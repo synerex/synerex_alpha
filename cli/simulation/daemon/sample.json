@@ -24,7 +24,7 @@
 			"route": {
 				"coord": {
 					"lat": 35.153000,
-					"lon": 136.990000
+					"lon": 136.976000
 				},
 				"direction": 180,
 				"speed": 10,
@@ -39,17 +39,17 @@
 			"id": 2,
 			"type": "pedestrian",
 			"status": {
-				"name": "hirano",
-				"age": "20",
-				"sex": "male"
+				"name": "rui",
+				"age": "30",
+				"sex": "female"
 			},
 			"route": {
 				"coord": {
-					"lat": 35.159021,
-					"lon": 136.973190
+					"lat": 35.156000,
+					"lon": 136.983000
 				},
-				"direction": 0,
-				"speed": 10,
+				"direction": 10,
+				"speed": 20,
 				"departure": "",
 				"destination": ""
 			},

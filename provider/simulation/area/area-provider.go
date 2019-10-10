@@ -24,6 +24,7 @@ var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	idlist     []uint64
+	myChannelIdList []uint64
 	dmMap      map[uint64]*sxutil.DemandOpts
 	spMap		map[uint64]*sxutil.SupplyOpts
 	selection 	bool
@@ -32,33 +33,34 @@ var (
 	sclientAgent *sxutil.SMServiceClient
 	sclientClock *sxutil.SMServiceClient
 	sclientParticipant *sxutil.SMServiceClient
-	AreaData []Area
+	MapData []Map
 	data *Data
 )
 
 func init() {
 	idlist = make([]uint64, 0)
+	myChannelIdList = make([]uint64, 0)
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 	selection = false
-	AreaData = make([]Area, 0)
+	MapData = make([]Map, 0)
 	data = new(Data)
 }
 
-func readAreaData() []Area{
+func readMapData() []Map{
 	// JSONファイル読み込み
-	bytes, err := ioutil.ReadFile("area_data.json")
+	bytes, err := ioutil.ReadFile("map.json")
 	if err != nil {
 		log.Fatal(err)
 	}
 	// JSONデコード
-	var areaData []Area
+	var mapData []Map
 	
-	if err := json.Unmarshal(bytes, &areaData); err != nil {
+	if err := json.Unmarshal(bytes, &mapData); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("areaData is : %v\n", areaData)
-	return areaData
+	fmt.Printf("mapData is : %v\n", mapData)
+	return mapData
 }
 
 type Data struct {
@@ -73,10 +75,12 @@ type Coord struct {
 	EndLon float32	`json:"elon"`
 }
 
-type Area struct {
+type Map struct {
 	Id uint32	`json:"id"`
 	Name string	`json:"name"`
 	Coord Coord	`json:"coord"`
+	Controlled Coord `json:"controlled"`
+	Neighbor []uint32 `json:"neighbor"`
 }
 
 
@@ -111,8 +115,8 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
 func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setArea")
 	argOneof := dm.GetArg_AreaDemand()
-	for _, areaData := range readAreaData(){
-		if(areaData.Id == argOneof.AreaId){
+	for _, mapData := range readMapData(){
+		if(mapData.Id == argOneof.AreaId){
 			// send area info
 			areaInfo := &area.AreaInfo{
 				Time: argOneof.Time, // uint32(1)
@@ -153,24 +157,32 @@ func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("getArea")
 	argOneof := dm.GetArg_AreaDemand()
 	log.Printf("demand: ", argOneof)
-	for _, areaData := range readAreaData(){
-		if(areaData.Id == argOneof.AreaId){
+	for _, mapData := range readMapData(){
+		if(mapData.Id == argOneof.AreaId){
+			// calc area data
 			//areaData := AreaData[argOneof.AreaId]
 			mapInfo := area.Map{
 				Coord: &area.Map_Coord{
-					StartLat: areaData.Coord.StartLat,
-					StartLon: areaData.Coord.StartLon, 
-					EndLat: areaData.Coord.EndLat,
-					EndLon: areaData.Coord.EndLon, 
+					StartLat: mapData.Coord.StartLat,
+					StartLon: mapData.Coord.StartLon, 
+					EndLat: mapData.Coord.EndLat,
+					EndLon: mapData.Coord.EndLon, 
 				},
 				MapInfo: uint32(0),
+				Controlled: &area.Map_Coord{
+					StartLat: mapData.Controlled.StartLat,
+					StartLon: mapData.Controlled.StartLon, 
+					EndLat: mapData.Controlled.EndLat,
+					EndLon: mapData.Controlled.EndLon, 
+				},
+				Neighbor: mapData.Neighbor,
 			}
 
 			// send area info
 			areaInfo := &area.AreaInfo{
 				Time: argOneof.Time,
 				AreaId: argOneof.AreaId, // A
-				AreaName: areaData.Name,
+				AreaName: mapData.Name,
 				Map: &mapInfo,
 				SupplyType: 1, // RES_GET
 				StatusType: 0, // OK
@@ -183,9 +195,14 @@ func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 		
 			nm := "getArea respnse by area-provider"
 			js := ""
-			opts := &sxutil.SupplyOpts{Name: nm, JSON: js, AreaInfo: areaInfo}
+			opts := &sxutil.SupplyOpts{
+				Target: dm.GetId(),
+				Name: nm, 
+				JSON: js, 
+				AreaInfo: areaInfo,
+			}
 	
-			spMap, idlist = simutil.SendSupply(sclientArea, opts, spMap, idlist)
+			spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)
 		}
 	}
 }
@@ -330,6 +347,7 @@ func main() {
 	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
 	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
 	sclientParticipant = sxutil.NewSMServiceClient(client, pb.ChannelType_PARTICIPANT_SERVICE,argJson)
+	myChannelIdList = append(myChannelIdList, []uint64{uint64(sclientAgent.ClientID), uint64(sclientClock.ClientID), uint64(sclientArea.ClientID), uint64(sclientParticipant.ClientID)}...)
 
 	wg := sync.WaitGroup{}
 

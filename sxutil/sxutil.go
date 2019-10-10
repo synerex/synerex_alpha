@@ -253,7 +253,6 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 	case api.ChannelType_PARTICIPANT_SERVICE:
 		if spo.ParticipantInfo != nil {
 			sp.WithParticipantInfo(spo.ParticipantInfo)
-			log.Printf("ParticipantInfo is nil %v", sp)
 		}else{
 			log.Printf("ParticipantInfo is nil")
 		}
@@ -282,13 +281,10 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 	case api.ChannelType_AGENT_SERVICE:
 		if spo.AgentInfo != nil {
 			sp.WithAgentInfo(spo.AgentInfo)
-		}else{
-			log.Printf("AgentInfo is nil")
-		} 
-		if spo.AgentsInfo != nil {
+		}else if spo.AgentsInfo != nil {
 			sp.WithAgentsInfo(spo.AgentsInfo)
 		}else{
-			log.Printf("AgentsInfo is nil")
+			log.Printf("AgentsInfo or AgentInfo is nil")
 		} 
 //		if spo.AgentDemand != nil {
 //			sp.WithAgentDemand(spo.AgentDemand)

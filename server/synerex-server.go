@@ -145,6 +145,7 @@ func (s *synerexServerInfo) ProposeSupply(c context.Context, sp *api.Supply) (r 
 	r = &api.Response{Ok: okFlag, Err: okMsg}
 	return r, nil
 }
+
 func (s *synerexServerInfo) ReserveSupply(c context.Context, tg *api.Target) (r *api.ConfirmResponse, e error) {
 	//	chs := s.demandChans[tg.GetType()]
 	//	dm := &api.Demand{}
@@ -321,6 +322,7 @@ func supplyServerFunc(ch chan *api.Supply, stream api.Synerex_SubscribeSupplySer
 			log.Printf("in supply server func id %v",sp)
 			err := stream.Send(sp)
 			if err != nil {
+				
 				//				log.Printf("Error SupplyServer Error %v", err)
 				return err
 			}

@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-    Container, connectToHarmowareVis, HarmoVisLayers, MovesLayer, MovesInput, LoadingIcon, FpsDisplay, DepotsLayer, EventInfo, MovesbaseOperation, MovesBase, BasedProps
+    Container, connectToHarmowareVis, HarmoVisLayers, MovesLayer, LineMapLayer, MovesInput, LoadingIcon, FpsDisplay, DepotsLayer, EventInfo, MovesbaseOperation, MovesBase, BasedProps
 } from 'harmoware-vis';
 
 import Controller from '../components/controller';
@@ -23,7 +23,47 @@ class App extends Container {
 	    depotOptionVisible: false,
 	    heatmapVisible: false,
 	    optionChange: false,
-	    popup: [0,0, '']
+	    popup: [0,0, ''],
+		linemapData: [{
+			"sourcePosition": [136.973172, 35.152476, 0],
+			"targetPosition": [136.984031, 35.152476, 0],
+		},
+		{
+			"sourcePosition": [136.973172, 35.160678, 0],
+			"targetPosition": [136.984031, 35.160678, 0],
+		},
+		{
+			"sourcePosition": [136.973172, 35.152476, 0],
+			"targetPosition": [136.973172, 35.160678, 0],
+		},
+		{
+			"sourcePosition": [136.984031, 35.152476, 0],
+			"targetPosition": [136.984031, 35.160678, 0],
+		},
+
+		{
+			"sourcePosition": [136.981014, 35.152476, 0],
+			"targetPosition": [136.990047, 35.152476, 0],
+		},
+		{
+			"sourcePosition": [136.981014, 35.160678, 0],
+			"targetPosition": [136.990047, 35.160678, 0],
+		},
+		{
+			"sourcePosition": [136.981014, 35.152476, 0],
+			"targetPosition": [136.981014, 35.160678, 0],
+		},
+		{
+			"sourcePosition": [136.990047, 35.152476, 0],
+			"targetPosition": [136.990047, 35.160678, 0],
+		},
+
+		{
+			"sourcePosition": [136.982500, 35.152476, 0],
+			"targetPosition": [136.982500, 35.160678, 0],
+			"color": [255, 0, 255]
+		}
+		]
 	};
 
 	// for receiving event info.
@@ -34,18 +74,21 @@ class App extends Container {
     }
 
     getEvent(socketData){
-		console.log("Get event!", socketData)
-	const {actions, movesbase} = this.props
+		console.log("Get event!!", socketData)
+	const {actions, movesbase, movedData} = this.props
 	const {mtype, id,  lat, lon, angle, speed } = JSON.parse(socketData);
 	//	console.log("dt:",mtype,id,time,lat,lon,angle,speed, socketData);
 	const time = Date.now()/1000; // set time as now. (If data have time, ..)
 	let hit = false;
 	const movesbasedata = [...movesbase]; // why copy !?
+	const movedData2 = [...movedData]; // why copy !?
 	const setMovesbase = [];
+	const setMovedData = [];
 	
 	for( let i = 0, lengthi = movesbasedata.length; i < lengthi; i+=1){
 	    //	    let setMovedata = Object.assign({}, movesbasedata[i]);
 	    let setMovedata = movesbasedata[i];
+			let setMovedDatai = movedData2[i];
 	    if(mtype === setMovedata.mtype && id === setMovedata.id){
 		hit = true;
 //		const {operation } = setMovedata;
@@ -59,20 +102,25 @@ class App extends Container {
 //		setMovedata = Object.assign({}, setMovedata, {arrivaltime, operation});
 	    }
 	    setMovesbase.push(setMovedata);
+			setMovedData.push(setMovedDatai);
 	}
 	if(!hit){
 	    setMovesbase.push({
-		mtype, id,
-		departuretime:time,
-		arrivaltime: time,
-		operation: [{
-		    elapsedtime:time,
-		    position:[lon, lat, 0],
-		    angle, speed
-		}]
+				mtype, id,
+				departuretime:time,
+				arrivaltime: time,
+				operation: [{
+		    	elapsedtime:time,
+		    	position:[lon, lat, 0],
+		    	angle, speed
+				}]
+	    });
+			setMovedData.push({
+				sourceColor: [255, 0, 255]
 	    });
 	}
 	actions.updateMovesBase(setMovesbase);
+	//actions.updateMovedData(setMovedData);
     }
 
   deleteMovebase(maxKeepSecond) {
@@ -136,6 +184,7 @@ class App extends Container {
 	const props = this.props;
 	const { actions, clickedObject, inputFileName, viewport, deoptsData, loading,
 		routePaths, lightSettings, movesbase, movedData } = props;
+//	var movedData2 = [...movedData]
 //	const { movesFileName } = inputFileName;
 	const optionVisible = false;
 	const onHover = (el) => {
@@ -167,16 +216,20 @@ class App extends Container {
 		<HarmoVisLayers
 	    viewport={viewport} actions={actions}
 	    mapboxApiAccessToken={MAPBOX_TOKEN}
-	    layers={[
-		this.state.moveDataVisible && movedData.length > 0 ?
-		    new MovesLayer({ viewport, routePaths, movesbase, movedData,
+	    layers={
+			this.state.moveDataVisible && movedData.length > 0 ?
+			[
+				new LineMapLayer( {viewport,  linemapData: this.state.linemapData }),
+		    	new MovesLayer({ viewport, routePaths, movesbase, movedData,
 				     clickedObject, actions, lightSettings,
 				     visible: this.state.moveDataVisible,
 				     optionVisible: this.state.moveOptionVisible,
 				     optionChange: this.state.optionChange,
-				     onHover}) :null
-	    ]}
-	        />
+				     onHover})
+			]:[
+				new LineMapLayer( {viewport, linemapData: this.state.linemapData }),
+			]
+		}/>
 		</div>
 		<svg width={viewport.width} height={viewport.height} className="harmovis_overlay">
 		<g fill="white" fontSize="12">

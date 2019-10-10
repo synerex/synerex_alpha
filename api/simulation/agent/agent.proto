@@ -9,18 +9,19 @@ message AgentInfo {
     // agent info
     uint32 time = 1;
     uint32 agent_id = 2;
-    string agent_name = 3;
-    AgentStatus agent_status = 4;
-    AgentType agent_type = 5;
-    Route route = 6;
-    Rule rule = 7;
+    uint32 controll_area = 3;
+    string agent_name = 4;
+    AgentStatus agent_status = 5;
+    AgentType agent_type = 6;
+    Route route = 7;
+    Rule rule = 8;
 
     // supply type
-    SupplyType supply_type = 8;
+    SupplyType supply_type = 9;
 
     // meta data
-    StatusType status_type = 9;
-	string meta = 10;
+    StatusType status_type = 10;
+	string meta = 11;
 }
 
 message AgentsInfo {

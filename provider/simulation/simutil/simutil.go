@@ -3,7 +3,10 @@ package simutil
 import (  
     pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
-    //"fmt"
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/agent"
+    "fmt"
     //"time"
     "log"
     "sync"
@@ -81,6 +84,50 @@ type SimData struct{
 	Agent []AgentInfo	`json:"agent"`
 }
 
+type Data struct {
+	AreaInfo *area.AreaInfo
+	ClockInfo *clock.ClockInfo
+	AgentsInfo []*agent.AgentInfo
+}
+
+func SyncProposeSupply(sp *pb.Supply, syncIdList []uint64, pspMap map[uint64]*pb.Supply, callback func(pspMap map[uint64]*pb.Supply)){
+	go func() { 
+		log.Println("Send Supply")
+		ch <- sp
+		return
+	}()
+	log.Printf("StartSync : %v", startSync)
+	if !startSync {
+		log.Println("Start Sync")
+		startSync = true
+
+		go func(){		
+		for {
+			select {
+				case psp := <- ch:
+					log.Println("recieve ProposeSupply")
+					pspMap[psp.SenderId] = psp
+//					log.Printf("waitidList %v %v", pspMap, idList)
+			
+				if IsFinishSync(pspMap, syncIdList){
+					fmt.Printf("Finish Sync\n")
+					// init pspMap
+					pspMap = make(map[uint64]*pb.Supply)
+					startSync = false
+					fmt.Printf("startSync to false: %v\n", startSync)
+
+					// if you need, return response
+					callback(pspMap)
+					
+					return
+				}
+			}
+		}
+
+		}()
+	}	
+}
+
 func CreateIdListByChannel(pspMap map[uint64]*pb.Supply) *IdListByChannel {
     participantIdList := make([]uint64, 0)
     clockIdList := make([]uint64, 0)
@@ -123,6 +170,17 @@ func IsFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint64) bool {
 		} 
 	}
 	return true
+}
+
+// IsSupplyTarget is a helper function to check target
+func IsSupplyTarget(sp *pb.Supply, idlist []uint64) bool {
+	spid := sp.TargetId
+	for _, id := range idlist {
+		if id == spid {
+			return true
+		}
+	}
+	return false
 }
 
 func CheckDemandArgOneOf(dm *pb.Demand) string {
@@ -192,6 +250,7 @@ func CheckSupplyArgOneOf(sp *pb.Supply) string {
 		argOneof := sp.GetArg_AgentsInfo()
 		switch(argOneof.SupplyType.String()){
 			case "RES_SET": return "RES_SET_AGENTS"
+			case "RES_GET": return "RES_GET_AGENTS"
 		}
 	}
 	if(sp.GetArg_ParticipantInfo() != nil){

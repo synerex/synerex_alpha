@@ -56,7 +56,9 @@ message Map {
         float end_lon = 4;
     }
     Coord coord = 1;
-    uint32 map_info = 2;
+    repeated uint32 neighbor = 2;
+    Coord controlled = 3;
+    uint32 map_info = 4;
 }
 
 message Climate {
