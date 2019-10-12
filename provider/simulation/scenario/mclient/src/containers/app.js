@@ -67,7 +67,7 @@ class App extends Container {
 	};
 
 	// for receiving event info.
-	socket.on('connect', ()=>{console.log("Socket.IO connected!")});
+	socket.on('connect', ()=>{console.log("Socket.IO3 connected!")});
 	socket.on('event', this.getEvent.bind(this));
 	socket.on('disconnect', ()=>{console.log("Socket.IO disconnected!")});
 	
@@ -76,8 +76,8 @@ class App extends Container {
     getEvent(socketData){
 		console.log("Get event!!", socketData)
 	const {actions, movesbase, movedData} = this.props
-	const {mtype, id,  lat, lon, angle, speed } = JSON.parse(socketData);
-	//	console.log("dt:",mtype,id,time,lat,lon,angle,speed, socketData);
+	const {mtype, id,  lat, lon, angle, speed, area } = JSON.parse(socketData);
+	console.log("area: ",area);
 	const time = Date.now()/1000; // set time as now. (If data have time, ..)
 	let hit = false;
 	const movesbasedata = [...movesbase]; // why copy !?

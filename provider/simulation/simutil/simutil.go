@@ -217,6 +217,7 @@ func CheckDemandArgOneOf(dm *pb.Demand) string {
 		argOneof := dm.GetArg_ParticipantDemand()
 		switch(argOneof.DemandType.String()){
 			case "GET": return "GET_PARTICIPANT"
+			case "SET": return "SET_PARTICIPANT"
 		}
 	}
 	return "INVALID_TYPE"
@@ -257,6 +258,7 @@ func CheckSupplyArgOneOf(sp *pb.Supply) string {
 		argOneof := sp.GetArg_ParticipantInfo()
 		switch(argOneof.SupplyType.String()){
 			case "RES_GET": return "RES_GET_PARTICIPANT"
+			case "RES_SET": return "RES_SET_PARTICIPANT"
 		}
 	}
 	return "INVALID_TYPE"

@@ -58,9 +58,11 @@ enum ClientType {
 
 enum DemandType {
     GET = 0;
+    SET = 1;
 }
 
 enum SupplyType {
     RES_GET = 0;
+    RES_SET = 1;
 }
 

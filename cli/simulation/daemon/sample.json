@@ -56,6 +56,28 @@
 			"rule": {
 
 			}
+		},
+		{
+			"id": 3,
+			"type": "car",
+			"status": {
+				"name": "rui",
+				"age": "20",
+				"sex": "female"
+			},
+			"route": {
+				"coord": {
+					"lat": 35.154000,
+					"lon": 136.983000
+				},
+				"direction": 20,
+				"speed": 20,
+				"departure": "",
+				"destination": ""
+			},
+			"rule": {
+
+			}
 		}
 	]
 }

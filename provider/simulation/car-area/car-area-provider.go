@@ -240,7 +240,7 @@ func setAgent(clt *sxutil.SMServiceClient, dm *pb.Demand){
 		Meta: "",
 	}
 
-	/*if isAgentInControlledArea(agentInfo, data, *agentType){
+	if isAgentInControlledArea(agentInfo, data, *agentType){
 		agentInfo.ControllArea = uint32(*areaId)
 	}
 
@@ -248,7 +248,7 @@ func setAgent(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	if isAgentInArea(agentInfo){
 		data.AgentsInfo = append(data.AgentsInfo, agentInfo)
 		log.Printf("data.AgentInfo %v\n\n", data)
-	}*/
+	}
 
 	nm := "setAgent respnse by car-area-provider"
 	js := ""
@@ -515,6 +515,52 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	}
 }
 
+func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("setParticipant")
+	participantDemand := dm.GetArg_ParticipantDemand()
+	participantInfo := participant.ParticipantInfo{
+		ClientParticipantId: uint64(sclientParticipant.ClientID),
+		ClientAreaId: uint64(sclientArea.ClientID),
+		ClientAgentId: uint64(sclientAgent.ClientID),
+		ClientClockId: uint64(sclientClock.ClientID),
+		ClientType: 2, // CarArea
+		AreaId: uint32(*areaId), // Area A
+		AgentType: 1, // Car
+		SupplyType: 0, // RES_GET
+		StatusType: 0, // OK
+		Meta: "",
+	}
+	
+	nm := "getParticipant respnse by ped-area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(), 
+		Name: nm, 
+		JSON: js, 
+		ParticipantInfo: &participantInfo,
+	}
+
+	spMap, spIdList = simutil.SendProposeSupply(sclientParticipant, opts, spMap, spIdList)
+
+	// get participant to same area provider
+	if isGetParticipant == false{
+		log.Println("getParticipant for same area")
+		isGetParticipant = true
+		participantDemand := participant.ParticipantDemand {
+			ClientId: uint64(sclientParticipant.ClientID),
+			DemandType: 0, // GET
+			StatusType: 2, // NONE
+			Meta: "",
+		}
+		
+		nm := "setParticipant order by car area provider"
+		js := ""
+		opts := &sxutil.DemandOpts{Name: nm, JSON: js, ParticipantDemand: &participantDemand}
+	
+		dmMap, dmIdList = simutil.SendDemand(sclientParticipant, opts, dmMap, dmIdList)
+	}
+}
+
 func getAgents(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("getAgents")
 	dmArgOneof := dm.GetArg_AgentsDemand()
@@ -603,6 +649,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	demandType := simutil.CheckDemandArgOneOf(dm)
 	switch demandType{
 		case "GET_PARTICIPANT": getParticipant(clt, dm)
+		case "SET_PARTICIPANT": setParticipant(clt, dm)
 		case "SET_CLOCK": setClock(clt, dm)
 		case "FORWARD_CLOCK": forwardClock(clt, dm)
 		case "SET_AREA": setArea(clt, dm)

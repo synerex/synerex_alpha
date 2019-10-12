@@ -1,0 +1,585 @@
+
+
+@startuml
+
+'http://plantuml.com/ja/guide'
+
+
+title SynerexSimulationSequence
+
+actor SE
+box "Synerex" #LightBlue
+participant Scenario
+participant Area
+control ClockAPI
+control AgentAPI
+control AreaAPI
+control ParticipantAPI
+control RouteAPI
+participant Ped_AreaA
+participant Car_AreaA
+participant Ped_AreaB
+participant Car_AreaB
+end box
+
+
+== StartUp ==
+note over SE: StartUp
+SE --> Scenario: startUp()
+SE --> Area: startUp()
+
+SE --> Ped_AreaA: startUp(A_id, time)
+activate Ped_AreaA #c0c0c0
+Ped_AreaA -> AreaAPI: RegisterDemand(AreaDemand(AreaA, GET))
+AreaAPI -> Area: AreaDemand(A, GET)
+activate Area #c0c0c0
+Area -> AreaAPI: ProposeSupply(AreaInfo(OK, AreaA, GET))
+deactivate Area
+AreaAPI -> Ped_AreaA: AreaInfo(OK, AreaA, SET)
+note over Ped_AreaA: Set AreaA
+deactivate Ped_AreaA
+
+SE --> Car_AreaA: startUp(A_id, time)
+activate Car_AreaA #c0c0c0
+Car_AreaA -> AreaAPI: RegisterDemand(AreaDemand(AreaA, GET))
+AreaAPI -> Area: AreaDemand(A, GET)
+activate Area #c0c0c0
+Area -> AreaAPI: ProposeSupply(AreaInfo(OK, AreaA, GET))
+deactivate Area
+AreaAPI -> Car_AreaA: AreaInfo(OK, AreaA, SET)
+note over Car_AreaA: Set AreaA
+deactivate Car_AreaA
+
+SE --> Ped_AreaB: startUp(B_id, time)
+activate Ped_AreaB #c0c0c0
+Ped_AreaB -> AreaAPI: RegisterDemand(AreaDemand(AreaB, GET))
+AreaAPI -> Area: AreaDemand(B, GET)
+activate Area #c0c0c0
+Area -> AreaAPI: ProposeSupply(AreaInfo(OK, AreaB, GET))
+deactivate Area
+AreaAPI -> Ped_AreaB: AreaInfo(OK, AreaB, SET)
+note over Ped_AreaB: Set AreaB
+deactivate Ped_AreaB
+
+SE --> Car_AreaB: startUp(B_id, time)
+activate Car_AreaB  #c0c0c0
+Car_AreaB -> AreaAPI: RegisterDemand(AreaDemand(AreaB, GET))
+AreaAPI -> Area: AreaDemand(B, GET)
+activate Area #c0c0c0
+Area -> AreaAPI: ProposeSupply(AreaInfo(OK, AreaB, GET))
+deactivate Area
+AreaAPI -> Car_AreaB: AreaInfo(OK, AreaB, SET)
+note over Car_AreaB: Set AreaB
+deactivate Car_AreaB
+
+
+== GetParticipantId ==
+SE --> Scenario: GetParticipant (Area: A, B)
+Scenario -> ParticipantAPI: RegisterDemand(ParticipantDemand(GET))
+activate ParticipantAPI
+activate Scenario #98FB98
+
+'Get ParticipantId to Area'
+'ParticipantAPI -> Area: ParticipantDemand(GET)
+'activate Area #c0c0c0
+'Area -> ParticipantAPI: ProposeSupply(ParticipantInfo(OK, GET, ID))
+'deactivate Area
+'ParticipantAPI -> Scenario: ParticipantInfo(OK, GET, ID)
+
+'Get ParticipantId to Ped_Area_A'
+ParticipantAPI -> Ped_AreaA: ParticipantDemand(GET)
+activate Ped_AreaA #c0c0c0
+Ped_AreaA -> ParticipantAPI: ProposeSupply(ParticipantInfo(OK, GET, ID))
+deactivate Ped_AreaA
+ParticipantAPI -> Scenario: ParticipantInfo(OK, GET, ID)
+
+'Get ParticipantId to Car_Area_A'
+ParticipantAPI -> Car_AreaA: ParticipantDemand(GET)
+activate Car_AreaA #c0c0c0
+Car_AreaA -> ParticipantAPI: ProposeSupply(ParticipantInfo(OK, GET, ID))
+deactivate Car_AreaA
+ParticipantAPI -> Scenario: ParticipantInfo(OK, GET, ID)
+
+'Get ParticipantId to Ped_Area_B'
+ParticipantAPI -> Ped_AreaB: ParticipantDemand(GET)
+activate Ped_AreaB #c0c0c0
+Ped_AreaB -> ParticipantAPI: ProposeSupply(ParticipantInfo(OK, GET, ID))
+deactivate Ped_AreaB
+ParticipantAPI -> Scenario: ParticipantInfo(OK, GET, ID)
+
+'Get ParticipantId to Car_Area_B'
+ParticipantAPI -> Car_AreaB: ParticipantDemand(GET)
+activate Car_AreaB #c0c0c0
+Car_AreaB -> ParticipantAPI: ProposeSupply(ParticipantInfo(OK, GET, ID))
+deactivate Car_AreaB
+ParticipantAPI -> Scenario: ParticipantInfo(OK, GET, ID)
+
+deactivate Scenario
+deactivate ParticipantAPI
+
+'set ParticipantID'
+
+Scenario -> ParticipantAPI: RegisterDemand(ParticipantDemand(SET))
+activate ParticipantAPI
+activate Scenario #FFBBBB
+
+'Set ParticipantId to Ped_Area_A'
+ParticipantAPI -> Ped_AreaA: ParticipantDemand(SET)
+activate Ped_AreaA #c0c0c0
+Ped_AreaA -> ParticipantAPI: ProposeSupply(ParticipantInfo(OK, SET, ID))
+note over Ped_AreaA: Set ID
+deactivate Ped_AreaA
+ParticipantAPI -> Scenario: ParticipantInfo(OK, SET, ID)
+
+'Set ParticipantId to Car_Area_A'
+ParticipantAPI -> Car_AreaA: ParticipantDemand(SET)
+activate Car_AreaA #c0c0c0
+Car_AreaA -> ParticipantAPI: ProposeSupply(ParticipantInfo(OK, SET, ID))
+note over Car_AreaA: Set ID
+deactivate Car_AreaA
+ParticipantAPI -> Scenario: ParticipantInfo(OK, SET, ID)
+
+'Set ParticipantId to Ped_Area_B'
+ParticipantAPI -> Ped_AreaB: ParticipantDemand(SET)
+activate Ped_AreaB #c0c0c0
+Ped_AreaB -> ParticipantAPI: ProposeSupply(ParticipantInfo(OK, SET, ID))
+note over Ped_AreaB: Set ID
+deactivate Ped_AreaB
+ParticipantAPI -> Scenario: ParticipantInfo(OK, SET, ID)
+
+'Set ParticipantId to Car_Area_B'
+ParticipantAPI -> Car_AreaB: ParticipantDemand(SET)
+activate Car_AreaB #c0c0c0
+Car_AreaB -> ParticipantAPI: ProposeSupply(ParticipantInfo(OK, SET, ID))
+note over Car_AreaB: Set ID
+deactivate Car_AreaB
+ParticipantAPI -> Scenario: ParticipantInfo(OK, SET, ID)
+
+deactivate Scenario
+deactivate ParticipantAPI
+
+'== SetClock ==
+'SE -> Scenario: SetClock
+'activate Scenario #FFBBBB
+'ote over Scenario: Set Clock
+'cenario -> ClockAPI: RegisterDemand(ClockDemand(SET))
+'activate ClockAPI
+
+'SetClock Area'
+'ClockAPI -> Area: ClockDemand(SET)
+'activate Area  #c0c0c0
+'note over Area: Set Clock
+'Area -> ClockAPI: ProposeSupply(Scenario, ClockInfo(OK, SET))
+'deactivate Area
+'ClockAPI -> Scenario: (Scenario, ClockInfo(OK, SET))
+
+'SetClock Ped_AreaA'
+'ClockAPI -> Ped_AreaA: ClockDemand(SET)∂
+'ctivate Ped_AreaA  #c0c0c0
+'note over Ped_AreaA: Set Clock
+'Ped_AreaA -> ClockAPI: ProposeSupply(Scenario, ClockInfo(OK, SET))
+'deactivate Ped_AreaA
+'ClockAPI -> Scenario: (Scenario, ClockInfo(OK, SET))
+
+'SetClock Car_AreaA'
+'ClockAPI -> Car_AreaA: ClockDemand(SET)
+'activate Car_AreaA  #c0c0c0
+'note over Car_AreaA: s\Set Clock
+'Car_AreaA -> ClockAPI: ProposeSupply(Scenario, ClockInfo(OK, SET))
+'deactivate Car_AreaA
+'ClockAPI -> Scenario: (Scenario, ClockInfo(OK, SET))
+
+'SetClock Ped_AreaB'
+'ClockAPI -> Ped_AreaB: ClockDemand(SET)
+'activate Ped_AreaB  #c0c0c0
+'note over Ped_AreaB: Set Clock
+'Ped_AreaB -> ClockAPI: ProposeSupply(Scenario, ClockInfo(OK, SET))
+'deactivate Ped_AreaB
+'ClockAPI -> Scenario: (Scenario, ClockInfo(OK, SET))
+
+'SetClock Car_AreaB'
+'ClockAPI -> Car_AreaB: ClockDemand(SET)
+'activate Car_AreaB  #c0c0c0
+'note over Car_AreaB: Set Clock
+'Car_AreaB -> ClockAPI: ProposeSupply(Scenario, ClockInfo(OK, SET))
+'deactivate Car_AreaB
+'ClockAPI -> Scenario: (Scenario, ClockInfo(OK, SET))
+'deactivate ClockAPI
+
+'Scenario -> SE: OK
+'deactivate Scenario
+
+'== SetArea ==
+'Set Area A'
+'SE -> Scenario: SetArea(A)
+'activate Scenario #FFBBBB
+'Scenario -> AreaAPI: RegisterDemand(AreaDemand(A, SET))
+'activate AreaAPI
+
+'Set Area To Ped_AreaA'
+'AreaAPI -> Ped_AreaA: AreaDemand(A, SET)
+'activate Ped_AreaA  #c0c0c0
+'Ped_AreaA -> AreaAPI: RegisterDemand(AreaDemand(AreaA, GET))
+'AreaAPI -> Area: AreaDemand(A, GET)
+'activate Area #c0c0c0
+'Area -> AreaAPI: RegisterSupply(AreaInfo(OK, AreaA, GET))
+'deactivate Area
+'AreaAPI -> Ped_AreaA: AreaInfo(OK, AreaA, SET)
+'note over Ped_AreaA: Set AreaA
+'Ped_AreaA -> AreaAPI: ProposeSupply(Scenario, AreaInfo(OK, AreaA, SET)) 
+'deactivate Ped_AreaA
+'AreaAPI -> Scenario: (Scenario, AreaInfo(OK, AreaA, SET)) 
+
+'Set Area To Car_AreaA'
+'AreaAPI -> Car_AreaA: AreaDemand(A, SET)
+'activate Car_AreaA  #c0c0c0
+'Car_AreaA -> AreaAPI: RegisterDemand(AreaDemand(AreaA, GET))
+'AreaAPI -> Area: AreaDemand(A, GET)
+'activate Area #c0c0c0
+'Area -> AreaAPI: RegisterSupply(AreaInfo(OK, AreaA, GET))
+'deactivate Area
+'AreaAPI -> Car_AreaA: AreaInfo(OK, AreaA, SET)
+'note over Car_AreaA: Set AreaA
+'Car_AreaA -> AreaAPI: ProposeSupply(Scenario, AreaInfo(OK, AreaA, SET)) 
+'deactivate Car_AreaA
+'AreaAPI -> Scenario: (Scenario, AreaInfo(OK, AreaA, SET)) 
+'deactivate AreaAPI
+'Scenario -> SE: OK
+'deactivate Scenario
+
+
+'Set Area B'
+'SE -> Scenario: SetArea(B)
+'activate Scenario #FFBBBB
+'Scenario -> AreaAPI: RegisterDemand(AreaDemand(B, SET))
+'activate AreaAPI
+
+'Set Area To Ped_AreaB'
+'AreaAPI -> Ped_AreaB: AreaDemand(B, SET)
+'activate Ped_AreaB  #c0c0c0
+'Ped_AreaB -> AreaAPI: RegisterDemand(AreaDemand(AreaB, GET))
+'AreaAPI -> Area: AreaDemand(B, GET)
+'activate Area #c0c0c0
+'Area -> AreaAPI: RegisterSupply(AreaInfo(OK, AreaB, GET))
+'deactivate Area
+'AreaAPI -> Ped_AreaB: AreaInfo(OK, AreaB, SET)
+'note over Ped_AreaB: Set AreaB
+'Ped_AreaB -> AreaAPI: ProposeSupply(Scenario, AreaInfo(OK, AreaB, SET)) 
+'deactivate Ped_AreaB
+'AreaAPI -> Scenario: (Scenario, AreaInfo(OK, AreaB, SET)) 
+
+'Set Area To Car_AreaB'
+'AreaAPI -> Car_AreaB: AreaDemand(B, SET)
+'activate Car_AreaB  #c0c0c0
+'Car_AreaB -> AreaAPI: RegisterDemand(AreaDemand(AreaB, GET))
+'AreaAPI -> Area: AreaDemand(B, GET)
+'activate Area #c0c0c0
+'Area -> AreaAPI: RegisterSupply(AreaInfo(OK, AreaB, GET))
+'deactivate Area
+'AreaAPI -> Car_AreaB: AreaInfo(OK, AreaB, SET)
+'note over Car_AreaB: Set AreaB
+'Car_AreaB -> AreaAPI: ProposeSupply(Scenario, AreaInfo(OK, AreaB, SET)) 
+'deactivate Car_AreaB
+'AreaAPI -> Scenario: (Scenario, AreaInfo(OK, AreaB, SET)) 
+'deactivate AreaAPI
+'Scenario -> SE: OK
+'deactivate Scenario
+
+
+== SetAgent ==
+'Set Agent Ped A'
+SE -> Scenario: SetAgent
+activate Scenario #FFBBBB
+Scenario -> AgentAPI: RegisterDemand(AgentDemand(SET, A, Ped))
+activate AgentAPI
+
+'SetAgent Ped A To Ped_AreaA'
+AgentAPI -> Ped_AreaA: AgentDemand(SET, A, Ped)
+activate Ped_AreaA #c0c0c0
+note over Ped_AreaA: if coord A Ped?
+Ped_AreaA -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(SET, OK, AreaA, Ped))
+deactivate Ped_AreaA
+AgentAPI -> Scenario: AgentsInfo(SET, OK, AreaA, Ped)
+
+'SetAgent Ped A To Car_AreaA'
+AgentAPI -> Car_AreaA: AgentDemand(SET, A, Ped)
+activate Car_AreaA #c0c0c0
+note over Car_AreaA: if coord A Car?
+Car_AreaA -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(SET, OK, AreaA, Car))
+deactivate Car_AreaA
+AgentAPI -> Scenario: AgentsInfo(SET, OK, AreaA, Ped)
+
+'SetAgent Ped A To Ped_AreaB'
+AgentAPI -> Ped_AreaB: AgentDemand(SET, A, Ped)
+activate Ped_AreaB #c0c0c0
+note over Ped_AreaB: if coord B Ped?
+Ped_AreaB -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(SET, OK, AreaB, Ped))
+deactivate Ped_AreaB
+AgentAPI -> Scenario: AgentsInfo(SET, OK, AreaA, Ped)
+
+'SetAgent Ped A To Car_AreaB'
+AgentAPI -> Car_AreaB: AgentDemand(SET, A, Ped)
+activate Car_AreaB #c0c0c0
+note over Car_AreaB: if coord B Car?
+Car_AreaB -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(SET, OK, AreaB, Car))
+deactivate Car_AreaB
+AgentAPI -> Scenario: AgentsInfo(SET, OK, AreaA, Ped)
+
+deactivate AgentAPI
+Scenario -> SE: OK
+deactivate Scenario
+
+
+'Set Agent Car A and B'
+SE -> Scenario: SetAgent
+activate Scenario #FFBBBB
+Scenario -> AgentAPI: RegisterDemand(AgentDemand(SET, A B, Car))
+activate AgentAPI
+
+'SetAgent Car A B To Ped_AreaA'
+AgentAPI -> Ped_AreaA: AgentDemand(SET, A B, Car)
+activate Ped_AreaA #c0c0c0
+note over Ped_AreaA: if coord A Ped?
+Ped_AreaA -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(SET, OK, AreaA, Ped))
+deactivate Ped_AreaA
+AgentAPI -> Scenario: OK
+
+'SetAgent Car A B To Car_AreaA'
+AgentAPI -> Car_AreaA: AgentDemand(SET, A B, Car)
+activate Car_AreaA #c0c0c0
+note over Car_AreaA: if coord A Car?
+Car_AreaA -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(SET, OK, AreaA, Car))
+deactivate Car_AreaA
+AgentAPI -> Scenario: OK
+
+'SetAgent Car A B To Ped_AreaB'
+AgentAPI -> Ped_AreaB: AgentDemand(SET, A B, Car)
+activate Ped_AreaB #c0c0c0
+note over Ped_AreaB: if coord B Ped?
+Ped_AreaB -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(SET, OK, AreaB, Ped))
+deactivate Ped_AreaB
+AgentAPI -> Scenario: OK
+
+'SetAgent Car A B To Car_AreaB'
+AgentAPI -> Car_AreaB: AgentDemand(SET, A B, Car)
+activate Car_AreaB #c0c0c0
+note over Car_AreaB: if coord B Car?
+Car_AreaB -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(SET, OK, AreaB, Car))
+deactivate Car_AreaB
+AgentAPI -> Scenario: OK
+
+deactivate AgentAPI
+Scenario -> SE: OK
+deactivate Scenario
+
+
+== Start ==
+SE -> Scenario: Start
+activate Scenario #FFBBBB
+Scenario -> ClockAPI: RegisterDemand(ClockDemand(Forward))
+
+'Forward To Area'
+ClockAPI -> Area: ClockDemand(Forward)
+activate Area #c0c0c0
+note over Area: calculation
+Area -> ClockAPI: ProposeSupply(Scenario, ClockInfo(Forward, OK, t+1))
+deactivate Area
+ClockAPI -> Scenario: ClockInfo(Forward, OK, t+1)
+deactivate ClockAPI
+
+'Forward To Ped_AreaA'
+ClockAPI -> Ped_AreaA: Forward
+activate ClockAPI
+activate Ped_AreaA #FFBBBB
+
+Ped_AreaA -> AreaAPI: RegisterDemand(AreaDemand(GET, AreaA, t))
+activate AreaAPI 
+AreaAPI -> Area: AreaDemand(GET, AreaA, t)
+activate Area #c0c0c0
+Area -> AreaAPI: RegisterSupply(AreaInfo(OK, Get, AreaA, t))
+deactivate Area
+AreaAPI -> Ped_AreaA: AreaInfo(OK, Get, AreaA, t)
+deactivate AreaAPI
+
+Ped_AreaA -> AgentAPI: RegisterDemand(AgentsDemand(GET, Car, AreaA, t))
+activate AgentAPI
+AgentAPI -> Car_AreaA: AgentsDemand(GET, Car, AreaA, t)
+activate Car_AreaA #c0c0c0
+Car_AreaA -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Car, AreaA, t))
+deactivate Car_AreaA
+AgentAPI -> Ped_AreaA: AgentsInfo(OK, Get, Car, AreaA, t)
+deactivate AgentAPI
+
+Ped_AreaA -> AgentAPI: RegisterDemand(AgentsDemand(GET, Ped, AreaB, t))
+activate AgentAPI
+AgentAPI -> Ped_AreaB: AgentsDemand(GET, Ped, AreaA, t)
+activate Ped_AreaB #c0c0c0
+Ped_AreaB -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Ped, AreaB, t))
+deactivate Ped_AreaB
+AgentAPI -> Ped_AreaA: AgentsInfo(OK, Get, Ped, AreaA, t)
+deactivate AgentAPI
+
+Ped_AreaA -> AgentAPI: RegisterDemand(AgentsDemand(GET, Car, AreaB, t))
+activate AgentAPI
+AgentAPI -> Car_AreaB: AgentsDemand(GET, Car, AreaB, t)
+activate Car_AreaB #c0c0c0
+Car_AreaB -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Car, AreaB, t))
+deactivate Car_AreaB
+AgentAPI -> Ped_AreaA: AgentsInfo(OK, Get, Car, AreaB, t)
+deactivate AgentAPI
+
+note over Ped_AreaA: calculation
+Ped_AreaA -> ClockAPI: ProposeSupply(Scenario, ClockInfo(Forward, OK, t+1))
+deactivate Ped_AreaA
+ClockAPI -> Scenario: ClockInfo(Forward, OK, t+1)
+deactivate ClockAPI
+
+'Forward To Car_AreaA'
+ClockAPI -> Car_AreaA: Forward
+activate ClockAPI
+activate Car_AreaA #FFBBBB
+
+Car_AreaA -> AreaAPI: RegisterDemand(AreaDemand(GET, AreaA, t))
+activate AreaAPI 
+AreaAPI -> Area: AreaDemand(GET, AreaA, t)
+activate Area #c0c0c0
+Area -> AreaAPI: RegisterSupply(AreaInfo(OK, Get, AreaA, t))
+deactivate Area
+AreaAPI -> Car_AreaA: AreaInfo(OK, Get, AreaA, t)
+deactivate AreaAPI
+
+Car_AreaA -> AgentAPI: RegisterDemand(AgentsDemand(GET, Ped, AreaA, t))
+activate AgentAPI
+AgentAPI -> Ped_AreaA: AgentsDemand(GET, Ped, AreaA, t)
+activate Ped_AreaA #c0c0c0
+Ped_AreaA -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Ped, AreaA, t))
+deactivate Ped_AreaA
+AgentAPI -> Car_AreaA: AgentsInfo(OK, Get, Ped, AreaA, t)
+deactivate AgentAPI
+
+Car_AreaA -> AgentAPI: RegisterDemand(AgentsDemand(GET, Ped, AreaA, t))
+activate AgentAPI
+AgentAPI -> Ped_AreaB: AgentsDemand(GET, Ped, AreaA, t)
+activate Ped_AreaB #c0c0c0
+Ped_AreaB -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Ped, AreaA, t))
+deactivate Ped_AreaB
+AgentAPI -> Car_AreaA: AgentsInfo(OK, Get, Ped, AreaA, t)
+deactivate AgentAPI
+
+Car_AreaA -> AgentAPI: RegisterDemand(AgentsDemand(GET, Car, AreaB, t))
+activate AgentAPI
+AgentAPI -> Car_AreaB: AgentsDemand(GET, Car, AreaB, t)
+activate Car_AreaB #c0c0c0
+Car_AreaB -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Car, AreaB, t))
+deactivate Car_AreaB
+AgentAPI -> Car_AreaA: AgentsInfo(OK, Get, Car, AreaB, t)
+deactivate AgentAPI
+
+note over Car_AreaA: calculation
+Car_AreaA -> ClockAPI: ProposeSupply(Scenario, ClockInfo(Forward, OK, t+1))
+deactivate Car_AreaA
+ClockAPI -> Scenario: ClockInfo(Forward, OK, t+1)
+deactivate ClockAPI
+
+'Forward To Ped_AreaB'
+ClockAPI -> Ped_AreaB: Forward
+activate ClockAPI
+activate Ped_AreaB #FFBBBB
+
+Ped_AreaB -> AreaAPI: RegisterDemand(AreaDemand(GET, AreaB, t))
+activate AreaAPI 
+AreaAPI -> Area: AreaDemand(GET, AreaB, t)
+activate Area #c0c0c0
+Area -> AreaAPI: RegisterSupply(AreaInfo(OK, Get, AreaB, t))
+deactivate Area
+AreaAPI -> Ped_AreaB: AreaInfo(OK, Get, AreaB, t)
+deactivate AreaAPI
+
+Ped_AreaB -> AgentAPI: RegisterDemand(AgentsDemand(GET, Car, AreaB, t))
+activate AgentAPI
+AgentAPI -> Car_AreaB: AgentsDemand(GET, Car, AreaB, t)
+activate Car_AreaB #c0c0c0
+Car_AreaB -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Car, AreaB, t))
+deactivate Car_AreaB
+AgentAPI -> Ped_AreaB: AgentsInfo(OK, Get, Car, AreaB, t)
+deactivate AgentAPI
+
+Ped_AreaB -> AgentAPI: RegisterDemand(AgentsDemand(GET, Ped, AreaA, t))
+activate AgentAPI
+AgentAPI -> Ped_AreaA: AgentsDemand(GET, Ped, AreaA, t)
+activate Ped_AreaA #c0c0c0
+Ped_AreaA -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Ped, AreaA, t))
+deactivate Ped_AreaA
+AgentAPI -> Ped_AreaB: AgentsInfo(OK, Get, Ped, AreaA, t)
+deactivate AgentAPI
+
+Ped_AreaB -> AgentAPI: RegisterDemand(AgentsDemand(GET, Car, AreaA, t))
+activate AgentAPI
+AgentAPI -> Car_AreaA: AgentsDemand(GET, Car, AreaA, t)
+activate Car_AreaA #c0c0c0
+Car_AreaA -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Car, AreaA, t))
+deactivate Car_AreaA
+AgentAPI -> Ped_AreaB: AgentsInfo(OK, Get, Car, AreaA, t)
+deactivate AgentAPI
+
+note over Ped_AreaB: calculation
+Ped_AreaB -> ClockAPI: ProposeSupply(Scenario, ClockInfo(Forward, OK, t+1))
+deactivate Ped_AreaB
+ClockAPI -> Scenario: ClockInfo(Forward, OK, t+1)
+deactivate ClockAPI
+
+'Forward To Car_AreaB'
+ClockAPI -> Car_AreaB: Forward
+activate ClockAPI
+activate Car_AreaB #FFBBBB
+
+Car_AreaB -> AreaAPI: RegisterDemand(AreaDemand(GET, AreaB, t))
+activate AreaAPI 
+AreaAPI -> Area: AreaDemand(GET, AreaB, t)
+activate Area #c0c0c0
+Area -> AreaAPI: RegisterSupply(AreaInfo(OK, Get, AreaB, t))
+deactivate Area
+AreaAPI -> Car_AreaB: AreaInfo(OK, Get, AreaB, t)
+deactivate AreaAPI
+
+Car_AreaB -> AgentAPI: RegisterDemand(AgentsDemand(GET, Ped, AreaB, t))
+activate AgentAPI
+AgentAPI -> Ped_AreaB: AgentsDemand(GET, Ped, AreaB, t)
+activate Ped_AreaB #c0c0c0
+Ped_AreaB -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Ped, AreaB, t))
+deactivate Ped_AreaB
+AgentAPI -> Car_AreaB: AgentsInfo(OK, Get, Ped, AreaB, t)
+deactivate AgentAPI
+
+Car_AreaB -> AgentAPI: RegisterDemand(AgentsDemand(GET, Ped, AreaA, t))
+activate AgentAPI
+AgentAPI -> Ped_AreaA: AgentsDemand(GET, Ped, AreaA, t)
+activate Ped_AreaA #c0c0c0
+Ped_AreaA -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Ped, AreaA, t))
+deactivate Ped_AreaA
+AgentAPI -> Car_AreaB: AgentsInfo(OK, Get, Ped, AreaA, t)
+deactivate AgentAPI
+
+Car_AreaB -> AgentAPI: RegisterDemand(AgentsDemand(GET, Car, AreaA, t))
+activate AgentAPI
+AgentAPI -> Car_AreaA: AgentsDemand(GET, Car, AreaA, t)
+activate Car_AreaA #c0c0c0
+Car_AreaA -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Car, AreaA, t))
+deactivate Car_AreaA
+AgentAPI -> Car_AreaB: AgentsInfo(OK, Get, Car, AreaA, t)
+deactivate AgentAPI
+
+note over Car_AreaB: calculation
+Car_AreaB -> ClockAPI: ProposeSupply(Scenario, ClockInfo(Forward, OK, t+1))
+deactivate Car_AreaB
+ClockAPI -> Scenario: ClockInfo(Forward, OK, t+1)
+deactivate ClockAPI
+
+note over Scenario: sleep
+note over Scenario: cycle 2 ...repeat
+
+== Stop ==
+SE -> Scenario: Stop
+note over Scenario: Stop
+
+@enduml

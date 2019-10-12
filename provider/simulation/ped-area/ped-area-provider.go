@@ -521,6 +521,51 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	}
 }
 
+func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	log.Println("setParticipant")
+	//argOneof := dm.GetArg_ParticipantDemand()
+	participantInfo := participant.ParticipantInfo{
+		ClientParticipantId: uint64(sclientParticipant.ClientID),
+		ClientAreaId: uint64(sclientArea.ClientID),
+		ClientAgentId: uint64(sclientAgent.ClientID),
+		ClientClockId: uint64(sclientClock.ClientID),
+		ClientType: 3, // PedArea
+		AreaId: uint32(*areaId), // Area A
+		AgentType: 0, // Pedestrian
+		StatusType: 0, // OK
+		Meta: "",
+	}
+	
+	nm := "getParticipant respnse by ped-area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(), 
+		Name: nm, 
+		JSON: js, 
+		ParticipantInfo: &participantInfo,
+	}
+
+	spMap, spIdList = simutil.SendProposeSupply(sclientParticipant, opts, spMap, spIdList)
+
+	// get participant to same area provider
+	if isGetParticipant == false{
+		log.Println("getParticipant for same area")
+		isGetParticipant = true
+		participantDemand := participant.ParticipantDemand {
+			ClientId: uint64(sclientParticipant.ClientID),
+			DemandType: 0, // GET
+			StatusType: 2, // NONE
+			Meta: "",
+		}
+			
+		nm := "getParticipant order by car area provider"
+		js := ""
+		opts := &sxutil.DemandOpts{Name: nm, JSON: js, ParticipantDemand: &participantDemand}
+		
+		dmMap, dmIdList = simutil.SendDemand(sclientParticipant, opts, dmMap, dmIdList)
+	}
+}
+
 func getAgents(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("getAgents")
 	dmArgOneof := dm.GetArg_AgentsDemand()
@@ -609,6 +654,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	demandType := simutil.CheckDemandArgOneOf(dm)
 	switch demandType{
 		case "GET_PARTICIPANT": getParticipant(clt, dm)
+		case "SET_PARTICIPANT": setParticipant(clt, dm)
 		case "SET_CLOCK": setClock(clt, dm)
 		case "FORWARD_CLOCK": forwardClock(clt, dm)
 		case "SET_AREA": setArea(clt, dm)
@@ -639,7 +685,7 @@ func proposeSupplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 				syncProposeSupply(sp, syncAgentIdList, pspMap, callback)
 
 			case "RES_GET_PARTICIPANT":
-				fmt.Println("getAgents response in callback")
+				fmt.Println("getParticipant response in callback")
 				callbackForGetParticipant(clt, sp)
 			default:
 				fmt.Println("error")
