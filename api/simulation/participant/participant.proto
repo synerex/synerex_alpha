@@ -19,7 +19,7 @@ message GetParticipantSupply {
 }
 
 message SetParticipantDemand {
-    ParticipantInfo participant_info = 1;
+    repeated ParticipantInfo participants_info = 1;
     StatusType status_type = 2;
     string meta = 3;
 }
