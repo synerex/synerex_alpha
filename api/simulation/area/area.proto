@@ -4,67 +4,35 @@ package api.area;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/area";
 
+
+
+message GetAreaDemand {
+    uint32 time = 1;
+    uint32 area_id = 2;
+    StatusType status_type = 3;
+    string meta = 4;
+}
+
+message GetAreaSupply {
+    AreaInfo area_info = 1;
+    StatusType status_type = 2;
+    string meta = 3;
+}
+
 message AreaInfo {
-    // area info
     uint32 time = 1;
     uint32 area_id = 2;
     string area_name = 3;
-    Signal signal = 4;
-    Map map = 5;
-    Climate climate = 6;
-
-    // supply type
-    SupplyType supply_type = 7;
-
-    // meta data
-    StatusType status_type = 8;
-    string meta = 9;
+    repeated uint32 neighbor_area = 4;
+    AreaCoord area_coord = 5;
+    AreaCoord control_area_coord = 6;
 }
 
-message AreaDemand {
-    // demand info
-    uint32 time = 1;
-    uint32 area_id = 2;
-
-    // demand type
-    DemandType demand_type = 3;
-
-    // meta data
-    StatusType status_type = 4;
-    string meta = 5;
-}
-
-enum DemandType {
-    SET = 0;
-    GET = 1;
-}
-
-enum SupplyType {
-    RES_SET = 0;
-    RES_GET = 1;
-}
-
-message Signal {
-    uint32 signal_info = 1;
-}
-
-message Map {
-    message Coord {
-        float start_lat = 1;
-        float start_lon = 2;
-        float end_lat = 3;
-        float end_lon = 4;
-    }
-    Coord coord = 1;
-    repeated uint32 neighbor = 2;
-    Coord controlled = 3;
-    uint32 map_info = 4;
-}
-
-message Climate {
-    uint32 Weather = 1;
-    uint32 Temperature = 2;
-    uint32 Humidity = 3;
+message AreaCoord {
+    float start_lat = 1;
+    float start_lon = 2;
+    float end_lat = 3;
+    float end_lon = 4;
 }
 
 enum StatusType {

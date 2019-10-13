@@ -5,54 +5,55 @@ package api.clock;
 option go_package="github.com/synerex/synerex_alpha/api/simulation/clock";
 //import "common/common.proto";
 
+message SetClockDemand{
+    uint32 time = 1;
+    uint32 cycle_duration = 2;
+    StatusType status_type = 3;
+    string meta = 4;
+}
+
+message SetClockSupply{
+    ClockInfo clock_info = 1;
+    StatusType status_type = 2;
+    string meta = 3;
+}
+
+message ForwardClockDemand{
+    uint32 time = 1;
+    uint32 cycle_num = 2;
+    StatusType status_type = 3;
+    string meta = 4;
+}
+
+message ForwardClockSupply{
+    ClockInfo clock_info = 1;
+    StatusType status_type = 2;
+    string meta = 3;
+}
+
+message BackClockDemand{
+    uint32 time = 1;
+    uint32 cycle_num = 2;
+    StatusType status_type = 3;
+    string meta = 4;
+}
+
+message BackClockSupply{
+    ClockInfo clock_info = 1;
+    StatusType status_type = 2;
+    string meta = 3;
+}
 
 message ClockInfo {
-        // clock info
-        uint32 time = 1;
-
-        // supply type
-        SupplyType supply_type = 2;
-
-        // meta data
-        StatusType status_type = 3;
-	    string meta = 4;
-    }
-
- message ClockDemand {
-        // demand info
         uint32 time = 1;
         uint32 cycle_num = 2;
-	    uint32 cycle_duration = 3;	
-	    uint32 cycle_interval = 4;
-
-        // demand type
-        DemandType demand_type = 5;
-
-        // meta data
-        StatusType status_type = 6;
-        string meta = 7;
-    }
+        uint32 cycle_duration = 3;
+        uint32 cycle_interval = 4;
+}
 
 enum StatusType {
     OK = 0;
     NG = 1;
     NONE = 2;
-}
-
-
-enum DemandType {
-    FORWARD = 0;
-    BACK = 1;
-    SET = 2;
-    START = 3;
-    STOP = 4;
-}
-
-enum SupplyType {
-    RES_FORWARD = 0;
-    RES_BACK = 1;
-    RES_SET = 2;
-    RES_START = 3;
-    RES_STOP = 4;
 }
 

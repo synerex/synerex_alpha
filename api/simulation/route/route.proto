@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package api.route;
+
+option go_package="github.com/synerex/synerex_alpha/api/simulation/route";
+//import "common/common.proto";
+
+message GetRouteDemand {
+    Coord departure = 1;
+    Coord destination = 2;
+    Coord location = 3;
+    StatusType status_type = 4;
+    string meta = 5;
+}
+
+message GetRouteSupply {
+    repeated RouteInfo routes = 1;
+    StatusType status_type = 2;
+    string meta = 3;
+}
+
+message Coord {
+    float lat = 1;
+    float lon = 2;
+}
+
+message RouteInfo {
+    repeated AreaRouteInfo area_routes = 1;
+}
+
+message AreaRouteInfo {
+    uint32 area_id = 1;
+    Coord departure = 2;
+    Coord destination = 3;
+}
+
+enum StatusType {
+    OK = 0;
+    NG = 1;
+    NONE = 2;
+}
+
+
+
+

@@ -4,72 +4,55 @@ package api.agent;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/agent";
 
-
-message AgentInfo {
-    // agent info
-    uint32 time = 1;
-    uint32 agent_id = 2;
-    uint32 controll_area = 3;
-    string agent_name = 4;
-    AgentStatus agent_status = 5;
-    AgentType agent_type = 6;
-    Route route = 7;
-    Rule rule = 8;
-
-    // supply type
-    SupplyType supply_type = 9;
-
-    // meta data
-    StatusType status_type = 10;
-	string meta = 11;
-}
-
-message AgentsInfo {
-    // agents info
+message GetAgentsDemand {
     uint32 time = 1;
     uint32 area_id = 2;
     AgentType agent_type = 3;
-    repeated AgentInfo agent_info = 4;
-
-    // supply type
-    SupplyType supply_type = 5;
-        
-    // meta data
-    StatusType status_type = 6;
-	string meta = 7;
+    StatusType status_type = 4;
+	string meta = 5;
 }
 
-message AgentDemand {
-    // demand info
-    uint32 time = 1;
-    uint32 agent_id = 2;
-    string agent_name = 3;
-    AgentType agent_type = 4;
-    AgentStatus agent_status = 5;
-    Route route = 6;
-    Rule rule = 7;
-        
-    // demand info
-    DemandType demand_type = 8;
-
-    // meta data
-    StatusType status_type = 9;
-	string meta = 10;
-}
-
-message AgentsDemand {
-    // demand info
+message GetAgentsSupply {
     uint32 time = 1;
     uint32 area_id = 2;
     AgentType agent_type = 3;
-        
-    // demand info
-    DemandType demand_type = 4;
-
-    // meta data
+    repeated AgentInfo agents_info = 4;
     StatusType status_type = 5;
 	string meta = 6;
 }
+
+message SetAgentsDemand {
+    repeated AgentInfo agents_info = 1;
+    StatusType status_type = 2;
+	string meta = 3;
+}
+
+message SetAgentsSupply {
+    uint32 time = 1;
+    uint32 area_id = 2;
+    AgentType agent_type = 3;
+    StatusType status_type = 4;
+	string meta = 5;
+}
+
+message ForwardAgentsSupply {
+    uint32 time = 1;
+    uint32 area_id = 2;
+    AgentType agent_type = 3;
+    repeated AgentInfo agents_info = 4;
+    StatusType status_type = 5;
+	string meta = 6;
+}
+
+message AgentInfo {
+    uint32 time = 1;
+    uint32 agent_id = 2;
+    uint32 control_area = 3;
+    AgentStatus agent_status = 4;
+    AgentType agent_type = 6;
+    Route route = 7;
+}
+
 
 message Route {
     message Coord {
@@ -83,13 +66,11 @@ message Route {
     float departure = 5;
 }
 
-message Rule {
-    string rule_info = 1;
-}
 
 message AgentStatus {
     string age = 1;
     string sex = 2;
+    string name = 3;
 }
 
 enum StatusType {
@@ -101,16 +82,4 @@ enum StatusType {
 enum AgentType {
     PEDESTRIAN = 0;
     CAR = 1;
-    TRAIN = 2;
-    BICYCLE = 3;
-}
-
-enum DemandType {
-    SET = 0;
-    GET = 1;
-}
-
-enum SupplyType {
-    RES_SET = 0;
-    RES_GET = 1;
 }
