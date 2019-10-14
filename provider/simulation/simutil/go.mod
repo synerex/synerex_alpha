@@ -5,6 +5,7 @@ require (
 	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/participant v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
 )
 
@@ -21,6 +22,7 @@ replace (
 	github.com/synerex/synerex_alpha/api/simulation/area => ./../../../api/simulation/area
 	github.com/synerex/synerex_alpha/api/simulation/clock => ./../../../api/simulation/clock
 	github.com/synerex/synerex_alpha/api/simulation/participant => ./../../../api/simulation/participant
+	github.com/synerex/synerex_alpha/api/simulation/route => ./../../../api/simulation/route
 	github.com/synerex/synerex_alpha/nodeapi => ./../../../nodeapi
 	github.com/synerex/synerex_alpha/provider/simulation/simutil => ../simutil
 	github.com/synerex/synerex_alpha/sxutil => ./../../../sxutil

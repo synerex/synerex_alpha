@@ -8,16 +8,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/synerex/synerex_alpha/api/rideshare"
-	"github.com/synerex/synerex_alpha/api/routing"
-	"github.com/synerex/synerex_alpha/api/simulation/clock"
-	"github.com/synerex/synerex_alpha/api/simulation/area"
-	"github.com/synerex/synerex_alpha/api/simulation/agent"
-	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"io"
 	"log"
 	"sync"
 	"time"
+
+	"github.com/synerex/synerex_alpha/api/rideshare"
+	"github.com/synerex/synerex_alpha/api/routing"
+	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
+	"github.com/synerex/synerex_alpha/api/simulation/route"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/golang/protobuf/ptypes"
@@ -44,42 +46,46 @@ var (
 
 // DemandOpts is sender options for Demand
 type DemandOpts struct {
-	ID     uint64
-	Target uint64
-	Name   string
-	JSON   string
-	Fleet     *fleet.Fleet
+	ID             uint64
+	Target         uint64
+	Name           string
+	JSON           string
+	Fleet          *fleet.Fleet
 	RoutingService *routing.RoutingService
-	RideShare *rideshare.RideShare
-	//ClockInfo *clock.ClockInfo
-	ClockDemand *clock.ClockDemand
-	//AreaInfo *area.AreaInfo
-	AreaDemand *area.AreaDemand
-	//AgentInfo *agent.AgentInfo
-	//AgentsInfo *agent.AgentsInfo
-	AgentDemand *agent.AgentDemand
-	AgentsDemand *agent.AgentsDemand
-	ParticipantDemand *participant.ParticipantDemand
+	RideShare      *rideshare.RideShare
+
+	SetClockDemand       *clock.SetClockDemand
+	ForwardClockDemand   *clock.ForwardClockDemand
+	BackClockDemand      *clock.BackClockDemand
+	GetAreaDemand        *area.GetAreaDemand
+	GetAgentsDemand      *agent.GetAgentsDemand
+	SetAgentsDemand      *agent.SetAgentsDemand
+	GetParticipantDemand *participant.GetParticipantDemand
+	SetParticipantDemand *participant.SetParticipantDemand
+	GetRouteDemand       *route.GetRouteDemand
 }
 
 // SupplyOpts is sender options for Supply
 type SupplyOpts struct {
-	ID        uint64
-	Target    uint64
-	Name      string
-	JSON      string
-	Fleet     *fleet.Fleet
-	PTService *ptransit.PTService
+	ID             uint64
+	Target         uint64
+	Name           string
+	JSON           string
+	Fleet          *fleet.Fleet
+	PTService      *ptransit.PTService
 	RoutingService *routing.RoutingService
-	RideShare *rideshare.RideShare
-	ClockInfo *clock.ClockInfo
-	//ClockDemand *clock.ClockDemand
-	AreaInfo *area.AreaInfo
-	//AreaDemand *area.AreaDemand
-	AgentInfo *agent.AgentInfo
-	AgentsInfo *agent.AgentsInfo
-	//AgentDemand *agent.AgentDemand
-	ParticipantInfo *participant.ParticipantInfo
+	RideShare      *rideshare.RideShare
+
+	SetClockSupply       *clock.SetClockSupply
+	ForwardClockSupply   *clock.ForwardClockSupply
+	BackClockSupply      *clock.BackClockSupply
+	GetAreaSupply        *area.GetAreaSupply
+	GetAgentsSupply      *agent.GetAgentsSupply
+	SetAgentsSupply      *agent.SetAgentsSupply
+	ForwardAgentsSupply  *agent.ForwardAgentsSupply
+	GetParticipantSupply *participant.GetParticipantSupply
+	SetParticipantSupply *participant.SetParticipantSupply
+	GetRouteSupply       *route.GetRouteSupply
 }
 
 func init() {
@@ -247,67 +253,48 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 		SupplyName: spo.Name,
 		ArgJson:    spo.JSON,
 	}
-//	log.Printf("spo Target %v", sp)
+	//	log.Printf("spo Target %v", sp)
 
 	switch clt.MType {
 	case api.ChannelType_PARTICIPANT_SERVICE:
-		if spo.ParticipantInfo != nil {
-			sp.WithParticipantInfo(spo.ParticipantInfo)
-		}else{
-			log.Printf("ParticipantInfo is nil")
+		if spo.GetParticipantSupply != nil {
+			sp.WithGetParticipantSupply(spo.GetParticipantSupply)
 		}
+		if spo.SetParticipantSupply != nil {
+			sp.WithSetParticipantSupply(spo.SetParticipantSupply)
+		}
+
 	case api.ChannelType_CLOCK_SERVICE:
-		if spo.ClockInfo != nil {
-			sp.WithClockInfo(spo.ClockInfo)
-		}else{
-			log.Printf("ClockInfo is nil")
+		if spo.SetClockSupply != nil {
+			sp.WithSetClockSupply(spo.SetClockSupply)
 		}
-//		if spo.ClockDemand != nil {
-//			sp.WithClockDemand(spo.ClockDemand)
-//		}else{
-//			log.Printf("ClockDemand is nil")
-//		}
+		if spo.ForwardClockSupply != nil {
+			sp.WithForwardClockSupply(spo.ForwardClockSupply)
+		}
+		if spo.BackClockSupply != nil {
+			sp.WithBackClockSupply(spo.BackClockSupply)
+		}
+
 	case api.ChannelType_AREA_SERVICE:
-		if spo.AreaInfo != nil {
-			sp.WithAreaInfo(spo.AreaInfo)
-		}else{
-			log.Printf("AreaInfo is nil")
+		if spo.GetAreaSupply != nil {
+			sp.WithGetAreaSupply(spo.GetAreaSupply)
 		}
-//		if spo.AreaDemand != nil {
-//			sp.WithAreaDemand(spo.AreaDemand)
-//		}else{
-//			log.Printf("AreaDemand is nil")
-//		}
+
+	case api.ChannelType_ROUTE_SERVICE:
+		if spo.GetRouteSupply != nil {
+			sp.WithGetRouteSupply(spo.GetRouteSupply)
+		}
+
 	case api.ChannelType_AGENT_SERVICE:
-		if spo.AgentInfo != nil {
-			sp.WithAgentInfo(spo.AgentInfo)
-		}else if spo.AgentsInfo != nil {
-			sp.WithAgentsInfo(spo.AgentsInfo)
-		}else{
-			log.Printf("AgentsInfo or AgentInfo is nil")
-		} 
-//		if spo.AgentDemand != nil {
-//			sp.WithAgentDemand(spo.AgentDemand)
-//		}else{
-//			log.Printf("AgentDemand is nil")
-//		} 
-	case api.ChannelType_RIDE_SHARE:
-		if spo.RideShare != nil {
-			sp.WithRideShare(spo.RideShare)
+		if spo.GetAgentsSupply != nil {
+			sp.WithGetAgentsSupply(spo.GetAgentsSupply)
 		}
-		if spo.Fleet != nil {
-			sp.WithFleet(spo.Fleet)
+		if spo.SetAgentsSupply != nil {
+			sp.WithSetAgentsSupply(spo.SetAgentsSupply)
 		}
-	case api.ChannelType_PT_SERVICE:
-		spa := api.Supply_Arg_PTService{
-			spo.PTService,
+		if spo.ForwardAgentsSupply != nil {
+			sp.WithForwardAgentsSupply(spo.ForwardAgentsSupply)
 		}
-		sp.ArgOneof = &spa
-	case api.ChannelType_ROUTING_SERVICE:
-		spa := api.Supply_Arg_RoutingService{
-			spo.RoutingService,
-		}
-		sp.ArgOneof = &spa
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -317,16 +304,16 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 		log.Printf("%v.ProposeSupply err %v, [%v]", clt, err, sp)
 		return 0 // should check...
 	}
-	log.Println("ProposeSupply Response:", resp, ":PID ",pid)
+	log.Println("ProposeSupply Response:", resp, ":PID ", pid)
 	return pid
 }
 
 // SelectSupply send select message to server
-func (clt *SMServiceClient) SelectSupply(sp *api.Supply)  (uint64, error) {
+func (clt *SMServiceClient) SelectSupply(sp *api.Supply) (uint64, error) {
 	tgt := &api.Target{
 		Id:       GenerateIntID(),
 		SenderId: uint64(clt.ClientID),
-		TargetId: sp.Id,  /// Message Id of Supply (not SenderId),
+		TargetId: sp.Id, /// Message Id of Supply (not SenderId),
 		Type:     sp.Type,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -343,7 +330,7 @@ func (clt *SMServiceClient) SelectSupply(sp *api.Supply)  (uint64, error) {
 		//		clt.SubscribeMbus()
 	}
 
-	return	uint64(clt.MbusID), nil
+	return uint64(clt.MbusID), nil
 }
 
 // SelectDemand send select message to server
@@ -384,7 +371,7 @@ func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMSe
 			}
 			break
 		}
-//		log.Println("Receive SS:", sp)
+		//		log.Println("Receive SS:", sp)
 		// call Callback!
 		spcb(clt, sp)
 	}
@@ -410,7 +397,7 @@ func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMSe
 			}
 			break
 		}
-//		log.Println("Receive SD:",*dm)
+		//		log.Println("Receive SD:",*dm)
 		// call Callback!
 		dmcb(clt, dm)
 	}
@@ -441,7 +428,7 @@ func (clt *SMServiceClient) SubscribeMbus(ctx context.Context, mbcb func(*SMServ
 			}
 			break
 		}
-//		log.Printf("Receive Mbus Message %v", *mes)
+		//		log.Printf("Receive Mbus Message %v", *mes)
 		// call Callback!
 		mbcb(clt, mes)
 	}
@@ -490,49 +477,58 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 
 	switch clt.MType {
 	case api.ChannelType_PARTICIPANT_SERVICE:
-		if dmo.ParticipantDemand != nil {
-			dm.WithParticipantDemand(dmo.ParticipantDemand)
-		}else{
-			log.Printf("ParticipantDemand is nil")
+		if dmo.GetParticipantDemand != nil {
+			dm.WithGetParticipantDemand(dmo.GetParticipantDemand)
 		}
+		if dmo.SetParticipantDemand != nil {
+			dm.WithSetParticipantDemand(dmo.SetParticipantDemand)
+		}
+
 	case api.ChannelType_CLOCK_SERVICE:
-		if dmo.ClockDemand != nil {
-			dm.WithClockDemand(dmo.ClockDemand)
-		}else{
-			log.Printf("ClockDemand is nil")
+		if dmo.SetClockDemand != nil {
+			dm.WithSetClockDemand(dmo.SetClockDemand)
 		}
+		if dmo.ForwardClockDemand != nil {
+			dm.WithForwardClockDemand(dmo.ForwardClockDemand)
+		}
+		if dmo.BackClockDemand != nil {
+			dm.WithBackClockDemand(dmo.BackClockDemand)
+		}
+
 	case api.ChannelType_AREA_SERVICE:
-		if dmo.AreaDemand != nil {
-			dm.WithAreaDemand(dmo.AreaDemand)
-		}else{
-			log.Printf("AreaDemand is nil")
+		if dmo.GetAreaDemand != nil {
+			dm.WithGetAreaDemand(dmo.GetAreaDemand)
 		}
+
+	case api.ChannelType_ROUTE_SERVICE:
+		if dmo.GetRouteDemand != nil {
+			dm.WithGetRouteDemand(dmo.GetRouteDemand)
+		}
+
 	case api.ChannelType_AGENT_SERVICE:
-		if dmo.AgentDemand != nil {
-			dm.WithAgentDemand(dmo.AgentDemand)
-		}else if dmo.AgentsDemand != nil {
-			dm.WithAgentsDemand(dmo.AgentsDemand)
-		}else{
-			log.Printf("AgentDemand is nil")
-		} 
+		if dmo.GetAgentsDemand != nil {
+			dm.WithGetAgentsDemand(dmo.GetAgentsDemand)
+		}
+		if dmo.SetAgentsDemand != nil {
+			dm.WithSetAgentsDemand(dmo.SetAgentsDemand)
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-//	log.Printf("Now RegisterDemand with %v",dm)
-//	log.Printf("Arg %v",dm.ArgOneof)
-//	log.Printf("Arg %v",dm.GetArg_RideShare())
+	//	log.Printf("Now RegisterDemand with %v",dm)
+	//	log.Printf("Arg %v",dm.ArgOneof)
+	//	log.Printf("Arg %v",dm.GetArg_RideShare())
 
-
-	_ , err := clt.Client.RegisterDemand(ctx, &dm)
+	_, err := clt.Client.RegisterDemand(ctx, &dm)
 
 	//	resp, err := clt.Client.RegisterDemand(ctx, &dm)
 	if err != nil {
 		log.Printf("%v.RegisterDemand err %v", clt, err)
 		return 0
 	}
-//	log.Println(resp)
+	//	log.Println(resp)
 	dmo.ID = id // assign ID
 	return id
 }
@@ -552,77 +548,56 @@ func (clt *SMServiceClient) RegisterSupply(spo *SupplyOpts) uint64 {
 
 	switch clt.MType {
 	case api.ChannelType_PARTICIPANT_SERVICE:
-		if spo.ParticipantInfo != nil {
-			sp.WithParticipantInfo(spo.ParticipantInfo)
-		}else{
-			log.Printf("ParticipantInfo is nil")
+		if spo.GetParticipantSupply != nil {
+			sp.WithGetParticipantSupply(spo.GetParticipantSupply)
 		}
+		if spo.SetParticipantSupply != nil {
+			sp.WithSetParticipantSupply(spo.SetParticipantSupply)
+		}
+
 	case api.ChannelType_CLOCK_SERVICE:
-		if spo.ClockInfo != nil {
-			sp.WithClockInfo(spo.ClockInfo)
-		}else{
-			log.Printf("ClockInfo is nil")
+		if spo.SetClockSupply != nil {
+			sp.WithSetClockSupply(spo.SetClockSupply)
 		}
-//		if spo.ClockDemand != nil {
-//			sp.WithClockDemand(spo.ClockDemand)
-//		}else{
-//			log.Printf("ClockDemand is nil")
-//		}
+		if spo.ForwardClockSupply != nil {
+			sp.WithForwardClockSupply(spo.ForwardClockSupply)
+		}
+		if spo.BackClockSupply != nil {
+			sp.WithBackClockSupply(spo.BackClockSupply)
+		}
+
 	case api.ChannelType_AREA_SERVICE:
-		if spo.AreaInfo != nil {
-			sp.WithAreaInfo(spo.AreaInfo)
-		}else{
-			log.Printf("AreaInfo is nil")
+		if spo.GetAreaSupply != nil {
+			sp.WithGetAreaSupply(spo.GetAreaSupply)
 		}
-//		if spo.AreaDemand != nil {
-//			sp.WithAreaDemand(spo.AreaDemand)
-//		}else{
-//			log.Printf("AreaDemand is nil")
-//		}
+
+	case api.ChannelType_ROUTE_SERVICE:
+		if spo.GetRouteSupply != nil {
+			sp.WithGetRouteSupply(spo.GetRouteSupply)
+		}
+
 	case api.ChannelType_AGENT_SERVICE:
-		if spo.AgentInfo != nil {
-			sp.WithAgentInfo(spo.AgentInfo)
-		}else{
-			log.Printf("AgentInfo is nil")
-		} 
-		if spo.AgentsInfo != nil {
-			sp.WithAgentsInfo(spo.AgentsInfo)
-		}else{
-			log.Printf("AgentsInfo is nil")
-		} 
-//		if spo.AgentDemand != nil {
-//			sp.WithAgentDemand(spo.AgentDemand)
-//		}else{
-//			log.Printf("AgentDemand is nil")
-//		} 
-	
-	/*case api.ChannelType_RIDE_SHARE:
-		sp := api.Supply_Arg_Fleet{
-			smo.Fleet,
+		if spo.GetAgentsSupply != nil {
+			sp.WithGetAgentsSupply(spo.GetAgentsSupply)
 		}
-		dm.ArgOneof = &sp
-	case api.ChannelType_PT_SERVICE:
-		sp := api.Supply_Arg_PTService{
-			smo.PTService,
+		if spo.SetAgentsSupply != nil {
+			sp.WithSetAgentsSupply(spo.SetAgentsSupply)
 		}
-		dm.ArgOneof = &sp
-	case api.ChannelType_ROUTING_SERVICE:
-		sp := api.Supply_Arg_RoutingService{
-			smo.RoutingService,
+		if spo.ForwardAgentsSupply != nil {
+			sp.WithForwardAgentsSupply(spo.ForwardAgentsSupply)
 		}
-		dm.ArgOneof = &sp*/
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-//	resp , err := clt.Client.RegisterSupply(ctx, &dm)
+	//	resp , err := clt.Client.RegisterSupply(ctx, &dm)
 
 	_, err := clt.Client.RegisterSupply(ctx, &sp)
 	if err != nil {
 		log.Printf("Error for sending:RegisterSupply to  Synerex Server as %v ", err)
 		return 0
 	}
-//	log.Println("RegiterSupply:", smo, resp)
+	//	log.Println("RegiterSupply:", smo, resp)
 	spo.ID = id // assign ID
 	return id
 }

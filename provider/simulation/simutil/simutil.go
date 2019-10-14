@@ -1,22 +1,25 @@
 package simutil
 
-import (  
-    pb "github.com/synerex/synerex_alpha/api"
-	"github.com/synerex/synerex_alpha/sxutil"
-	"github.com/synerex/synerex_alpha/api/simulation/clock"
-	"github.com/synerex/synerex_alpha/api/simulation/area"
+import (
+	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
-    "fmt"
-    //"time"
-    "log"
-    "sync"
-    "context"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
+	"github.com/synerex/synerex_alpha/sxutil"
+
+	//	"github.com/synerex/synerex_alpha/api/simulation/route"
+	"fmt"
+	//"time"
+	"context"
+	"log"
+	"sync"
 )
 
 var (
-    ch 			chan *pb.Supply
-    startSync 	bool
-    mu	sync.Mutex
+	ch        chan *pb.Supply
+	startSync bool
+	mu        sync.Mutex
 )
 
 func init() {
@@ -25,73 +28,108 @@ func init() {
 }
 
 type IdListByChannel struct {
-	ParticipantIdList []uint64
-	ClockIdList    []uint64
-	AgentIdList    []uint64
-	AreaIdList    []uint64
+	ParticipantIdList []uint32
+	ClockIdList       []uint32
+	AgentIdList       []uint32
+	AreaIdList        []uint32
+	RouteIdList       []uint32
 }
 
-type Order struct{
-	Type string 
-	ClockInfo ClockInfo
-	AreaInfo AreaInfo
-	AgentInfo AgentInfo
+type Order struct {
+	Type       string
+	ClockInfo  ClockInfo
+	AreaInfo   AreaInfo
+	AgentsInfo []AgentInfo
 }
 
-type Coord struct{
-	Lat float32 	`json:"lat"`
-	Lon float32		`json:"lon"`
+type Coord struct {
+	Lat float32 `json:"lat"`
+	Lon float32 `json:"lon"`
 }
 
-type Route struct{
-	Coord Coord	`json:"coord"`
-	Direction float32	`json:"direction"`
-	Speed float32	`json:"speed"`
-	Departure string	`json:"departure"`
-	Destination string	`json:"destination"`
+type Route struct {
+	Coord       Coord   `json:"coord"`
+	Direction   float32 `json:"direction"`
+	Speed       float32 `json:"speed"`
+	Departure   string  `json:"departure"`
+	Destination string  `json:"destination"`
 }
 
-type Status struct{
-	Name string	`json:"name"`
-	Age string	`json:"age"`
-	Sex string	`json:"sex"`
+type Status struct {
+	Name string `json:"name"`
+	Age  string `json:"age"`
+	Sex  string `json:"sex"`
 }
 
-type Rule struct{
-
+type Rule struct {
 }
 
-type ClockInfo struct{
+type ClockInfo struct {
 	Time string `json:"time"`
 }
 
-type AreaInfo struct{
-	Id uint32	`json:"id"`
-	Name string 	`json:"name"`
+type AreaInfo struct {
+	Id   uint32 `json:"id"`
+	Name string `json:"name"`
 }
 
-type AgentInfo struct{
-	Id uint32	`json:"id"`
-	Type string		`json:"type"`
-	Status Status	`json:"status"`
-	Route Route	`json:"route"`
-	Rule Rule		`json:"rule"`
+type AgentInfo struct {
+	Id     uint32 `json:"id"`
+	Type   string `json:"type"`
+	Status Status `json:"status"`
+	Route  Route  `json:"route"`
+	Rule   Rule   `json:"rule"`
 }
 
-type SimData struct{
-	Time string 	`json:"time"`
-	Area []AreaInfo	`json:"area"`
-	Agent []AgentInfo	`json:"agent"`
+type SimData struct {
+	Time  string      `json:"time"`
+	Area  []AreaInfo  `json:"area"`
+	Agent []AgentInfo `json:"agent"`
 }
 
 type Data struct {
-	AreaInfo *area.AreaInfo
-	ClockInfo *clock.ClockInfo
+	AreaInfo   *area.AreaInfo
+	ClockInfo  *clock.ClockInfo
 	AgentsInfo []*agent.AgentInfo
 }
 
-func SyncProposeSupply(sp *pb.Supply, syncIdList []uint64, pspMap map[uint64]*pb.Supply, callback func(pspMap map[uint64]*pb.Supply)){
-	go func() { 
+func ConvertAgentsInfo(agentsInfo2 []AgentInfo) []*agent.AgentInfo {
+	agentsInfo := make([]*agent.AgentInfo, 0)
+	for _, agentInfo := range agentsInfo2 {
+		route := &agent.Route{
+			Coord: &agent.Route_Coord{
+				Lat: float32(agentInfo.Route.Coord.Lat),
+				Lon: float32(agentInfo.Route.Coord.Lon),
+			},
+			Direction:   float32(agentInfo.Route.Direction),
+			Speed:       float32(agentInfo.Route.Speed),
+			Destination: float32(10),
+			Departure:   float32(100),
+		}
+		agentStatus := &agent.AgentStatus{
+			Name: "Rui",
+			Age:  "20",
+			Sex:  "Male",
+		}
+		agentType := agent.AgentType_PEDESTRIAN
+		if agentInfo.Type == "car" {
+			agentType = agent.AgentType_CAR
+		}
+
+		agentInfo := &agent.AgentInfo{
+			Time:        uint32(1),
+			AgentId:     uint32(agentInfo.Id),
+			AgentStatus: agentStatus,
+			AgentType:   agentType,
+			Route:       route,
+		}
+		agentsInfo = append(agentsInfo, agentInfo)
+	}
+	return agentsInfo
+}
+
+func SyncProposeSupply(sp *pb.Supply, syncIdList []uint32, pspMap map[uint64]*pb.Supply, callback func(pspMap map[uint64]*pb.Supply)) {
+	go func() {
 		log.Println("Send Supply")
 		ch <- sp
 		return
@@ -101,73 +139,86 @@ func SyncProposeSupply(sp *pb.Supply, syncIdList []uint64, pspMap map[uint64]*pb
 		log.Println("Start Sync")
 		startSync = true
 
-		go func(){		
-		for {
-			select {
-				case psp := <- ch:
+		go func() {
+			for {
+				select {
+				case psp := <-ch:
 					log.Println("recieve ProposeSupply")
 					pspMap[psp.SenderId] = psp
-//					log.Printf("waitidList %v %v", pspMap, idList)
-			
-				if IsFinishSync(pspMap, syncIdList){
-					fmt.Printf("Finish Sync\n")
-					// init pspMap
-					pspMap = make(map[uint64]*pb.Supply)
-					startSync = false
-					fmt.Printf("startSync to false: %v\n", startSync)
+					//					log.Printf("waitidList %v %v", pspMap, idList)
 
-					// if you need, return response
-					callback(pspMap)
-					
-					return
+					if IsFinishSync(pspMap, syncIdList) {
+						fmt.Printf("Finish Sync\n")
+						// init pspMap
+						pspMap = make(map[uint64]*pb.Supply)
+						startSync = false
+						fmt.Printf("startSync to false: %v\n", startSync)
+
+						// if you need, return response
+						callback(pspMap)
+
+						return
+					}
 				}
 			}
-		}
 
 		}()
-	}	
+	}
 }
 
-func CreateIdListByChannel(pspMap map[uint64]*pb.Supply) *IdListByChannel {
-    participantIdList := make([]uint64, 0)
-    clockIdList := make([]uint64, 0)
-    agentIdList := make([]uint64, 0)
-    areaIdList := make([]uint64, 0)
-    
-    for _, psp := range pspMap {
-        argOneof := psp.GetArg_ParticipantInfo()
+func CreateIdListByChannel(participantsInfo []*participant.ParticipantInfo) *IdListByChannel {
+	participantIdList := make([]uint32, 0)
+	clockIdList := make([]uint32, 0)
+	agentIdList := make([]uint32, 0)
+	areaIdList := make([]uint32, 0)
+	routeIdList := make([]uint32, 0)
 
-        participantIdList = append(participantIdList, argOneof.ClientParticipantId)
-		areaIdList = append(areaIdList, argOneof.ClientAreaId)
-		agentIdList = append(agentIdList, argOneof.ClientAgentId)
-        clockIdList = append(clockIdList, argOneof.ClientClockId)
-    }
+	for _, participantInfo := range participantsInfo {
+		channelId := participantInfo.ChannelId
 
-    i := &IdListByChannel{
+		participantIdList = append(participantIdList, channelId.ParticipantChannelId)
+		areaIdList = append(areaIdList, channelId.AreaChannelId)
+		agentIdList = append(agentIdList, channelId.AgentChannelId)
+		clockIdList = append(clockIdList, channelId.ClockChannelId)
+		routeIdList = append(routeIdList, channelId.RouteChannelId)
+	}
+
+	i := &IdListByChannel{
 		ParticipantIdList: participantIdList,
-	    AgentIdList:    agentIdList,
-        AreaIdList:    areaIdList,
-	    ClockIdList:    clockIdList,
-    }
-    
+		AgentIdList:       agentIdList,
+		AreaIdList:        areaIdList,
+		ClockIdList:       clockIdList,
+		RouteIdList:       routeIdList,
+	}
+
 	return i
 }
 
-// IsFinishSync is a helper function to check if synchronization finish or not 
-func IsFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint64) bool {
+func CreateParticipantsInfo(pspMap map[uint64]*pb.Supply) []*participant.ParticipantInfo {
+	participantsInfo := make([]*participant.ParticipantInfo, 0)
+
+	for _, psp := range pspMap {
+		getParticipantSupply := psp.GetArg_GetParticipantSupply()
+		participantInfo := getParticipantSupply.ParticipantInfo
+		participantsInfo = append(participantsInfo, participantInfo)
+	}
+
+	return participantsInfo
+}
+
+// IsFinishSync is a helper function to check if synchronization finish or not
+func IsFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint32) bool {
 	for _, id := range idlist {
 		isMatch := false
 		for _, sp := range pspMap {
-			senderId := sp.SenderId
-			if id == senderId{
-				log.Printf("match! %v %v",id, senderId)
+			senderId := uint32(sp.SenderId)
+			if id == senderId {
 				isMatch = true
 			}
 		}
 		if isMatch == false {
-			log.Printf("false")
 			return false
-		} 
+		}
 	}
 	return true
 }
@@ -183,114 +234,110 @@ func IsSupplyTarget(sp *pb.Supply, idlist []uint64) bool {
 	return false
 }
 
-func CheckDemandArgOneOf(dm *pb.Demand) string {
-	if(dm.GetArg_ClockDemand() != nil){
-		argOneof := dm.GetArg_ClockDemand()
-		switch(argOneof.DemandType.String()){
-			case "SET": return "SET_CLOCK"
-			case "FORWARD": return "FORWARD_CLOCK"
-			case "STOP": return "STOP_CLOCK"
-			case "BACK": return "BACK_CLOCK"
-			case "START": return "START_CLOCK"
-		}
+func CheckDemandType(dm *pb.Demand) string {
+	// clock
+	if dm.GetArg_SetClockDemand() != nil {
+		return "SET_CLOCK_DEMAND"
 	}
-	if(dm.GetArg_AreaDemand() != nil){
-		argOneof := dm.GetArg_AreaDemand()
-		switch(argOneof.DemandType.String()){
-			case "SET": return "SET_AREA"
-			case "GET": return "GET_AREA"
-		}
+	if dm.GetArg_ForwardClockDemand() != nil {
+		return "FORWARD_CLOCK_DEMAND"
 	}
-	if(dm.GetArg_AgentDemand() != nil){
-		argOneof := dm.GetArg_AgentDemand()
-		switch(argOneof.DemandType.String()){
-			case "SET": return "SET_AGENT"
-		}
+	if dm.GetArg_BackClockDemand() != nil {
+		return "BACK_CLOCK_DEMAND"
 	}
-	if(dm.GetArg_AgentsDemand() != nil){
-		argOneof := dm.GetArg_AgentsDemand()
-		switch(argOneof.DemandType.String()){
-			case "GET": return "GET_AGENTS"
-		}
-    }
-	if(dm.GetArg_ParticipantDemand() != nil){
-		argOneof := dm.GetArg_ParticipantDemand()
-		switch(argOneof.DemandType.String()){
-			case "GET": return "GET_PARTICIPANT"
-			case "SET": return "SET_PARTICIPANT"
-		}
+	// area
+	if dm.GetArg_GetAreaDemand() != nil {
+		return "GET_AREA_DEMAND"
 	}
+	// agents
+	if dm.GetArg_GetAgentsDemand() != nil {
+		return "GET_AGENTS_DEMAND"
+	}
+	if dm.GetArg_SetAgentsDemand() != nil {
+		return "SET_AGENTS_DEMAND"
+	}
+	// participant
+	if dm.GetArg_GetParticipantDemand() != nil {
+		return "GET_PARTICIPANT_DEMAND"
+	}
+	if dm.GetArg_SetParticipantDemand() != nil {
+		return "SET_PARTICIPANT_DEMAND"
+	}
+	// route
+	if dm.GetArg_GetRouteDemand() != nil {
+		return "GET_ROUTE_DEMAND"
+	}
+
 	return "INVALID_TYPE"
 }
 
-func CheckSupplyArgOneOf(sp *pb.Supply) string {
-	if(sp.GetArg_ClockInfo() != nil){
-		argOneof := sp.GetArg_ClockInfo()
-		switch(argOneof.SupplyType.String()){
-			case "RES_SET": return "RES_SET_CLOCK"
-			case "RES_FORWARD": return "RES_FORWARD_CLOCK"
-			case "RES_STOP": return "RES_STOP_CLOCK"
-			case "RES_BACK": return "RES_BACK_CLOCK"
-			case "RES_START": return "RES_START_CLOCK"
-		}
+func CheckSupplyType(sp *pb.Supply) string {
+	// clock
+	if sp.GetArg_SetClockSupply() != nil {
+		return "SET_CLOCK_SUPPLY"
 	}
-	if(sp.GetArg_AreaInfo() != nil){
-		argOneof := sp.GetArg_AreaInfo()
-		switch(argOneof.SupplyType.String()){
-			case "RES_SET": return "RES_SET_AREA"
-			case "RES_GET": return "RES_GET_AREA"
-		}
+	if sp.GetArg_ForwardClockSupply() != nil {
+		return "FORWARD_CLOCK_SUPPLY"
 	}
-	if(sp.GetArg_AgentInfo() != nil){
-		argOneof := sp.GetArg_AgentInfo()
-		switch(argOneof.SupplyType.String()){
-			case "RES_SET": return "RES_SET_AGENT"
-		}
-    }
-    if(sp.GetArg_AgentsInfo() != nil){
-		argOneof := sp.GetArg_AgentsInfo()
-		switch(argOneof.SupplyType.String()){
-			case "RES_SET": return "RES_SET_AGENTS"
-			case "RES_GET": return "RES_GET_AGENTS"
-		}
+	if sp.GetArg_BackClockSupply() != nil {
+		return "BACK_CLOCK_SUPPLY"
 	}
-	if(sp.GetArg_ParticipantInfo() != nil){
-		argOneof := sp.GetArg_ParticipantInfo()
-		switch(argOneof.SupplyType.String()){
-			case "RES_GET": return "RES_GET_PARTICIPANT"
-			case "RES_SET": return "RES_SET_PARTICIPANT"
-		}
+	// area
+	if sp.GetArg_GetAreaSupply() != nil {
+		return "GET_AREA_SUPPLY"
 	}
+	// agents
+	if sp.GetArg_GetAgentsSupply() != nil {
+		return "GET_AGENTS_SUPPLY"
+	}
+	if sp.GetArg_SetAgentsSupply() != nil {
+		return "SET_AGENTS_SUPPLY"
+	}
+	if sp.GetArg_ForwardAgentsSupply() != nil {
+		return "FORWARD_AGENTS_SUPPLY"
+	}
+	// participant
+	if sp.GetArg_GetParticipantSupply() != nil {
+		return "GET_PARTICIPANT_SUPPLY"
+	}
+	if sp.GetArg_SetParticipantSupply() != nil {
+		return "SET_PARTICIPANT_SUPPLY"
+	}
+	// route
+	if sp.GetArg_GetRouteSupply() != nil {
+		return "GET_ROUTE_SUPPLY"
+	}
+
 	return "INVALID_TYPE"
 }
 
-func SendProposeSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap map[uint64]*sxutil.SupplyOpts, idlist []uint64) (map[uint64]*sxutil.SupplyOpts, []uint64){
+func SendProposeSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap map[uint64]*sxutil.SupplyOpts, idlist []uint64) (map[uint64]*sxutil.SupplyOpts, []uint64) {
 	mu.Lock()
 	id := sclient.ProposeSupply(opts)
 	idlist = append(idlist, id) // my demand list
 	spMap[id] = opts            // my demand options
 	mu.Unlock()
-//    log.Printf("Propose my supply as id %v, %v",id,idlist)
-    return spMap, idlist
+	//    log.Printf("Propose my supply as id %v, %v",id,idlist)
+	return spMap, idlist
 }
 
-func SendSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap map[uint64]*sxutil.SupplyOpts, idlist []uint64) (map[uint64]*sxutil.SupplyOpts, []uint64){
+func SendSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap map[uint64]*sxutil.SupplyOpts, idlist []uint64) (map[uint64]*sxutil.SupplyOpts, []uint64) {
 	mu.Lock()
 	id := sclient.RegisterSupply(opts)
 	idlist = append(idlist, id) // my demand list
 	spMap[id] = opts            // my demand options
 	mu.Unlock()
-//    log.Printf("Register my supply as id %v, %v",id,idlist)
-    return spMap, idlist
+	//    log.Printf("Register my supply as id %v, %v",id,idlist)
+	return spMap, idlist
 }
 
-func SendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts, dmMap map[uint64]*sxutil.DemandOpts, idlist []uint64) (map[uint64]*sxutil.DemandOpts, []uint64){
+func SendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts, dmMap map[uint64]*sxutil.DemandOpts, idlist []uint64) (map[uint64]*sxutil.DemandOpts, []uint64) {
 	mu.Lock()
 	id := sclient.RegisterDemand(opts)
 	idlist = append(idlist, id) // my demand list
 	dmMap[id] = opts            // my demand options
 	mu.Unlock()
-    return dmMap, idlist
+	return dmMap, idlist
 }
 
 func SubscribeSupply(client *sxutil.SMServiceClient, supplyCallback func(*sxutil.SMServiceClient, *pb.Supply)) {

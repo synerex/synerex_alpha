@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -18,8 +19,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"io/ioutil"
-	"github.com/mtfelian/golang-socketio"
+
+	gosocketio "github.com/mtfelian/golang-socketio"
 
 	"github.com/kardianos/service"
 )
@@ -51,62 +52,61 @@ type SubCommands struct {
 	RunFunc     func()
 }
 
-type Order2 struct{
-	Type string 
-	ClockInfo ClockInfo
-	AreaInfo AreaInfo
-	AgentInfo AgentInfo
+type Order2 struct {
+	Type       string
+	ClockInfo  ClockInfo
+	AreaInfo   AreaInfo
+	AgentsInfo []AgentInfo
 }
 
-type Order struct{
-	Type string 
-	Arg string
+type Order struct {
+	Type string
+	Arg  string
 }
 
-type Coord struct{
-	Lat float32 	`json:"lat"`
-	Lon float32		`json:"lon"`
+type Coord struct {
+	Lat float32 `json:"lat"`
+	Lon float32 `json:"lon"`
 }
 
-type Route struct{
-	Coord Coord	`json:"coord"`
-	Direction float32	`json:"direction"`
-	Speed float32	`json:"speed"`
-	Departure string	`json:"departure"`
-	Destination string	`json:"destination"`
+type Route struct {
+	Coord       Coord   `json:"coord"`
+	Direction   float32 `json:"direction"`
+	Speed       float32 `json:"speed"`
+	Departure   string  `json:"departure"`
+	Destination string  `json:"destination"`
 }
 
-type Status struct{
-	Name string	`json:"name"`
-	Age string	`json:"age"`
-	Sex string	`json:"sex"`
+type Status struct {
+	Name string `json:"name"`
+	Age  string `json:"age"`
+	Sex  string `json:"sex"`
 }
 
-type Rule struct{
-
+type Rule struct {
 }
 
-type ClockInfo struct{
+type ClockInfo struct {
 	Time string `json:"time"`
 }
 
-type AreaInfo struct{
-	Id uint32	`json:"id"`
-	Name string 	`json:"name"`
+type AreaInfo struct {
+	Id   uint32 `json:"id"`
+	Name string `json:"name"`
 }
 
-type AgentInfo struct{
-	Id uint32	`json:"id"`
-	Type string		`json:"type"`
-	Status Status	`json:"status"`
-	Route Route	`json:"route"`
-	Rule Rule		`json:"rule"`
+type AgentInfo struct {
+	Id     uint32 `json:"id"`
+	Type   string `json:"type"`
+	Status Status `json:"status"`
+	Route  Route  `json:"route"`
+	Rule   Rule   `json:"rule"`
 }
 
-type SimData struct{
-	Clock ClockInfo 	`json:"clock"`
-	Area []AreaInfo	`json:"area"`
-	Agent []AgentInfo	`json:"agent"`
+type SimData struct {
+	Clock ClockInfo   `json:"clock"`
+	Area  []AreaInfo  `json:"area"`
+	Agent []AgentInfo `json:"agent"`
 }
 
 // for Structures for Github json.
@@ -132,8 +132,9 @@ type data struct {
 }
 
 type sioChannel struct {
-	Scenario     *gosocketio.Channel
+	Scenario *gosocketio.Channel
 }
+
 var sioCh sioChannel
 
 var cmdArray []SubCommands
@@ -170,74 +171,74 @@ func init() {
 		},
 		{
 			CmdName: "Area",
-			SrcDir: "provider/simulation/area",
+			SrcDir:  "provider/simulation/area",
 			BinName: "area-provider",
 			GoFiles: []string{"area-provider.go"},
 		},
 		{
 			CmdName: "Clock",
-			SrcDir: "provider/simulation/clock",
+			SrcDir:  "provider/simulation/clock",
 			BinName: "clock-provider",
 			GoFiles: []string{"clock-provider.go"},
 		},
 		{
 			CmdName: "Scenario",
-			SrcDir: "provider/simulation/scenario",
+			SrcDir:  "provider/simulation/scenario",
 			BinName: "scenario-provider",
 			GoFiles: []string{"scenario-provider.go"},
 		},
 		{
 			CmdName: "Log",
-			SrcDir: "provider/simulation/log",
+			SrcDir:  "provider/simulation/log",
 			BinName: "log-provider",
 			GoFiles: []string{"log-provider.go"},
 		},
 		{
 			CmdName: "PedArea",
-			SrcDir: "provider/simulation/ped-area",
+			SrcDir:  "provider/simulation/ped-area",
 			BinName: "ped-area-provider",
 			GoFiles: []string{"ped-area-provider.go"},
 		},
 		{
 			CmdName: "CarArea",
-			SrcDir: "provider/simulation/car-area",
+			SrcDir:  "provider/simulation/car-area",
 			BinName: "car-area-provider",
 			GoFiles: []string{"car-area-provider.go"},
 		},
 		{
-			CmdName: "GetParticipant",
+			CmdName:     "GetParticipant",
 			Description: "Order",
 		},
 		{
-			CmdName: "SetTime",
+			CmdName:     "SetTime",
 			Description: "Order",
 		},
 		{
-			CmdName: "SetArea",
+			CmdName:     "SetArea",
 			Description: "Order",
 		},
 		{
-			CmdName: "SetAgent",
+			CmdName:     "SetAgent",
 			Description: "Order",
 		},
 		{
-			CmdName: "Start",
+			CmdName:     "Start",
 			Description: "Order",
 		},
 		{
-			CmdName: "Stop",
+			CmdName:     "Stop",
 			Description: "Order",
 		},
 		{
-			CmdName: "Forward",
+			CmdName:     "Forward",
 			Description: "Order",
 		},
 		{
-			CmdName: "Back",
+			CmdName:     "Back",
 			Description: "Order",
 		},
 		{
-			CmdName: "SetAll",
+			CmdName:     "SetAll",
 			Description: "Order",
 		},
 	}
@@ -254,11 +255,11 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return
 		}
-		logger.Infof("UnMarshaled WebHook from:%s",d.Repository.Name)
-		logger.Infof("Pusher    :%s",d.Pusher)
-		logger.Infof("Committer :%s",d.Head_commit.Committer.Name)
-		logger.Infof("URL       :%s",d.Head_commit.Url)
- 		status = 200
+		logger.Infof("UnMarshaled WebHook from:%s", d.Repository.Name)
+		logger.Infof("Pusher    :%s", d.Pusher)
+		logger.Infof("Committer :%s", d.Head_commit.Committer.Name)
+		logger.Infof("URL       :%s", d.Head_commit.Url)
+		status = 200
 		if d.Ref == "refs/heads/"+githubBranch {
 			fmt.Println("Now staring rebuild and rerun.")
 			githubPullAndRun()
@@ -266,8 +267,8 @@ func githubHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(status)
 }
-// for github end.
 
+// for github end.
 
 func pullGithub() {
 
@@ -306,9 +307,8 @@ func pullGithub() {
 	logger.Infof("Command [%s] closed\n", "git")
 }
 
-
 // compile and rerun..
-func githubPullAndRun (){
+func githubPullAndRun() {
 	//first get
 	//
 	var procs []string
@@ -317,7 +317,7 @@ func githubPullAndRun (){
 	providerMutex.RLock()
 	for key, _ := range providerMap {
 		procs[i] = key
-		i+=1
+		i += 1
 	}
 	providerMutex.RUnlock()
 
@@ -325,7 +325,7 @@ func githubPullAndRun (){
 	handleStop(procs)
 
 	// then build and rerun
-//	cleanAll() need not to clean all?
+	//	cleanAll() need not to clean all?
 
 	// we need to pull!
 	pullGithub()
@@ -336,21 +336,18 @@ func githubPullAndRun (){
 	handleRun("MonitorServer")
 	handleRun("SynerexServer")
 
-	for _, proc := range procs{
-		if proc != "NodeIDServer" && proc != "MonitorServer" && proc !="SynerexServer"{
+	for _, proc := range procs {
+		if proc != "NodeIDServer" && proc != "MonitorServer" && proc != "SynerexServer" {
 			handleRun(proc)
 		}
 	}
 
-
 }
-
 
 func (sesrv *SynerexService) Start(s service.Service) error {
 	go sesrv.run()
 	return nil
 }
-
 
 // assetsFileHandler for static Data
 func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
@@ -468,7 +465,7 @@ func buildCmd(sc SubCommands) string { // build local node server
 		sp := filepath.FromSlash(filepath.ToSlash(srcpath) + "/" + fn)
 		ss, errf := os.Stat(sp)
 		if errf != nil {
-			return "Can't find file "+srcpath+":"+err.Error()
+			return "Can't find file " + srcpath + ":" + err.Error()
 		}
 
 		if ss.ModTime().After(modTime) {
@@ -642,10 +639,10 @@ func runSubCmd(cmd string) {
 
 func buildSubCmd(cmd string) string {
 	for _, sc := range cmdArray {
-		// part of commands don't enter .. by RH 
-		if sc.Description == "Order"{
+		// part of commands don't enter .. by RH
+		if sc.Description == "Order" {
 			return "order"
-		} else if sc.CmdName == cmd{
+		} else if sc.CmdName == cmd {
 			return buildCmd(sc)
 		}
 	}
@@ -693,15 +690,13 @@ func handleRuns(target []string) []string { // we need to think order of servers
 	resp := make([]string, len(target))
 	for i, proc := range target {
 		if proc == "All" || proc == "all" {
-			resp[i]="-"
+			resp[i] = "-"
 		} else {
 			resp[i] = handleRun(proc)
 		}
 	}
 	return resp
 }
-
-
 
 func handleRun(target string) string {
 	for _, sc := range cmdArray {
@@ -726,26 +721,28 @@ func handleOrder(order *Order) string {
 	for _, sc := range cmdArray {
 		if sc.CmdName == target {
 			var res string
-			if target == "SetAll"{
+			if target == "SetAll" {
 				// JSONファイル読み込み
-	 			bytes, err := ioutil.ReadFile("sample.json")
-	 			if err != nil {
-		 			log.Fatal(err)
-	 			}
-	 			// JSONデコード
-				 var simData SimData
-				 
-	 			if err := json.Unmarshal(bytes, &simData); err != nil {
-		 			log.Fatal(err)
-	 			}
-				 fmt.Printf("simData is : %v\n", simData.Clock)
-				if simData.Clock.Time != "" && simData.Area != nil && simData.Agent != nil{
+				jsonName := order.Arg
+				fmt.Printf("jsonName is : %v\n", order)
+				bytes, err := ioutil.ReadFile(jsonName)
+				if err != nil {
+					log.Fatal(err)
+				}
+				// JSONデコード
+				var simData SimData
+
+				if err := json.Unmarshal(bytes, &simData); err != nil {
+					log.Fatal(err)
+				}
+				//fmt.Printf("simData is : %v\n", simData.Clock)
+				if simData.Clock.Time != "" && simData.Area != nil && simData.Agent != nil {
 					var order2 Order2
 					// getParticipant
 					order2.Type = "GetParticipant"
 					sioCh.Scenario.Emit("scenario", order2)
 					time.Sleep(4 * time.Second)
-					// setTime
+					/*// setTime
 					order2.Type = "SetTime"
 					order2.ClockInfo = simData.Clock
 					sioCh.Scenario.Emit("scenario", order2)
@@ -756,21 +753,20 @@ func handleOrder(order *Order) string {
 						order2.AreaInfo = areaInfo
 						sioCh.Scenario.Emit("scenario", order2)
 						time.Sleep(1 * time.Second)
-					}
+					}*/
 					// setAgent
-					for _, agentInfo := range simData.Agent{
-						order2.Type = "SetAgent"
-						order2.AgentInfo = agentInfo
-						sioCh.Scenario.Emit("scenario", order2)
-						time.Sleep(1 * time.Second)
-					}
+					order2.Type = "SetAgent"
+					order2.AgentsInfo = simData.Agent
+					sioCh.Scenario.Emit("scenario", order2)
+					time.Sleep(1 * time.Second)
+
 				}
-			}else{
+			} else {
 				var order2 Order2
 				order2.Type = target
 				sioCh.Scenario.Emit("scenario", order2)
 			}
-			
+
 			res = "ok"
 			logger.Infof("your order is %s", target)
 			return res
@@ -870,15 +866,15 @@ func interfaceToString(target interface{}) []string {
 	return resp
 }
 
-type debugLogger struct {}
-func (d debugLogger) Write(p []byte) (n int, err error){
-	s:= string(p)
-	if strings.Contains(s, "multiple response.WriteHeader"){
+type debugLogger struct{}
+
+func (d debugLogger) Write(p []byte) (n int, err error) {
+	s := string(p)
+	if strings.Contains(s, "multiple response.WriteHeader") {
 		debug.PrintStack()
 	}
 	return os.Stderr.Write(p)
 }
-
 
 func (sesrv *SynerexService) run() error {
 	logger.Info("Starting.. Synergic Engine:" + version)
@@ -906,7 +902,7 @@ func (sesrv *SynerexService) run() error {
 		// need to check param short or long
 		opt, ok := param.(string)
 		logger.Infof("param is %s as %s", ok, opt)
-		if(ok && opt == "Scenario"){
+		if ok && opt == "Scenario" {
 			sioCh.Scenario = c
 		}
 		return "ok"
@@ -951,9 +947,9 @@ func (sesrv *SynerexService) run() error {
 		//		fmt.Printf("Get Run Command %s\n", nid)
 		logger.Infof("order from %s as %s", c.IP(), c.Id())
 		logger.Infof("Get order command %s %v", nid, order)
-		
+
 		//test :=  map[string]string{"Order": nid, "Meta": "test"}
-		
+
 		return handleOrder(order)
 	})
 
@@ -962,20 +958,20 @@ func (sesrv *SynerexService) run() error {
 	serveMux.Handle("/socket.io/", server)
 	serveMux.HandleFunc("/", assetsFileHandler)
 	// for GitHub auto development
-	serveMux.HandleFunc( "/github/", githubHandler)
+	serveMux.HandleFunc("/github/", githubHandler)
 
 	logger.Info("Starting Synerex Engine daemon on port ", port)
 
 	hLogger := log.New(debugLogger{}, "", 0)
 
 	server := &http.Server{
-		Addr: fmt.Sprintf(":%d", port),
-		Handler: serveMux,
+		Addr:     fmt.Sprintf(":%d", port),
+		Handler:  serveMux,
 		ErrorLog: hLogger,
 	}
 	err = server.ListenAndServe()
 
-//	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
+	//	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -1042,11 +1038,11 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 			cleanAll()
 			return "Clean all binaries", nil
 		case "github": // check
-			if 	len(os.Args) > 2 {
+			if len(os.Args) > 2 {
 				githubBranch = os.Args[2]
 			}
-			fmt.Println("Accept Github Webhook for branch "+githubBranch)
-//			return "Accept Github Webhook for branch "+githubBranch, nil
+			fmt.Println("Accept Github Webhook for branch " + githubBranch)
+			//			return "Accept Github Webhook for branch "+githubBranch, nil
 		default:
 			return usage, nil
 		}
@@ -1062,8 +1058,8 @@ func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
 func main() {
 	// add gops agent.
 	//	fmt.Println("Start gops agent")
-//	if gerr := agent.Listen(agent.Options{}); gerr != nil {
-//		log.Fatal(gerr)
+	//	if gerr := agent.Listen(agent.Options{}); gerr != nil {
+	//		log.Fatal(gerr)
 	//}
 
 	serv := &SynerexService{}

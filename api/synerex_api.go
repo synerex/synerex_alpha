@@ -8,10 +8,11 @@ import (
 	"github.com/synerex/synerex_alpha/api/ptransit"
 	"github.com/synerex/synerex_alpha/api/rideshare"
 	"github.com/synerex/synerex_alpha/api/routing"
-	"github.com/synerex/synerex_alpha/api/simulation/clock"
-	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
+	"github.com/synerex/synerex_alpha/api/simulation/route"
 )
 
 // Demand
@@ -67,56 +68,53 @@ func (dm *Demand) WithMarketingService(m *marketing.MarketingService) *Demand {
 	return dm
 }
 
-// WithClockInfo set a given ClockInfo to Demand.Demand_Arg_ClockInfo.Arg_ClockInfo .
-//func (dm *Demand) WithClockInfo(c *clock.ClockInfo) *Demand {
-//	dm.ArgOneof = &Demand_Arg_ClockInfo{c}
-//	return dm
-//}
-
-// WithClockDemand set a given ClockDemand to Demand.Demand_Arg_ClockDemand.Arg_ClockDemand .
-func (dm *Demand) WithClockDemand(c *clock.ClockDemand) *Demand {
-	dm.ArgOneof = &Demand_Arg_ClockDemand{c}
+// clock demand
+func (dm *Demand) WithSetClockDemand(c *clock.SetClockDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_SetClockDemand{c}
 	return dm
 }
 
-// WithAreaInfo set a given AreaInfo to Demand.Demand_Arg_AreaInfo.Arg_AreaInfo.
-//func (dm *Demand) WithAreaInfo(a *area.AreaInfo) *Demand {
-//	dm.ArgOneof = &Demand_Arg_AreaInfo{a}
-//	return dm
-//}
-
-// WithAreaDemand set a given AreaDemand to Demand.Demand_Arg_AreaDemand.Arg_AreaDemand.
-func (dm *Demand) WithAreaDemand(a *area.AreaDemand) *Demand {
-	dm.ArgOneof = &Demand_Arg_AreaDemand{a}
+func (dm *Demand) WithForwardClockDemand(c *clock.ForwardClockDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_ForwardClockDemand{c}
 	return dm
 }
 
-// WithAgentInfo set a given AgentInfo to Demand.Demand_Arg_AgentInfo.Arg_AgentInfo.
-//func (dm *Demand) WithAgentInfo(a *agent.AgentInfo) *Demand {
-//	dm.ArgOneof = &Demand_Arg_AgentInfo{a}
-//	return dm
-//}
-
-// WithAgentsInfo set a given AgentsInfo to Demand.Demand_Arg_AgentsInfo.Arg_AgentsInfo.
-//func (dm *Demand) WithAgentsInfo(a *agent.AgentsInfo) *Demand {
-//	dm.ArgOneof = &Demand_Arg_AgentsInfo{a}
-//	return dm
-//}
-
-// WithParticipantDemand set a given ParticipantDemand to Supply.Supply_Arg_ParticipantDemand.Arg_ParticipantDemand.
-func (dm *Demand) WithParticipantDemand(a *participant.ParticipantDemand) *Demand {
-	dm.ArgOneof = &Demand_Arg_ParticipantDemand{a}
+func (dm *Demand) WithBackClockDemand(c *clock.BackClockDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_BackClockDemand{c}
 	return dm
 }
 
-// WithAgentsDemand set a given AgentsDemand to Demand.Demand_Arg_AgentsDemand.Arg_AgentsDemand.
-func (dm *Demand) WithAgentsDemand(a *agent.AgentsDemand) *Demand {
-	dm.ArgOneof = &Demand_Arg_AgentsDemand{a}
+// agent demand
+func (dm *Demand) WithGetAgentsDemand(a *agent.GetAgentsDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_GetAgentsDemand{a}
 	return dm
 }
-// WithAgentDemand set a given AgentDemand to Demand.Demand_Arg_AgentDemand.Arg_AgentDemand.
-func (dm *Demand) WithAgentDemand(a *agent.AgentDemand) *Demand {
-	dm.ArgOneof = &Demand_Arg_AgentDemand{a}
+
+func (dm *Demand) WithSetAgentsDemand(a *agent.SetAgentsDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_SetAgentsDemand{a}
+	return dm
+}
+
+// area demand
+func (dm *Demand) WithGetAreaDemand(a *area.GetAreaDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_GetAreaDemand{a}
+	return dm
+}
+
+// participant demand
+func (dm *Demand) WithGetParticipantDemand(p *participant.GetParticipantDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_GetParticipantDemand{p}
+	return dm
+}
+
+func (dm *Demand) WithSetParticipantDemand(p *participant.SetParticipantDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_SetParticipantDemand{p}
+	return dm
+}
+
+// route demand
+func (dm *Demand) WithGetRouteDemand(r *route.GetRouteDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_GetRouteDemand{r}
 	return dm
 }
 
@@ -163,50 +161,57 @@ func (sp *Supply) WithMarketingService(m *marketing.MarketingService) *Supply {
 	return sp
 }
 
-// WithClockInfo set a given ClockInfo to Supply.Supply_Arg_ClockInfo.Arg_ClockInfo .
-func (sp *Supply) WithClockInfo(c *clock.ClockInfo) *Supply {
-	sp.ArgOneof = &Supply_Arg_ClockInfo{c}
+// clock supply
+func (sp *Supply) WithSetClockSupply(c *clock.SetClockSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_SetClockSupply{c}
 	return sp
 }
 
-// WithClockDemand set a given ClockDemand to Supply.Supply_Arg_ClockDemand.Arg_ClockDemand .
-//func (sp *Supply) WithClockDemand(c *clock.ClockDemand) *Supply {
-//	sp.ArgOneof = &Supply_Arg_ClockDemand{c}
-//	return sp
-//}
-
-// WithAreaInfo set a given AreaInfo to Supply.Supply_Arg_AreaInfo.Arg_AreaInfo.
-func (sp *Supply) WithAreaInfo(a *area.AreaInfo) *Supply {
-	sp.ArgOneof = &Supply_Arg_AreaInfo{a}
+func (sp *Supply) WithForwardClockSupply(c *clock.ForwardClockSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_ForwardClockSupply{c}
 	return sp
 }
 
-// WithAreaDemand set a given AreaDemand to Supply.Supply_Arg_AreaDemand.Arg_AreaDemand.
-//func (sp *Supply) WithAreaDemand(a *area.AreaDemand) *Supply {
-//	sp.ArgOneof = &Supply_Arg_AreaDemand{a}
-//	return sp
-//}
-
-// WithAgentInfo set a given AgentInfo to Supply.Supply_Arg_AgentInfo.Arg_AgentInfo.
-func (sp *Supply) WithAgentInfo(a *agent.AgentInfo) *Supply {
-	sp.ArgOneof = &Supply_Arg_AgentInfo{a}
+func (sp *Supply) WithBackClockSupply(c *clock.BackClockSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_BackClockSupply{c}
 	return sp
 }
 
-// WithAgentsInfo set a given AgentsInfo to Supply.Supply_Arg_AgentsInfo.Arg_AgentsInfo.
-func (sp *Supply) WithAgentsInfo(a *agent.AgentsInfo) *Supply {
-	sp.ArgOneof = &Supply_Arg_AgentsInfo{a}
+// area supply
+func (sp *Supply) WithGetAreaSupply(a *area.GetAreaSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_GetAreaSupply{a}
 	return sp
 }
 
-// WithAgentDemand set a given AgentDemand to Supply.Supply_Arg_AgentDemand.Arg_AgentDemand.
-//func (sp *Supply) WithAgentDemand(a *agent.AgentDemand) *Supply {
-//	sp.ArgOneof = &Supply_Arg_AgentDemand{a}
-//	return sp
-//}
+// agent supply
+func (sp *Supply) WithGetAgentsSupply(a *agent.GetAgentsSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_GetAgentsSupply{a}
+	return sp
+}
 
-// WithParticipantInfo set a given ParticipantInfo to Supply.Supply_Arg_ParticipantInfo.Arg_ParticipantInfo.
-func (sp *Supply) WithParticipantInfo(a *participant.ParticipantInfo) *Supply {
-	sp.ArgOneof = &Supply_Arg_ParticipantInfo{a}
+func (sp *Supply) WithSetAgentsSupply(a *agent.SetAgentsSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_SetAgentsSupply{a}
+	return sp
+}
+
+func (sp *Supply) WithForwardAgentsSupply(a *agent.ForwardAgentsSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_ForwardAgentsSupply{a}
+	return sp
+}
+
+// participant supply
+func (sp *Supply) WithGetParticipantSupply(p *participant.GetParticipantSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_GetParticipantSupply{p}
+	return sp
+}
+
+func (sp *Supply) WithSetParticipantSupply(p *participant.SetParticipantSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_SetParticipantSupply{p}
+	return sp
+}
+
+// route supply
+func (sp *Supply) WithGetRouteSupply(r *route.GetRouteSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_GetRouteSupply{r}
 	return sp
 }

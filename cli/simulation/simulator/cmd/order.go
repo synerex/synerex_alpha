@@ -16,11 +16,11 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"time"
+
+	"github.com/spf13/cobra"
 	//"strings"
 	//"strconv"
-	
 	//"os/exec"
 )
 
@@ -30,32 +30,32 @@ type orderCmdInfo struct {
 	CmdName string
 }
 
-
-
-type Order struct{
-	Type string 
-	Arg string
+type Order struct {
+	Type string
+	Arg  string
 }
 
-var orderCmds =[...]orderCmdInfo{
+type Options struct {
+	optJsonName string
+}
+
+var o = &Options{}
+
+var orderCmds = [...]orderCmdInfo{
 	{
 		Aliases: []string{"SetAll", "setAll"},
 		CmdName: "SetAll",
 	},
 	{
-		Aliases: []string{"GetParticipant", "getParticipant", "getparticipant", "get-participant" },
-		CmdName: "GetParticipant",
-	},
-	{
-		Aliases: []string{"SetTime", "setTime", "settime", "set-time" },
+		Aliases: []string{"SetTime", "setTime", "settime", "set-time"},
 		CmdName: "SetTime",
 	},
 	{
-		Aliases: []string{"SetArea", "setArea", "setarea", "set-area" },
+		Aliases: []string{"SetArea", "setArea", "setarea", "set-area"},
 		CmdName: "SetArea",
 	},
 	{
-		Aliases: []string{"SetAgent", "setAgent", "setagent", "set-agent" },
+		Aliases: []string{"SetAgent", "setAgent", "setagent", "set-agent"},
 		CmdName: "SetAgent",
 	},
 	{
@@ -66,21 +66,11 @@ var orderCmds =[...]orderCmdInfo{
 		Aliases: []string{"Stop", "stop"},
 		CmdName: "Stop",
 	},
-	{
-		Aliases: []string{"Forward", "forward"},
-		CmdName: "Forward",
-	},
-	{
-		Aliases: []string{"Back", "back"},
-		CmdName: "Back",
-	},
-	
 }
 
-
-func getOrderCmdName(alias string)  string{
-	for _, ci  := range orderCmds {
-		for _,str := range ci.Aliases {
+func getOrderCmdName(alias string) string {
+	for _, ci := range orderCmds {
+		for _, str := range ci.Aliases {
 			if alias == str {
 				return ci.CmdName
 			}
@@ -89,82 +79,15 @@ func getOrderCmdName(alias string)  string{
 	return "" // can'f find alias
 }
 
-/*func handleUserDialogue() *SimData{
-	simData := &SimData{}
-	fmt.Print("Enter Time \n")
-	var time uint32
-	fmt.Scan(&time)
-	simData.Time = time
+func handleOrder(cmd *cobra.Command, args []string) {
 
-	fmt.Print("Enter AreaId (ex. 0, 1) \n")
-	var strAreaId string
-	fmt.Scan(&strAreaId)
-	strAreaId = strings.Replace(strAreaId, " ", "", -1)
-	slice := strings.Split(strAreaId, ",")
-  	for _, str := range slice {
-		i, _ := strconv.Atoi(str)
-		simData.AreaId = append(simData.AreaId, uint32(i))
-  }
-
-	
-	for{
-		agentInfo := &AgentInfo{}
-	fmt.Print("Agent Info \n")
-	fmt.Print("Enter AgentId \n")
-	var id uint32
-	fmt.Scan(&id)
-	agentInfo.AgentId = id
-
-	fmt.Print("Enter AgentType [0: PED, 1: CAR] \n")
-	var atype uint32
-	fmt.Scan(&atype)
-	agentInfo.AgentType = atype
-
-	fmt.Print("Enter Latitude \n")
-	coord := make(map[string]float32)
-	var lat float32
-	fmt.Scan(&lat)
-	coord["Lat"] = lat
-
-	fmt.Print("Enter Longitude \n")
-	var lon float32
-	fmt.Scan(&lon)
-	coord["Lon"] = lon
-	agentInfo.Coord = coord
-
-	fmt.Print("Enter Direction \n")
-	var dir float32
-	fmt.Scan(&dir)
-	agentInfo.Direction = dir
-
-	fmt.Print("Enter Speed \n")
-	var sp float32
-	fmt.Scan(&sp)
-	agentInfo.Speed = sp
-	fmt.Printf("AgentInfot: %v\n", agentInfo)
-	simData.AgentsInfo = append(simData.AgentsInfo, *agentInfo)
-
-	fmt.Print("Create other Agent ? [y/ N]\n")
-	var ansCreate string
-	fmt.Scan(&ansCreate)
-	if ansCreate != "Y" && ansCreate != "y"{
-		break
-	}
-	}
-
-	return simData
-}*/
-
-func handleOrder(cmd *cobra.Command, args []string){
-
-	 
 	//simData := handleUserDialogue()
-	//fmt.Printf("Dialogue Result: %v\n", simData)
+	fmt.Printf("Dialogue Result: %v\n", args)
 	if len(args) > 0 {
-		for n := range args{
+		for n := range args {
 			findflag := false
-			for _, ci  := range orderCmds {
-				for _,str := range ci.Aliases {
+			for _, ci := range orderCmds {
+				for _, str := range ci.Aliases {
 					if args[n] == str {
 						fmt.Printf("simulator: Starting '%s'\n", ci.CmdName)
 
@@ -187,7 +110,7 @@ func handleOrder(cmd *cobra.Command, args []string){
 
 			}
 			if !findflag {
-				fmt.Printf("simulation: Can't find command run '%s'.\n",args[n])
+				fmt.Printf("simulation: Can't find command run '%s'.\n", args[n])
 				fmt.Printf("cmd is:'%s'\n", orderCmds)
 				break
 			}
@@ -195,7 +118,55 @@ func handleOrder(cmd *cobra.Command, args []string){
 	}
 }
 
+func handleSetAll(cmd *cobra.Command, args []string) {
+	cmdName := "SetAll"
+	//simData := handleUserDialogue()
+	fmt.Printf("Dialogue Result: %v\n", o.optJsonName)
+	fmt.Printf("simulator: Starting SetAll Order\n")
 
+	res, err := sioClient.Ack("order", &Order{Type: cmdName, Arg: o.optJsonName}, 20*time.Second)
+	time.Sleep(1 * time.Second)
+
+	if err != nil || res != "\"ok\"" {
+		fmt.Printf("simulator: Got error on reply:'%s',%v\n", res, err)
+		return
+	} else {
+		fmt.Printf("simulator: Reply [%s]\n", res)
+		fmt.Printf("simulator: Run '%s' succeeded.\n", cmdName)
+	}
+}
+
+func handleStart(cmd *cobra.Command, args []string) {
+	cmdName := "Start"
+	fmt.Printf("simulator: Starting Start Order\n")
+
+	res, err := sioClient.Ack("order", &Order{Type: cmdName}, 20*time.Second)
+	time.Sleep(1 * time.Second)
+
+	if err != nil || res != "\"ok\"" {
+		fmt.Printf("simulator: Got error on reply:'%s',%v\n", res, err)
+		return
+	} else {
+		fmt.Printf("simulator: Reply [%s]\n", res)
+		fmt.Printf("simulator: Run '%s' succeeded.\n", cmdName)
+	}
+}
+
+func handleStop(cmd *cobra.Command, args []string) {
+	cmdName := "Stop"
+	fmt.Printf("simulator: Starting Stop Order\n")
+
+	res, err := sioClient.Ack("order", &Order{Type: cmdName}, 20*time.Second)
+	time.Sleep(1 * time.Second)
+
+	if err != nil || res != "\"ok\"" {
+		fmt.Printf("simulator: Got error on reply:'%s',%v\n", res, err)
+		return
+	} else {
+		fmt.Printf("simulator: Reply [%s]\n", res)
+		fmt.Printf("simulator: Run '%s' succeeded.\n", cmdName)
+	}
+}
 
 var orderCmd = &cobra.Command{
 	Use:   "order [order name] [options..]",
@@ -209,7 +180,37 @@ For example:
 	Run: handleOrder,
 }
 
+var setAllCmd = &cobra.Command{
+	Use:   "setAll",
+	Short: "set time, area and agent info",
+	Long: `-j options 
+	For example:
+    ./simulator setAll -j (json-name)  `,
+	Run: handleSetAll,
+}
+
+var startClockCmd = &cobra.Command{
+	Use:   "start",
+	Short: "start simulation",
+	Long: ` 
+	For example:
+    ./simulator start`,
+	Run: handleStart,
+}
+
+var stopClockCmd = &cobra.Command{
+	Use:   "stop",
+	Short: "stop simulation",
+	Long: ` 
+	For example:
+    ./simulator stop`,
+	Run: handleStop,
+}
 
 func init() {
 	rootCmd.AddCommand(orderCmd)
+	rootCmd.AddCommand(setAllCmd)
+	rootCmd.AddCommand(startClockCmd)
+	rootCmd.AddCommand(stopClockCmd)
+	setAllCmd.Flags().StringVarP(&o.optJsonName, "json", "j", "sample.json", "string option")
 }

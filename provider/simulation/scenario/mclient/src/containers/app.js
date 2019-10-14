@@ -67,7 +67,7 @@ class App extends Container {
 	};
 
 	// for receiving event info.
-	socket.on('connect', ()=>{console.log("Socket.IO3 connected!")});
+	socket.on('connect', ()=>{console.log("Socket.IO connected!")});
 	socket.on('event', this.getEvent.bind(this));
 	socket.on('disconnect', ()=>{console.log("Socket.IO disconnected!")});
 	

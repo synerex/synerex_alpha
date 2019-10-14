@@ -5,36 +5,40 @@ import (
 	"flag"
 	"log"
 	"sync"
+
 	//"math/rand"
 
-	"github.com/synerex/synerex_alpha/api/simulation/clock"
+	pb "github.com/synerex/synerex_alpha/api"
+	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/provider/simulation/simutil"
-	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
+
 	//"time"
 	"encoding/json"
-	"io/ioutil"
 	"fmt"
+	"io/ioutil"
 )
 
 var (
-	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
-	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	idlist     []uint64
-	myChannelIdList []uint64
-	dmMap      map[uint64]*sxutil.DemandOpts
-	spMap		map[uint64]*sxutil.SupplyOpts
-	selection 	bool
-	mu	sync.Mutex
-	sclientArea *sxutil.SMServiceClient
-	sclientAgent *sxutil.SMServiceClient
-	sclientClock *sxutil.SMServiceClient
+	serverAddr         = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
+	nodesrv            = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
+	idlist             []uint64
+	myChannelIdList    []uint64
+	dmMap              map[uint64]*sxutil.DemandOpts
+	spMap              map[uint64]*sxutil.SupplyOpts
+	selection          bool
+	mu                 sync.Mutex
+	sclientArea        *sxutil.SMServiceClient
+	sclientAgent       *sxutil.SMServiceClient
+	sclientClock       *sxutil.SMServiceClient
+	sclientRoute       *sxutil.SMServiceClient
 	sclientParticipant *sxutil.SMServiceClient
-	MapData []Map
-	data *Data
+	MapData            []Map
+	data               *Data
 )
 
 func init() {
@@ -47,7 +51,7 @@ func init() {
 	data = new(Data)
 }
 
-func readMapData() []Map{
+func readMapData() []Map {
 	// JSONファイル読み込み
 	bytes, err := ioutil.ReadFile("map.json")
 	if err != nil {
@@ -55,7 +59,7 @@ func readMapData() []Map{
 	}
 	// JSONデコード
 	var mapData []Map
-	
+
 	if err := json.Unmarshal(bytes, &mapData); err != nil {
 		log.Fatal(err)
 	}
@@ -64,55 +68,75 @@ func readMapData() []Map{
 }
 
 type Data struct {
-	AreaInfo *area.AreaInfo
+	AreaInfo  *area.AreaInfo
 	ClockInfo *clock.ClockInfo
 }
 
 type Coord struct {
-	StartLat float32	`json:"slat"`
-	EndLat float32	`json:"elat"`
-	StartLon float32	`json:"slon"`
-	EndLon float32	`json:"elon"`
+	StartLat float32 `json:"slat"`
+	EndLat   float32 `json:"elat"`
+	StartLon float32 `json:"slon"`
+	EndLon   float32 `json:"elon"`
 }
 
 type Map struct {
-	Id uint32	`json:"id"`
-	Name string	`json:"name"`
-	Coord Coord	`json:"coord"`
-	Controlled Coord `json:"controlled"`
-	Neighbor []uint32 `json:"neighbor"`
+	Id         uint32   `json:"id"`
+	Name       string   `json:"name"`
+	Coord      Coord    `json:"coord"`
+	Controlled Coord    `json:"controlled"`
+	Neighbor   []uint32 `json:"neighbor"`
 }
 
-
-func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand){
+// Finish Fix
+func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	log.Println("getParticipant")
-	//argOneof := dm.GetArg_ParticipantDemand()
-	participantInfo := participant.ParticipantInfo{
-		ClientParticipantId: uint64(sclientParticipant.ClientID),
-		ClientAreaId: uint64(sclientArea.ClientID),
-		ClientAgentId: uint64(sclientAgent.ClientID),
-		ClientClockId: uint64(sclientClock.ClientID),
-		ClientType: 3, // PedArea
-		AreaId: uint32(0), // Area A
-		AgentType: 0, // Pedestrian
-		StatusType: 0, // OK
-		Meta: "",
+
+	participantInfo := &participant.ParticipantInfo{
+		ChannelId: &participant.ChannelId{
+			ParticipantChannelId: uint32(sclientParticipant.ClientID),
+			AreaChannelId:        uint32(sclientArea.ClientID),
+			AgentChannelId:       uint32(sclientAgent.ClientID),
+			ClockChannelId:       uint32(sclientClock.ClientID),
+			RouteChannelId:       uint32(sclientRoute.ClientID),
+		},
+		ProviderType: 1, // Area
 	}
-	
-	nm := "getParticipant respnse by ped-area-provider"
+
+	getParticipantSupply := &participant.GetParticipantSupply{
+		ParticipantInfo: participantInfo,
+		StatusType:      0, // OK
+		Meta:            "",
+	}
+
+	nm := "getParticipant respnse by area-provider"
 	js := ""
 	opts := &sxutil.SupplyOpts{
-		Target: dm.GetId(), 
-		Name: nm, 
-		JSON: js, 
-		ParticipantInfo: &participantInfo,
+		Target:               dm.GetId(),
+		Name:                 nm,
+		JSON:                 js,
+		GetParticipantSupply: getParticipantSupply,
 	}
 
 	spMap, idlist = simutil.SendProposeSupply(sclientParticipant, opts, spMap, idlist)
 }
 
+// Finish Fix
+func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
+	log.Println("setParticipant")
 
-func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	nm := "SetParticipantSupply respnse by area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target: dm.GetId(),
+		Name:   nm,
+		JSON:   js,
+	}
+
+	spMap, idlist = simutil.SendProposeSupply(sclientParticipant, opts, spMap, idlist)
+}
+
+// Finish Fix  , this is unused
+/*func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setArea")
 	argOneof := dm.GetArg_AreaDemand()
 	for _, mapData := range readMapData(){
@@ -123,91 +147,107 @@ func setArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
 				StatusType: 2, // NONE
 				Meta: "",
 			}
-			
+
 			nm := "setArea respnse by area-provider"
 			js := ""
 			opts := &sxutil.SupplyOpts{
 				Target: dm.GetId(),
-				Name: nm, 
-				JSON: js, 
+				Name: nm,
+				JSON: js,
 				AreaInfo: areaInfo,
 			}
-	
+
 			spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)
 		}
 	}
-}
+}*/
 
-func setAgent(clt *sxutil.SMServiceClient, dm *pb.Demand){
+// Finish Fix
+func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	log.Println("setAgent")
-		
+
 	nm := "setAgent respnse by area-provider"
 	js := ""
 	opts := &sxutil.SupplyOpts{
 		Target: dm.GetId(),
-		Name: nm, 
-		JSON: js, 
+		Name:   nm,
+		JSON:   js,
 	}
-	
+
 	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts, spMap, idlist)
 }
 
+// Finish Fix
+func getAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
+	log.Println("getAgent")
 
-func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand){
+	getAgentsSupply := &agent.GetAgentsSupply{
+		Time:       uint32(1),
+		StatusType: 0, //OK
+		Meta:       "",
+	}
+
+	nm := "getAgent respnse by area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target:          dm.GetId(),
+		Name:            nm,
+		JSON:            js,
+		GetAgentsSupply: getAgentsSupply,
+	}
+
+	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts, spMap, idlist)
+}
+
+// Finish Fix
+func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	log.Println("getArea")
-	argOneof := dm.GetArg_AreaDemand()
-	log.Printf("demand: ", argOneof)
-	for _, mapData := range readMapData(){
-		if(mapData.Id == argOneof.AreaId){
-			// calc area data
-			//areaData := AreaData[argOneof.AreaId]
-			mapInfo := area.Map{
-				Coord: &area.Map_Coord{
-					StartLat: mapData.Coord.StartLat,
-					StartLon: mapData.Coord.StartLon, 
-					EndLat: mapData.Coord.EndLat,
-					EndLon: mapData.Coord.EndLon, 
-				},
-				MapInfo: uint32(0),
-				Controlled: &area.Map_Coord{
-					StartLat: mapData.Controlled.StartLat,
-					StartLon: mapData.Controlled.StartLon, 
-					EndLat: mapData.Controlled.EndLat,
-					EndLon: mapData.Controlled.EndLon, 
-				},
-				Neighbor: mapData.Neighbor,
-			}
+	getAreaDemand := dm.GetArg_GetAreaDemand()
+	log.Printf("demand: ", getAreaDemand)
+	for _, mapData := range readMapData() {
+		if mapData.Id == getAreaDemand.AreaId {
 
 			// send area info
 			areaInfo := &area.AreaInfo{
-				Time: argOneof.Time,
-				AreaId: argOneof.AreaId, // A
-				AreaName: mapData.Name,
-				Map: &mapInfo,
-				SupplyType: 1, // RES_GET
-				StatusType: 0, // OK
-				Meta: "",
+				Time:         getAreaDemand.Time,
+				AreaId:       getAreaDemand.AreaId,
+				AreaName:     mapData.Name,
+				NeighborArea: mapData.Neighbor,
+				AreaCoord: &area.AreaCoord{
+					StartLat: mapData.Coord.StartLat,
+					StartLon: mapData.Coord.StartLon,
+					EndLat:   mapData.Coord.EndLat,
+					EndLon:   mapData.Coord.EndLon,
+				},
+				ControlAreaCoord: &area.AreaCoord{
+					StartLat: mapData.Controlled.StartLat,
+					StartLon: mapData.Controlled.StartLon,
+					EndLat:   mapData.Controlled.EndLat,
+					EndLon:   mapData.Controlled.EndLon,
+				},
 			}
 
-			// store AreaInfo data
-			data.AreaInfo = areaInfo
-			log.Printf("data.AreaInfo %v\n\n", data)
-		
+			getAreaSupply := &area.GetAreaSupply{
+				AreaInfo:   areaInfo,
+				StatusType: 0, //OK
+				Meta:       "",
+			}
+
 			nm := "getArea respnse by area-provider"
 			js := ""
 			opts := &sxutil.SupplyOpts{
-				Target: dm.GetId(),
-				Name: nm, 
-				JSON: js, 
-				AreaInfo: areaInfo,
+				Target:        dm.GetId(),
+				Name:          nm,
+				JSON:          js,
+				GetAreaSupply: getAreaSupply,
 			}
-	
+
 			spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)
 		}
 	}
 }
 
-
+/* this is unused
 func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	log.Println("setClock")
 	argOneof := dm.GetArg_ClockDemand()
@@ -222,107 +262,113 @@ func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
 	// store ClockInfo data
 	data.ClockInfo = clockInfo
 	log.Printf("data.ClockInfo %v\n\n", data)
-	
+
 	nm := "setClock respnse by area-provider"
 	js := ""
 	opts := &sxutil.SupplyOpts{
 		Target: dm.GetId(),
-		Name: nm, 
-		JSON: js, 
+		Name: nm,
+		JSON: js,
 		ClockInfo: clockInfo,
 	}
 
 	spMap, idlist = simutil.SendProposeSupply(sclientClock, opts, spMap, idlist)
-}
+}*/
 
-func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand){
+// Finish Fix
+func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	log.Println("forwardClock")
-	dmArgOneof := dm.GetArg_ClockDemand()
-	time := dmArgOneof.Time
+	forwardClockDemand := dm.GetArg_ForwardClockDemand()
+	time := forwardClockDemand.Time
 	nextTime := time + 1
 	// calculation  area here
 
 	// propose next area
-	areaInfo := data.AreaInfo
+	/*areaInfo := data.AreaInfo
 	mapInfo := area.Map{
 		Coord: &area.Map_Coord{
 			StartLat: areaInfo.Map.Coord.StartLat,
-			StartLon: areaInfo.Map.Coord.StartLon, 
-			EndLat: areaInfo.Map.Coord.EndLat,
-			EndLon: areaInfo.Map.Coord.EndLon, 
+			StartLon: areaInfo.Map.Coord.StartLon,
+			EndLat:   areaInfo.Map.Coord.EndLat,
+			EndLon:   areaInfo.Map.Coord.EndLon,
 		},
 		MapInfo: uint32(0),
 	}
 
 	nextAreaInfo := &area.AreaInfo{
-		Time: nextTime,
-		AreaId: areaInfo.AreaId, // A
-		AreaName: areaInfo.AreaName,
-		Map: &mapInfo,
-		SupplyType: 0, // RES_SET
-		StatusType: 0, // OK
-		Meta: "",
-	}
-
-	nm := "forwardClock to AreaCh respnse by area-provider"
-	js := ""
-	opts := &sxutil.SupplyOpts{
-		Target: dm.GetId(),
-		Name: nm, 
-		JSON: js, 
-		AreaInfo: nextAreaInfo,
-	}
-
-	spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)
-
+		Time:       nextTime,
+		AreaId:     areaInfo.AreaId, // A
+		AreaName:   areaInfo.AreaName,
+		NeighborArea: areaInfo.NeighborArea,
+		AreaCoord: &area.AreaCoord{
+			StartLat: mapData.Coord.StartLat,
+			StartLon: mapData.Coord.StartLon,
+			EndLat:   mapData.Coord.EndLat,
+			EndLon:   mapData.Coord.EndLon,
+		},
+		ControlAreaCoord: &area.AreaCoord{
+			StartLat: mapData.Controlled.StartLat,
+			StartLon: mapData.Controlled.StartLon,
+			EndLat:   mapData.Controlled.EndLat,
+			EndLon:   mapData.Controlled.EndLon,
+		},
+	}*/
 
 	// propose next clock
-	nextClockInfo := clock.ClockInfo{
+	nextClockInfo := &clock.ClockInfo{
 		Time: nextTime,
-		SupplyType: 0,
-		StatusType: 0, // OK
-		Meta: "",
 	}
-	
+
+	forwardClockSupply := &clock.ForwardClockSupply{
+		ClockInfo:  nextClockInfo,
+		StatusType: 0, //OK
+		Meta:       "",
+	}
+
 	nm2 := "forwardClock to ClockCh respnse by area-provider"
 	js2 := ""
 	opts2 := &sxutil.SupplyOpts{
-		Target: dm.GetId(),
-		Name: nm2, 
-		JSON: js2, 
-		ClockInfo: &nextClockInfo,
+		Target:             dm.GetId(),
+		Name:               nm2,
+		JSON:               js2,
+		ForwardClockSupply: forwardClockSupply,
 	}
 
 	spMap, idlist = simutil.SendProposeSupply(sclientClock, opts2, spMap, idlist)
-	
+
 	nm3 := "forwardClock to AgentCh respnse by area-provider"
 	js3 := ""
 	opts3 := &sxutil.SupplyOpts{
 		Target: dm.GetId(),
-		Name: nm3, 
-		JSON: js3, 
+		Name:   nm3,
+		JSON:   js3,
 	}
 
 	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts3, spMap, idlist)
 }
 
-
 // callback for each Supply
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
-	demandType := simutil.CheckDemandArgOneOf(dm)
-	switch demandType{
-		case "GET_PARTICIPANT": getParticipant(clt, dm)
-		case "SET_CLOCK": setClock(clt, dm)
-		case "FORWARD_CLOCK": forwardClock(clt, dm)
-		case "SET_AREA": setArea(clt, dm)
-		case "GET_AREA": getArea(clt, dm)
-		case "SET_AGENT": setAgent(clt, dm)
-		//case "START_CLOCK": startClock(clt, dm)
-		//case "FORWARD_CLOCK_OK": forwardClockOK(clt, dm)
-		default: log.Println("demand callback is invalid.")
+	demandType := simutil.CheckDemandType(dm)
+	switch demandType {
+	case "GET_PARTICIPANT_DEMAND":
+		getParticipant(clt, dm)
+		//		case "SET_CLOCK_DEMAND": setClock(clt, dm)
+	case "SET_PARTICIPANT_DEMAND":
+		setParticipant(clt, dm)
+	case "FORWARD_CLOCK_DEMAND":
+		forwardClock(clt, dm)
+		//		case "SET_AREA_DEMAND": setArea(clt, dm)
+	case "GET_AREA_DEMAND":
+		getArea(clt, dm)
+	case "SET_AGENTS_DEMAND":
+		setAgents(clt, dm)
+	case "GET_AGENTS_DEMAND":
+		getAgents(clt, dm)
+	default:
+		log.Println("demand callback is invalid.")
 	}
 }
-
 
 func main() {
 	flag.Parse()
@@ -343,11 +389,11 @@ func main() {
 
 	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Area}")
-	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE,argJson)
-	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE,argJson)
-	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE,argJson)
-	sclientParticipant = sxutil.NewSMServiceClient(client, pb.ChannelType_PARTICIPANT_SERVICE,argJson)
-	myChannelIdList = append(myChannelIdList, []uint64{uint64(sclientAgent.ClientID), uint64(sclientClock.ClientID), uint64(sclientArea.ClientID), uint64(sclientParticipant.ClientID)}...)
+	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE, argJson)
+	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE, argJson)
+	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE, argJson)
+	sclientParticipant = sxutil.NewSMServiceClient(client, pb.ChannelType_PARTICIPANT_SERVICE, argJson)
+	sclientRoute = sxutil.NewSMServiceClient(client, pb.ChannelType_ROUTE_SERVICE, argJson)
 
 	wg := sync.WaitGroup{}
 

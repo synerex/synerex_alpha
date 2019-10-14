@@ -16,29 +16,20 @@ require (
 	github.com/synerex/synerex_alpha/api/ptransit v0.0.0
 	github.com/synerex/synerex_alpha/api/rideshare v0.0.0
 	github.com/synerex/synerex_alpha/api/routing v0.0.0
-	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
-	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/participant v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/route v0.0.0
 	github.com/synerex/synerex_alpha/nodeapi v0.0.0
-	golang.org/x/lint v0.0.0-20181217174547-8f45f776aaf1 // indirect
-	golang.org/x/net v0.0.0-20181220203305-927f97764cc3 // indirect
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890 // indirect
-	golang.org/x/sync v0.0.0-20181221193216-37e7f081c4d4 // indirect
-	golang.org/x/sys v0.0.0-20190107070147-cb59ee366067 // indirect
-	golang.org/x/tools v0.0.0-20190107030206-d345f29b0d7b // indirect
 	google.golang.org/appengine v1.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20181221175505-bd9b4fb69e2f // indirect
-	google.golang.org/grpc v1.17.0
-	honnef.co/go/tools v0.0.0-20190106161140-3f1c8253044a // indirect
+	google.golang.org/grpc v1.22.1
 )
 
 replace (
 	github.com/synerex/synerex_alpha/api => ../api
-	github.com/synerex/synerex_alpha/api/simulation/clock => ../api/simulation/clock
-	github.com/synerex/synerex_alpha/api/simulation/area => ../api/simulation/area
-	github.com/synerex/synerex_alpha/api/simulation/agent => ../api/simulation/agent
-	github.com/synerex/synerex_alpha/api/simulation/participant => ../api/simulation/participant
 	github.com/synerex/synerex_alpha/api/adservice => ../api/adservice
 	github.com/synerex/synerex_alpha/api/common => ../api/common
 	github.com/synerex/synerex_alpha/api/fleet => ../api/fleet
@@ -47,6 +38,11 @@ replace (
 	github.com/synerex/synerex_alpha/api/ptransit => ../api/ptransit
 	github.com/synerex/synerex_alpha/api/rideshare => ../api/rideshare
 	github.com/synerex/synerex_alpha/api/routing => ../api/routing
+	github.com/synerex/synerex_alpha/api/simulation/agent => ../api/simulation/agent
+	github.com/synerex/synerex_alpha/api/simulation/area => ../api/simulation/area
+	github.com/synerex/synerex_alpha/api/simulation/clock => ../api/simulation/clock
+	github.com/synerex/synerex_alpha/api/simulation/participant => ../api/simulation/participant
+	github.com/synerex/synerex_alpha/api/simulation/route => ../api/simulation/route
 	github.com/synerex/synerex_alpha/monitor/monitorapi => ../monitor/monitorapi
 	github.com/synerex/synerex_alpha/nodeapi => ../nodeapi
 	github.com/synerex/synerex_alpha/sxutil => ../sxutil

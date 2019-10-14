@@ -23,6 +23,7 @@ replace (
 	github.com/synerex/synerex_alpha/api/simulation/area => ../api/simulation/area
 	github.com/synerex/synerex_alpha/api/simulation/clock => ../api/simulation/clock
 	github.com/synerex/synerex_alpha/api/simulation/participant => ../api/simulation/participant
+	github.com/synerex/synerex_alpha/api/simulation/route => ../api/simulation/route
 	github.com/synerex/synerex_alpha/monitor/monitorapi => ../monitor/monitorapi
 	github.com/synerex/synerex_alpha/nodeapi => ../nodeapi
 	github.com/synerex/synerex_alpha/sxutil => ../sxutil
