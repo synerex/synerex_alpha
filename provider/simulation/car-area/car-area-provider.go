@@ -55,6 +55,7 @@ var (
 	sclientParticipant *sxutil.SMServiceClient
 	participantsInfo   []*participant.ParticipantInfo
 	data               *Data
+	history            *History
 )
 
 func init() {
@@ -73,12 +74,19 @@ func init() {
 	pspCh = make(chan map[uint64]*pb.Supply)
 	data = new(Data)
 	data.AgentsInfo = make([]*agent.AgentInfo, 0)
+	history = new(History)
+	history.History = make(map[uint32]*Data)
 }
 
 type Data struct {
 	AreaInfo   *area.AreaInfo
 	ClockInfo  *clock.ClockInfo
 	AgentsInfo []*agent.AgentInfo
+}
+
+type History struct {
+	CurrentTime uint32
+	History     map[uint32]*Data
 }
 
 func isContainNeighborMap(areaId uint32) bool {
@@ -99,8 +107,6 @@ func isFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint32) bool {
 		isMatch := false
 		for _, sp := range pspMap {
 			senderId := uint32(sp.SenderId)
-			//agentsInfo := sp.GetArg_GetAgentsSupply()
-			//isNeighborArea := isContainNeighborMap(agentsInfo.AreaId)
 			if id == senderId {
 				log.Printf("match! %v %v", id, senderId)
 				isMatch = true
@@ -197,14 +203,14 @@ func isAgentInArea(agentInfo *agent.AgentInfo) bool {
 
 // Finish Fix
 // if agent type and coord satisfy, return true
-func isAgentInControlledArea(agentInfo *agent.AgentInfo, data *Data, agentType int) bool {
+func isAgentInControlledArea(agentInfo *agent.AgentInfo) bool {
 	lat := agentInfo.Route.Coord.Lat
 	lon := agentInfo.Route.Coord.Lon
 	slat := data.AreaInfo.ControlAreaCoord.StartLat
 	elat := data.AreaInfo.ControlAreaCoord.EndLat
 	slon := data.AreaInfo.ControlAreaCoord.StartLon
 	elon := data.AreaInfo.ControlAreaCoord.EndLon
-	if agentInfo.AgentType.String() == agent.AgentType_name[int32(agentType)] && slat <= lat && lat <= elat && slon <= lon && lon <= elon {
+	if agentInfo.AgentType.String() == agent.AgentType_name[int32(*agentType)] && slat <= lat && lat <= elat && slon <= lon && lon <= elon {
 		return true
 	} else {
 		log.Printf("agent type and coord is not match...\n\n")
@@ -218,14 +224,20 @@ func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	setAgentsDemand := dm.GetArg_SetAgentsDemand()
 	agentsInfo := setAgentsDemand.AgentsInfo
 	for _, agentInfo := range agentsInfo {
-		if isAgentInControlledArea(agentInfo, data, *agentType) {
+		if isAgentInControlledArea(agentInfo) {
 			agentInfo.ControlArea = uint32(*areaId)
 		}
 
 		if isAgentInArea(agentInfo) {
 			data.AgentsInfo = append(data.AgentsInfo, agentInfo)
-			log.Printf("data.AgentInfo %v\n\n", data)
 		}
+	}
+
+	if data.AreaInfo != nil && data.AgentsInfo != nil && data.ClockInfo != nil {
+		time := data.ClockInfo.Time
+		history.History[time] = data
+		history.CurrentTime = time
+		log.Printf("\x1b[30m\x1b[47m History is : %v\x1b[0m\n", history)
 	}
 
 	setAgentsSupply := &agent.SetAgentsSupply{
@@ -351,7 +363,7 @@ func calcAgentsInfo(areaInfo *area.AreaInfo, nextTime uint32) []*agent.AgentInfo
 	//	otherAgentsInfo := spAgentArgOneof
 	otherAgentsInfo := make([]*agent.AgentInfo, 0)
 	data.AgentsInfo = make([]*agent.AgentInfo, 0)
-	for k, agentInfo := range agentsInfo {
+	for _, agentInfo := range agentsInfo {
 		// calc next agentInfo
 		//		route := agentInfo.Route
 		nextRoute := calcNextRoute(areaInfo, agentInfo, otherAgentsInfo)
@@ -364,14 +376,12 @@ func calcAgentsInfo(areaInfo *area.AreaInfo, nextTime uint32) []*agent.AgentInfo
 			Route:       nextRoute,
 		}
 
-		log.Printf("nextAgentInfo %v %v\n\n", nextAgentInfo, k)
-
 		data.AgentsInfo = append(data.AgentsInfo, nextAgentInfo)
 	}
 
 	controlAgentsInfo := make([]*agent.AgentInfo, 0)
 	for _, agentInfo := range data.AgentsInfo {
-		if isAgentInControlledArea(agentInfo, data, *agentType) {
+		if isAgentInControlledArea(agentInfo) {
 			controlAgentsInfo = append(controlAgentsInfo, agentInfo)
 		}
 	}
@@ -414,7 +424,6 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		JSON:                js2,
 		ForwardAgentsSupply: forwardAgentsSupply,
 	}
-	log.Printf("nextAgentsInfo! %v %v\n\n", forwardAgentsSupply)
 	spMap, spIdList = simutil.SendProposeSupply(sclientAgent, opts2, spMap, spIdList)
 
 	// propose clockInfo
@@ -439,6 +448,11 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	}
 	spMap, spIdList = simutil.SendProposeSupply(sclientClock, opts3, spMap, spIdList)
 
+	if data.AreaInfo != nil && data.AgentsInfo != nil && data.ClockInfo != nil {
+		history.History[nextTime] = data
+		history.CurrentTime = nextTime
+		log.Printf("\x1b[30m\x1b[47m History is : %v\x1b[0m\n", history)
+	}
 	log.Printf("FORWARD_CLOCK_FINISH\n\n")
 }
 
