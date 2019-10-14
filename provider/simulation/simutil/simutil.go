@@ -27,6 +27,17 @@ func init() {
 	ch = make(chan *pb.Supply)
 }
 
+type Data struct {
+	AreaInfo   *area.AreaInfo
+	ClockInfo  *clock.ClockInfo
+	AgentsInfo []*agent.AgentInfo
+}
+
+type History struct {
+	CurrentTime uint32
+	History     map[uint32]*Data
+}
+
 type IdListByChannel struct {
 	ParticipantIdList []uint32
 	ClockIdList       []uint32
@@ -85,12 +96,6 @@ type SimData struct {
 	Time  string      `json:"time"`
 	Area  []AreaInfo  `json:"area"`
 	Agent []AgentInfo `json:"agent"`
-}
-
-type Data struct {
-	AreaInfo   *area.AreaInfo
-	ClockInfo  *clock.ClockInfo
-	AgentsInfo []*agent.AgentInfo
 }
 
 func ConvertAgentsInfo(agentsInfo2 []AgentInfo) []*agent.AgentInfo {

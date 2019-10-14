@@ -26,6 +26,9 @@ var (
 	areaId             = flag.Int("areaId", 1, "Area Id")       // Area B
 	agentType          = flag.Int("agentType", 0, "Agent Type") // PEDESTRIAN
 	clockTime          = flag.Int("time", 1, "Time")
+	cycleNum           = flag.Int("num", 1, "Num")
+	cycleInterval      = flag.Int("interval", 1, "Interval")
+	cycleDuration      = flag.Int("duration", 1, "Duration")
 	dmIdList           []uint64
 	spIdList           []uint64
 	myChannelIdList    []uint64
@@ -240,35 +243,18 @@ func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 }
 
 // Finish Fix
-func setClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
+func setClock() {
 	log.Println("setClock")
-	setClockDemand := dm.GetArg_SetClockDemand()
 
 	clockInfo := &clock.ClockInfo{
-		Time:          setClockDemand.Time,
-		CycleDuration: setClockDemand.CycleDuration,
+		Time:          uint32(*clockTime),
+		CycleDuration: uint32(*cycleDuration),
+		CycleNum:      uint32(*cycleNum),
+		CycleInterval: uint32(*cycleInterval),
 	}
 
 	// store AgentInfo data
 	data.ClockInfo = clockInfo
-	log.Printf("data.ClockInfo %v\n\n", data)
-
-	setClockSupply := &clock.SetClockSupply{
-		ClockInfo:  clockInfo,
-		StatusType: 0, //OK
-		Meta:       "",
-	}
-
-	nm := "setClockSupply by ped-area-provider"
-	js := ""
-	opts := &sxutil.SupplyOpts{
-		Target:         dm.GetId(),
-		Name:           nm,
-		JSON:           js,
-		SetClockSupply: setClockSupply,
-	}
-
-	spMap, spIdList = simutil.SendProposeSupply(sclientClock, opts, spMap, spIdList)
 }
 
 // Finish Fix
@@ -297,13 +283,7 @@ func calcNextRoute(areaInfo *area.AreaInfo, agentInfo *agent.AgentInfo, otherAge
 	return nextRoute
 }
 
-// Finish Fix
-func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
-	log.Println("forwardClock")
-	forwardClockDemand := dm.GetArg_ForwardClockDemand()
-	time := forwardClockDemand.Time
-	nextTime := time + 1
-
+func getAreaInfo() *area.AreaInfo {
 	// get area
 	getAreaDemand := &area.GetAreaDemand{
 		Time:       uint32(*clockTime),
@@ -320,7 +300,12 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	sp := <-ch
 	log.Println("GET_AREA_FINISH")
 	getAreaSupply := sp.GetArg_GetAreaSupply()
+	areaInfo := getAreaSupply.AreaInfo
 
+	return areaInfo
+}
+
+func getAgentsInfo() []*agent.GetAgentsSupply {
 	// get Agent
 	getAgentsDemand := &agent.GetAgentsDemand{
 		Time:       uint32(1),
@@ -343,25 +328,23 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	agentPspMap := <-pspCh
 	log.Println("GET_AGENTS_FINISH")
 	//spAgentsArgOneof := spAgent.GetArg_AgentsInfo()
-	log.Printf("get Agents is: %v", agentPspMap)
+	getAgentsSupplies := make([]*agent.GetAgentsSupply, 0)
+	for _, agentPsp := range agentPspMap {
+		getAgentsSupply := agentPsp.GetArg_GetAgentsSupply()
+		getAgentsSupplies = append(getAgentsSupplies, getAgentsSupply)
+	}
+	return getAgentsSupplies
+}
 
-	/*areaInfo := &area.AreaInfo{
-		Time: spArgOneof.Time,
-		AgentId: spArgOneof.AreaId, // A
-		AreaName: spArgOneof.AreaName,
-		Map: spArgOneof.Map,
-		SupplyType: 0, // RES_GET
-		StatusType: 0, // OK
-		Meta: "",
-	}*/
+func updateAgentsInfo(areaInfo *area.AreaInfo, getAgentsSupplies []*agent.GetAgentsSupply) {
 
-	// update Agents data
+}
 
+func calcAgentsInfo(areaInfo *area.AreaInfo, nextTime uint32) []*agent.AgentInfo {
 	// calc agent
 	agentsInfo := data.AgentsInfo
 	//	otherAgentsInfo := spAgentArgOneof
 	otherAgentsInfo := make([]*agent.AgentInfo, 0)
-	areaInfo := getAreaSupply.AreaInfo
 	data.AgentsInfo = make([]*agent.AgentInfo, 0)
 	for k, agentInfo := range agentsInfo {
 		// calc next agentInfo
@@ -381,23 +364,33 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		data.AgentsInfo = append(data.AgentsInfo, nextAgentInfo)
 	}
 
-	/*// nextAreaInfo
-	nextAreaInfo := &area.AreaInfo{
-		Time: nextTime,
-		AreaId: spArgOneof.AreaId, // A
-		AreaName: spArgOneof.AreaName,
-		Map: spArgOneof.Map,
-		SupplyType: 0, // RES_GET
-		StatusType: 0, // OK
-		Meta: "",
-	}
-	data.AreaInfo = nextAreaInfo*/
 	controlAgentsInfo := make([]*agent.AgentInfo, 0)
 	for _, agentInfo := range data.AgentsInfo {
 		if isAgentInControlledArea(agentInfo, data, *agentType) {
 			controlAgentsInfo = append(controlAgentsInfo, agentInfo)
 		}
 	}
+	return controlAgentsInfo
+}
+
+// Finish Fix
+func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
+	log.Println("forwardClock")
+	forwardClockDemand := dm.GetArg_ForwardClockDemand()
+	time := forwardClockDemand.Time
+	nextTime := time + 1
+
+	// update Area data
+	areaInfo := getAreaInfo()
+
+	// update Agents data
+	getAgentsSupplies := getAgentsInfo()
+
+	// update Agents data
+	updateAgentsInfo(areaInfo, getAgentsSupplies)
+
+	// calc Agents data
+	controlAgentsInfo := calcAgentsInfo(areaInfo, nextTime)
 
 	forwardAgentsSupply := &agent.ForwardAgentsSupply{
 		Time:       nextTime,
@@ -637,7 +630,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case "SET_PARTICIPANT_DEMAND":
 		setParticipant(clt, dm)
 	case "SET_CLOCK_DEMAND":
-		setClock(clt, dm)
+		//		setClock(clt, dm)
 	case "FORWARD_CLOCK_DEMAND":
 		forwardClock(clt, dm)
 	case "SET_AREA_DEMAND":
@@ -718,6 +711,7 @@ func main() {
 
 	// start up(setArea)
 	setArea()
+	setClock()
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
