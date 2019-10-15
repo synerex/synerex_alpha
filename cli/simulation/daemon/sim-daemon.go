@@ -176,22 +176,10 @@ func init() {
 			GoFiles: []string{"area-provider.go"},
 		},
 		{
-			CmdName: "Clock",
-			SrcDir:  "provider/simulation/clock",
-			BinName: "clock-provider",
-			GoFiles: []string{"clock-provider.go"},
-		},
-		{
 			CmdName: "Scenario",
 			SrcDir:  "provider/simulation/scenario",
 			BinName: "scenario-provider",
 			GoFiles: []string{"scenario-provider.go"},
-		},
-		{
-			CmdName: "Log",
-			SrcDir:  "provider/simulation/log",
-			BinName: "log-provider",
-			GoFiles: []string{"log-provider.go"},
 		},
 		{
 			CmdName: "PedArea",
@@ -575,8 +563,9 @@ func runAllServ() {
 	runSubCmd("SynerexServer")
 	time.Sleep(1 * time.Second)
 	runSubCmd("Area")
-	runSubCmd("Clock")
+	time.Sleep(1 * time.Second)
 	runSubCmd("PedArea")
+	runSubCmd("CarArea")
 	time.Sleep(1 * time.Second)
 	runSubCmd("Scenario")
 }
@@ -584,6 +573,7 @@ func runAllServ() {
 func killAll() {
 	killCmd("Scenario")
 	killCmd("PedArea")
+	killCmd("CarArea")
 	killCmd("Area")
 	killCmd("Clock")
 	killCmd("SynerexServer")

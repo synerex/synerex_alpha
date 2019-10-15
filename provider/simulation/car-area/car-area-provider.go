@@ -721,16 +721,35 @@ func main() {
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
-	go simutil.SubscribeDemand(sclientAgent, demandCallback)
-	go simutil.SubscribeDemand(sclientClock, demandCallback)
-	go simutil.SubscribeDemand(sclientArea, demandCallback)
-	go simutil.SubscribeDemand(sclientParticipant, demandCallback)
+	go simutil.SubscribeDemand(sclientAgent, demandCallback, &wg)
+	wg.Wait()
 
-	go simutil.SubscribeSupply(sclientArea, proposeSupplyCallback)
-	go simutil.SubscribeSupply(sclientAgent, proposeSupplyCallback)
-	go simutil.SubscribeSupply(sclientParticipant, proposeSupplyCallback)
+	wg.Add(1)
+	go simutil.SubscribeDemand(sclientClock, demandCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go simutil.SubscribeDemand(sclientArea, demandCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go simutil.SubscribeDemand(sclientParticipant, demandCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go simutil.SubscribeSupply(sclientArea, proposeSupplyCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go simutil.SubscribeSupply(sclientAgent, proposeSupplyCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go simutil.SubscribeSupply(sclientParticipant, proposeSupplyCallback, &wg)
+	wg.Wait()
 
 	// start up(setArea)
+	wg.Add(1)
 	setArea()
 	setClock()
 

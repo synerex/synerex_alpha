@@ -398,11 +398,22 @@ func main() {
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
-	go simutil.SubscribeDemand(sclientAgent, demandCallback)
-	go simutil.SubscribeDemand(sclientClock, demandCallback)
-	go simutil.SubscribeDemand(sclientArea, demandCallback)
-	go simutil.SubscribeDemand(sclientParticipant, demandCallback)
+	go simutil.SubscribeDemand(sclientAgent, demandCallback, &wg)
+	wg.Wait()
 
+	wg.Add(1)
+	go simutil.SubscribeDemand(sclientClock, demandCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go simutil.SubscribeDemand(sclientArea, demandCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go simutil.SubscribeDemand(sclientParticipant, demandCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
 

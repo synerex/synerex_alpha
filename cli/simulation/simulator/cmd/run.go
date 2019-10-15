@@ -16,8 +16,9 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"time"
+
+	"github.com/spf13/cobra"
 )
 
 // cmdInfo represents the run command aliases
@@ -26,53 +27,48 @@ type cmdInfo struct {
 	CmdName string
 }
 
-var cmds =[...]cmdInfo{
+var cmds = [...]cmdInfo{
 	{
-		Aliases: []string{"All", "all" },
+		Aliases: []string{"All", "all"},
 		CmdName: "All",
 	},
 	{
-		Aliases: []string{"nodeserv", "nodesrv", "ndsrv","NodeIDServer"},
+		Aliases: []string{"nodeserv", "nodesrv", "ndsrv", "NodeIDServer"},
 		CmdName: "NodeIDServer",
 	},
 	{
-		Aliases: []string{"Synerex","smarket", "server", "synerex","SynerexServer"},
+		Aliases: []string{"Synerex", "smarket", "server", "synerex", "SynerexServer"},
 		CmdName: "SynerexServer",
 	},
 	{
-		Aliases: []string{"monitor", "MonitorServer", "mon",},
+		Aliases: []string{"monitor", "MonitorServer", "mon"},
 		CmdName: "MonitorServer",
 	},
 	{
-		Aliases: []string{"Clock", "clock",},
-		CmdName: "Clock",
-	},
-	{
-		Aliases: []string{"Area", "area" },
+		Aliases: []string{"Area", "area"},
 		CmdName: "Area",
 	},
 	{
-		Aliases: []string{"Scenario", "scenario" },
+		Aliases: []string{"Scenario", "scenario"},
 		CmdName: "Scenario",
 	},
 	{
-		Aliases: []string{"Log", "log" },
-		CmdName: "Log",
-	},
-	{
-		Aliases: []string{"PedArea", "Ped-Area", "ped-area" },
+		Aliases: []string{"PedArea", "Ped-Area", "ped-area"},
 		CmdName: "PedArea",
 	},
 	{
-		Aliases: []string{"CarArea", "Car-Area", "car-area" },
+		Aliases: []string{"CarArea", "Car-Area", "car-area"},
 		CmdName: "CarArea",
+	},
+	{
+		Aliases: []string{"simulator", "sim", "Simulator"},
+		CmdName: "Simulator",
 	},
 }
 
-
-func getCmdName(alias string)  string{
-	for _, ci  := range cmds {
-		for _,str := range ci.Aliases {
+func getCmdName(alias string) string {
+	for _, ci := range cmds {
+		for _, str := range ci.Aliases {
 			if alias == str {
 				return ci.CmdName
 			}
@@ -81,13 +77,13 @@ func getCmdName(alias string)  string{
 	return "" // can'f find alias
 }
 
-func handleProvider(cmd *cobra.Command, args []string){
+func handleProvider(cmd *cobra.Command, args []string) {
 	if len(args) > 0 {
-		for n := range args{
+		for n := range args {
 			findflag := false
 			fmt.Printf("cmd is:'%s'\n", cmds)
-			for _, ci  := range cmds {
-				for _,str := range ci.Aliases {
+			for _, ci := range cmds {
+				for _, str := range ci.Aliases {
 					if args[n] == str {
 						fmt.Printf("simulator: Starting '%s'\n", ci.CmdName)
 
@@ -110,15 +106,13 @@ func handleProvider(cmd *cobra.Command, args []string){
 
 			}
 			if !findflag {
-				fmt.Printf("simulator: Can't find command run '%s'.\n",args[n])
+				fmt.Printf("simulator: Can't find command run '%s'.\n", args[n])
 				fmt.Printf("cmd is:'%s'\n", cmds)
 				break
 			}
 		}
 	}
 }
-
-
 
 var runCmd = &cobra.Command{
 	Use:   "run [provider name] [options..]",
@@ -134,7 +128,6 @@ For example:
 `,
 	Run: handleProvider,
 }
-
 
 func init() {
 	rootCmd.AddCommand(runCmd)

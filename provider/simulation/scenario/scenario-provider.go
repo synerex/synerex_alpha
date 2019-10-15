@@ -670,11 +670,22 @@ func main() {
 	wg := sync.WaitGroup{}
 
 	wg.Add(1)
-	go simutil.SubscribeSupply(sclientAgent, proposeSupplyCallback)
-	go simutil.SubscribeSupply(sclientClock, proposeSupplyCallback)
-	go simutil.SubscribeSupply(sclientArea, proposeSupplyCallback)
-	go simutil.SubscribeSupply(sclientParticipant, proposeSupplyCallback)
+	go simutil.SubscribeSupply(sclientArea, proposeSupplyCallback, &wg)
+	wg.Wait()
 
+	wg.Add(1)
+	go simutil.SubscribeSupply(sclientAgent, proposeSupplyCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go simutil.SubscribeSupply(sclientClock, proposeSupplyCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go simutil.SubscribeSupply(sclientParticipant, proposeSupplyCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
 	serveMux := http.NewServeMux()
 
 	serveMux.Handle("/socket.io/", ioserv)

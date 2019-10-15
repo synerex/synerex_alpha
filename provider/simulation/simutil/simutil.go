@@ -345,18 +345,18 @@ func SendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts, dmMap 
 	return dmMap, idlist
 }
 
-func SubscribeSupply(client *sxutil.SMServiceClient, supplyCallback func(*sxutil.SMServiceClient, *pb.Supply)) {
+func SubscribeSupply(client *sxutil.SMServiceClient, supplyCallback func(*sxutil.SMServiceClient, *pb.Supply), wg *sync.WaitGroup) {
 	//called as goroutine
 	ctx := context.Background() // should check proper context
-	client.SubscribeSupply(ctx, supplyCallback)
+	client.SubscribeSupply(ctx, supplyCallback, wg)
 	// comes here if channel closed
 	log.Printf("SMarket Server Closed?")
 }
 
-func SubscribeDemand(client *sxutil.SMServiceClient, demandCallback func(*sxutil.SMServiceClient, *pb.Demand)) {
+func SubscribeDemand(client *sxutil.SMServiceClient, demandCallback func(*sxutil.SMServiceClient, *pb.Demand), wg *sync.WaitGroup) {
 	//called as goroutine
 	ctx := context.Background() // should check proper context
-	client.SubscribeDemand(ctx, demandCallback)
+	client.SubscribeDemand(ctx, demandCallback, wg)
 	// comes here if channel closed
 	log.Printf("SMarket Server Closed?")
 }
