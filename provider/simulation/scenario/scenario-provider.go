@@ -26,30 +26,35 @@ import (
 )
 
 var (
-	serverAddr         = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
-	nodesrv            = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	port               = flag.Int("port", 10080, "HarmoVis Provider Listening Port")
-	clockTime          = flag.Int("time", 1, "Time")
-	version            = "0.01"
-	idlist             []uint64
-	dmMap              map[uint64]*sxutil.DemandOpts
-	spMap              map[uint64]*pb.Supply
-	pspMap             map[uint64]*pb.Supply
-	ch                 chan *pb.Supply
-	startCollectId     bool
-	isStop             bool
-	isStart            bool
-	isSetClock         bool
-	isSetArea          bool
-	isSetAgent         bool
+	serverAddr        = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
+	nodesrv           = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
+	port              = flag.Int("port", 10080, "HarmoVis Provider Listening Port")
+	clockTime         = flag.Int("time", 1, "Time")
+	version           = "0.01"
+	idlist            []uint64
+	dmMap             map[uint64]*sxutil.DemandOpts
+	spMap             map[uint64]*pb.Supply
+	pspMap            map[uint64]*pb.Supply
+	agentPspMap       map[uint64]*pb.Supply
+	participantPspMap map[uint64]*pb.Supply
+	forwardPspMap     map[uint64]*pb.Supply
+	ch                chan *pb.Supply
+	startCollectId    bool
+	isStop            bool
+	isStart           bool
+	isSetClock        bool
+	isSetArea         bool
+	isSetAgent        bool
+	isFinishSync      bool
+
 	isGetParticipant   bool
 	Order              string
 	mu                 sync.Mutex
 	sclientArea        *sxutil.SMServiceClient
 	sclientAgent       *sxutil.SMServiceClient
 	sclientClock       *sxutil.SMServiceClient
-	sclientRoute       *sxutil.SMServiceClient
 	sclientParticipant *sxutil.SMServiceClient
+	sclientRoute       *sxutil.SMServiceClient
 	participantsInfo   []*participant.ParticipantInfo
 	sioClient          *gosocketio.Client
 	idListByChannel    *simutil.IdListByChannel
@@ -65,6 +70,10 @@ func init() {
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
 	spMap = make(map[uint64]*pb.Supply)
 	pspMap = make(map[uint64]*pb.Supply)
+	agentPspMap = make(map[uint64]*pb.Supply)
+	participantPspMap = make(map[uint64]*pb.Supply)
+	forwardPspMap = make(map[uint64]*pb.Supply)
+	isFinishSync = false
 	isStop = false
 	isSetClock = false
 	isSetAgent = false
@@ -101,67 +110,19 @@ type MapMarker struct {
 	area  int32   `json:"area"`
 }
 
-func syncProposeSupply(sp *pb.Supply, syncIdList []uint32, pspMap map[uint64]*pb.Supply, callback func(pspMap map[uint64]*pb.Supply)) {
+func wait() {
+	wg := sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
-		//		log.Println("Send Supply")
-		ch <- sp
-		return
-	}()
-	if !startSync {
-		log.Println("Start Sync")
-		startSync = true
-		pspMap2 := make(map[uint64]*pb.Supply)
-
-		go func() {
-			for {
-				select {
-				case psp := <-ch:
-					pspMap2[psp.SenderId] = psp
-					//					log.Printf("waitidList %v %v", pspMap, idList)
-
-					if simutil.IsFinishSync(pspMap2, syncIdList) {
-						fmt.Printf("Finish Sync\n")
-
-						// if you need, return response
-						callback(pspMap2)
-
-						// init pspMap
-						//pspMap = make(map[uint64]*pb.Supply)
-						startSync = false
-
-						return
-					}
-				}
+		for {
+			if isFinishSync {
+				isFinishSync = false
+				wg.Done()
+				return
 			}
-
-		}()
-	}
-}
-
-// assetsFileHandler for static Data
-func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		return
-	}
-
-	file := r.URL.Path
-	//	log.Printf("Open File '%s'",file)
-	if file == "/" {
-		file = "/index.html"
-	}
-	f, err := assetsDir.Open(file)
-	if err != nil {
-		log.Printf("can't open file %s: %v\n", file, err)
-		return
-	}
-	defer f.Close()
-
-	fi, err := f.Stat()
-	if err != nil {
-		log.Printf("can't open file %s: %v\n", file, err)
-		return
-	}
-	http.ServeContent(w, r, file, fi.ModTime(), f)
+		}
+	}()
+	wg.Wait()
 }
 
 // Finish Fix
@@ -225,6 +186,35 @@ func orderStartClock() {
 			CycleInterval: uint32(1),
 		}
 		data.ClockInfo = clockInfo
+
+		fmt.Printf("wait now...")
+		wait()
+
+		fmt.Printf("Callback StartClock! Regist and Send Data to Simulator %v", pspMap)
+		for _, psp := range pspMap {
+			supplyType := simutil.CheckSupplyType(psp)
+			switch supplyType {
+			case "FORWARD_AGENTS_SUPPLY":
+				fmt.Println("registAgents")
+				sendToSimulator(psp)
+			default:
+				fmt.Println("SupplyType is invalid")
+			}
+		}
+
+		fmt.Printf("Callback StartClock! move next clock")
+		time.Sleep(1 * time.Second)
+		if isStop == false {
+			log.Printf("FORWARD_CLOCK")
+			orderStartClock()
+		} else {
+			fmt.Printf("Stop clock!")
+			isStop = false
+			isStart = false
+		}
+
+		// clear pspMap
+		forwardPspMap = make(map[uint64]*pb.Supply)
 	}
 }
 
@@ -279,6 +269,11 @@ func orderSetAgents(agentsInfo []*agent.AgentInfo) {
 		opts := &sxutil.DemandOpts{Name: nm, JSON: js, SetAgentsDemand: setAgentsDemand}
 
 		dmMap, idlist = simutil.SendDemand(sclientAgent, opts, dmMap, idlist)
+
+		wait()
+		fmt.Printf("Callback SetAgent! return OK to Simulation Synerex Engine")
+		isSetAgent = true
+		agentPspMap = make(map[uint64]*pb.Supply)
 	}
 }
 
@@ -305,6 +300,28 @@ func orderGetParticipant() {
 	opts := &sxutil.DemandOpts{Name: nm, JSON: js, GetParticipantDemand: getParticipantDemand}
 
 	dmMap, idlist = simutil.SendDemand(sclientParticipant, opts, dmMap, idlist)
+}
+
+// Finish Fix
+func orderSetParticipant() {
+
+	// send participantID to participant provider
+	setParticipantDemand := &participant.SetParticipantDemand{
+		ParticipantsInfo: participantsInfo,
+		StatusType:       2, // NONE
+		Meta:             "",
+	}
+
+	nm := "setParticipant order by scenario"
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SetParticipantDemand: setParticipantDemand}
+
+	dmMap, idlist = simutil.SendDemand(sclientParticipant, opts, dmMap, idlist)
+
+	wait()
+	fmt.Printf("Callback SetParticipant! return OK to Simulation Synerex Engine")
+	participantPspMap = make(map[uint64]*pb.Supply)
+
 }
 
 func (m *MapMarker) GetJson() string {
@@ -338,79 +355,47 @@ func sendToSimulator(psp *pb.Supply) {
 
 // Finish Fix
 func callbackStartClock(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	//	log.Println("Got for start_clock callback")
-	if clt.IsSupplyTarget(sp, idlist) {
-		spMap[sp.SenderId] = sp
+	mu.Lock()
+	spMap[sp.SenderId] = sp
+	forwardPspMap[sp.SenderId] = sp
+	mu.Unlock()
 
-		callback := func(pspMap map[uint64]*pb.Supply) {
-			fmt.Printf("Callback StartClock! Regist and Send Data to Simulator %v", pspMap)
-			for _, psp := range pspMap {
-				supplyType := simutil.CheckSupplyType(psp)
-				switch supplyType {
-				case "FORWARD_AGENTS_SUPPLY":
-					fmt.Println("registAgents")
-					sendToSimulator(psp)
-				default:
-					fmt.Println("SupplyType is invalid")
-				}
-			}
-
-			fmt.Printf("Callback StartClock! move next clock")
-			time.Sleep(1 * time.Second)
-			if isStop == false {
-				orderStartClock()
-			} else {
-				fmt.Printf("Stop clock!")
-				isStop = false
-				isStart = false
-			}
-
-			//pspMap = make(map[uint64]*pb.Supply)
-		}
-
-		clockIdList := idListByChannel.ClockIdList
-		agentIdList := idListByChannel.AgentIdList
-		syncIdList := append(clockIdList, agentIdList...)
-		syncProposeSupply(sp, syncIdList, pspMap, callback)
-
-	} else {
-		log.Printf("This is not propose supply \n")
+	clockIdList := idListByChannel.ClockIdList
+	agentIdList := idListByChannel.AgentIdList
+	syncIdList := append(clockIdList, agentIdList...)
+	if simutil.CheckFinishSync(forwardPspMap, syncIdList) {
+		isFinishSync = true
 	}
+
 }
 
 // Finish Fix
 func callbackSetAgent(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	//	log.Println("Got for set_agent callback")
-	if clt.IsSupplyTarget(sp, idlist) {
-		spMap[sp.SenderId] = sp
-		fmt.Printf("sp is: %v", sp)
-		callback := func(pspMap map[uint64]*pb.Supply) {
-			fmt.Printf("Callback SetAgent! return OK to Simulation Synerex Engine")
-			isSetAgent = true
-		}
-		syncAgentIdList := idListByChannel.AgentIdList
-		syncProposeSupply(sp, syncAgentIdList, pspMap, callback)
+	log.Println("Got for set_agent callback")
+	mu.Lock()
+	spMap[sp.SenderId] = sp
+	agentPspMap[sp.SenderId] = sp
+	fmt.Printf("sp is: %v", sp)
+	mu.Unlock()
 
-	} else {
-		log.Printf("This is not propose supply \n")
+	syncAgentIdList := idListByChannel.AgentIdList
+	if simutil.CheckFinishSync(agentPspMap, syncAgentIdList) {
+		isFinishSync = true
 	}
 }
 
 // Finish Fix
 func callbackSetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	//	log.Println("Got for set_agent callback")
-	if clt.IsSupplyTarget(sp, idlist) {
-		spMap[sp.SenderId] = sp
-
-		callback := func(pspMap map[uint64]*pb.Supply) {
-			fmt.Printf("Callback SetParticipant! return OK to Simulation Synerex Engine")
-			//isSetAgent = true
-		}
-		syncParticipantIdList := idListByChannel.ParticipantIdList
-		syncProposeSupply(sp, syncParticipantIdList, pspMap, callback)
-
-	} else {
-		log.Printf("This is not propose supply \n")
+	log.Println("Got for set_participant callback")
+	mu.Lock()
+	log.Println("setParticipant2")
+	spMap[sp.SenderId] = sp
+	participantPspMap[sp.SenderId] = sp
+	mu.Unlock()
+	log.Println("setParticipant3")
+	syncParticipantIdList := idListByChannel.ParticipantIdList
+	if simutil.CheckFinishSync(participantPspMap, syncParticipantIdList) {
+		isFinishSync = true
 	}
 }
 
@@ -455,24 +440,6 @@ func callbackSetArea(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 }*/
 
 // Finish Fix
-func orderSetParticipant() {
-
-	// send participantID to participant provider
-	setParticipantDemand := &participant.SetParticipantDemand{
-		ParticipantsInfo: participantsInfo,
-		StatusType:       2, // NONE
-		Meta:             "",
-	}
-
-	nm := "setParticipant order by scenario"
-	js := ""
-	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SetParticipantDemand: setParticipantDemand}
-
-	dmMap, idlist = simutil.SendDemand(sclientParticipant, opts, dmMap, idlist)
-
-}
-
-// Finish Fix
 func collectParticipantId(clt *sxutil.SMServiceClient, d int) {
 
 	for i := 0; i < d; i++ {
@@ -481,14 +448,14 @@ func collectParticipantId(clt *sxutil.SMServiceClient, d int) {
 	}
 
 	mu.Lock()
-	participantsInfo = simutil.CreateParticipantsInfo(pspMap)
+	participantsInfo = simutil.CreateParticipantsInfo(participantPspMap)
 	idListByChannel = simutil.CreateIdListByChannel(participantsInfo)
 	fmt.Printf("participantsInfo, %v", participantsInfo)
 	fmt.Printf("idListByChannel ", idListByChannel)
 	mu.Unlock()
 	startCollectId = false
 	isGetParticipant = true
-	pspMap = make(map[uint64]*pb.Supply)
+	participantPspMap = make(map[uint64]*pb.Supply)
 
 	// setParticipant
 	Order = "SetParticipant"
@@ -498,19 +465,18 @@ func collectParticipantId(clt *sxutil.SMServiceClient, d int) {
 // Finish Fix
 func callbackGetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	//	log.Println("Got for get_participant callback")
-
 	if idListByChannel != nil {
 		log.Println("already corrected IdList!")
 	} else {
 		mu.Lock()
 		if clt.IsSupplyTarget(sp, idlist) {
 			spMap[sp.SenderId] = sp
-			pspMap[sp.SenderId] = sp
+			participantPspMap[sp.SenderId] = sp
 
 			if !startCollectId {
 				log.Println("start selection")
 				startCollectId = true
-				go collectParticipantId(clt, 3)
+				go collectParticipantId(clt, 2)
 			}
 		}
 		mu.Unlock()
@@ -524,22 +490,12 @@ func proposeSupplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	if simutil.IsSupplyTarget(sp, idlist) {
 		switch Order {
 		case "GetParticipant":
-			fmt.Println("getParticipant")
 			callbackGetParticipant(clt, sp)
 		case "SetParticipant":
-			fmt.Println("setParticipant")
 			callbackSetParticipant(clt, sp)
-			/*		case "SetTime":
-						fmt.Println("setClock")
-						callbackSetClock(clt, sp)
-					case "SetArea":
-						fmt.Println("setArea")
-						callbackSetArea(clt, sp)*/
 		case "SetAgent":
-			fmt.Println("setAgent")
 			callbackSetAgent(clt, sp)
 		case "Start":
-			fmt.Println("startClock")
 			callbackStartClock(clt, sp)
 		default:
 			fmt.Println("order is invalid")
@@ -574,13 +530,14 @@ func runServer() *gosocketio.Server {
 }
 
 func runClient() *gosocketio.Client {
+	log.Println("RUN_CLIENT")
 	var sioErr error
 	sioClient, sioErr = gosocketio.Dial("ws://localhost:9995/socket.io/?EIO=3&transport=websocket", transport.DefaultWebsocketTransport())
 	if sioErr != nil {
-		fmt.Println("se: Error to connect with se-daemon. You have to start se-daemon first.") //,err)
+		log.Println("se: Error to connect with se-daemon. You have to start se-daemon first.") //,err)
 		os.Exit(1)
 	} else {
-		fmt.Println("se: connect OK")
+		log.Println("se: connect OK")
 	}
 	sioClient.On(gosocketio.OnConnection, func(c *gosocketio.Channel, param interface{}) {
 		fmt.Println("Go socket.io connected ")
@@ -588,7 +545,7 @@ func runClient() *gosocketio.Client {
 	})
 
 	sioClient.On("scenario", func(c *gosocketio.Channel, order *simutil.Order) {
-		fmt.Printf("get order is: %v\n", order)
+		log.Printf("get order is: %v\n", order)
 		Order = order.Type
 		switch Order {
 		case "GetParticipant":
@@ -625,6 +582,32 @@ func runClient() *gosocketio.Client {
 	return sioClient
 }
 
+// assetsFileHandler for static Data
+func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		return
+	}
+
+	file := r.URL.Path
+	//	log.Printf("Open File '%s'",file)
+	if file == "/" {
+		file = "/index.html"
+	}
+	f, err := assetsDir.Open(file)
+	if err != nil {
+		log.Printf("can't open file %s: %v\n", file, err)
+		return
+	}
+	defer f.Close()
+
+	fi, err := f.Stat()
+	if err != nil {
+		log.Printf("can't open file %s: %v\n", file, err)
+		return
+	}
+	http.ServeContent(w, r, file, fi.ModTime(), f)
+}
+
 func main() {
 
 	flag.Parse()
@@ -646,14 +629,14 @@ func main() {
 
 	// run socket.io server
 	ioserv = runServer()
-	fmt.Printf("Running Sio Server..\n")
+	log.Printf("Running Sio Server..\n")
 	if ioserv == nil {
 		os.Exit(1)
 	}
 
 	// run socket.io client
 	sioClient = runClient()
-	fmt.Printf("Running Sio Client..\n")
+	log.Printf("Running Sio Client..\n")
 	if sioClient == nil {
 		os.Exit(1)
 	}
@@ -690,13 +673,15 @@ func main() {
 
 	serveMux.Handle("/socket.io/", ioserv)
 	serveMux.HandleFunc("/", assetsFileHandler)
-
+	//Order = "GetParticipant"
+	//orderGetParticipant()
 	log.Printf("Starting Harmoware VIS  Provider %s  on port %d", version, *port)
 	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", *port), serveMux)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	//orderGetParticipant()
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
 

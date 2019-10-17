@@ -410,25 +410,17 @@ deactivate Car_AreaA
 AgentAPI -> Ped_AreaA: AgentsInfo(OK, Get, Car, AreaA, t)
 deactivate AgentAPI
 
-Ped_AreaA -> AgentAPI: RegisterDemand(AgentsDemand(GET, Ped, AreaB, t))
-activate AgentAPI
-AgentAPI -> Ped_AreaB: AgentsDemand(GET, Ped, AreaA, t)
-activate Ped_AreaB #c0c0c0
+note over Ped_AreaA: calculation
+Ped_AreaA -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(Forward, OK, t+1))
+
+
 Ped_AreaB -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Ped, AreaB, t))
-deactivate Ped_AreaB
+activate AgentAPI
 AgentAPI -> Ped_AreaA: AgentsInfo(OK, Get, Ped, AreaA, t)
 deactivate AgentAPI
 
-Ped_AreaA -> AgentAPI: RegisterDemand(AgentsDemand(GET, Car, AreaB, t))
-activate AgentAPI
-AgentAPI -> Car_AreaB: AgentsDemand(GET, Car, AreaB, t)
-activate Car_AreaB #c0c0c0
-Car_AreaB -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Car, AreaB, t))
-deactivate Car_AreaB
-AgentAPI -> Ped_AreaA: AgentsInfo(OK, Get, Car, AreaB, t)
-deactivate AgentAPI
+note over Ped_AreaA: update
 
-note over Ped_AreaA: calculation
 Ped_AreaA -> ClockAPI: ProposeSupply(Scenario, ClockInfo(Forward, OK, t+1))
 deactivate Ped_AreaA
 ClockAPI -> Scenario: ClockInfo(Forward, OK, t+1)
@@ -457,25 +449,16 @@ deactivate Ped_AreaA
 AgentAPI -> Car_AreaA: AgentsInfo(OK, Get, Ped, AreaA, t)
 deactivate AgentAPI
 
-Car_AreaA -> AgentAPI: RegisterDemand(AgentsDemand(GET, Ped, AreaA, t))
-activate AgentAPI
-AgentAPI -> Ped_AreaB: AgentsDemand(GET, Ped, AreaA, t)
-activate Ped_AreaB #c0c0c0
-Ped_AreaB -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Ped, AreaA, t))
-deactivate Ped_AreaB
-AgentAPI -> Car_AreaA: AgentsInfo(OK, Get, Ped, AreaA, t)
-deactivate AgentAPI
+note over Car_AreaA: calculation
+Car_AreaA -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(Forward, OK, t+1))
 
-Car_AreaA -> AgentAPI: RegisterDemand(AgentsDemand(GET, Car, AreaB, t))
-activate AgentAPI
-AgentAPI -> Car_AreaB: AgentsDemand(GET, Car, AreaB, t)
-activate Car_AreaB #c0c0c0
+
 Car_AreaB -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Car, AreaB, t))
-deactivate Car_AreaB
+activate AgentAPI
 AgentAPI -> Car_AreaA: AgentsInfo(OK, Get, Car, AreaB, t)
 deactivate AgentAPI
 
-note over Car_AreaA: calculation
+note over Car_AreaA: update
 Car_AreaA -> ClockAPI: ProposeSupply(Scenario, ClockInfo(Forward, OK, t+1))
 deactivate Car_AreaA
 ClockAPI -> Scenario: ClockInfo(Forward, OK, t+1)
@@ -504,25 +487,16 @@ deactivate Car_AreaB
 AgentAPI -> Ped_AreaB: AgentsInfo(OK, Get, Car, AreaB, t)
 deactivate AgentAPI
 
-Ped_AreaB -> AgentAPI: RegisterDemand(AgentsDemand(GET, Ped, AreaA, t))
-activate AgentAPI
-AgentAPI -> Ped_AreaA: AgentsDemand(GET, Ped, AreaA, t)
-activate Ped_AreaA #c0c0c0
+note over Ped_AreaB: calculation
+Ped_AreaB -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(Forward, OK, t+1))
+
+
 Ped_AreaA -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Ped, AreaA, t))
-deactivate Ped_AreaA
+activate AgentAPI
 AgentAPI -> Ped_AreaB: AgentsInfo(OK, Get, Ped, AreaA, t)
 deactivate AgentAPI
 
-Ped_AreaB -> AgentAPI: RegisterDemand(AgentsDemand(GET, Car, AreaA, t))
-activate AgentAPI
-AgentAPI -> Car_AreaA: AgentsDemand(GET, Car, AreaA, t)
-activate Car_AreaA #c0c0c0
-Car_AreaA -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Car, AreaA, t))
-deactivate Car_AreaA
-AgentAPI -> Ped_AreaB: AgentsInfo(OK, Get, Car, AreaA, t)
-deactivate AgentAPI
-
-note over Ped_AreaB: calculation
+note over Ped_AreaB: update
 Ped_AreaB -> ClockAPI: ProposeSupply(Scenario, ClockInfo(Forward, OK, t+1))
 deactivate Ped_AreaB
 ClockAPI -> Scenario: ClockInfo(Forward, OK, t+1)
@@ -551,25 +525,16 @@ deactivate Ped_AreaB
 AgentAPI -> Car_AreaB: AgentsInfo(OK, Get, Ped, AreaB, t)
 deactivate AgentAPI
 
-Car_AreaB -> AgentAPI: RegisterDemand(AgentsDemand(GET, Ped, AreaA, t))
-activate AgentAPI
-AgentAPI -> Ped_AreaA: AgentsDemand(GET, Ped, AreaA, t)
-activate Ped_AreaA #c0c0c0
-Ped_AreaA -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Ped, AreaA, t))
-deactivate Ped_AreaA
-AgentAPI -> Car_AreaB: AgentsInfo(OK, Get, Ped, AreaA, t)
-deactivate AgentAPI
+note over Car_AreaB: calculation
+Car_AreaB -> AgentAPI: ProposeSupply(Scenario, AgentsInfo(Forward, OK, t+1))
 
-Car_AreaB -> AgentAPI: RegisterDemand(AgentsDemand(GET, Car, AreaA, t))
-activate AgentAPI
-AgentAPI -> Car_AreaA: AgentsDemand(GET, Car, AreaA, t)
-activate Car_AreaA #c0c0c0
+
 Car_AreaA -> AgentAPI: RegisterSupply(AgentsInfo(OK, Get, Car, AreaA, t))
-deactivate Car_AreaA
+activate AgentAPI
 AgentAPI -> Car_AreaB: AgentsInfo(OK, Get, Car, AreaA, t)
 deactivate AgentAPI
 
-note over Car_AreaB: calculation
+note over Car_AreaB: update
 Car_AreaB -> ClockAPI: ProposeSupply(Scenario, ClockInfo(Forward, OK, t+1))
 deactivate Car_AreaB
 ClockAPI -> Scenario: ClockInfo(Forward, OK, t+1)

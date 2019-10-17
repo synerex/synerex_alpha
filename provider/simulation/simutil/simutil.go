@@ -9,7 +9,7 @@ import (
 	"github.com/synerex/synerex_alpha/sxutil"
 
 	//	"github.com/synerex/synerex_alpha/api/simulation/route"
-	"fmt"
+
 	//"time"
 	"context"
 	"log"
@@ -133,42 +133,55 @@ func ConvertAgentsInfo(agentsInfo2 []AgentInfo) []*agent.AgentInfo {
 	return agentsInfo
 }
 
-func SyncProposeSupply(sp *pb.Supply, syncIdList []uint32, pspMap map[uint64]*pb.Supply, callback func(pspMap map[uint64]*pb.Supply)) {
-	go func() {
-		log.Println("Send Supply")
-		ch <- sp
-		return
-	}()
-	log.Printf("StartSync : %v", startSync)
-	if !startSync {
-		log.Println("Start Sync")
-		startSync = true
+func CheckFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint32) bool {
 
-		go func() {
-			for {
-				select {
-				case psp := <-ch:
-					log.Println("recieve ProposeSupply")
-					pspMap[psp.SenderId] = psp
-					//					log.Printf("waitidList %v %v", pspMap, idList)
-
-					if IsFinishSync(pspMap, syncIdList) {
-						fmt.Printf("Finish Sync\n")
-						// init pspMap
-						pspMap = make(map[uint64]*pb.Supply)
-						startSync = false
-						fmt.Printf("startSync to false: %v\n", startSync)
-
-						// if you need, return response
-						callback(pspMap)
-
-						return
-					}
-				}
+	for _, id := range idlist {
+		isMatch := false
+		for _, sp := range pspMap {
+			senderId := uint32(sp.SenderId)
+			if id == senderId {
+				log.Printf("match! %v %v", id, senderId)
+				isMatch = true
 			}
-
-		}()
+		}
+		if isMatch == false {
+			return false
+		}
 	}
+	return true
+}
+
+// Finish Fix
+// if agent type and coord satisfy, return true
+func IsAgentInArea(agentInfo *agent.AgentInfo, areaInfo *area.AreaInfo, agentType int32) bool {
+	lat := agentInfo.Route.Coord.Lat
+	lon := agentInfo.Route.Coord.Lon
+	slat := areaInfo.AreaCoord.StartLat
+	elat := areaInfo.AreaCoord.EndLat
+	slon := areaInfo.AreaCoord.StartLon
+	elon := areaInfo.AreaCoord.EndLon
+	if agentInfo.AgentType.String() == agent.AgentType_name[agentType] && slat <= lat && lat <= elat && slon <= lon && lon <= elon {
+		return true
+	} else {
+		log.Printf("agent type and coord is not match...\n\n")
+		return false
+	}
+}
+
+// Fix now
+// if agent type and coord satisfy, return true
+func IsAgentInControlledArea(agentInfo *agent.AgentInfo, areaInfo *area.AreaInfo, agentType int32) bool {
+	lat := agentInfo.Route.Coord.Lat
+	lon := agentInfo.Route.Coord.Lon
+	slat := areaInfo.ControlAreaCoord.StartLat
+	elat := areaInfo.ControlAreaCoord.EndLat
+	slon := areaInfo.ControlAreaCoord.StartLon
+	elon := areaInfo.ControlAreaCoord.EndLon
+	if agentInfo.AgentType.String() == agent.AgentType_name[agentType] && slat <= lat && lat <= elat && slon <= lon && lon <= elon {
+		return true
+	}
+	log.Printf("agent type and coord is not match...\n\n")
+	return false
 }
 
 func CreateIdListByChannel(participantsInfo []*participant.ParticipantInfo) *IdListByChannel {

@@ -27,7 +27,6 @@ var (
 	serverAddr         = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv            = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	idlist             []uint64
-	myChannelIdList    []uint64
 	dmMap              map[uint64]*sxutil.DemandOpts
 	spMap              map[uint64]*sxutil.SupplyOpts
 	selection          bool
@@ -37,17 +36,14 @@ var (
 	sclientClock       *sxutil.SMServiceClient
 	sclientRoute       *sxutil.SMServiceClient
 	sclientParticipant *sxutil.SMServiceClient
-	MapData            []Map
 	data               *Data
 )
 
 func init() {
 	idlist = make([]uint64, 0)
-	myChannelIdList = make([]uint64, 0)
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
 	spMap = make(map[uint64]*sxutil.SupplyOpts)
 	selection = false
-	MapData = make([]Map, 0)
 	data = new(Data)
 }
 
@@ -282,37 +278,6 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	time := forwardClockDemand.Time
 	nextTime := time + 1
 	// calculation  area here
-
-	// propose next area
-	/*areaInfo := data.AreaInfo
-	mapInfo := area.Map{
-		Coord: &area.Map_Coord{
-			StartLat: areaInfo.Map.Coord.StartLat,
-			StartLon: areaInfo.Map.Coord.StartLon,
-			EndLat:   areaInfo.Map.Coord.EndLat,
-			EndLon:   areaInfo.Map.Coord.EndLon,
-		},
-		MapInfo: uint32(0),
-	}
-
-	nextAreaInfo := &area.AreaInfo{
-		Time:       nextTime,
-		AreaId:     areaInfo.AreaId, // A
-		AreaName:   areaInfo.AreaName,
-		NeighborArea: areaInfo.NeighborArea,
-		AreaCoord: &area.AreaCoord{
-			StartLat: mapData.Coord.StartLat,
-			StartLon: mapData.Coord.StartLon,
-			EndLat:   mapData.Coord.EndLat,
-			EndLon:   mapData.Coord.EndLon,
-		},
-		ControlAreaCoord: &area.AreaCoord{
-			StartLat: mapData.Controlled.StartLat,
-			StartLon: mapData.Controlled.StartLon,
-			EndLat:   mapData.Controlled.EndLat,
-			EndLon:   mapData.Controlled.EndLon,
-		},
-	}*/
 
 	// propose next clock
 	nextClockInfo := &clock.ClockInfo{

@@ -649,6 +649,33 @@ func cleanSubCmd(cmd string) string {
 	return str
 }
 
+func runSimulator() string {
+	log.Printf("Running Simulator..\n")
+
+	currentRoot, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
+	d := filepath.Join(currentRoot, "mclient", "build")
+
+	assetsDir = http.Dir(d)
+	log.Println("AssetDir:", assetsDir)
+
+	assetsDir = http.Dir(d)
+	server := gosocketio.NewServer()
+
+	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
+		log.Printf("Connected from %s as %s", c.IP(), c.Id())
+		// do something.
+	})
+
+	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
+		log.Printf("Disconnected from %s as %s", c.IP(), c.Id())
+	})
+
+	return "ok"
+}
+
 func handleBuild(target []string) []string {
 	resp := make([]string, len(target))
 	for i, proc := range target {
@@ -689,17 +716,22 @@ func handleRuns(target []string) []string { // we need to think order of servers
 }
 
 func handleRun(target string) string {
-	for _, sc := range cmdArray {
-		if sc.CmdName == target {
-			var res string
-			if sc.RunFunc == nil {
-				res = runProp(sc)
-			} else {
-				//			res = sc.RunFunc()
-				res = "ok"
-				sc.RunFunc()
+	var res string
+	if target == "Simulator" {
+		res = runSimulator()
+		return res
+	} else {
+		for _, sc := range cmdArray {
+			if sc.CmdName == target {
+				if sc.RunFunc == nil {
+					res = runProp(sc)
+				} else {
+					//			res = sc.RunFunc()
+					res = "ok"
+					sc.RunFunc()
+				}
+				return res
 			}
-			return res
 		}
 	}
 	logger.Infof("Can't find command %s", target)
