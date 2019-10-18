@@ -218,8 +218,8 @@ func calcNextRoute(areaInfo *area.AreaInfo, agentInfo *agent.AgentInfo, otherAge
 		Coord:       nextCoord,
 		Direction:   float32(direction),
 		Speed:       float32(speed),
-		Destination: float32(10),
-		Departure:   float32(100),
+		Destination: route.Destination,
+		Departure:   route.Departure,
 	}
 	return nextRoute
 }

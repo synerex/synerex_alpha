@@ -62,8 +62,8 @@ message Route {
     Coord coord = 1;
     float direction = 2;
     float speed = 3;
-    float destination = 4;
-    float departure = 5;
+    Coord destination = 4;
+    Coord departure = 5;
 }
 
 

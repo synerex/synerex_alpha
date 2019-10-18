@@ -62,8 +62,8 @@ type Route struct {
 	Coord       Coord   `json:"coord"`
 	Direction   float32 `json:"direction"`
 	Speed       float32 `json:"speed"`
-	Departure   string  `json:"departure"`
-	Destination string  `json:"destination"`
+	Departure   Coord   `json:"departure"`
+	Destination Coord   `json:"destination"`
 }
 
 type Status struct {
@@ -106,10 +106,16 @@ func ConvertAgentsInfo(agentsInfo2 []AgentInfo) []*agent.AgentInfo {
 				Lat: float32(agentInfo.Route.Coord.Lat),
 				Lon: float32(agentInfo.Route.Coord.Lon),
 			},
-			Direction:   float32(agentInfo.Route.Direction),
-			Speed:       float32(agentInfo.Route.Speed),
-			Destination: float32(10),
-			Departure:   float32(100),
+			Direction: float32(agentInfo.Route.Direction),
+			Speed:     float32(agentInfo.Route.Speed),
+			Destination: &agent.Route_Coord{
+				Lat: float32(agentInfo.Route.Destination.Lat),
+				Lon: float32(agentInfo.Route.Destination.Lon),
+			},
+			Departure: &agent.Route_Coord{
+				Lat: float32(agentInfo.Route.Departure.Lat),
+				Lon: float32(agentInfo.Route.Departure.Lon),
+			},
 		}
 		agentStatus := &agent.AgentStatus{
 			Name: "Rui",

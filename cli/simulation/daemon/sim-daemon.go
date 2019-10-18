@@ -73,8 +73,8 @@ type Route struct {
 	Coord       Coord   `json:"coord"`
 	Direction   float32 `json:"direction"`
 	Speed       float32 `json:"speed"`
-	Departure   string  `json:"departure"`
-	Destination string  `json:"destination"`
+	Departure   Coord   `json:"departure"`
+	Destination Coord   `json:"destination"`
 }
 
 type Status struct {

@@ -28,8 +28,14 @@
 				},
 				"direction": 30,
 				"speed": 10,
-				"departure": "",
-				"destination": ""
+				"departure": {
+					"lat": 35.153000,
+					"lon": 136.976000
+				},
+				"destination": {
+					"lat": 35.153000,
+					"lon": 136.976000
+				}
 			},
 			"rule": {
 
@@ -50,8 +56,14 @@
 				},
 				"direction": 250,
 				"speed": 20,
-				"departure": "",
-				"destination": ""
+				"departure": {
+					"lat": 35.153000,
+					"lon": 136.976000
+				},
+				"destination": {
+					"lat": 35.153000,
+					"lon": 136.976000
+				}
 			},
 			"rule": {
 
