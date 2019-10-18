@@ -26,7 +26,7 @@
 					"lat": 35.153000,
 					"lon": 136.976000
 				},
-				"direction": 180,
+				"direction": 30,
 				"speed": 10,
 				"departure": "",
 				"destination": ""
@@ -48,29 +48,7 @@
 					"lat": 35.156000,
 					"lon": 136.983000
 				},
-				"direction": 10,
-				"speed": 20,
-				"departure": "",
-				"destination": ""
-			},
-			"rule": {
-
-			}
-		},
-		{
-			"id": 3,
-			"type": "car",
-			"status": {
-				"name": "rui",
-				"age": "20",
-				"sex": "female"
-			},
-			"route": {
-				"coord": {
-					"lat": 35.154000,
-					"lon": 136.983000
-				},
-				"direction": 20,
+				"direction": 250,
 				"speed": 20,
 				"departure": "",
 				"destination": ""
@@ -79,5 +57,6 @@
 
 			}
 		}
+		
 	]
 }

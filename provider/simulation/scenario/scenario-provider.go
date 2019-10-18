@@ -34,7 +34,6 @@ var (
 	idlist            []uint64
 	dmMap             map[uint64]*sxutil.DemandOpts
 	spMap             map[uint64]*pb.Supply
-	pspMap            map[uint64]*pb.Supply
 	agentPspMap       map[uint64]*pb.Supply
 	participantPspMap map[uint64]*pb.Supply
 	forwardPspMap     map[uint64]*pb.Supply
@@ -69,7 +68,6 @@ func init() {
 	idlist = make([]uint64, 0)
 	dmMap = make(map[uint64]*sxutil.DemandOpts)
 	spMap = make(map[uint64]*pb.Supply)
-	pspMap = make(map[uint64]*pb.Supply)
 	agentPspMap = make(map[uint64]*pb.Supply)
 	participantPspMap = make(map[uint64]*pb.Supply)
 	forwardPspMap = make(map[uint64]*pb.Supply)
@@ -190,8 +188,8 @@ func orderStartClock() {
 		fmt.Printf("wait now...")
 		wait()
 
-		fmt.Printf("Callback StartClock! Regist and Send Data to Simulator %v", pspMap)
-		for _, psp := range pspMap {
+		fmt.Printf("Callback StartClock! Regist and Send Data to Simulator %v", forwardPspMap)
+		for _, psp := range forwardPspMap {
 			supplyType := simutil.CheckSupplyType(psp)
 			switch supplyType {
 			case "FORWARD_AGENTS_SUPPLY":
@@ -204,6 +202,9 @@ func orderStartClock() {
 
 		fmt.Printf("Callback StartClock! move next clock")
 		time.Sleep(1 * time.Second)
+		//var i int
+		//fmt.Print("forward again? \n")
+		//fmt.Scan(&i)
 		if isStop == false {
 			log.Printf("FORWARD_CLOCK")
 			orderStartClock()
@@ -358,7 +359,6 @@ func callbackStartClock(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	mu.Lock()
 	spMap[sp.SenderId] = sp
 	forwardPspMap[sp.SenderId] = sp
-	mu.Unlock()
 
 	clockIdList := idListByChannel.ClockIdList
 	agentIdList := idListByChannel.AgentIdList
@@ -366,6 +366,7 @@ func callbackStartClock(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	if simutil.CheckFinishSync(forwardPspMap, syncIdList) {
 		isFinishSync = true
 	}
+	mu.Unlock()
 
 }
 
@@ -376,27 +377,26 @@ func callbackSetAgent(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	spMap[sp.SenderId] = sp
 	agentPspMap[sp.SenderId] = sp
 	fmt.Printf("sp is: %v", sp)
-	mu.Unlock()
 
 	syncAgentIdList := idListByChannel.AgentIdList
 	if simutil.CheckFinishSync(agentPspMap, syncAgentIdList) {
 		isFinishSync = true
 	}
+	mu.Unlock()
 }
 
 // Finish Fix
 func callbackSetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	log.Println("Got for set_participant callback")
 	mu.Lock()
-	log.Println("setParticipant2")
 	spMap[sp.SenderId] = sp
 	participantPspMap[sp.SenderId] = sp
-	mu.Unlock()
-	log.Println("setParticipant3")
+
 	syncParticipantIdList := idListByChannel.ParticipantIdList
 	if simutil.CheckFinishSync(participantPspMap, syncParticipantIdList) {
 		isFinishSync = true
 	}
+	mu.Unlock()
 }
 
 // Finish Fix
@@ -452,11 +452,12 @@ func collectParticipantId(clt *sxutil.SMServiceClient, d int) {
 	idListByChannel = simutil.CreateIdListByChannel(participantsInfo)
 	fmt.Printf("participantsInfo, %v", participantsInfo)
 	fmt.Printf("idListByChannel ", idListByChannel)
-	mu.Unlock()
+
 	startCollectId = false
 	isGetParticipant = true
 	participantPspMap = make(map[uint64]*pb.Supply)
 
+	mu.Unlock()
 	// setParticipant
 	Order = "SetParticipant"
 	orderSetParticipant()

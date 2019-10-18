@@ -140,7 +140,6 @@ func CheckFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint32) bool {
 		for _, sp := range pspMap {
 			senderId := uint32(sp.SenderId)
 			if id == senderId {
-				log.Printf("match! %v %v", id, senderId)
 				isMatch = true
 			}
 		}
