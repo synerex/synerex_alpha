@@ -8,7 +8,7 @@ option go_package="github.com/synerex/synerex_alpha/api/simulation/route";
 message GetRouteDemand {
     Coord departure = 1;
     Coord destination = 2;
-    Coord location = 3;
+    AgentType agent_type  = 3;
     StatusType status_type = 4;
     string meta = 5;
 }
@@ -25,14 +25,11 @@ message Coord {
 }
 
 message RouteInfo {
-    repeated AreaRouteInfo area_routes = 1;
+    repeated Coord transit_point = 1;
+    float total_distance = 2;
+    float required_time = 3;
 }
 
-message AreaRouteInfo {
-    uint32 area_id = 1;
-    Coord departure = 2;
-    Coord destination = 3;
-}
 
 enum StatusType {
     OK = 0;
@@ -40,6 +37,9 @@ enum StatusType {
     NONE = 2;
 }
 
-
+enum AgentType {
+    PEDESTRIAN = 0;
+    CAR = 1;
+}
 
 
