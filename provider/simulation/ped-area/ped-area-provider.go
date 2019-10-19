@@ -5,10 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math"
-	"math/rand"
 	"sync"
-	"time"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
@@ -198,17 +195,18 @@ func setClock() {
 func calcNextRoute(areaInfo *area.AreaInfo, agentInfo *agent.AgentInfo, otherAgentsInfo []*agent.AgentInfo) *agent.Route {
 
 	route := agentInfo.Route
-	nextCoord := &agent.Route_Coord{
-		Lat: float32(float64(route.Coord.Lat) + float64(0.0001)*1*math.Cos(float64(route.Direction*math.Pi/180))),
-		Lon: float32(float64(route.Coord.Lon) + float64(0.0001)*1*math.Sin(float64(route.Direction*math.Pi/180))),
-	}
+	speed := route.Speed
+	currentLocation := route.Coord
+	destination := route.Destination
+	direction, distance := simutil.CalcDirectionAndDistance(currentLocation.Lat, currentLocation.Lon, destination.Lat, destination.Lon)
+	//newLat, newLon := simutil.CalcMovedLatLon(currentLocation.Lat, currentLocation.Lon, speed*1000/3600, direction)
+	newLat, newLon := simutil.CalcMovedLatLon(currentLocation.Lat, currentLocation.Lon, destination.Lat, destination.Lon, distance, speed)
 
-	// change speed and direction
-	speedFluct := 2
-	directionFluct := 5
-	rand.Seed(time.Now().UnixNano())
-	speed := route.Speed + float32(rand.Intn(speedFluct)) - float32(rand.Intn(speedFluct)/2)
-	direction := route.Direction + float32(rand.Intn(directionFluct)) - float32(rand.Intn(directionFluct)/2)
+	nextCoord := &agent.Route_Coord{
+		Lat: newLat,
+		Lon: newLon,
+	}
+	log.Printf("\x1b[30m\x1b[47m direction is : %v, distance: %v\x1b[0m\n", direction, distance)
 
 	nextRoute := &agent.Route{
 		Coord:       nextCoord,

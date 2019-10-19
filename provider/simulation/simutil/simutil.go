@@ -13,6 +13,7 @@ import (
 	//"time"
 	"context"
 	"log"
+	"math"
 	"sync"
 )
 
@@ -137,6 +138,68 @@ func ConvertAgentsInfo(agentsInfo2 []AgentInfo) []*agent.AgentInfo {
 		agentsInfo = append(agentsInfo, agentInfo)
 	}
 	return agentsInfo
+}
+
+func CalcDirectionAndDistance(sLat float32, sLon float32, gLat float32, gLon float32) (float32, float32) {
+
+	r := 6378137 // equatorial radius
+	sLat = sLat * math.Pi / 180
+	sLon = sLon * math.Pi / 180
+	gLat = gLat * math.Pi / 180
+	gLon = gLon * math.Pi / 180
+	dLon := gLon - sLon
+	dLat := gLat - sLat
+	cLat := (sLat + gLat) / 2
+	dx := float64(r) * float64(dLon) * math.Cos(float64(cLat))
+	dy := float64(r) * float64(dLat)
+
+	distance := float32(math.Sqrt(math.Pow(dx, 2) + math.Pow(dy, 2)))
+	direction := float32(0)
+	if dx != 0 && dy != 0 {
+		direction = float32(math.Atan2(dy, dx)) * 180 / math.Pi
+	}
+
+	return direction, distance
+}
+
+/*func CalcMovedLatLon(sLat float32, sLon float32, distance float32, direction float32) (float32, float32) {
+
+	r := float64(6378137) // equatorial radius
+	// 緯線、経線上の移動距離
+	latDistance := float64(distance) * math.Cos(float64(direction)*math.Pi/180)
+	lonDistance := float64(distance) * math.Sin(float64(direction)*math.Pi/180)
+
+	// 1mあたりの緯度
+	latEarthCircle := 2 * math.Pi * r
+	latParMeter := 360 / latEarthCircle
+
+	// 緯度の変化量
+	dLat := latDistance * latParMeter
+	newLat := sLat + float32(dLat)
+
+	// 1mあたりの経度
+	lonEarthRadius := r * math.Cos(float64(newLat)*math.Pi/100)
+	lonEarthCircle := 2 * math.Pi * lonEarthRadius
+	lonPerMeter := 360 / lonEarthCircle
+
+	// 経度の変化量
+	dLon := lonDistance * lonPerMeter
+	newLon := sLon + float32(dLon)
+
+	return newLat, newLon
+}*/
+
+func CalcMovedLatLon(sLat float32, sLon float32, gLat float32, gLon float32, distance float32, speed float32) (float32, float32) {
+
+	//r := float64(6378137) // equatorial radius
+
+	// 割合
+	x := speed * 1000 / 3600 / distance
+
+	newLat := sLat + (gLat-sLat)*x
+	newLon := sLon + (gLon-sLon)*x
+
+	return newLat, newLon
 }
 
 func CheckFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint32) bool {
