@@ -3,6 +3,7 @@ syntax = "proto3";
 package api.agent;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/agent";
+//import "simulation/route/route.proto";
 
 message GetAgentsDemand {
     uint32 time = 1;
@@ -44,6 +45,30 @@ message ForwardAgentsSupply {
 	string meta = 6;
 }
 
+message GetAgentRouteDemand {
+    AgentInfo agents_info = 1;
+    StatusType status_type = 2;
+    string meta = 3;
+}
+
+message GetAgentRouteSupply {
+    AgentInfo agents_info = 1;
+    StatusType status_type = 2;
+    string meta = 3;
+}
+
+message GetAgentsRouteDemand {
+    repeated AgentInfo agents_info = 1;
+    StatusType status_type = 2;
+	string meta = 3;
+}
+
+message GetAgentsRouteSupply {
+    repeated AgentInfo agents_info = 1;
+    StatusType status_type = 2;
+	string meta = 3;
+}
+
 message AgentInfo {
     uint32 time = 1;
     uint32 agent_id = 2;
@@ -53,17 +78,26 @@ message AgentInfo {
     Route route = 7;
 }
 
+    
+message Coord {
+    float lat = 1;
+    float lon = 2;
+}
+
+message RouteInfo {
+    repeated Coord transit_point = 1;
+    Coord next_transit = 2;
+    float total_distance = 3;
+    float required_time = 4;
+}
 
 message Route {
-    message Coord {
-        float lat = 1;
-        float lon = 2;
-        }
     Coord coord = 1;
     float direction = 2;
     float speed = 3;
     Coord destination = 4;
     Coord departure = 5;
+    RouteInfo route_info = 6;
 }
 
 

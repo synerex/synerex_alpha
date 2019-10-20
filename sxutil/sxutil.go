@@ -19,7 +19,6 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
-	"github.com/synerex/synerex_alpha/api/simulation/route"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/golang/protobuf/ptypes"
@@ -62,7 +61,8 @@ type DemandOpts struct {
 	SetAgentsDemand      *agent.SetAgentsDemand
 	GetParticipantDemand *participant.GetParticipantDemand
 	SetParticipantDemand *participant.SetParticipantDemand
-	GetRouteDemand       *route.GetRouteDemand
+	GetAgentRouteDemand  *agent.GetAgentRouteDemand
+	GetAgentsRouteDemand *agent.GetAgentsRouteDemand
 }
 
 // SupplyOpts is sender options for Supply
@@ -85,7 +85,8 @@ type SupplyOpts struct {
 	ForwardAgentsSupply  *agent.ForwardAgentsSupply
 	GetParticipantSupply *participant.GetParticipantSupply
 	SetParticipantSupply *participant.SetParticipantSupply
-	GetRouteSupply       *route.GetRouteSupply
+	GetAgentRouteSupply  *agent.GetAgentRouteSupply
+	GetAgentsRouteSupply *agent.GetAgentsRouteSupply
 }
 
 func init() {
@@ -281,8 +282,11 @@ func (clt *SMServiceClient) ProposeSupply(spo *SupplyOpts) uint64 {
 		}
 
 	case api.ChannelType_ROUTE_SERVICE:
-		if spo.GetRouteSupply != nil {
-			sp.WithGetRouteSupply(spo.GetRouteSupply)
+		if spo.GetAgentRouteSupply != nil {
+			sp.WithGetAgentRouteSupply(spo.GetAgentRouteSupply)
+		}
+		if spo.GetAgentsRouteSupply != nil {
+			sp.WithGetAgentsRouteSupply(spo.GetAgentsRouteSupply)
 		}
 
 	case api.ChannelType_AGENT_SERVICE:
@@ -505,8 +509,11 @@ func (clt *SMServiceClient) RegisterDemand(dmo *DemandOpts) uint64 {
 		}
 
 	case api.ChannelType_ROUTE_SERVICE:
-		if dmo.GetRouteDemand != nil {
-			dm.WithGetRouteDemand(dmo.GetRouteDemand)
+		if dmo.GetAgentRouteDemand != nil {
+			dm.WithGetAgentRouteDemand(dmo.GetAgentRouteDemand)
+		}
+		if dmo.GetAgentsRouteDemand != nil {
+			dm.WithGetAgentsRouteDemand(dmo.GetAgentsRouteDemand)
 		}
 
 	case api.ChannelType_AGENT_SERVICE:
@@ -576,8 +583,11 @@ func (clt *SMServiceClient) RegisterSupply(spo *SupplyOpts) uint64 {
 		}
 
 	case api.ChannelType_ROUTE_SERVICE:
-		if spo.GetRouteSupply != nil {
-			sp.WithGetRouteSupply(spo.GetRouteSupply)
+		if spo.GetAgentRouteSupply != nil {
+			sp.WithGetAgentRouteSupply(spo.GetAgentRouteSupply)
+		}
+		if spo.GetAgentsRouteSupply != nil {
+			sp.WithGetAgentsRouteSupply(spo.GetAgentsRouteSupply)
 		}
 
 	case api.ChannelType_AGENT_SERVICE:

@@ -55,8 +55,6 @@ enum StatusType {
 enum AgentType {
     PEDESTRIAN = 0;
     CAR = 1;
-    TRAIN = 2;
-    BICYCLE = 3;
 }
 
 enum ProviderType {

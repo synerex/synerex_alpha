@@ -27,10 +27,10 @@
 					"lon": 136.973200
 				},
 				"direction": 30,
-				"speed": 30,
+				"speed": 50,
 				"departure": {
-					"lat": 35.160500,
-					"lon": 136.984000
+					"lat": 35.152500,
+					"lon": 136.973200
 				},
 				"destination": {
 					"lat": 35.160500,
@@ -55,10 +55,10 @@
 					"lon": 136.983000
 				},
 				"direction": 250,
-				"speed": 20,
+				"speed": 50,
 				"departure": {
-					"lat": 35.153000,
-					"lon": 136.976000
+					"lat": 35.156000,
+					"lon": 136.983000
 				},
 				"destination": {
 					"lat": 35.153000,

@@ -3,11 +3,6 @@ syntax = "proto3";
 package api.participant;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/participant";
-//import "common/common.proto";
-import "simulation/agent/agent.proto"
-import "simulation/area/area.proto"
-import "simulation/clock/clock.proto"
-import "simulation/participant/participant.proto"
 
 message Demand {
         // participant info
@@ -33,28 +28,81 @@ message Demand {
         string meta = 4;
     }
 
+message ParticipantInfo {
+    ChannelId channel_id = 1;
+    ProviderType provider_type = 2;
+    uint32 area_id = 3;
+    AgentType agent_type = 4;
+}
+
+message ChannelId {
+    uint32 participant_channel_id = 1;
+    uint32 area_channel_id = 2;
+    uint32 agent_channel_id = 3;
+    uint32 clock_channel_id = 4;
+    uint32 route_channel_id = 5;
+}
+
+message ClockInfo {
+        uint32 time = 1;
+        uint32 cycle_num = 2;
+        uint32 cycle_duration = 3;
+        uint32 cycle_interval = 4;
+}
+
+message AreaInfo {
+    uint32 time = 1;
+    uint32 area_id = 2;
+    string area_name = 3;
+    repeated uint32 neighbor_area = 4;
+    AreaCoord area_coord = 5;
+    AreaCoord control_area_coord = 6;
+}
+
+message AreaCoord {
+    float start_lat = 1;
+    float start_lon = 2;
+    float end_lat = 3;
+    float end_lon = 4;
+}
+
+message RouteInfo {
+    repeated Coord transit_point = 1;
+    float total_distance = 2;
+    float required_time = 3;
+}
+
+message AgentInfo {
+    uint32 time = 1;
+    uint32 agent_id = 2;
+    uint32 control_area = 3;
+    AgentStatus agent_status = 4;
+    AgentType agent_type = 6;
+    Route route = 7;
+}
+
+enum AgentType {
+    PEDESTRIAN = 0;
+    CAR = 1;
+}
+
+message Coord {
+    float lat = 1;
+    float lon = 2;
+}
+
 enum StatusType {
     OK = 0;
     NG = 1;
     NONE = 2;
 }
 
-
-enum OrderType {
-    SET_CLOCK = 0;
-    FORWARD_CLOCK = 1;
-    BACK_CLOCK = 2;
-    START_CLOCK = 3;
-    STOP_CLOCK = 4;
-
-    SET_AREA = 5;
-    GET_AREA = 6;
-
-    SET_AGENT = 7;
-    GET_AGENTS = 8;
-
-    GET_PARTICIPANT = 9;
-    GET_AREA_PARTICIPANT = 10;
+enum ProviderType {
+    SCENARIO = 0;
+    AREA = 1;
+    CAR_AREA = 2;
+    PED_AREA = 3;
+    ROUTE = 4;
 }
 
 

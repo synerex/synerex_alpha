@@ -103,17 +103,17 @@ func ConvertAgentsInfo(agentsInfo2 []AgentInfo) []*agent.AgentInfo {
 	agentsInfo := make([]*agent.AgentInfo, 0)
 	for _, agentInfo := range agentsInfo2 {
 		route := &agent.Route{
-			Coord: &agent.Route_Coord{
+			Coord: &agent.Coord{
 				Lat: float32(agentInfo.Route.Coord.Lat),
 				Lon: float32(agentInfo.Route.Coord.Lon),
 			},
 			Direction: float32(agentInfo.Route.Direction),
 			Speed:     float32(agentInfo.Route.Speed),
-			Destination: &agent.Route_Coord{
+			Destination: &agent.Coord{
 				Lat: float32(agentInfo.Route.Destination.Lat),
 				Lon: float32(agentInfo.Route.Destination.Lon),
 			},
-			Departure: &agent.Route_Coord{
+			Departure: &agent.Coord{
 				Lat: float32(agentInfo.Route.Departure.Lat),
 				Lon: float32(agentInfo.Route.Departure.Lon),
 			},
@@ -350,8 +350,11 @@ func CheckDemandType(dm *pb.Demand) string {
 		return "SET_PARTICIPANT_DEMAND"
 	}
 	// route
-	if dm.GetArg_GetRouteDemand() != nil {
-		return "GET_ROUTE_DEMAND"
+	if dm.GetArg_GetAgentRouteDemand() != nil {
+		return "GET_AGENT_ROUTE_DEMAND"
+	}
+	if dm.GetArg_GetAgentsRouteDemand() != nil {
+		return "GET_AGENTS_ROUTE_DEMAND"
 	}
 
 	return "INVALID_TYPE"
@@ -390,8 +393,11 @@ func CheckSupplyType(sp *pb.Supply) string {
 		return "SET_PARTICIPANT_SUPPLY"
 	}
 	// route
-	if sp.GetArg_GetRouteSupply() != nil {
-		return "GET_ROUTE_SUPPLY"
+	if sp.GetArg_GetAgentRouteSupply() != nil {
+		return "GET_AGENT_ROUTE_SUPPLY"
+	}
+	if sp.GetArg_GetAgentsRouteSupply() != nil {
+		return "GET_AGENTS_ROUTE_SUPPLY"
 	}
 
 	return "INVALID_TYPE"

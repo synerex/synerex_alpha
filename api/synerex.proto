@@ -105,7 +105,8 @@ message Supply{
         agent.ForwardAgentsSupply arg_ForwardAgentsSupply = 24;
         participant.GetParticipantSupply arg_GetParticipantSupply = 25;
         participant.SetParticipantSupply arg_SetParticipantSupply = 26;
-        route.GetRouteSupply arg_GetRouteSupply = 27;
+        agent.GetAgentRouteSupply arg_GetAgentRouteSupply = 27;
+        agent.GetAgentsRouteSupply arg_GetAgentsRouteSupply = 28;
     }
 }
 
@@ -136,7 +137,8 @@ message Demand {
         agent.SetAgentsDemand arg_SetAgentsDemand = 23;
         participant.GetParticipantDemand arg_GetParticipantDemand = 25;
         participant.SetParticipantDemand arg_SetParticipantDemand = 26;
-        route.GetRouteDemand arg_GetRouteDemand = 27;
+        agent.GetAgentRouteDemand arg_GetAgentRouteDemand = 27;
+        agent.GetAgentsRouteDemand arg_GetAgentsRouteDemand = 28;
     }
 }
 

@@ -3,20 +3,30 @@ syntax = "proto3";
 package api.route;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/route";
-//import "common/common.proto";
+//import "simulation/agent/agent.proto";
 
-message GetRouteDemand {
-    Coord departure = 1;
-    Coord destination = 2;
-    AgentType agent_type  = 3;
-    StatusType status_type = 4;
-    string meta = 5;
-}
-
-message GetRouteSupply {
-    repeated RouteInfo routes = 1;
+message GetAgentRouteDemand {
+    AgentInfo agents_info = 1;
     StatusType status_type = 2;
     string meta = 3;
+}
+
+message GetAgentRouteSupply {
+    AgentInfo agents_info = 1;
+    StatusType status_type = 2;
+    string meta = 3;
+}
+
+message GetAgentsRouteDemand {
+    repeated AgentInfo agents_info = 1;
+    StatusType status_type = 2;
+	string meta = 3;
+}
+
+message GetAgentsRouteSupply {
+    repeated AgentInfo agents_info = 1;
+    StatusType status_type = 2;
+	string meta = 3;
 }
 
 message Coord {
@@ -31,6 +41,31 @@ message RouteInfo {
 }
 
 
+
+message AgentInfo {
+    uint32 time = 1;
+    uint32 agent_id = 2;
+    uint32 control_area = 3;
+    AgentStatus agent_status = 4;
+    AgentType agent_type = 6;
+    Route route = 7;
+}
+
+message Route {
+    Coord coord = 1;
+    float direction = 2;
+    float speed = 3;
+    Coord destination = 4;
+    Coord departure = 5;
+    RouteInfo route_info = 6;
+}
+
+message AgentStatus {
+    string age = 1;
+    string sex = 2;
+    string name = 3;
+}
+
 enum StatusType {
     OK = 0;
     NG = 1;
@@ -41,5 +76,4 @@ enum AgentType {
     PEDESTRIAN = 0;
     CAR = 1;
 }
-
 

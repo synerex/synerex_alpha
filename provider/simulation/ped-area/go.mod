@@ -6,6 +6,7 @@ require (
 	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/participant v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/route v0.0.0
 	github.com/synerex/synerex_alpha/provider/simulation/simutil v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
 	google.golang.org/grpc v1.22.1

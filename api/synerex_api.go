@@ -12,7 +12,6 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
-	"github.com/synerex/synerex_alpha/api/simulation/route"
 )
 
 // Demand
@@ -113,8 +112,13 @@ func (dm *Demand) WithSetParticipantDemand(p *participant.SetParticipantDemand) 
 }
 
 // route demand
-func (dm *Demand) WithGetRouteDemand(r *route.GetRouteDemand) *Demand {
-	dm.ArgOneof = &Demand_Arg_GetRouteDemand{r}
+func (dm *Demand) WithGetAgentRouteDemand(r *agent.GetAgentRouteDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_GetAgentRouteDemand{r}
+	return dm
+}
+
+func (dm *Demand) WithGetAgentsRouteDemand(r *agent.GetAgentsRouteDemand) *Demand {
+	dm.ArgOneof = &Demand_Arg_GetAgentsRouteDemand{r}
 	return dm
 }
 
@@ -211,7 +215,12 @@ func (sp *Supply) WithSetParticipantSupply(p *participant.SetParticipantSupply) 
 }
 
 // route supply
-func (sp *Supply) WithGetRouteSupply(r *route.GetRouteSupply) *Supply {
-	sp.ArgOneof = &Supply_Arg_GetRouteSupply{r}
+func (sp *Supply) WithGetAgentRouteSupply(r *agent.GetAgentRouteSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_GetAgentRouteSupply{r}
+	return sp
+}
+
+func (sp *Supply) WithGetAgentsRouteSupply(r *agent.GetAgentsRouteSupply) *Supply {
+	sp.ArgOneof = &Supply_Arg_GetAgentsRouteSupply{r}
 	return sp
 }

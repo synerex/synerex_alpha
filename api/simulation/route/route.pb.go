@@ -73,79 +73,118 @@ func (AgentType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_f452970d86ac620f, []int{1}
 }
 
-type GetRouteDemand struct {
-	Departure            *Coord     `protobuf:"bytes,1,opt,name=departure,proto3" json:"departure,omitempty"`
-	Destination          *Coord     `protobuf:"bytes,2,opt,name=destination,proto3" json:"destination,omitempty"`
-	AgentType            AgentType  `protobuf:"varint,3,opt,name=agent_type,json=agentType,proto3,enum=api.route.AgentType" json:"agent_type,omitempty"`
-	StatusType           StatusType `protobuf:"varint,4,opt,name=status_type,json=statusType,proto3,enum=api.route.StatusType" json:"status_type,omitempty"`
-	Meta                 string     `protobuf:"bytes,5,opt,name=meta,proto3" json:"meta,omitempty"`
+type GetAgentRouteDemand struct {
+	AgentsInfo           *AgentInfo `protobuf:"bytes,1,opt,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
+	StatusType           StatusType `protobuf:"varint,2,opt,name=status_type,json=statusType,proto3,enum=api.route.StatusType" json:"status_type,omitempty"`
+	Meta                 string     `protobuf:"bytes,3,opt,name=meta,proto3" json:"meta,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
 	XXX_unrecognized     []byte     `json:"-"`
 	XXX_sizecache        int32      `json:"-"`
 }
 
-func (m *GetRouteDemand) Reset()         { *m = GetRouteDemand{} }
-func (m *GetRouteDemand) String() string { return proto.CompactTextString(m) }
-func (*GetRouteDemand) ProtoMessage()    {}
-func (*GetRouteDemand) Descriptor() ([]byte, []int) {
+func (m *GetAgentRouteDemand) Reset()         { *m = GetAgentRouteDemand{} }
+func (m *GetAgentRouteDemand) String() string { return proto.CompactTextString(m) }
+func (*GetAgentRouteDemand) ProtoMessage()    {}
+func (*GetAgentRouteDemand) Descriptor() ([]byte, []int) {
 	return fileDescriptor_f452970d86ac620f, []int{0}
 }
 
-func (m *GetRouteDemand) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetRouteDemand.Unmarshal(m, b)
+func (m *GetAgentRouteDemand) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetAgentRouteDemand.Unmarshal(m, b)
 }
-func (m *GetRouteDemand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetRouteDemand.Marshal(b, m, deterministic)
+func (m *GetAgentRouteDemand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetAgentRouteDemand.Marshal(b, m, deterministic)
 }
-func (m *GetRouteDemand) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetRouteDemand.Merge(m, src)
+func (m *GetAgentRouteDemand) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAgentRouteDemand.Merge(m, src)
 }
-func (m *GetRouteDemand) XXX_Size() int {
-	return xxx_messageInfo_GetRouteDemand.Size(m)
+func (m *GetAgentRouteDemand) XXX_Size() int {
+	return xxx_messageInfo_GetAgentRouteDemand.Size(m)
 }
-func (m *GetRouteDemand) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetRouteDemand.DiscardUnknown(m)
+func (m *GetAgentRouteDemand) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAgentRouteDemand.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetRouteDemand proto.InternalMessageInfo
+var xxx_messageInfo_GetAgentRouteDemand proto.InternalMessageInfo
 
-func (m *GetRouteDemand) GetDeparture() *Coord {
+func (m *GetAgentRouteDemand) GetAgentsInfo() *AgentInfo {
 	if m != nil {
-		return m.Departure
+		return m.AgentsInfo
 	}
 	return nil
 }
 
-func (m *GetRouteDemand) GetDestination() *Coord {
-	if m != nil {
-		return m.Destination
-	}
-	return nil
-}
-
-func (m *GetRouteDemand) GetAgentType() AgentType {
-	if m != nil {
-		return m.AgentType
-	}
-	return AgentType_PEDESTRIAN
-}
-
-func (m *GetRouteDemand) GetStatusType() StatusType {
+func (m *GetAgentRouteDemand) GetStatusType() StatusType {
 	if m != nil {
 		return m.StatusType
 	}
 	return StatusType_OK
 }
 
-func (m *GetRouteDemand) GetMeta() string {
+func (m *GetAgentRouteDemand) GetMeta() string {
 	if m != nil {
 		return m.Meta
 	}
 	return ""
 }
 
-type GetRouteSupply struct {
-	Routes               []*RouteInfo `protobuf:"bytes,1,rep,name=routes,proto3" json:"routes,omitempty"`
+type GetAgentRouteSupply struct {
+	AgentsInfo           *AgentInfo `protobuf:"bytes,1,opt,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
+	StatusType           StatusType `protobuf:"varint,2,opt,name=status_type,json=statusType,proto3,enum=api.route.StatusType" json:"status_type,omitempty"`
+	Meta                 string     `protobuf:"bytes,3,opt,name=meta,proto3" json:"meta,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
+}
+
+func (m *GetAgentRouteSupply) Reset()         { *m = GetAgentRouteSupply{} }
+func (m *GetAgentRouteSupply) String() string { return proto.CompactTextString(m) }
+func (*GetAgentRouteSupply) ProtoMessage()    {}
+func (*GetAgentRouteSupply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f452970d86ac620f, []int{1}
+}
+
+func (m *GetAgentRouteSupply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetAgentRouteSupply.Unmarshal(m, b)
+}
+func (m *GetAgentRouteSupply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetAgentRouteSupply.Marshal(b, m, deterministic)
+}
+func (m *GetAgentRouteSupply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAgentRouteSupply.Merge(m, src)
+}
+func (m *GetAgentRouteSupply) XXX_Size() int {
+	return xxx_messageInfo_GetAgentRouteSupply.Size(m)
+}
+func (m *GetAgentRouteSupply) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAgentRouteSupply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAgentRouteSupply proto.InternalMessageInfo
+
+func (m *GetAgentRouteSupply) GetAgentsInfo() *AgentInfo {
+	if m != nil {
+		return m.AgentsInfo
+	}
+	return nil
+}
+
+func (m *GetAgentRouteSupply) GetStatusType() StatusType {
+	if m != nil {
+		return m.StatusType
+	}
+	return StatusType_OK
+}
+
+func (m *GetAgentRouteSupply) GetMeta() string {
+	if m != nil {
+		return m.Meta
+	}
+	return ""
+}
+
+type GetAgentsRouteDemand struct {
+	AgentsInfo           []*AgentInfo `protobuf:"bytes,1,rep,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
 	StatusType           StatusType   `protobuf:"varint,2,opt,name=status_type,json=statusType,proto3,enum=api.route.StatusType" json:"status_type,omitempty"`
 	Meta                 string       `protobuf:"bytes,3,opt,name=meta,proto3" json:"meta,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
@@ -153,46 +192,101 @@ type GetRouteSupply struct {
 	XXX_sizecache        int32        `json:"-"`
 }
 
-func (m *GetRouteSupply) Reset()         { *m = GetRouteSupply{} }
-func (m *GetRouteSupply) String() string { return proto.CompactTextString(m) }
-func (*GetRouteSupply) ProtoMessage()    {}
-func (*GetRouteSupply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f452970d86ac620f, []int{1}
+func (m *GetAgentsRouteDemand) Reset()         { *m = GetAgentsRouteDemand{} }
+func (m *GetAgentsRouteDemand) String() string { return proto.CompactTextString(m) }
+func (*GetAgentsRouteDemand) ProtoMessage()    {}
+func (*GetAgentsRouteDemand) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f452970d86ac620f, []int{2}
 }
 
-func (m *GetRouteSupply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetRouteSupply.Unmarshal(m, b)
+func (m *GetAgentsRouteDemand) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetAgentsRouteDemand.Unmarshal(m, b)
 }
-func (m *GetRouteSupply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetRouteSupply.Marshal(b, m, deterministic)
+func (m *GetAgentsRouteDemand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetAgentsRouteDemand.Marshal(b, m, deterministic)
 }
-func (m *GetRouteSupply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetRouteSupply.Merge(m, src)
+func (m *GetAgentsRouteDemand) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAgentsRouteDemand.Merge(m, src)
 }
-func (m *GetRouteSupply) XXX_Size() int {
-	return xxx_messageInfo_GetRouteSupply.Size(m)
+func (m *GetAgentsRouteDemand) XXX_Size() int {
+	return xxx_messageInfo_GetAgentsRouteDemand.Size(m)
 }
-func (m *GetRouteSupply) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetRouteSupply.DiscardUnknown(m)
+func (m *GetAgentsRouteDemand) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAgentsRouteDemand.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetRouteSupply proto.InternalMessageInfo
+var xxx_messageInfo_GetAgentsRouteDemand proto.InternalMessageInfo
 
-func (m *GetRouteSupply) GetRoutes() []*RouteInfo {
+func (m *GetAgentsRouteDemand) GetAgentsInfo() []*AgentInfo {
 	if m != nil {
-		return m.Routes
+		return m.AgentsInfo
 	}
 	return nil
 }
 
-func (m *GetRouteSupply) GetStatusType() StatusType {
+func (m *GetAgentsRouteDemand) GetStatusType() StatusType {
 	if m != nil {
 		return m.StatusType
 	}
 	return StatusType_OK
 }
 
-func (m *GetRouteSupply) GetMeta() string {
+func (m *GetAgentsRouteDemand) GetMeta() string {
+	if m != nil {
+		return m.Meta
+	}
+	return ""
+}
+
+type GetAgentsRouteSupply struct {
+	AgentsInfo           []*AgentInfo `protobuf:"bytes,1,rep,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
+	StatusType           StatusType   `protobuf:"varint,2,opt,name=status_type,json=statusType,proto3,enum=api.route.StatusType" json:"status_type,omitempty"`
+	Meta                 string       `protobuf:"bytes,3,opt,name=meta,proto3" json:"meta,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
+}
+
+func (m *GetAgentsRouteSupply) Reset()         { *m = GetAgentsRouteSupply{} }
+func (m *GetAgentsRouteSupply) String() string { return proto.CompactTextString(m) }
+func (*GetAgentsRouteSupply) ProtoMessage()    {}
+func (*GetAgentsRouteSupply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f452970d86ac620f, []int{3}
+}
+
+func (m *GetAgentsRouteSupply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetAgentsRouteSupply.Unmarshal(m, b)
+}
+func (m *GetAgentsRouteSupply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetAgentsRouteSupply.Marshal(b, m, deterministic)
+}
+func (m *GetAgentsRouteSupply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetAgentsRouteSupply.Merge(m, src)
+}
+func (m *GetAgentsRouteSupply) XXX_Size() int {
+	return xxx_messageInfo_GetAgentsRouteSupply.Size(m)
+}
+func (m *GetAgentsRouteSupply) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetAgentsRouteSupply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GetAgentsRouteSupply proto.InternalMessageInfo
+
+func (m *GetAgentsRouteSupply) GetAgentsInfo() []*AgentInfo {
+	if m != nil {
+		return m.AgentsInfo
+	}
+	return nil
+}
+
+func (m *GetAgentsRouteSupply) GetStatusType() StatusType {
+	if m != nil {
+		return m.StatusType
+	}
+	return StatusType_OK
+}
+
+func (m *GetAgentsRouteSupply) GetMeta() string {
 	if m != nil {
 		return m.Meta
 	}
@@ -211,7 +305,7 @@ func (m *Coord) Reset()         { *m = Coord{} }
 func (m *Coord) String() string { return proto.CompactTextString(m) }
 func (*Coord) ProtoMessage()    {}
 func (*Coord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f452970d86ac620f, []int{2}
+	return fileDescriptor_f452970d86ac620f, []int{4}
 }
 
 func (m *Coord) XXX_Unmarshal(b []byte) error {
@@ -259,7 +353,7 @@ func (m *RouteInfo) Reset()         { *m = RouteInfo{} }
 func (m *RouteInfo) String() string { return proto.CompactTextString(m) }
 func (*RouteInfo) ProtoMessage()    {}
 func (*RouteInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_f452970d86ac620f, []int{3}
+	return fileDescriptor_f452970d86ac620f, []int{5}
 }
 
 func (m *RouteInfo) XXX_Unmarshal(b []byte) error {
@@ -301,45 +395,275 @@ func (m *RouteInfo) GetRequiredTime() float32 {
 	return 0
 }
 
+type AgentInfo struct {
+	Time                 uint32       `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	AgentId              uint32       `protobuf:"varint,2,opt,name=agent_id,json=agentId,proto3" json:"agent_id,omitempty"`
+	ControlArea          uint32       `protobuf:"varint,3,opt,name=control_area,json=controlArea,proto3" json:"control_area,omitempty"`
+	AgentStatus          *AgentStatus `protobuf:"bytes,4,opt,name=agent_status,json=agentStatus,proto3" json:"agent_status,omitempty"`
+	AgentType            AgentType    `protobuf:"varint,6,opt,name=agent_type,json=agentType,proto3,enum=api.route.AgentType" json:"agent_type,omitempty"`
+	Route                *Route       `protobuf:"bytes,7,opt,name=route,proto3" json:"route,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
+}
+
+func (m *AgentInfo) Reset()         { *m = AgentInfo{} }
+func (m *AgentInfo) String() string { return proto.CompactTextString(m) }
+func (*AgentInfo) ProtoMessage()    {}
+func (*AgentInfo) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f452970d86ac620f, []int{6}
+}
+
+func (m *AgentInfo) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AgentInfo.Unmarshal(m, b)
+}
+func (m *AgentInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AgentInfo.Marshal(b, m, deterministic)
+}
+func (m *AgentInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AgentInfo.Merge(m, src)
+}
+func (m *AgentInfo) XXX_Size() int {
+	return xxx_messageInfo_AgentInfo.Size(m)
+}
+func (m *AgentInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_AgentInfo.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AgentInfo proto.InternalMessageInfo
+
+func (m *AgentInfo) GetTime() uint32 {
+	if m != nil {
+		return m.Time
+	}
+	return 0
+}
+
+func (m *AgentInfo) GetAgentId() uint32 {
+	if m != nil {
+		return m.AgentId
+	}
+	return 0
+}
+
+func (m *AgentInfo) GetControlArea() uint32 {
+	if m != nil {
+		return m.ControlArea
+	}
+	return 0
+}
+
+func (m *AgentInfo) GetAgentStatus() *AgentStatus {
+	if m != nil {
+		return m.AgentStatus
+	}
+	return nil
+}
+
+func (m *AgentInfo) GetAgentType() AgentType {
+	if m != nil {
+		return m.AgentType
+	}
+	return AgentType_PEDESTRIAN
+}
+
+func (m *AgentInfo) GetRoute() *Route {
+	if m != nil {
+		return m.Route
+	}
+	return nil
+}
+
+type Route struct {
+	Coord                *Coord     `protobuf:"bytes,1,opt,name=coord,proto3" json:"coord,omitempty"`
+	Direction            float32    `protobuf:"fixed32,2,opt,name=direction,proto3" json:"direction,omitempty"`
+	Speed                float32    `protobuf:"fixed32,3,opt,name=speed,proto3" json:"speed,omitempty"`
+	Destination          *Coord     `protobuf:"bytes,4,opt,name=destination,proto3" json:"destination,omitempty"`
+	Departure            *Coord     `protobuf:"bytes,5,opt,name=departure,proto3" json:"departure,omitempty"`
+	RouteInfo            *RouteInfo `protobuf:"bytes,6,opt,name=route_info,json=routeInfo,proto3" json:"route_info,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
+}
+
+func (m *Route) Reset()         { *m = Route{} }
+func (m *Route) String() string { return proto.CompactTextString(m) }
+func (*Route) ProtoMessage()    {}
+func (*Route) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f452970d86ac620f, []int{7}
+}
+
+func (m *Route) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Route.Unmarshal(m, b)
+}
+func (m *Route) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Route.Marshal(b, m, deterministic)
+}
+func (m *Route) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Route.Merge(m, src)
+}
+func (m *Route) XXX_Size() int {
+	return xxx_messageInfo_Route.Size(m)
+}
+func (m *Route) XXX_DiscardUnknown() {
+	xxx_messageInfo_Route.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Route proto.InternalMessageInfo
+
+func (m *Route) GetCoord() *Coord {
+	if m != nil {
+		return m.Coord
+	}
+	return nil
+}
+
+func (m *Route) GetDirection() float32 {
+	if m != nil {
+		return m.Direction
+	}
+	return 0
+}
+
+func (m *Route) GetSpeed() float32 {
+	if m != nil {
+		return m.Speed
+	}
+	return 0
+}
+
+func (m *Route) GetDestination() *Coord {
+	if m != nil {
+		return m.Destination
+	}
+	return nil
+}
+
+func (m *Route) GetDeparture() *Coord {
+	if m != nil {
+		return m.Departure
+	}
+	return nil
+}
+
+func (m *Route) GetRouteInfo() *RouteInfo {
+	if m != nil {
+		return m.RouteInfo
+	}
+	return nil
+}
+
+type AgentStatus struct {
+	Age                  string   `protobuf:"bytes,1,opt,name=age,proto3" json:"age,omitempty"`
+	Sex                  string   `protobuf:"bytes,2,opt,name=sex,proto3" json:"sex,omitempty"`
+	Name                 string   `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *AgentStatus) Reset()         { *m = AgentStatus{} }
+func (m *AgentStatus) String() string { return proto.CompactTextString(m) }
+func (*AgentStatus) ProtoMessage()    {}
+func (*AgentStatus) Descriptor() ([]byte, []int) {
+	return fileDescriptor_f452970d86ac620f, []int{8}
+}
+
+func (m *AgentStatus) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_AgentStatus.Unmarshal(m, b)
+}
+func (m *AgentStatus) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_AgentStatus.Marshal(b, m, deterministic)
+}
+func (m *AgentStatus) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AgentStatus.Merge(m, src)
+}
+func (m *AgentStatus) XXX_Size() int {
+	return xxx_messageInfo_AgentStatus.Size(m)
+}
+func (m *AgentStatus) XXX_DiscardUnknown() {
+	xxx_messageInfo_AgentStatus.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_AgentStatus proto.InternalMessageInfo
+
+func (m *AgentStatus) GetAge() string {
+	if m != nil {
+		return m.Age
+	}
+	return ""
+}
+
+func (m *AgentStatus) GetSex() string {
+	if m != nil {
+		return m.Sex
+	}
+	return ""
+}
+
+func (m *AgentStatus) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterEnum("api.route.StatusType", StatusType_name, StatusType_value)
 	proto.RegisterEnum("api.route.AgentType", AgentType_name, AgentType_value)
-	proto.RegisterType((*GetRouteDemand)(nil), "api.route.GetRouteDemand")
-	proto.RegisterType((*GetRouteSupply)(nil), "api.route.GetRouteSupply")
+	proto.RegisterType((*GetAgentRouteDemand)(nil), "api.route.GetAgentRouteDemand")
+	proto.RegisterType((*GetAgentRouteSupply)(nil), "api.route.GetAgentRouteSupply")
+	proto.RegisterType((*GetAgentsRouteDemand)(nil), "api.route.GetAgentsRouteDemand")
+	proto.RegisterType((*GetAgentsRouteSupply)(nil), "api.route.GetAgentsRouteSupply")
 	proto.RegisterType((*Coord)(nil), "api.route.Coord")
 	proto.RegisterType((*RouteInfo)(nil), "api.route.RouteInfo")
+	proto.RegisterType((*AgentInfo)(nil), "api.route.AgentInfo")
+	proto.RegisterType((*Route)(nil), "api.route.Route")
+	proto.RegisterType((*AgentStatus)(nil), "api.route.AgentStatus")
 }
 
 func init() { proto.RegisterFile("simulation/route/route.proto", fileDescriptor_f452970d86ac620f) }
 
 var fileDescriptor_f452970d86ac620f = []byte{
-	// 433 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x52, 0x4f, 0x6b, 0xdb, 0x30,
-	0x1c, 0xad, 0xec, 0x34, 0x9b, 0x7f, 0x69, 0x82, 0x11, 0x1b, 0xf8, 0xb0, 0x43, 0xc8, 0xfe, 0x10,
-	0xba, 0xe1, 0x40, 0x4a, 0xb7, 0x73, 0xd6, 0x84, 0x52, 0x06, 0x69, 0x51, 0x72, 0xda, 0xc5, 0xa8,
-	0xb5, 0xd6, 0x0a, 0x6c, 0x49, 0x93, 0x7e, 0x86, 0xe5, 0x2b, 0xec, 0xb0, 0x6f, 0xbb, 0xfb, 0xb0,
-	0xe2, 0xa4, 0x5e, 0xc6, 0x0e, 0xbd, 0x58, 0xcf, 0x4f, 0xef, 0x49, 0x4f, 0x4f, 0x82, 0x57, 0x4e,
-	0x96, 0x55, 0xc1, 0x51, 0x6a, 0x35, 0xb1, 0xba, 0x42, 0xb1, 0xfd, 0xa6, 0xc6, 0x6a, 0xd4, 0x34,
-	0xe2, 0x46, 0xa6, 0x9e, 0x18, 0xfd, 0x26, 0x30, 0xb8, 0x14, 0xc8, 0xea, 0x9f, 0xb9, 0x28, 0xb9,
-	0xca, 0x69, 0x0a, 0x51, 0x2e, 0x0c, 0xb7, 0x58, 0x59, 0x91, 0x90, 0x21, 0x19, 0xf7, 0xa6, 0x71,
-	0xba, 0x77, 0xa4, 0x17, 0x5a, 0xdb, 0x9c, 0x3d, 0x4a, 0xe8, 0x14, 0x7a, 0xb9, 0x70, 0x28, 0x95,
-	0xdf, 0x2e, 0x09, 0xfe, 0xe3, 0x68, 0x8b, 0xe8, 0x19, 0x00, 0xbf, 0x17, 0x0a, 0x33, 0xdc, 0x18,
-	0x91, 0x84, 0x43, 0x32, 0x1e, 0x4c, 0x5f, 0xb4, 0x2c, 0xb3, 0x7a, 0x72, 0xbd, 0x31, 0x82, 0x45,
-	0x7c, 0x07, 0xe9, 0x47, 0xe8, 0x39, 0xe4, 0x58, 0xb9, 0xad, 0xab, 0xe3, 0x5d, 0x2f, 0x5b, 0xae,
-	0x95, 0x9f, 0xf5, 0x36, 0x70, 0x7b, 0x4c, 0x29, 0x74, 0x4a, 0x81, 0x3c, 0x39, 0x1e, 0x92, 0x71,
-	0xc4, 0x3c, 0x1e, 0xfd, 0x6c, 0x9d, 0x7b, 0x55, 0x19, 0x53, 0x6c, 0xe8, 0x07, 0xe8, 0xfa, 0x65,
-	0x5c, 0x42, 0x86, 0xe1, 0xb8, 0xf7, 0x57, 0x1e, 0xaf, 0xbb, 0x52, 0xdf, 0x34, 0x6b, 0x34, 0x87,
-	0x61, 0x82, 0xa7, 0x86, 0x09, 0x5b, 0x61, 0xde, 0xc3, 0xb1, 0xef, 0x88, 0xc6, 0x10, 0x16, 0x1c,
-	0x7d, 0xe9, 0x01, 0xab, 0xa1, 0x67, 0x9a, 0x52, 0x6b, 0x46, 0xab, 0xd1, 0x2f, 0x02, 0xd1, 0x3e,
-	0x0e, 0x3d, 0x87, 0x3e, 0x5a, 0xae, 0x9c, 0xc4, 0xcc, 0x68, 0xa9, 0xb0, 0xc9, 0xfe, 0x6f, 0xfd,
-	0x27, 0x8d, 0xec, 0xa6, 0x56, 0xd1, 0xb7, 0x30, 0x40, 0x8d, 0xbc, 0xc8, 0x72, 0xe9, 0x90, 0xab,
-	0x3b, 0xd1, 0xec, 0xd0, 0xf7, 0xec, 0xbc, 0x21, 0xe9, 0x6b, 0xe8, 0x5b, 0xf1, 0xbd, 0x92, 0x56,
-	0xe4, 0x19, 0xca, 0x72, 0x7b, 0x53, 0x01, 0x3b, 0xd9, 0x91, 0x6b, 0x59, 0x8a, 0xd3, 0x77, 0x00,
-	0x8f, 0x67, 0xa5, 0x5d, 0x08, 0xae, 0xbf, 0xc4, 0x47, 0xf5, 0xb8, 0xbc, 0x8c, 0x09, 0x7d, 0x0e,
-	0x9d, 0xe5, 0xf5, 0x72, 0x11, 0x07, 0xa7, 0x6f, 0x20, 0xda, 0x5f, 0x2b, 0x1d, 0x00, 0xdc, 0x2c,
-	0xe6, 0x8b, 0xd5, 0x9a, 0x5d, 0xcd, 0x96, 0xf1, 0x11, 0x7d, 0x06, 0xe1, 0xc5, 0x8c, 0xc5, 0xe4,
-	0xf3, 0xa7, 0xaf, 0xe7, 0xf7, 0x12, 0x1f, 0xaa, 0xdb, 0xf4, 0x4e, 0x97, 0x13, 0xb7, 0x51, 0xc2,
-	0x8a, 0x1f, 0xbb, 0x31, 0xe3, 0x85, 0x79, 0xe0, 0x13, 0x6e, 0xe4, 0xe4, 0xf0, 0x81, 0xdf, 0x76,
-	0xfd, 0xdb, 0x3e, 0xfb, 0x13, 0x00, 0x00, 0xff, 0xff, 0xce, 0x8f, 0x8a, 0x53, 0xfb, 0x02, 0x00,
+	// 625 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x55, 0xcf, 0x4f, 0xdb, 0x30,
+	0x14, 0x26, 0x2d, 0x2d, 0xe4, 0xb5, 0x45, 0x91, 0xc7, 0xa6, 0x4c, 0xe2, 0xc0, 0xba, 0x0d, 0x21,
+	0x26, 0xa5, 0x12, 0x88, 0x4d, 0x3b, 0x76, 0x50, 0x21, 0x34, 0xa9, 0x20, 0xc3, 0x69, 0x97, 0xc8,
+	0x34, 0x06, 0x2c, 0x25, 0x76, 0x66, 0x3b, 0x12, 0xfd, 0x27, 0x76, 0xde, 0xfe, 0xd0, 0xdd, 0x76,
+	0x98, 0xfc, 0x9c, 0xfe, 0x10, 0x15, 0x3b, 0x4e, 0x5c, 0x92, 0xcf, 0x9f, 0xdf, 0x8b, 0x3f, 0x7f,
+	0xef, 0xd9, 0x81, 0x1d, 0x23, 0x8a, 0x2a, 0x67, 0x56, 0x28, 0x39, 0xd0, 0xaa, 0xb2, 0xdc, 0x3f,
+	0x93, 0x52, 0x2b, 0xab, 0x48, 0xc8, 0x4a, 0x91, 0x20, 0xd1, 0xff, 0x19, 0xc0, 0x8b, 0x33, 0x6e,
+	0x87, 0x77, 0x5c, 0x5a, 0xea, 0x98, 0x53, 0x5e, 0x30, 0x99, 0x91, 0x63, 0xe8, 0x30, 0xc7, 0x99,
+	0x54, 0xc8, 0x5b, 0x15, 0x07, 0xbb, 0xc1, 0x7e, 0xe7, 0x70, 0x3b, 0x99, 0x27, 0x26, 0x98, 0x71,
+	0x2e, 0x6f, 0x15, 0x05, 0x1f, 0xe8, 0x30, 0xf9, 0x08, 0x1d, 0x63, 0x99, 0xad, 0x4c, 0x6a, 0xa7,
+	0x25, 0x8f, 0x1b, 0xbb, 0xc1, 0xfe, 0xd6, 0xe1, 0xcb, 0xa5, 0xb4, 0x2b, 0x9c, 0xbd, 0x9e, 0x96,
+	0x9c, 0x82, 0x99, 0x63, 0x42, 0x60, 0xbd, 0xe0, 0x96, 0xc5, 0xcd, 0xdd, 0x60, 0x3f, 0xa4, 0x88,
+	0x57, 0xa5, 0x5d, 0x55, 0x65, 0x99, 0x4f, 0x9f, 0x83, 0xb4, 0x5f, 0x01, 0x6c, 0xcf, 0xa4, 0x99,
+	0x7f, 0xda, 0xd6, 0x7c, 0x06, 0xda, 0x9e, 0xf2, 0xed, 0xff, 0x6b, 0xfb, 0x00, 0xad, 0x13, 0xa5,
+	0x74, 0x46, 0x22, 0x68, 0xe6, 0xcc, 0x62, 0xed, 0x1a, 0xd4, 0x41, 0x64, 0x94, 0xc4, 0xcf, 0x3b,
+	0x46, 0xc9, 0xfe, 0x8f, 0x00, 0x42, 0xd4, 0x8f, 0x32, 0x8e, 0xa1, 0x67, 0x35, 0x93, 0x46, 0xd8,
+	0xb4, 0x54, 0x42, 0xda, 0x5a, 0x7f, 0xb4, 0x24, 0x04, 0x3f, 0x4d, 0xbb, 0x75, 0xd8, 0xa5, 0x8b,
+	0x22, 0xef, 0x61, 0xcb, 0x2a, 0xcb, 0xf2, 0x34, 0x13, 0xc6, 0x32, 0x39, 0xe1, 0xf5, 0x0a, 0x3d,
+	0x64, 0x4f, 0x6b, 0x92, 0xbc, 0x85, 0x9e, 0xe6, 0xdf, 0x2b, 0xa1, 0x79, 0x96, 0x5a, 0x51, 0x70,
+	0x54, 0xdd, 0xa0, 0xdd, 0x19, 0x79, 0x2d, 0x0a, 0xde, 0xff, 0x1d, 0x40, 0x38, 0xf7, 0xc8, 0xed,
+	0x0f, 0x23, 0xdd, 0x1e, 0x7a, 0x14, 0x31, 0x79, 0x0d, 0x9b, 0xe8, 0x5c, 0x2a, 0x32, 0x5c, 0xa7,
+	0x47, 0x37, 0x70, 0x7c, 0x9e, 0x91, 0x37, 0xd0, 0x9d, 0x28, 0x69, 0xb5, 0xca, 0x53, 0xa6, 0xb9,
+	0xb7, 0xa5, 0x47, 0x3b, 0x35, 0x37, 0xd4, 0x9c, 0x91, 0xcf, 0xd0, 0xf5, 0xd9, 0xde, 0xc5, 0x78,
+	0x1d, 0x3b, 0xfb, 0xd5, 0xe3, 0x0a, 0x79, 0xbf, 0xa9, 0x2f, 0xa6, 0x1f, 0x90, 0x23, 0xf0, 0x25,
+	0xf3, 0x35, 0x6a, 0x63, 0x8d, 0x56, 0x4a, 0x8b, 0x25, 0x0a, 0xd9, 0x0c, 0x92, 0x3d, 0x68, 0xe1,
+	0x6c, 0xbc, 0x81, 0x0b, 0x2d, 0x5b, 0x89, 0xbe, 0x53, 0x3f, 0xdd, 0xff, 0x13, 0x40, 0x0b, 0x09,
+	0x97, 0x31, 0x71, 0x26, 0xd7, 0x87, 0x6e, 0xd5, 0x7c, 0x3f, 0x4d, 0x76, 0x20, 0xcc, 0x84, 0xe6,
+	0x13, 0x77, 0xff, 0xd4, 0x86, 0x2f, 0x08, 0xb2, 0x0d, 0x2d, 0x53, 0x72, 0x9e, 0xd5, 0x26, 0xfb,
+	0x01, 0x39, 0x84, 0x4e, 0xc6, 0x8d, 0x15, 0x12, 0x6f, 0xad, 0x7a, 0xf3, 0xab, 0x2b, 0x2c, 0x07,
+	0x91, 0x04, 0xc2, 0x8c, 0x97, 0x4c, 0xdb, 0x4a, 0xf3, 0xb8, 0xf5, 0x44, 0xc6, 0x22, 0xc4, 0xd9,
+	0x84, 0x33, 0xfe, 0x04, 0xb4, 0x57, 0x6e, 0x8e, 0x79, 0xbb, 0xd1, 0x50, 0xcf, 0x60, 0x7f, 0x04,
+	0x9d, 0x25, 0xdf, 0x5d, 0xa3, 0xb2, 0x3b, 0x5f, 0xf6, 0x90, 0x3a, 0xe8, 0x18, 0xc3, 0x1f, 0x70,
+	0x9f, 0x21, 0x75, 0xd0, 0xf5, 0x86, 0x64, 0x75, 0x17, 0x85, 0x14, 0xf1, 0xc1, 0x1e, 0xc0, 0xe2,
+	0xa4, 0x90, 0x36, 0x34, 0x2e, 0xbe, 0x46, 0x6b, 0xee, 0x3d, 0x3e, 0x8b, 0x02, 0xb2, 0x09, 0xeb,
+	0xe3, 0x8b, 0xf1, 0x28, 0x6a, 0x1c, 0xbc, 0xab, 0x9b, 0x0c, 0xc3, 0xb6, 0x00, 0x2e, 0x47, 0xa7,
+	0xa3, 0xab, 0x6b, 0x7a, 0x3e, 0x1c, 0x47, 0x6b, 0x64, 0x03, 0x9a, 0x27, 0x43, 0x1a, 0x05, 0x5f,
+	0x3e, 0x7d, 0x3b, 0xbe, 0x13, 0xf6, 0xbe, 0xba, 0x49, 0x26, 0xaa, 0x18, 0x98, 0xa9, 0xe4, 0x9a,
+	0x3f, 0xcc, 0xde, 0x29, 0xcb, 0xcb, 0x7b, 0x36, 0x60, 0xa5, 0x18, 0x3c, 0xfe, 0x0f, 0xdc, 0xb4,
+	0xf1, 0x17, 0x70, 0xf4, 0x37, 0x00, 0x00, 0xff, 0xff, 0x13, 0x45, 0xa8, 0x19, 0x22, 0x06, 0x00,
 	0x00,
 }

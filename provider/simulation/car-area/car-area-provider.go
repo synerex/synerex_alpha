@@ -143,6 +143,26 @@ func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	log.Println("setAgent")
 	setAgentsDemand := dm.GetArg_SetAgentsDemand()
 	agentsInfo := setAgentsDemand.AgentsInfo
+
+	// get route demand
+
+	getAgentsRouteDemand := &agent.GetAgentsRouteDemand{
+		AgentsInfo: agentsInfo,
+		StatusType: 2, //NONE
+		Meta:       "",
+	}
+
+	nm1 := "getAgentsRouteDemand order by ped-area-provider"
+	js1 := ""
+	opts1 := &sxutil.DemandOpts{Name: nm1, JSON: js1, GetAgentsRouteDemand: getAgentsRouteDemand}
+	dmMap, dmIdList = simutil.SendDemand(sclientRoute, opts1, dmMap, dmIdList)
+
+	sp := <-ch
+	//wait()
+	log.Println("GET_AGENTS_ROUTE_FINISH")
+	getAgentsRouteSupply := sp.GetArg_GetAgentsRouteSupply()
+	agentsInfo = getAgentsRouteSupply.AgentsInfo
+
 	for _, agentInfo := range agentsInfo {
 		if simutil.IsAgentInControlledArea(agentInfo, data.AreaInfo, int32(*agentType)) {
 			agentInfo.ControlArea = uint32(*areaId)
@@ -200,23 +220,60 @@ func calcNextRoute(areaInfo *area.AreaInfo, agentInfo *agent.AgentInfo, otherAge
 	route := agentInfo.Route
 	speed := route.Speed
 	currentLocation := route.Coord
+	nextTransit := route.RouteInfo.NextTransit
+	transitPoint := route.RouteInfo.TransitPoint
 	destination := route.Destination
+	// passed all transit point
+	if nextTransit != nil {
+		destination = nextTransit
+	}
+
 	direction, distance := simutil.CalcDirectionAndDistance(currentLocation.Lat, currentLocation.Lon, destination.Lat, destination.Lon)
 	//newLat, newLon := simutil.CalcMovedLatLon(currentLocation.Lat, currentLocation.Lon, speed*1000/3600, direction)
 	newLat, newLon := simutil.CalcMovedLatLon(currentLocation.Lat, currentLocation.Lon, destination.Lat, destination.Lon, distance, speed)
 
-	nextCoord := &agent.Route_Coord{
+	// upate next trasit point
+	if distance < 10 {
+		if nextTransit != nil {
+			nextTransit2 := nextTransit
+			for i, tPoint := range transitPoint {
+				if tPoint.Lon == nextTransit2.Lon && tPoint.Lat == nextTransit2.Lat {
+					if i+1 == len(transitPoint) {
+						// pass all transit point
+						log.Printf("\x1b[30m\x1b[47m To Destination!\x1b[0m\n")
+						nextTransit = nil
+					} else {
+						// go to next transit point
+						log.Printf("\x1b[30m\x1b[47m To Next TransitPoint!\x1b[0m\n")
+						nextTransit = transitPoint[i+1]
+					}
+				}
+			}
+		} else {
+			log.Printf("\x1b[30m\x1b[47m Arrived Destination! \x1b[0m\n")
+		}
+
+	}
+
+	nextCoord := &agent.Coord{
 		Lat: newLat,
 		Lon: newLon,
 	}
 	log.Printf("\x1b[30m\x1b[47m direction is : %v, distance: %v\x1b[0m\n", direction, distance)
 
+	routeInfo := &agent.RouteInfo{
+		TransitPoint:  transitPoint,
+		NextTransit:   nextTransit,
+		TotalDistance: route.RouteInfo.TotalDistance,
+		RequiredTime:  route.RouteInfo.RequiredTime,
+	}
 	nextRoute := &agent.Route{
 		Coord:       nextCoord,
 		Direction:   float32(direction),
 		Speed:       float32(speed),
 		Destination: route.Destination,
 		Departure:   route.Departure,
+		RouteInfo:   routeInfo,
 	}
 	return nextRoute
 }
@@ -595,6 +652,9 @@ func proposeSupplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		case "GET_AREA_SUPPLY":
 			ch <- sp
 			fmt.Println("getArea")
+		case "GET_AGENTS_ROUTE_SUPPLY":
+			ch <- sp
+			fmt.Println("getAgentsRoute")
 		case "GET_AGENTS_SUPPLY":
 			fmt.Println("getAgents response in callback")
 			mu.Lock()
@@ -695,6 +755,10 @@ func main() {
 
 	wg.Add(1)
 	go simutil.SubscribeSupply(sclientParticipant, proposeSupplyCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go simutil.SubscribeSupply(sclientRoute, proposeSupplyCallback, &wg)
 	wg.Wait()
 
 	// start up(setArea)
