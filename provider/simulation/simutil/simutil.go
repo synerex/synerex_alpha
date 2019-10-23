@@ -228,10 +228,10 @@ func IsAgentInArea(agentInfo *agent.AgentInfo, areaInfo *area.AreaInfo, agentTyp
 	elat := areaInfo.AreaCoord.EndLat
 	slon := areaInfo.AreaCoord.StartLon
 	elon := areaInfo.AreaCoord.EndLon
-	if agentInfo.AgentType.String() == agent.AgentType_name[agentType] && slat <= lat && lat <= elat && slon <= lon && lon <= elon {
+	if agentInfo.AgentType.String() == agent.AgentType_name[agentType] && slat <= lat && lat < elat && slon <= lon && lon < elon {
 		return true
 	} else {
-		log.Printf("agent type and coord is not match...\n\n")
+		//log.Printf("agent type and coord is not match...\n\n")
 		return false
 	}
 }
@@ -245,10 +245,10 @@ func IsAgentInControlledArea(agentInfo *agent.AgentInfo, areaInfo *area.AreaInfo
 	elat := areaInfo.ControlAreaCoord.EndLat
 	slon := areaInfo.ControlAreaCoord.StartLon
 	elon := areaInfo.ControlAreaCoord.EndLon
-	if agentInfo.AgentType.String() == agent.AgentType_name[agentType] && slat <= lat && lat <= elat && slon <= lon && lon <= elon {
+	if agentInfo.AgentType.String() == agent.AgentType_name[agentType] && slat <= lat && lat < elat && slon <= lon && lon < elon {
 		return true
 	}
-	log.Printf("agent type and coord is not match...\n\n")
+	//log.Printf("agent type and coord is not match...\n\n")
 	return false
 }
 

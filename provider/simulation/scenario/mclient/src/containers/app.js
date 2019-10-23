@@ -73,39 +73,40 @@ class App extends Container {
 	
     }
 
-    getEvent(socketData){
-		console.log("Get event!!", socketData)
+    getEvent(socketsData){
+		console.log("Get event4 socketsData!!", socketsData)
 	const {actions, movesbase, movedData} = this.props
-	const {mtype, id,  lat, lon, angle, speed, area } = JSON.parse(socketData);
-	console.log("area: ",area);
 	const time = Date.now()/1000; // set time as now. (If data have time, ..)
-	let hit = false;
-	const movesbasedata = [...movesbase]; // why copy !?
-	const movedData2 = [...movedData]; // why copy !?
 	const setMovesbase = [];
-	const setMovedData = [];
-	
-	for( let i = 0, lengthi = movesbasedata.length; i < lengthi; i+=1){
-	    //	    let setMovedata = Object.assign({}, movesbasedata[i]);
-	    let setMovedata = movesbasedata[i];
-			let setMovedDatai = movedData2[i];
-	    if(mtype === setMovedata.mtype && id === setMovedata.id){
-		hit = true;
-//		const {operation } = setMovedata;
-		//		const arrivaltime = time;
-		setMovedata.arrivaltime = time;		
-		setMovedata.operation.push({
-		    elapsedtime: time,
-		    position:[lon, lat, 0],
-		    angle,speed
-		});
-//		setMovedata = Object.assign({}, setMovedata, {arrivaltime, operation});
-	    }
-	    setMovesbase.push(setMovedata);
-			setMovedData.push(setMovedDatai);
-	}
-	if(!hit){
-	    setMovesbase.push({
+	//const setMovedData = [];
+	const movesbasedata = [...movesbase]; // why copy !?
+	//const movedData2 = [...movedData]; // why copy !?
+
+	console.log("socketData length", socketsData.length)
+	console.log("movesbasedata length", movesbasedata.length)
+
+	var count = 0
+	socketsData.forEach((socketData) => {
+		const {mtype, id,  lat, lon, angle, speed, area } = JSON.parse(socketData);
+		
+		let hit = false;
+		movesbasedata.forEach((movedata)=>{
+			if(mtype === movedata.mtype && id === movedata.id){
+				count++;
+				hit = true;
+				movedata.arrivaltime = time;		
+				movedata.operation.push({
+		    		elapsedtime: time,
+		    		position:[lon, lat, 0],
+		    		angle,speed
+				});
+
+				setMovesbase.push(movedata);
+			}
+		})
+
+		if(!hit){
+	    	setMovesbase.push({
 				mtype, id,
 				departuretime:time,
 				arrivaltime: time,
@@ -114,13 +115,19 @@ class App extends Container {
 		    	position:[lon, lat, 0],
 		    	angle, speed
 				}]
-	    });
-			setMovedData.push({
+	   		});
+			/*setMovedData.push({
 				sourceColor: [255, 0, 255]
-	    });
-	}
-	actions.updateMovesBase(setMovesbase);
-	//actions.updateMovedData(setMovedData);
+	    });*/
+		}
+	});
+
+
+	console.log("id match num", count)
+	console.log("lenth before", setMovesbase.length)
+		actions.updateMovesBase(setMovesbase);
+		//actions.updateMovedData(setMovedData);
+	
     }
 
   deleteMovebase(maxKeepSecond) {

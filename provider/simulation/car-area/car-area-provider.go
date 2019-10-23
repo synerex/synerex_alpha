@@ -101,7 +101,7 @@ func wait(pspMap map[uint64]*pb.Supply, idList []uint32, syncCh chan *pb.Supply)
 		for {
 			select {
 			case psp := <-syncCh:
-				log.Printf("\x1b[30m\x1b[47m GET SP IN CHANNEL %v\x1b[0m\n", psp)
+				//log.Printf("\x1b[30m\x1b[47m GET SP IN CHANNEL %v\x1b[0m\n", psp)
 				mu.Lock()
 				pspMap[psp.SenderId] = psp
 
@@ -509,10 +509,16 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	//data.AreaInfo = nextAreaInfo
 	history.History[nextTime] = data
 	history.CurrentTime = nextTime
-	log.Printf("\x1b[30m\x1b[47m History is : %v\x1b[0m\n", nextAgentsInfo)
+	log.Printf("\x1b[30m\x1b[47m time is : %v\x1b[0m\n", currentTime)
+	for i, _ := range pureNextAgentsInfo {
+		log.Printf("\x1b[30m\x1b[47m pureAgentsInfo is : %v\x1b[0m\n", pureNextAgentsInfo[i].AgentId)
+	}
 	neighborPspMap = make(map[uint64]*pb.Supply)
 	samePspMap = make(map[uint64]*pb.Supply)
+
 	log.Printf("FORWARD_CLOCK_FINISH\n\n")
+	log.Printf("\x1b[30m\x1b[47m PURE_AGENT_NUM: %v \x1b[0m\n", len(pureNextAgentsInfo))
+
 }
 
 // Finish Fix

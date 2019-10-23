@@ -100,6 +100,8 @@ func isContainNeighborMap(areaId uint32) bool {
 	return false
 }
 
+//Todo: エージェントの数が増減してしまうバグ
+
 func wait(pspMap map[uint64]*pb.Supply, idList []uint32, syncCh chan *pb.Supply) {
 	wg := sync.WaitGroup{}
 	wg.Add(1)
@@ -110,7 +112,7 @@ func wait(pspMap map[uint64]*pb.Supply, idList []uint32, syncCh chan *pb.Supply)
 			case psp := <-syncCh:
 				mu.Lock()
 				pspMap[psp.SenderId] = psp
-				log.Printf("\x1b[30m\x1b[47m GET SP IN CHANNEL %v\x1b[0m\n", psp)
+				//log.Printf("\x1b[30m\x1b[47m GET SP IN CHANNEL %v\x1b[0m\n", psp)
 				if simutil.CheckFinishSync(pspMap, idList) {
 					log.Printf("\x1b[30m\x1b[47m 3.5. wait finish\x1b[0m\n")
 					log.Println("WAIT_FINISH!")
@@ -273,6 +275,7 @@ func calcNextRoute(areaInfo *area.AreaInfo, agentInfo *agent.AgentInfo, otherAge
 		Lat: currentLocation.Lat,
 		Lon: currentLocation.Lon,
 	}
+	//TODO: Fix this
 	if newLat < 40 && newLat > 0 && newLon < 150 && newLon > 0 {
 		nextCoord = &agent.Coord{
 			Lat: newLat,
@@ -515,12 +518,17 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	//data.AreaInfo = nextAreaInfo
 	history.History[nextTime] = data
 	history.CurrentTime = nextTime
-	log.Printf("\x1b[30m\x1b[47m nextAgentsInfo is : %v\x1b[0m\n", nextAgentsInfo)
+	log.Printf("\x1b[30m\x1b[47m time is : %v\x1b[0m\n", currentTime)
+	for i, _ := range pureNextAgentsInfo {
+		log.Printf("\x1b[30m\x1b[47m pureAgentsInfo is : %v\x1b[0m\n", pureNextAgentsInfo[i].AgentId)
+	}
 
 	neighborPspMap = make(map[uint64]*pb.Supply)
 	samePspMap = make(map[uint64]*pb.Supply)
 	//log.Printf("NEIGHBORPSPMap is clear, %v\n", neighborPspMap)
 	log.Printf("FORWARD_CLOCK_FINISH\n\n")
+	log.Printf("\x1b[30m\x1b[47m PURE_AGENT_NUM: %v \x1b[0m\n", len(pureNextAgentsInfo))
+
 	//return
 }
 

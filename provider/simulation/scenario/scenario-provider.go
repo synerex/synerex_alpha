@@ -214,8 +214,9 @@ func orderStartClock() {
 		//syncForwardCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 		wait(forwardPspMap, forwardAgentIdList, syncForwardCh)
 
-		fmt.Printf("Callback StartClock! Regist and Send Data to Simulator %v", forwardPspMap)
-		for _, psp := range forwardPspMap {
+		//fmt.Printf("Callback StartClock! Regist and Send Data to Simulator %v", forwardPspMap)
+		sendToSimulator2(forwardPspMap)
+		/*for _, psp := range forwardPspMap {
 			supplyType := simutil.CheckSupplyType(psp)
 			switch supplyType {
 			case "FORWARD_AGENTS_SUPPLY":
@@ -224,7 +225,7 @@ func orderStartClock() {
 			default:
 				fmt.Println("SupplyType is invalid")
 			}
-		}
+		}*/
 
 		// clear pspMap
 		forwardPspMap = make(map[uint64]*pb.Supply)
@@ -363,11 +364,51 @@ func (m *MapMarker) GetJson() string {
 }
 
 // Fix now
+func sendToSimulator2(pspMap map[uint64]*pb.Supply) {
+	sumAgentsInfo := make([]*agent.AgentInfo, 0)
+	for _, psp := range pspMap {
+		supplyType := simutil.CheckSupplyType(psp)
+		switch supplyType {
+		case "FORWARD_AGENTS_SUPPLY":
+			fmt.Println("registAgents")
+			forwardAgentsSupply := psp.GetArg_ForwardAgentsSupply()
+			agentsInfo := forwardAgentsSupply.AgentsInfo
+			sumAgentsInfo = append(sumAgentsInfo, agentsInfo...)
+		default:
+			fmt.Println("SupplyType is invalid")
+		}
+	}
+
+	log.Printf("\x1b[30m\x1b[47m Sum of Agents: %v\x1b[0m\n", len(sumAgentsInfo))
+
+	if sumAgentsInfo != nil {
+		//fmt.Printf("\x1b[30m\x1b[47m agentsInfo is : %v\x1b[0m\n", uniqAgentsInfo)
+		jsonAgentsInfo := make([]string, 0)
+		for _, agentInfo := range sumAgentsInfo {
+			mm := &MapMarker{
+				mtype: int32(agentInfo.AgentType), // depends on type of Ped: 0, Car , 1, Train, 2, Bycycle 3
+				id:    int32(agentInfo.AgentId),
+				lat:   float32(agentInfo.Route.Coord.Lat),
+				lon:   float32(agentInfo.Route.Coord.Lon),
+				angle: float32(agentInfo.Route.Direction),
+				speed: int32(agentInfo.Route.Speed),
+				area:  int32(agentInfo.ControlArea),
+			}
+			jsonAgentsInfo = append(jsonAgentsInfo, mm.GetJson())
+		}
+		mu.Lock()
+		ioserv.BroadcastToAll("event", jsonAgentsInfo)
+		mu.Unlock()
+	}
+}
+
+// Fix now
 func sendToSimulator(psp *pb.Supply) {
 	forwardAgentsSupply := psp.GetArg_ForwardAgentsSupply()
 	agentsInfo := forwardAgentsSupply.AgentsInfo
 	if agentsInfo != nil {
 		fmt.Printf("\x1b[30m\x1b[47m agentsInfo is : %v\x1b[0m\n", agentsInfo)
+		jsonAgentsInfo := make([]string, 0)
 		for _, agentInfo := range agentsInfo {
 			mm := &MapMarker{
 				mtype: int32(agentInfo.AgentType), // depends on type of Ped: 0, Car , 1, Train, 2, Bycycle 3
@@ -378,10 +419,11 @@ func sendToSimulator(psp *pb.Supply) {
 				speed: int32(agentInfo.Route.Speed),
 				area:  int32(agentInfo.ControlArea),
 			}
-			mu.Lock()
-			ioserv.BroadcastToAll("event", mm.GetJson())
-			mu.Unlock()
+			jsonAgentsInfo = append(jsonAgentsInfo, mm.GetJson())
 		}
+		mu.Lock()
+		ioserv.BroadcastToAll("event", jsonAgentsInfo)
+		mu.Unlock()
 	}
 }
 

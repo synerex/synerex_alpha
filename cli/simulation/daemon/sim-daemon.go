@@ -747,10 +747,10 @@ func handleRun(target string) string {
 
 func calcRoute() Route {
 
-	sLon := float32(136.973172)
-	eLon := float32(136.990047)
-	sLat := float32(35.152476)
-	eLat := float32(35.160678)
+	sLon := float32(136.973300)
+	eLon := float32(136.989900)
+	sLat := float32(35.152600)
+	eLat := float32(35.160500)
 	departure := Coord{
 		Lon: sLon + (eLon-sLon)*rand.Float32(),
 		Lat: sLat + (eLat-sLat)*rand.Float32(),
