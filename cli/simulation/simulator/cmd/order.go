@@ -31,15 +31,16 @@ type orderCmdInfo struct {
 }
 
 type Order struct {
-	Type string
-	Arg  string
+	Type   string
+	Option string
 }
 
 type Options struct {
 	optJsonName string
+	optAgentNum string
 }
 
-var o = &Options{}
+var o = Options{}
 
 var orderCmds = [...]orderCmdInfo{
 	{
@@ -57,6 +58,10 @@ var orderCmds = [...]orderCmdInfo{
 	{
 		Aliases: []string{"SetAgent", "setAgent", "setagent", "set-agent"},
 		CmdName: "SetAgent",
+	},
+	{
+		Aliases: []string{"GetParticipant", "getParticipant", "getparticipant", "get-participant"},
+		CmdName: "GetParticipant",
 	},
 	{
 		Aliases: []string{"Start", "start"},
@@ -85,7 +90,8 @@ func getOrderCmdName(alias string) string {
 
 func sendOrder(cmdName string, order *Order) bool {
 	//todo: we should use ack for this. but its not working....
-	res, err := sioClient.Ack("order", &order, 20*time.Second)
+	fmt.Printf("simulator order [%v]\n", order)
+	res, err := sioClient.Ack("order", order, 20*time.Second)
 	//					err := sioClient.Emit("run",ci.CmdName) //, 20*time.Second)
 	time.Sleep(1 * time.Second)
 
@@ -102,19 +108,21 @@ func sendOrder(cmdName string, order *Order) bool {
 func handleOrder(cmd *cobra.Command, args []string) {
 
 	//simData := handleUserDialogue()
-	fmt.Printf("Dialogue Result: %v\n", args)
+	fmt.Printf("Dialogue Result: %v\n", o)
 	if len(args) > 0 {
 		findflag := false
 		order := new(Order)
+		//order.Option = "&o"
 		for _, ci := range orderCmds {
 			for _, str := range ci.Aliases {
 				if args[0] == str {
 					switch ci.CmdName {
 					case "SetAll":
-						order.Arg = o.optJsonName
+						order.Option = o.optJsonName
 					case "SetTime":
 					case "SetArea":
 					case "SetAgent":
+						order.Option = o.optAgentNum
 					case "Start":
 					case "Stop":
 					case "Clear":
@@ -151,4 +159,5 @@ For example:
 func init() {
 	rootCmd.AddCommand(orderCmd)
 	orderCmd.Flags().StringVarP(&o.optJsonName, "json", "j", "sample.json", "string option")
+	orderCmd.Flags().StringVarP(&o.optAgentNum, "rand", "r", "1", "string option")
 }

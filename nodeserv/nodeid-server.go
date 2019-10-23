@@ -205,7 +205,7 @@ func (s *srvNodeInfo) KeepAlive(ctx context.Context, nu *nodepb.NodeUpdate) (nr 
 	ni.count = nu.UpdateCount
 	ni.status = nu.NodeStatus
 	ni.arg = nu.NodeArg
-	s.nodeMap[nid] = ni
+	//s.nodeMap[nid] = ni
 
 	if ni.lastAlive.Sub(lastPrint) > time.Second*time.Duration(DefaultDuration/2) {
 		log.Println("---KeepAlive------------------------------------------")

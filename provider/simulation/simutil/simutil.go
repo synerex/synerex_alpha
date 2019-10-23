@@ -189,6 +189,7 @@ func CalcDirectionAndDistance(sLat float32, sLon float32, gLat float32, gLon flo
 	return newLat, newLon
 }*/
 
+// TODO: Why Calc Error ? newLat=nan and newLon = inf
 func CalcMovedLatLon(sLat float32, sLon float32, gLat float32, gLon float32, distance float32, speed float32) (float32, float32) {
 
 	//r := float64(6378137) // equatorial radius
@@ -203,7 +204,6 @@ func CalcMovedLatLon(sLat float32, sLon float32, gLat float32, gLon float32, dis
 }
 
 func CheckFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint32) bool {
-
 	for _, id := range idlist {
 		isMatch := false
 		for _, sp := range pspMap {

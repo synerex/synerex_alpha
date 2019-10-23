@@ -120,12 +120,30 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	log.Println("setParticipant")
 
-	nm := "SetParticipantSupply respnse by area-provider"
+	participantInfo := &participant.ParticipantInfo{
+		ChannelId: &participant.ChannelId{
+			ParticipantChannelId: uint32(sclientParticipant.ClientID),
+			AreaChannelId:        uint32(sclientArea.ClientID),
+			AgentChannelId:       uint32(sclientAgent.ClientID),
+			ClockChannelId:       uint32(sclientClock.ClientID),
+			RouteChannelId:       uint32(sclientRoute.ClientID),
+		},
+		ProviderType: 1, // Area
+	}
+
+	setParticipantSupply := &participant.SetParticipantSupply{
+		ParticipantInfo: participantInfo,
+		StatusType:      0, // OK
+		Meta:            "",
+	}
+
+	nm := "SetParticipant respnse by area-provider"
 	js := ""
 	opts := &sxutil.SupplyOpts{
-		Target: dm.GetId(),
-		Name:   nm,
-		JSON:   js,
+		Target:               dm.GetId(),
+		Name:                 nm,
+		JSON:                 js,
+		SetParticipantSupply: setParticipantSupply,
 	}
 
 	spMap, idlist = simutil.SendProposeSupply(sclientParticipant, opts, spMap, idlist)
@@ -301,12 +319,19 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 
 	spMap, idlist = simutil.SendProposeSupply(sclientClock, opts2, spMap, idlist)
 
+	forwardAgentsSupply := &agent.ForwardAgentsSupply{
+		Time:       nextTime,
+		StatusType: 0, //OK
+		Meta:       "",
+	}
+
 	nm3 := "forwardClock to AgentCh respnse by area-provider"
 	js3 := ""
 	opts3 := &sxutil.SupplyOpts{
-		Target: dm.GetId(),
-		Name:   nm3,
-		JSON:   js3,
+		Target:              dm.GetId(),
+		Name:                nm3,
+		JSON:                js3,
+		ForwardAgentsSupply: forwardAgentsSupply,
 	}
 
 	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts3, spMap, idlist)

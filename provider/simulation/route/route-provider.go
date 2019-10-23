@@ -64,7 +64,7 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 			ClockChannelId:       uint32(sclientClock.ClientID),
 			RouteChannelId:       uint32(sclientRoute.ClientID),
 		},
-		ProviderType: 1, // Area
+		ProviderType: 4, // Route
 	}
 
 	getParticipantSupply := &participant.GetParticipantSupply{
@@ -89,12 +89,30 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	log.Println("setParticipant")
 
-	nm := "SetParticipantSupply respnse by route-provider"
+	participantInfo := &participant.ParticipantInfo{
+		ChannelId: &participant.ChannelId{
+			ParticipantChannelId: uint32(sclientParticipant.ClientID),
+			AreaChannelId:        uint32(sclientArea.ClientID),
+			AgentChannelId:       uint32(sclientAgent.ClientID),
+			ClockChannelId:       uint32(sclientClock.ClientID),
+			RouteChannelId:       uint32(sclientRoute.ClientID),
+		},
+		ProviderType: 4, // Route
+	}
+
+	setParticipantSupply := &participant.SetParticipantSupply{
+		ParticipantInfo: participantInfo,
+		StatusType:      0, // OK
+		Meta:            "",
+	}
+
+	nm := "SetParticipant respnse by route-provider"
 	js := ""
 	opts := &sxutil.SupplyOpts{
-		Target: dm.GetId(),
-		Name:   nm,
-		JSON:   js,
+		Target:               dm.GetId(),
+		Name:                 nm,
+		JSON:                 js,
+		SetParticipantSupply: setParticipantSupply,
 	}
 
 	spMap, idlist = simutil.SendProposeSupply(sclientParticipant, opts, spMap, idlist)
@@ -103,7 +121,7 @@ func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 func calcRoutes(sLat float32, sLon float32, gLat float32, gLon float32, agentType int32) *agent.RouteInfo {
 	dLat := gLat - sLat
 	dLon := gLon - sLon
-	transitNum := 2
+	transitNum := 5
 	transitPoint := make([]*agent.Coord, 0)
 	latArray := make([]float64, 0)
 	lonArray := make([]float64, 0)

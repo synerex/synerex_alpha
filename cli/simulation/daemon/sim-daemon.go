@@ -9,12 +9,14 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -60,8 +62,13 @@ type Order2 struct {
 }
 
 type Order struct {
-	Type string
-	Arg  string
+	Type   string
+	Option string
+}
+
+type Options struct {
+	optJsonName string
+	optAgentNum int
 }
 
 type Coord struct {
@@ -738,6 +745,36 @@ func handleRun(target string) string {
 	return "Can't find command " + target
 }
 
+func calcRoute() Route {
+
+	sLon := float32(136.973172)
+	eLon := float32(136.990047)
+	sLat := float32(35.152476)
+	eLat := float32(35.160678)
+	departure := Coord{
+		Lon: sLon + (eLon-sLon)*rand.Float32(),
+		Lat: sLat + (eLat-sLat)*rand.Float32(),
+	}
+	destination := Coord{
+		Lon: sLon + (eLon-sLon)*rand.Float32(),
+		Lat: sLat + (eLat-sLat)*rand.Float32(),
+	}
+	route := Route{
+		Coord:       departure,
+		Direction:   100 * rand.Float32(),
+		Speed:       100 * rand.Float32(),
+		Departure:   departure,
+		Destination: destination,
+	}
+
+	return route
+}
+
+func generateUid(i int) uint32 {
+	time := time.Now().Unix() + int64(i)
+	return uint32(time)
+}
+
 func handleOrder(order *Order) string {
 	target := order.Type
 	for _, sc := range cmdArray {
@@ -745,8 +782,8 @@ func handleOrder(order *Order) string {
 			var res string
 			if target == "SetAll" {
 				// JSONファイル読み込み
-				jsonName := order.Arg
-				fmt.Printf("jsonName is : %v\n", order)
+				jsonName := order.Option
+				fmt.Printf("jsonName is : %v\n", order.Option)
 				bytes, err := ioutil.ReadFile(jsonName)
 				if err != nil {
 					log.Fatal(err)
@@ -783,6 +820,29 @@ func handleOrder(order *Order) string {
 					time.Sleep(1 * time.Second)
 
 				}
+
+			} else if target == "SetAgent" {
+				agentNum, _ := strconv.Atoi(order.Option)
+				agentsInfo := make([]AgentInfo, 0)
+				for i := 0; i < agentNum; i++ {
+					agentInfo := AgentInfo{
+						Id:   generateUid(i),
+						Type: "pedestrian",
+						Status: Status{
+							Name: "A",
+							Age:  "20",
+							Sex:  "Femail",
+						},
+						Route: calcRoute(),
+					}
+					agentsInfo = append(agentsInfo, agentInfo)
+				}
+
+				var order2 Order2
+				order2.Type = "SetAgent"
+				order2.AgentsInfo = agentsInfo
+				sioCh.Scenario.Emit("scenario", order2)
+				time.Sleep(1 * time.Second)
 			} else {
 				var order2 Order2
 				order2.Type = target

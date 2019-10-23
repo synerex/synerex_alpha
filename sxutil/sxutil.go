@@ -369,6 +369,7 @@ func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMSe
 	for {
 		var sp *api.Supply
 		sp, err = smc.Recv() // receive Demand
+		//log.Printf("\x1b[30m\x1b[47m SXUTIL: SUPPLY\x1b[0m\n")
 		if err != nil {
 			if err == io.EOF {
 				log.Print("End Supply subscribe OK")
@@ -397,6 +398,7 @@ func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMSe
 	for {
 		var dm *api.Demand
 		dm, err = dmc.Recv() // receive Demand
+		//log.Printf("\x1b[30m\x1b[47m SXUTIL: DEMAND\x1b[0m\n")
 		if err != nil {
 			if err == io.EOF {
 				log.Print("End Demand subscribe OK")

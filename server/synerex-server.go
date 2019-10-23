@@ -134,7 +134,6 @@ func (s *synerexServerInfo) ProposeSupply(c context.Context, sp *api.Supply) (r 
 	chs := s.supplyChans[sp.GetType()]
 	for i := range chs {
 		ch := chs[i]
-		log.Printf("ch is :  %v\n", chs)
 		if len(ch) < MessageChannelBufferSize {
 			ch <- sp
 		} else {
@@ -251,7 +250,7 @@ func demandServerFunc(ch chan *api.Demand, stream api.Synerex_SubscribeDemandSer
 			err := stream.Send(dm)
 
 			if err != nil {
-				//				log.Printf("Error in DemandServer Error %v", err)
+				log.Printf("Error in DemandServer Error %v", err)
 				return err
 			}
 		}
@@ -319,11 +318,11 @@ func supplyServerFunc(ch chan *api.Supply, stream api.Synerex_SubscribeSupplySer
 	for {
 		select {
 		case sp := <-ch:
-			log.Printf("in supply server func id %v", sp)
+			//log.Printf("in supply server func id %v", sp)
 			err := stream.Send(sp)
 			if err != nil {
 
-				//				log.Printf("Error SupplyServer Error %v", err)
+				log.Printf("Error SupplyServer Error %v", err)
 				return err
 			}
 		}
