@@ -132,8 +132,6 @@ func wait(pspMap map[uint64]*pb.Supply, idList []uint32, syncCh chan *pb.Supply)
 				pspMap[psp.SenderId] = psp
 
 				if simutil.CheckFinishSync(pspMap, idList) {
-					log.Printf("\x1b[30m\x1b[47m 3.5. wait finish\x1b[0m\n")
-					log.Println("WAIT_FINISH!")
 					mu.Unlock()
 					wg.Done()
 					return
@@ -197,6 +195,10 @@ func orderStartClock() {
 
 		dmMap, idlist = simutil.SendDemand(sclientClock, opts, dmMap, idlist)
 
+		wait(forwardPspMap, forwardAgentIdList, syncForwardCh)
+
+		sendToSimulator(forwardPspMap)
+
 		// calc next time
 		nextTime := data.ClockInfo.Time + 1
 		clockInfo := &clock.ClockInfo{
@@ -207,30 +209,9 @@ func orderStartClock() {
 		}
 		data.ClockInfo = clockInfo
 
-		fmt.Printf("wait now...")
-		//clockIdList := idListByChannel.ClockIdList
-		//agentIdList := idListByChannel.AgentIdList
-		//syncIdList := append(clockIdList, agentIdList...)
-		//syncForwardCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-		wait(forwardPspMap, forwardAgentIdList, syncForwardCh)
-
-		//fmt.Printf("Callback StartClock! Regist and Send Data to Simulator %v", forwardPspMap)
-		sendToSimulator2(forwardPspMap)
-		/*for _, psp := range forwardPspMap {
-			supplyType := simutil.CheckSupplyType(psp)
-			switch supplyType {
-			case "FORWARD_AGENTS_SUPPLY":
-				fmt.Println("registAgents")
-				sendToSimulator(psp)
-			default:
-				fmt.Println("SupplyType is invalid")
-			}
-		}*/
-
 		// clear pspMap
 		forwardPspMap = make(map[uint64]*pb.Supply)
 
-		fmt.Printf("Callback StartClock! move next clock")
 		time.Sleep(1 * time.Second)
 		//var i int
 		//fmt.Print("forward again? \n")
@@ -302,7 +283,7 @@ func orderSetAgents(agentsInfo []*agent.AgentInfo) {
 		//syncAgentIdList := idListByChannel.AgentIdList
 		syncGetAgentCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 		wait(agentPspMap, setAgentIdList, syncGetAgentCh)
-		fmt.Printf("Callback SetAgent! return OK to Simulation Synerex Engine")
+		fmt.Printf("SET_AGENTS_FINISH!")
 		isSetAgent = true
 		agentPspMap = make(map[uint64]*pb.Supply)
 	}
@@ -352,7 +333,7 @@ func orderSetParticipant() {
 	//syncParticipantIdList := idListByChannel.ParticipantIdList
 	syncParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	wait(participantPspMap, participantIdList, syncParticipantCh)
-	fmt.Printf("Callback SetParticipant! return OK to Simulation Synerex Engine")
+	fmt.Printf("SET_PARTICIPANT_FINISH!")
 	participantPspMap = make(map[uint64]*pb.Supply)
 
 }
@@ -364,54 +345,27 @@ func (m *MapMarker) GetJson() string {
 }
 
 // Fix now
-func sendToSimulator2(pspMap map[uint64]*pb.Supply) {
+func sendToSimulator(pspMap map[uint64]*pb.Supply) {
 	sumAgentsInfo := make([]*agent.AgentInfo, 0)
 	for _, psp := range pspMap {
 		supplyType := simutil.CheckSupplyType(psp)
 		switch supplyType {
 		case "FORWARD_AGENTS_SUPPLY":
-			fmt.Println("registAgents")
 			forwardAgentsSupply := psp.GetArg_ForwardAgentsSupply()
 			agentsInfo := forwardAgentsSupply.AgentsInfo
 			sumAgentsInfo = append(sumAgentsInfo, agentsInfo...)
 		default:
-			fmt.Println("SupplyType is invalid")
+			//fmt.Println("SupplyType is invalid")
 		}
 	}
-
-	log.Printf("\x1b[30m\x1b[47m Sum of Agents: %v\x1b[0m\n", len(sumAgentsInfo))
+	log.Printf("\x1b[30m\x1b[47m \n FORWARD_CLOCK_FINISH \n TIME:  %v \n Agents Num: %v \x1b[0m\n", data.ClockInfo.Time, len(sumAgentsInfo))
 
 	if sumAgentsInfo != nil {
 		//fmt.Printf("\x1b[30m\x1b[47m agentsInfo is : %v\x1b[0m\n", uniqAgentsInfo)
 		jsonAgentsInfo := make([]string, 0)
 		for _, agentInfo := range sumAgentsInfo {
 			mm := &MapMarker{
-				mtype: int32(agentInfo.AgentType), // depends on type of Ped: 0, Car , 1, Train, 2, Bycycle 3
-				id:    int32(agentInfo.AgentId),
-				lat:   float32(agentInfo.Route.Coord.Lat),
-				lon:   float32(agentInfo.Route.Coord.Lon),
-				angle: float32(agentInfo.Route.Direction),
-				speed: int32(agentInfo.Route.Speed),
-				area:  int32(agentInfo.ControlArea),
-			}
-			jsonAgentsInfo = append(jsonAgentsInfo, mm.GetJson())
-		}
-		mu.Lock()
-		ioserv.BroadcastToAll("event", jsonAgentsInfo)
-		mu.Unlock()
-	}
-}
-
-// Fix now
-func sendToSimulator(psp *pb.Supply) {
-	forwardAgentsSupply := psp.GetArg_ForwardAgentsSupply()
-	agentsInfo := forwardAgentsSupply.AgentsInfo
-	if agentsInfo != nil {
-		fmt.Printf("\x1b[30m\x1b[47m agentsInfo is : %v\x1b[0m\n", agentsInfo)
-		jsonAgentsInfo := make([]string, 0)
-		for _, agentInfo := range agentsInfo {
-			mm := &MapMarker{
-				mtype: int32(agentInfo.AgentType), // depends on type of Ped: 0, Car , 1, Train, 2, Bycycle 3
+				mtype: int32(agentInfo.AgentType), // depends on type of Ped: 0, Car , 1
 				id:    int32(agentInfo.AgentId),
 				lat:   float32(agentInfo.Route.Coord.Lat),
 				lon:   float32(agentInfo.Route.Coord.Lon),
@@ -429,29 +383,18 @@ func sendToSimulator(psp *pb.Supply) {
 
 // Finish Fix
 func callbackStartClock(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	//mu.Lock()
-	//spMap[sp.SenderId] = sp
 	syncForwardCh <- sp
-	//mu.Unlock()
 
 }
 
 // Finish Fix
 func callbackSetAgent(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	log.Println("Got for set_agent callback")
-	//mu.Lock()
-	//spMap[sp.SenderId] = sp
 	syncGetAgentCh <- sp
-	//mu.Unlock()
 }
 
 // Finish Fix
 func callbackSetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	log.Printf("Got for set_participant callback %v", sp)
-	//mu.Lock()
-	//spMap[sp.SenderId] = sp
 	syncParticipantCh <- sp
-	//mu.Unlock()
 }
 
 // Finish Fix
@@ -511,7 +454,6 @@ func createSyncIdList(participantsInfo []*participant.ParticipantInfo) ([]uint32
 			setAgentIdList = append(setAgentIdList, agentChannelId)
 		}
 		if isForwardAgent {
-			fmt.Printf("Provider is %v, \n ", tProviderType.String())
 
 			channelId := participantInfo.ChannelId
 			agentChannelId := channelId.AgentChannelId
@@ -526,7 +468,6 @@ func createSyncIdList(participantsInfo []*participant.ParticipantInfo) ([]uint32
 		}
 
 	}
-	fmt.Printf("setAgentsIdList: %v, \n participantIdList:  %v,\n forwardAgentIdList:  %v ", setAgentIdList, participantIdList, forwardAgentIdList)
 	return setAgentIdList, participantIdList, forwardAgentIdList
 }
 

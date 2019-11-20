@@ -153,7 +153,6 @@ func calcRoutes(sLat float32, sLon float32, gLat float32, gLon float32, agentTyp
 		if i == 0 {
 			nextTransit = coord
 		}
-		log.Printf("\x1b[30m\x1b[47m coord is :i: %v:  %v\x1b[0m\n", i, coord)
 	}
 
 	routeInfo := &agent.RouteInfo{
@@ -225,6 +224,7 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	time := forwardClockDemand.Time
 	nextTime := time + 1
 	// calculation  area here
+	log.Printf("\x1b[30m\x1b[47m \n FORWARD_CLOCK_FINISH \n TIME: %v \x1b[0m\n", time)
 
 	// propose next clock
 	nextClockInfo := &clock.ClockInfo{
@@ -274,7 +274,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case "SET_AGENTS_DEMAND":
 		setAgents(clt, dm)
 	default:
-		log.Println("demand callback is invalid.")
+		//log.Println("demand callback is invalid.")
 	}
 }
 

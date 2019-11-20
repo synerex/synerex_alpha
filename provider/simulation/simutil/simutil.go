@@ -11,16 +11,14 @@ import (
 	//	"github.com/synerex/synerex_alpha/api/simulation/route"
 
 	//"time"
-	"context"
-	"log"
+
 	"math"
-	"sync"
 )
 
 var (
 	ch        chan *pb.Supply
 	startSync bool
-	mu        sync.Mutex
+	//mu        sync.Mutex
 )
 
 func init() {
@@ -140,6 +138,20 @@ func ConvertAgentsInfo(agentsInfo2 []AgentInfo) []*agent.AgentInfo {
 	return agentsInfo
 }
 
+func CreateOccupancyMap(areaInfo *area.AreaInfo, agentInfo []*agent.AgentInfo) [][][]uint32 {
+	occupancyMap := make([][][]uint32, 0)
+	//gridLength := 1  // meter
+
+	return occupancyMap
+}
+
+func UpdateOccupancyMap(areaInfo *area.AreaInfo, agentsInfo []*agent.AgentInfo) [][][]uint32 {
+	occupancyMap := make([][][]uint32, 0)
+	//gridLength := 1  // meter
+
+	return occupancyMap
+}
+
 func CalcDirectionAndDistance(sLat float32, sLon float32, gLat float32, gLon float32) (float32, float32) {
 
 	r := 6378137 // equatorial radius
@@ -161,33 +173,6 @@ func CalcDirectionAndDistance(sLat float32, sLon float32, gLat float32, gLon flo
 
 	return direction, distance
 }
-
-/*func CalcMovedLatLon(sLat float32, sLon float32, distance float32, direction float32) (float32, float32) {
-
-	r := float64(6378137) // equatorial radius
-	// 緯線、経線上の移動距離
-	latDistance := float64(distance) * math.Cos(float64(direction)*math.Pi/180)
-	lonDistance := float64(distance) * math.Sin(float64(direction)*math.Pi/180)
-
-	// 1mあたりの緯度
-	latEarthCircle := 2 * math.Pi * r
-	latParMeter := 360 / latEarthCircle
-
-	// 緯度の変化量
-	dLat := latDistance * latParMeter
-	newLat := sLat + float32(dLat)
-
-	// 1mあたりの経度
-	lonEarthRadius := r * math.Cos(float64(newLat)*math.Pi/100)
-	lonEarthCircle := 2 * math.Pi * lonEarthRadius
-	lonPerMeter := 360 / lonEarthCircle
-
-	// 経度の変化量
-	dLon := lonDistance * lonPerMeter
-	newLon := sLon + float32(dLon)
-
-	return newLat, newLon
-}*/
 
 // TODO: Why Calc Error ? newLat=nan and newLon = inf
 func CalcMovedLatLon(sLat float32, sLon float32, gLat float32, gLon float32, distance float32, speed float32) (float32, float32) {
@@ -430,20 +415,4 @@ func SendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts, dmMap 
 	dmMap[id] = opts            // my demand options
 	mu.Unlock()
 	return dmMap, idlist
-}
-
-func SubscribeSupply(client *sxutil.SMServiceClient, supplyCallback func(*sxutil.SMServiceClient, *pb.Supply), wg *sync.WaitGroup) {
-	//called as goroutine
-	ctx := context.Background() // should check proper context
-	client.SubscribeSupply(ctx, supplyCallback, wg)
-	// comes here if channel closed
-	log.Printf("SMarket Server Closed?")
-}
-
-func SubscribeDemand(client *sxutil.SMServiceClient, demandCallback func(*sxutil.SMServiceClient, *pb.Demand), wg *sync.WaitGroup) {
-	//called as goroutine
-	ctx := context.Background() // should check proper context
-	client.SubscribeDemand(ctx, demandCallback, wg)
-	// comes here if channel closed
-	log.Printf("SMarket Server Closed?")
 }

@@ -775,6 +775,15 @@ func generateUid(i int) uint32 {
 	return uint32(time)
 }
 
+func createRandomAgentType() string {
+	num := rand.Float32()
+	if num > 0.5 {
+		return "car"
+	} else {
+		return "pedestrian"
+	}
+}
+
 func handleOrder(order *Order) string {
 	target := order.Type
 	for _, sc := range cmdArray {
@@ -827,7 +836,7 @@ func handleOrder(order *Order) string {
 				for i := 0; i < agentNum; i++ {
 					agentInfo := AgentInfo{
 						Id:   generateUid(i),
-						Type: "pedestrian",
+						Type: createRandomAgentType(),
 						Status: Status{
 							Name: "A",
 							Age:  "20",

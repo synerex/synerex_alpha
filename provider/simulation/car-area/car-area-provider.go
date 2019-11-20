@@ -84,9 +84,10 @@ func init() {
 }
 
 type Data struct {
-	AreaInfo   *area.AreaInfo
-	ClockInfo  *clock.ClockInfo
-	AgentsInfo []*agent.AgentInfo
+	AreaInfo     *area.AreaInfo
+	ClockInfo    *clock.ClockInfo
+	AgentsInfo   []*agent.AgentInfo
+	OccupancyMap [][][]uint32
 }
 
 type History struct {
@@ -101,13 +102,10 @@ func wait(pspMap map[uint64]*pb.Supply, idList []uint32, syncCh chan *pb.Supply)
 		for {
 			select {
 			case psp := <-syncCh:
-				//log.Printf("\x1b[30m\x1b[47m GET SP IN CHANNEL %v\x1b[0m\n", psp)
 				mu.Lock()
 				pspMap[psp.SenderId] = psp
 
 				if simutil.CheckFinishSync(pspMap, idList) {
-					log.Printf("\x1b[30m\x1b[47m 3.5. wait finish\x1b[0m\n")
-					log.Println("WAIT_FINISH!")
 					mu.Unlock()
 					wg.Done()
 					return
@@ -189,11 +187,14 @@ func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		}
 	}
 
+	occupancyMap := simutil.CreateOccupancyMap(data.AreaInfo, data.AgentsInfo)
+	data.OccupancyMap = occupancyMap
+
 	if data.AreaInfo != nil && data.AgentsInfo != nil && data.ClockInfo != nil {
 		time := data.ClockInfo.Time
 		history.History[time] = data
 		history.CurrentTime = time
-		log.Printf("\x1b[30m\x1b[47m History is : %v\x1b[0m\n", history)
+		//log.Printf("\x1b[30m\x1b[47m History is : %v\x1b[0m\n", history)
 	}
 
 	setAgentsSupply := &agent.SetAgentsSupply{
@@ -256,11 +257,9 @@ func calcNextRoute(areaInfo *area.AreaInfo, agentInfo *agent.AgentInfo, otherAge
 				if tPoint.Lon == nextTransit2.Lon && tPoint.Lat == nextTransit2.Lat {
 					if i+1 == len(transitPoint) {
 						// pass all transit point
-						log.Printf("\x1b[30m\x1b[47m To Destination!\x1b[0m\n")
 						nextTransit = nil
 					} else {
 						// go to next transit point
-						log.Printf("\x1b[30m\x1b[47m To Next TransitPoint!\x1b[0m\n")
 						nextTransit = transitPoint[i+1]
 					}
 				}
@@ -326,7 +325,6 @@ func getAreaInfo() *area.AreaInfo {
 
 func getAgentsInfo() []*agent.GetAgentsSupply {
 
-	log.Println("WAIT_GET_AGENT")
 	if len(sameAreaIdList) != 0 {
 
 		// get Agent
@@ -345,16 +343,13 @@ func getAgentsInfo() []*agent.GetAgentsSupply {
 			JSON:            js4,
 			GetAgentsDemand: getAgentsDemand,
 		}
-		log.Printf("\x1b[30m\x1b[47m 1.2. SendSameAgentsDemand\x1b[0m\n")
 		dmMap, dmIdList = simutil.SendDemand(sclientAgent, opts4, dmMap, dmIdList)
 
 		//syncSameCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 		wait(samePspMap, sameAreaIdList, syncSameCh)
 	} else {
-		log.Println("SAME_AREA_NOTHING")
+		//log.Println("SAME_AREA_NOTHING")
 	}
-	//agentPspMap := <-pspCh
-	//spAgentsArgOneof := spAgent.GetArg_AgentsInfo()
 	getAgentsSupplies := make([]*agent.GetAgentsSupply, 0)
 	for _, agentPsp := range samePspMap {
 		getAgentsSupply := agentPsp.GetArg_GetAgentsSupply()
@@ -428,7 +423,8 @@ func calcAgentsInfo(currentAgentsInfo []*agent.AgentInfo, currentAreaInfo *area.
 
 // Finish Fix
 func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
-	log.Println("forwardClock")
+	log.Printf("FORWARD_CLOCK_START \n\n")
+
 	forwardClockDemand := dm.GetArg_ForwardClockDemand()
 	currentTime := forwardClockDemand.Time
 	currentClockInfo := data.ClockInfo
@@ -460,18 +456,15 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		JSON:                js2,
 		ForwardAgentsSupply: forwardAgentsSupply,
 	}
-	log.Printf("\x1b[30m\x1b[47m 1.8 SEND Forward Agent \x1b[0m\n")
 	spMap, spIdList = simutil.SendProposeSupply(sclientAgent, opts2, spMap, spIdList)
 
 	// update
-	log.Printf("\x1b[30m\x1b[47m 2. Wait Forward Same Area Agent \x1b[0m\n")
 	if len(neighborAreaIdList) != 0 {
 		//syncNeighborCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 		wait(neighborPspMap, neighborAreaIdList, syncNeighborCh)
 	} else {
-		log.Println("NEIGHBOR_AREA_NOTHING")
+		//log.Println("NEIGHBOR_AREA_NOTHING")
 	}
-	log.Printf("\x1b[30m\x1b[47m 4. Finish Get Forward Agent \x1b[0m\n")
 
 	// update Agents data
 	nextAgentsInfo := updateAgentsInfo(pureNextAgentsInfo, neighborPspMap, currentAreaInfo)
@@ -488,7 +481,6 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		StatusType: 0, // OK
 		Meta:       "",
 	}
-	log.Printf("\x1b[30m\x1b[47m 5. Send Forward Clock \x1b[0m\n")
 
 	nm3 := "forwardClock to clockCh respnse by car-area-provider"
 	js3 := ""
@@ -501,6 +493,9 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	spMap, spIdList = simutil.SendProposeSupply(sclientClock, opts3, spMap, spIdList)
 
 	// update data and history
+	occupancyMap := simutil.UpdateOccupancyMap(data.AreaInfo, nextAgentsInfo)
+	data.OccupancyMap = occupancyMap
+
 	nextClockInfo := &clock.ClockInfo{
 		Time: nextTime,
 	}
@@ -509,15 +504,11 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	//data.AreaInfo = nextAreaInfo
 	history.History[nextTime] = data
 	history.CurrentTime = nextTime
-	log.Printf("\x1b[30m\x1b[47m time is : %v\x1b[0m\n", currentTime)
-	for i, _ := range pureNextAgentsInfo {
-		log.Printf("\x1b[30m\x1b[47m pureAgentsInfo is : %v\x1b[0m\n", pureNextAgentsInfo[i].AgentId)
-	}
+
 	neighborPspMap = make(map[uint64]*pb.Supply)
 	samePspMap = make(map[uint64]*pb.Supply)
 
-	log.Printf("FORWARD_CLOCK_FINISH\n\n")
-	log.Printf("\x1b[30m\x1b[47m PURE_AGENT_NUM: %v \x1b[0m\n", len(pureNextAgentsInfo))
+	log.Printf("\x1b[30m\x1b[47m \n FORWARD_CLOCK_FINISH \n TIME: %v \n AGENT_NUM: %v \x1b[0m\n\n", currentTime, len(pureNextAgentsInfo))
 
 }
 
@@ -674,7 +665,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case "GET_AGENTS_DEMAND":
 		getAgents(clt, dm)
 	default:
-		log.Println("demand callback is invalid.")
+		//log.Println("demand callback is invalid.")
 	}
 }
 
@@ -682,40 +673,31 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 // callback for each Supply
 func proposeSupplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	supplyType := simutil.CheckSupplyType(sp)
-	fmt.Sprintf("getSupplyCallback", sp)
 	if simutil.IsSupplyTarget(sp, dmIdList) {
 		//supplyType := simutil.CheckSupplyType(sp)
 		switch supplyType {
 		case "GET_AREA_SUPPLY":
 			ch <- sp
-			fmt.Println("getArea")
 		case "GET_AGENTS_ROUTE_SUPPLY":
 			ch <- sp
-			fmt.Println("getAgentsRoute")
 		case "GET_AGENTS_SUPPLY":
-			fmt.Println("getAgents response in callback")
 			getAgentsSupply := sp.GetArg_GetAgentsSupply()
 			if getAgentsSupply.AreaId == uint32(*areaId) {
 				log.Printf("\x1b[30m\x1b[47m 1.3. GET_SAME_AREA_AGENTS\x1b[0m\n")
 				syncSameCh <- sp
 			}
 		default:
-			fmt.Println("error")
+			//fmt.Println("error")
 		}
 	}
 
 	// FORWARD_AGENTS_SUPPLY
 	if supplyType == "FORWARD_AGENTS_SUPPLY" {
-		fmt.Println("forwardAgents response in callback")
 		//mu.Lock()
 		forwardAgentsSupply := sp.GetArg_ForwardAgentsSupply()
 		// not equal areaId and not AreaProvider
 		if forwardAgentsSupply.AreaId != uint32(*areaId) && forwardAgentsSupply.AreaId != 0 {
-			//fmt.Printf("GET_NEIGHBOR_DATA %v\n", forwardAgentsSupply.AreaId == nil)
-			fmt.Printf("GET_NEIGHBOR_DATA %v\n", forwardAgentsSupply.AreaId == 0)
-			log.Printf("\x1b[30m\x1b[47m 3. get neighbor\x1b[0m\n")
 			syncNeighborCh <- sp
-
 		}
 	}
 

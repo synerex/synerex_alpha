@@ -297,6 +297,8 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	nextTime := time + 1
 	// calculation  area here
 
+	log.Printf("\x1b[30m\x1b[47m \n FORWARD_CLOCK_FINISH \n TIME: %v \x1b[0m\n", time)
+
 	// propose next clock
 	nextClockInfo := &clock.ClockInfo{
 		Time: nextTime,
@@ -356,7 +358,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case "GET_AGENTS_DEMAND":
 		getAgents(clt, dm)
 	default:
-		log.Println("demand callback is invalid.")
+		//log.Println("demand callback is invalid.")
 	}
 }
 

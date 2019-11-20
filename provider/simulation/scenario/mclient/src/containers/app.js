@@ -74,7 +74,7 @@ class App extends Container {
     }
 
     getEvent(socketsData){
-		console.log("Get event4 socketsData!!", socketsData)
+		//console.log("Get event4 socketsData!!", socketsData)
 	const {actions, movesbase, movedData} = this.props
 	const time = Date.now()/1000; // set time as now. (If data have time, ..)
 	const setMovesbase = [];
@@ -83,16 +83,14 @@ class App extends Container {
 	//const movedData2 = [...movedData]; // why copy !?
 
 	console.log("socketData length", socketsData.length)
-	console.log("movesbasedata length", movesbasedata.length)
+	//console.log("movesbasedata length", movesbasedata.length)
 
-	var count = 0
 	socketsData.forEach((socketData) => {
 		const {mtype, id,  lat, lon, angle, speed, area } = JSON.parse(socketData);
 		
 		let hit = false;
 		movesbasedata.forEach((movedata)=>{
 			if(mtype === movedata.mtype && id === movedata.id){
-				count++;
 				hit = true;
 				movedata.arrivaltime = time;		
 				movedata.operation.push({
@@ -100,20 +98,25 @@ class App extends Container {
 		    		position:[lon, lat, 0],
 		    		angle,speed
 				});
+				
 
 				setMovesbase.push(movedata);
 			}
 		})
 
 		if(!hit){
+			let color = [0, 200, 0]
+			if (mtype === 0) {
+				color = [0, 200, 120]
+			}
 	    	setMovesbase.push({
 				mtype, id,
 				departuretime:time,
 				arrivaltime: time,
 				operation: [{
 		    	elapsedtime:time,
-		    	position:[lon, lat, 0],
-		    	angle, speed
+				position:[lon, lat, 0],
+				angle, speed
 				}]
 	   		});
 			/*setMovedData.push({
@@ -122,8 +125,6 @@ class App extends Container {
 		}
 	});
 
-
-	console.log("id match num", count)
 	console.log("lenth before", setMovesbase.length)
 		actions.updateMovesBase(setMovesbase);
 		//actions.updateMovedData(setMovedData);
@@ -191,8 +192,26 @@ class App extends Container {
 	const props = this.props;
 	const { actions, clickedObject, inputFileName, viewport, deoptsData, loading,
 		routePaths, lightSettings, movesbase, movedData } = props;
-//	var movedData2 = [...movedData]
-//	const { movesFileName } = inputFileName;
+	/*var pedMovesbase = []
+	var pedMovedData = []
+	var carMovesbase = []
+	var carMovedData = []
+	var movedDataInfo = [...movedData]
+	movesbase.forEach((movebase, index)=>{
+		let mtype = movebase.mtype
+		if (mtype === 0){	// ped
+			pedMovesbase.push(movebase)
+			pedMovedData.push(movedDataInfo[index])
+		}else if(mtype === 1){
+			carMovesbase.push(movebase)
+			carMovedData.push(movedDataInfo[index])
+		}
+	})
+	console.log("pedmobes", pedMovesbase)
+		console.log("pedmovedData", pedMovedData)
+		console.log("carmobes", carMovesbase)
+		console.log("carmovedData", carMovedData)*/
+
 	const optionVisible = false;
 	const onHover = (el) => {
 	    if (el && el.object) {
@@ -231,8 +250,9 @@ class App extends Container {
 				     clickedObject, actions, lightSettings,
 				     visible: this.state.moveDataVisible,
 				     optionVisible: this.state.moveOptionVisible,
-				     optionChange: this.state.optionChange,
-				     onHover})
+					 optionChange: this.state.optionChange,
+					 iconChange: false,
+					 onHover}),
 			]:[
 				new LineMapLayer( {viewport, linemapData: this.state.linemapData }),
 			]
