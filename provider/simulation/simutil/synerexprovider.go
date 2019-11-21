@@ -2,6 +2,7 @@ package simutil
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sync"
 
@@ -15,30 +16,31 @@ import (
 
 var (
 	mu sync.Mutex
+	//waitCh chan *pb.Supply
 )
 
 func init() {
+	//waitCh = make(chan *pb.Supply)
 }
 
+//Todo なぜかエージェントが減る
 // SynerexSimulator :
 type SynerexProvider struct {
-	DmMap             map[uint64]*sxutil.DemandOpts
-	DmIdList          []uint64
-	SpMap             map[uint64]*sxutil.SupplyOpts
-	SpIdList          []uint64
-	AgentClient       *sxutil.SMServiceClient
-	ClockClient       *sxutil.SMServiceClient
-	AreaClient        *sxutil.SMServiceClient
-	RouteClient       *sxutil.SMServiceClient
-	ParticipantClient *sxutil.SMServiceClient
+	DmMap              map[uint64]*sxutil.DemandOpts
+	SpMap              map[uint64]*sxutil.SupplyOpts
+	SameAreaIdList     []uint64
+	NeighborAreaIdList []uint64
+	AgentClient        *sxutil.SMServiceClient
+	ClockClient        *sxutil.SMServiceClient
+	AreaClient         *sxutil.SMServiceClient
+	RouteClient        *sxutil.SMServiceClient
+	ParticipantClient  *sxutil.SMServiceClient
 }
 
 func NewSynerexProvider() *SynerexProvider {
 	s := &SynerexProvider{
-		DmMap:    make(map[uint64]*sxutil.DemandOpts),
-		DmIdList: make([]uint64, 0),
-		SpMap:    make(map[uint64]*sxutil.SupplyOpts),
-		SpIdList: make([]uint64, 0),
+		DmMap: make(map[uint64]*sxutil.DemandOpts),
+		SpMap: make(map[uint64]*sxutil.SupplyOpts),
 	}
 	return s
 }
@@ -63,18 +65,26 @@ func (s *SynerexProvider) RegisterClient(client pb.SynerexClient, channelTypes [
 
 }
 
+func (s *SynerexProvider) SetRelateAreaIdList(sameAreaIdList []uint64, neighborAreaIdList []uint64) {
+	s.SameAreaIdList = sameAreaIdList
+	s.NeighborAreaIdList = neighborAreaIdList
+}
+
 // AddAgent :　エージェントを追加する関数
-func Wait(pspMap map[uint64]*pb.Supply, idList []uint32, syncCh chan *pb.Supply) {
+func (s *SynerexProvider) Wait(idList []uint64, waitCh chan *pb.Supply) map[uint64]*pb.Supply {
 	wg := sync.WaitGroup{}
 	mu := sync.Mutex{}
 	wg.Add(1)
+	pspMap := make(map[uint64]*pb.Supply)
 	go func() {
 		for {
 			select {
-			case psp := <-syncCh:
+			case psp := <-waitCh:
+
 				mu.Lock()
 				pspMap[psp.SenderId] = psp
-				if isFinishSynerexProvider(pspMap, idList) {
+				fmt.Printf("get fromsendTowait %v\n, %v\n", uint32(psp.SenderId), uint32(idList[0]))
+				if isFinishSync(pspMap, idList) {
 
 					mu.Unlock()
 					wg.Done()
@@ -86,15 +96,21 @@ func Wait(pspMap map[uint64]*pb.Supply, idList []uint32, syncCh chan *pb.Supply)
 		}
 	}()
 	wg.Wait()
+	return pspMap
 }
 
-// isFinishSynerexProvider :
-func isFinishSynerexProvider(pspMap map[uint64]*pb.Supply, idlist []uint32) bool {
+func (s *SynerexProvider) SendToWait(sp *pb.Supply, waitCh chan *pb.Supply) {
+	fmt.Printf("sendTowait")
+	waitCh <- sp
+}
+
+// isFinishSync :
+func isFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint64) bool {
 	for _, id := range idlist {
 		isMatch := false
 		for _, sp := range pspMap {
 			senderId := uint32(sp.SenderId)
-			if id == senderId {
+			if uint32(id) == senderId {
 				isMatch = true
 			}
 		}
@@ -103,6 +119,17 @@ func isFinishSynerexProvider(pspMap map[uint64]*pb.Supply, idlist []uint32) bool
 		}
 	}
 	return true
+}
+
+func (s *SynerexProvider) IsSupplyTarget(sp *pb.Supply) bool {
+	spid := sp.TargetId
+	for id, _ := range s.DmMap {
+		//fmt.Printf("demandOpts %v, %v \n", demandOpts, i)
+		if id == spid {
+			return true
+		}
+	}
+	return false
 }
 
 // getAgentsDemand :　同じエリアのエージェント情報を取得する
@@ -285,24 +312,21 @@ func (s *SynerexProvider) GetAgentsSupply(tid uint64, time uint32, areaId uint32
 func (s *SynerexProvider) sendProposeSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts) {
 	mu.Lock()
 	id := sclient.ProposeSupply(opts)
-	s.SpIdList = append(s.SpIdList, id) // my demand list
-	s.SpMap[id] = opts                  // my demand options
+	s.SpMap[id] = opts // my demand options
 	mu.Unlock()
 }
 
 func (s *SynerexProvider) sendSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts) {
 	mu.Lock()
 	id := sclient.RegisterSupply(opts)
-	s.SpIdList = append(s.SpIdList, id) // my demand list
-	s.SpMap[id] = opts                  // my demand options
+	s.SpMap[id] = opts // my demand options
 	mu.Unlock()
 }
 
 func (s *SynerexProvider) sendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts) {
 	mu.Lock()
 	id := sclient.RegisterDemand(opts)
-	s.DmIdList = append(s.DmIdList, id) // my demand list
-	s.DmMap[id] = opts                  // my demand options
+	s.DmMap[id] = opts // my demand options
 	mu.Unlock()
 }
 

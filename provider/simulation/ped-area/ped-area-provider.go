@@ -26,82 +26,27 @@ var (
 	cycleNum            = flag.Int("num", 1, "Num")
 	cycleInterval       = flag.Int("interval", 1, "Interval")
 	cycleDuration       = flag.Int("duration", 1, "Duration")
-	idListByChannel     *simutil.IdListByChannel
-	sameAreaIdList      []uint32
-	neighborAreaIdList  []uint32
-	isGetParticipant    bool
-	pspMap              map[uint64]*pb.Supply
-	neighborPspMap      map[uint64]*pb.Supply
-	samePspMap          map[uint64]*pb.Supply
-	selection           bool
-	startCollectId      bool
-	startSync           bool
 	mu                  sync.Mutex
 	ch                  chan *pb.Supply
-	syncSameCh          chan *pb.Supply
-	syncNeighborCh      chan *pb.Supply
-	participantsInfo    []*participant.ParticipantInfo
-	isFinishSync        bool
-	CHANNEL_BUFFER_SIZE int
+	sameCh              chan *pb.Supply
+	neighborCh          chan *pb.Supply
 	sprovider           *simutil.SynerexProvider
 	sim                 *simutil.SynerexSimulator
+	CHANNEL_BUFFER_SIZE int
 )
 
 func init() {
 	CHANNEL_BUFFER_SIZE = 10
-	isGetParticipant = false
-	pspMap = make(map[uint64]*pb.Supply)
-	neighborPspMap = make(map[uint64]*pb.Supply)
-	samePspMap = make(map[uint64]*pb.Supply)
-	selection = false
-	startCollectId = false
-	startSync = false
-	isFinishSync = false
 	ch = make(chan *pb.Supply)
-	syncNeighborCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	syncSameCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-}
-
-func isContainNeighborMap(areaId uint32) bool {
-	neighborMap := sim.Area.NeighborArea
-	for _, neighborId := range neighborMap {
-		if areaId == neighborId {
-			return true
-		}
-	}
-	return false
-}
-
-func wait(pspMap map[uint64]*pb.Supply, idList []uint32, syncCh chan *pb.Supply) {
-	wg := sync.WaitGroup{}
-	wg.Add(1)
-	go func() {
-		for {
-			select {
-			case psp := <-syncCh:
-				mu.Lock()
-				pspMap[psp.SenderId] = psp
-				if simutil.CheckFinishSync(pspMap, idList) {
-
-					mu.Unlock()
-					wg.Done()
-					return
-				}
-				mu.Unlock()
-
-			}
-		}
-	}()
-	wg.Wait()
+	neighborCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	sameCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 }
 
 // Finish Fix
 // when start up,
 func setArea() {
-	log.Println("setArea")
 
 	sprovider.GetAreaDemand(uint32(*clockTime), uint32(*areaId))
-
 	sp := <-ch
 	getAreaSupply := sp.GetArg_GetAreaSupply()
 	areaInfo := getAreaSupply.AreaInfo
@@ -117,9 +62,8 @@ func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 
 	// get route demand
 	sprovider.GetAgentsRouteDemand(agentsInfo)
-
+	log.Println("setAgent2")
 	sp := <-ch
-	//wait()
 	log.Println("GET_AGENTS_ROUTE_FINISH")
 	getAgentsRouteSupply := sp.GetArg_GetAgentsRouteSupply()
 	agentsInfo = getAgentsRouteSupply.AgentsInfo
@@ -148,83 +92,11 @@ func setClock() {
 	//data.ClockInfo = clockInfo
 }
 
-// Finish Fix
-func calcNextRoute(areaInfo *area.AreaInfo, agentInfo *agent.AgentInfo, otherAgentsInfo []*agent.AgentInfo) *agent.Route {
-
-	route := agentInfo.Route
-	speed := route.Speed
-	currentLocation := route.Coord
-	nextTransit := route.RouteInfo.NextTransit
-	transitPoint := route.RouteInfo.TransitPoint
-	destination := route.Destination
-	// passed all transit point
-	if nextTransit != nil {
-		destination = nextTransit
-	}
-
-	direction, distance := simutil.CalcDirectionAndDistance(currentLocation.Lat, currentLocation.Lon, destination.Lat, destination.Lon)
-	//newLat, newLon := simutil.CalcMovedLatLon(currentLocation.Lat, currentLocation.Lon, speed*1000/3600, direction)
-	newLat, newLon := simutil.CalcMovedLatLon(currentLocation.Lat, currentLocation.Lon, destination.Lat, destination.Lon, distance, speed)
-
-	// upate next trasit point
-	if distance < 10 {
-		if nextTransit != nil {
-			nextTransit2 := nextTransit
-			for i, tPoint := range transitPoint {
-				if tPoint.Lon == nextTransit2.Lon && tPoint.Lat == nextTransit2.Lat {
-					if i+1 == len(transitPoint) {
-						// pass all transit point
-						nextTransit = nil
-					} else {
-						// go to next transit point
-						nextTransit = transitPoint[i+1]
-					}
-				}
-			}
-		} else {
-			log.Printf("\x1b[30m\x1b[47m Arrived Destination! \x1b[0m\n")
-		}
-
-	}
-
-	nextCoord := &agent.Coord{
-		Lat: currentLocation.Lat,
-		Lon: currentLocation.Lon,
-	}
-	//TODO: Fix this
-	if newLat < 40 && newLat > 0 && newLon < 150 && newLon > 0 {
-		nextCoord = &agent.Coord{
-			Lat: newLat,
-			Lon: newLon,
-		}
-	} else {
-		log.Printf("\x1b[30m\x1b[47m LOCATION CULC ERROR %v \x1b[0m\n", nextCoord)
-
-	}
-
-	routeInfo := &agent.RouteInfo{
-		TransitPoint:  transitPoint,
-		NextTransit:   nextTransit,
-		TotalDistance: route.RouteInfo.TotalDistance,
-		RequiredTime:  route.RouteInfo.RequiredTime,
-	}
-	nextRoute := &agent.Route{
-		Coord:       nextCoord,
-		Direction:   float32(direction),
-		Speed:       float32(speed),
-		Destination: route.Destination,
-		Departure:   route.Departure,
-		RouteInfo:   routeInfo,
-	}
-	return nextRoute
-}
-
 func getAreaInfo() *area.AreaInfo {
 
 	sprovider.GetAreaDemand(uint32(*clockTime), uint32(*areaId))
 
 	sp := <-ch
-	//wait()
 	log.Println("GET_AREA_FINISH")
 	getAreaSupply := sp.GetArg_GetAreaSupply()
 	areaInfo := getAreaSupply.AreaInfo
@@ -232,78 +104,26 @@ func getAreaInfo() *area.AreaInfo {
 	return areaInfo
 }
 
-func getAgentsInfo() []*agent.GetAgentsSupply {
+func getSameAreaAgents() []*agent.AgentInfo {
 
-	if len(sameAreaIdList) != 0 {
+	sameAreaAgents := make([]*agent.AgentInfo, 0)
+	if len(sprovider.SameAreaIdList) != 0 {
 
 		// get Agent
 		sprovider.GetAgentsDemand(uint32(1), uint32(*areaId))
 
-		wait(samePspMap, sameAreaIdList, syncSameCh)
+		sameAreaPspMap := sprovider.Wait(sprovider.SameAreaIdList, sameCh)
+		fmt.Printf("sameArea: %v\n", sameAreaPspMap)
+		for _, agentPsp := range sameAreaPspMap {
+			getAgentsSupply := agentPsp.GetArg_GetAgentsSupply()
+			sameAreaAgents = append(sameAreaAgents, getAgentsSupply.AgentsInfo...)
+		}
 	} else {
 		//log.Println("SAME_AREA_NOTHING")
 	}
-	getAgentsSupplies := make([]*agent.GetAgentsSupply, 0)
-	for _, agentPsp := range samePspMap {
-		getAgentsSupply := agentPsp.GetArg_GetAgentsSupply()
-		getAgentsSupplies = append(getAgentsSupplies, getAgentsSupply)
-	}
-	return getAgentsSupplies
-}
+	fmt.Printf("sameArea: %v\n", sameAreaAgents)
 
-func updateAgentsInfo(pureNextAgentsInfo []*agent.AgentInfo, neighborPspMap map[uint64]*pb.Supply, currentAreaInfo *area.AreaInfo) []*agent.AgentInfo {
-	nextAgentsInfo := pureNextAgentsInfo
-	for _, psp := range neighborPspMap {
-		forwardAgentsSupply := psp.GetArg_ForwardAgentsSupply()
-		agentsInfo := forwardAgentsSupply.AgentsInfo
-		for _, neighborAgentInfo := range agentsInfo {
-			//　隣のエージェントが自分のエリアにいてかつ自分のエリアのエージェントと被ってない場合更新
-			//log.Printf("IS_AGENT_IN_AREA: %v", simutil.IsAgentInArea(neighborAgentInfo, sim.Area, int32(*agentType)))
-			if len(pureNextAgentsInfo) == 0 {
-				if simutil.IsAgentInArea(neighborAgentInfo, currentAreaInfo, int32(*agentType)) {
-					//log.Println("CHANGE_AREA1!!!")
-					nextAgentsInfo = append(nextAgentsInfo, neighborAgentInfo)
-				}
-			} else {
-				isAppendAgent := false
-				for _, sameAreaAgent := range pureNextAgentsInfo {
-					if neighborAgentInfo.AgentId != sameAreaAgent.AgentId && simutil.IsAgentInArea(neighborAgentInfo, currentAreaInfo, int32(*agentType)) {
-						isAppendAgent = true
-					}
-				}
-				if isAppendAgent {
-					//log.Println("CHANGE_AREA2!!!")
-					nextAgentsInfo = append(nextAgentsInfo, neighborAgentInfo)
-				}
-			}
-		}
-	}
-	return nextAgentsInfo
-}
-
-func calcAgentsInfo(currentAgentsInfo []*agent.AgentInfo, currentAreaInfo *area.AreaInfo, currentTime uint32, sameAreaAgentsSupply []*agent.GetAgentsSupply) []*agent.AgentInfo {
-	// calc agent
-	otherAgentsInfo := make([]*agent.AgentInfo, 0)
-	pureNextAgentsInfo := make([]*agent.AgentInfo, 0)
-	for _, agentInfo := range currentAgentsInfo {
-		// 自エリアにいる場合、次のルートを計算する
-		if simutil.IsAgentInControlledArea(agentInfo, currentAreaInfo, int32(*agentType)) {
-
-			nextRoute := calcNextRoute(currentAreaInfo, agentInfo, otherAgentsInfo)
-
-			pureNextAgentInfo := &agent.AgentInfo{
-				Time:        currentTime + 1,
-				AgentId:     agentInfo.AgentId,
-				AgentType:   agentInfo.AgentType,
-				AgentStatus: agentInfo.AgentStatus,
-				Route:       nextRoute,
-			}
-
-			pureNextAgentsInfo = append(pureNextAgentsInfo, pureNextAgentInfo)
-		}
-	}
-
-	return pureNextAgentsInfo
+	return sameAreaAgents
 }
 
 // Finish Fix
@@ -317,35 +137,39 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		CycleNum:      uint32(*cycleNum),
 		CycleInterval: uint32(*cycleInterval),
 	}
-	currentAreaInfo := sim.Area
-	currentAgentsInfo := sim.Agents
 	nextTime := time + 1
-	// update Agents data
-	sameAreaAgentsSupply := getAgentsInfo()
+
+	// 同じエリアにいるエージェントを取得する
+	sameAreaAgents := getSameAreaAgents()
 
 	// 次の時間のエージェントを計算する。重複エリアの更新をすませてないのでpureNextAgentsInfoとしている
-	pureNextAgentsInfo := calcAgentsInfo(currentAgentsInfo, currentAreaInfo, time, sameAreaAgentsSupply)
+	pureNextAgents := sim.CalcNextAgents(sameAreaAgents)
 
-	sprovider.ForwardAgentsSupply(dm.GetId(), nextTime, uint32(*areaId), pureNextAgentsInfo)
+	// 計算後のエージェントを同じエリアの異種エージェントプロバイダへ送る
+	sprovider.ForwardAgentsSupply(dm.GetId(), nextTime, uint32(*areaId), pureNextAgents)
 
-	if len(neighborAreaIdList) != 0 {
-		//syncNeighborCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-		wait(neighborPspMap, neighborAreaIdList, syncNeighborCh)
+	// 同じエリアの異種エージェントプロバイダから計算後のエージェント情報を取得する
+	neighborAgents := make([]*agent.AgentInfo, 0)
+	if len(sprovider.NeighborAreaIdList) != 0 {
+		fmt.Printf("neihg")
+		neighborPspMap := sprovider.Wait(sprovider.NeighborAreaIdList, neighborCh)
+		for _, psp := range neighborPspMap {
+			forwardAgentsSupply := psp.GetArg_ForwardAgentsSupply()
+			neighborAgents = append(neighborAgents, forwardAgentsSupply.AgentsInfo...)
+		}
 	} else {
 		//log.Println("NEIGHBOR_AREA_NOTHING")
 	}
 
 	// update Agents data
-	nextAgentsInfo := updateAgentsInfo(pureNextAgentsInfo, neighborPspMap, currentAreaInfo)
+	nextAgentsInfo := sim.UpdateDuplicateAgents(pureNextAgents, neighborAgents)
 
 	// propose clockInfo
 	sprovider.ForwardClockSupply(dm.GetId(), currentClockInfo)
 	sim.Agents = nextAgentsInfo
 	sim.GlobalTime = float64(nextTime)
 
-	neighborPspMap = make(map[uint64]*pb.Supply)
-	samePspMap = make(map[uint64]*pb.Supply)
-	log.Printf("\x1b[30m\x1b[47m \n FORWARD_CLOCK_FINISH \n TIME: %v \n AGENT_NUM: %v \x1b[0m\n", time, len(pureNextAgentsInfo))
+	log.Printf("\x1b[30m\x1b[47m \n FORWARD_CLOCK_FINISH \n TIME: %v \n AGENT_NUM: %v \x1b[0m\n", time, len(pureNextAgents))
 
 }
 
@@ -370,38 +194,15 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 
 }
 
-// create sync id list
-func createSyncIdList(participantsInfo []*participant.ParticipantInfo) ([]uint32, []uint32) {
-	sameAreaIdList := make([]uint32, 0)
-	neighborAreaIdList := make([]uint32, 0)
-
-	for _, participantInfo := range participantsInfo {
-		tAgentType := participantInfo.AgentType
-		tAreaId := participantInfo.AreaId
-		isNeighborArea := isContainNeighborMap(tAreaId) && int(tAgentType) == *agentType
-		isSameArea := int(tAreaId) == *areaId && int(tAgentType) != *agentType
-		if isNeighborArea {
-			channelId := participantInfo.ChannelId
-			agentChannelId := channelId.AgentChannelId
-			neighborAreaIdList = append(neighborAreaIdList, agentChannelId)
-		}
-		if isSameArea {
-			channelId := participantInfo.ChannelId
-			agentChannelId := channelId.AgentChannelId
-			sameAreaIdList = append(sameAreaIdList, agentChannelId)
-		}
-	}
-
-	return sameAreaIdList, neighborAreaIdList
-}
-
 // Finish Fix
 func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	log.Println("setParticipant")
 	setParticipantDemand := dm.GetArg_SetParticipantDemand()
 
-	participantsInfo = setParticipantDemand.ParticipantsInfo
-	sameAreaIdList, neighborAreaIdList = createSyncIdList(participantsInfo)
+	participantsInfo := setParticipantDemand.ParticipantsInfo
+	fmt.Printf("participants: %v\n", participantsInfo)
+	sameAreaIdList, neighborAreaIdList := sim.CreateSyncIdList(participantsInfo)
+	sprovider.SetRelateAreaIdList(sameAreaIdList, neighborAreaIdList)
 	fmt.Printf("Same %v", sameAreaIdList)
 	fmt.Printf("Neighbor %v", neighborAreaIdList)
 
@@ -424,11 +225,11 @@ func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 
 // Finish Fix
 func getAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
-	log.Println("getAgents")
+	log.Printf("getAgents %v", dm)
 
 	getAgentsDemand := dm.GetArg_GetAgentsDemand()
 	//log.Printf("info %v, %v, %v, %v", int(getAgentsDemand.AreaId), *areaId, int(getAgentsDemand.AgentType), *agentType)
-	isNeighborArea := isContainNeighborMap(getAgentsDemand.AreaId)
+	isNeighborArea := sim.IsContainNeighborMap(getAgentsDemand.AreaId)
 	isSameArea := int(getAgentsDemand.AreaId) == *areaId && int(getAgentsDemand.AgentType) != *agentType
 	if isSameArea || isNeighborArea {
 
@@ -460,18 +261,21 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 
 // Finish Fix
 // callback for each Supply
-func proposeSupplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
+func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
+
 	supplyType := simutil.CheckSupplyType(sp)
-	if simutil.IsSupplyTarget(sp, sprovider.DmIdList) {
+	if sprovider.IsSupplyTarget(sp) {
 		switch supplyType {
 		case "GET_AREA_SUPPLY":
 			ch <- sp
 		case "GET_AGENTS_ROUTE_SUPPLY":
 			ch <- sp
 		case "GET_AGENTS_SUPPLY":
+			fmt.Printf("asdf2")
 			getAgentsSupply := sp.GetArg_GetAgentsSupply()
 			if getAgentsSupply.AreaId == uint32(*areaId) {
-				syncSameCh <- sp
+				//ch <- sp
+				sprovider.SendToWait(sp, sameCh)
 			}
 		default:
 			//fmt.Println("error")
@@ -481,12 +285,13 @@ func proposeSupplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	// FORWARD_AGENTS_SUPPLY
 	//supplyType := simutil.CheckSupplyType(sp)
 	if supplyType == "FORWARD_AGENTS_SUPPLY" {
+		fmt.Printf("asdf")
 		//mu.Lock()
 		forwardAgentsSupply := sp.GetArg_ForwardAgentsSupply()
 		// not equal areaId and not AreaProvider
 		if forwardAgentsSupply.AreaId != uint32(*areaId) && forwardAgentsSupply.AreaId != 0 {
-			syncNeighborCh <- sp
-
+			//ch <- sp
+			sprovider.SendToWait(sp, neighborCh)
 		}
 	}
 
@@ -546,19 +351,19 @@ func main() {
 	wg.Wait()
 
 	wg.Add(1)
-	go simutil.SubscribeSupply(sprovider.AreaClient, proposeSupplyCallback, &wg)
+	go simutil.SubscribeSupply(sprovider.AreaClient, supplyCallback, &wg)
 	wg.Wait()
 
 	wg.Add(1)
-	go simutil.SubscribeSupply(sprovider.AgentClient, proposeSupplyCallback, &wg)
+	go simutil.SubscribeSupply(sprovider.AgentClient, supplyCallback, &wg)
 	wg.Wait()
 
 	wg.Add(1)
-	go simutil.SubscribeSupply(sprovider.ParticipantClient, proposeSupplyCallback, &wg)
+	go simutil.SubscribeSupply(sprovider.ParticipantClient, supplyCallback, &wg)
 	wg.Wait()
 
 	wg.Add(1)
-	go simutil.SubscribeSupply(sprovider.RouteClient, proposeSupplyCallback, &wg)
+	go simutil.SubscribeSupply(sprovider.RouteClient, supplyCallback, &wg)
 	wg.Wait()
 
 	// start up(setArea)

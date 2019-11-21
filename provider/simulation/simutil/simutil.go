@@ -188,11 +188,11 @@ func CalcMovedLatLon(sLat float32, sLon float32, gLat float32, gLon float32, dis
 	return newLat, newLon
 }
 
-func CheckFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint32) bool {
+func CheckFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint64) bool {
 	for _, id := range idlist {
 		isMatch := false
 		for _, sp := range pspMap {
-			senderId := uint32(sp.SenderId)
+			senderId := uint64(sp.SenderId)
 			if id == senderId {
 				isMatch = true
 			}

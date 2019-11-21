@@ -836,7 +836,7 @@ func handleOrder(order *Order) string {
 				for i := 0; i < agentNum; i++ {
 					agentInfo := AgentInfo{
 						Id:   generateUid(i),
-						Type: createRandomAgentType(),
+						Type: "pedestrian",
 						Status: Status{
 							Name: "A",
 							Age:  "20",
