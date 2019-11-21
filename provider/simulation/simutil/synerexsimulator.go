@@ -20,12 +20,12 @@ type SynerexSimulator struct {
 
 //Todo: agentType
 // NewSenerexSimulator:
-func NewSynerexSimulator(timeStep float64, agentType uint64, globalTime float64) *SynerexSimulator {
+func NewSynerexSimulator(timeStep float64, agentType int32, globalTime float64) *SynerexSimulator {
 
 	sim := &SynerexSimulator{
 		TimeStep:   timeStep,
 		Agents:     make([]*agent.AgentInfo, 0),
-		AgentType:  0,
+		AgentType:  agentType,
 		Area:       &area.AreaInfo{},
 		GlobalTime: globalTime,
 	}

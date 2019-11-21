@@ -133,11 +133,11 @@ func (s *SynerexProvider) IsSupplyTarget(sp *pb.Supply) bool {
 }
 
 // getAgentsDemand :　同じエリアのエージェント情報を取得する
-func (s *SynerexProvider) GetAgentsDemand(time uint32, areaId uint32) {
+func (s *SynerexProvider) GetAgentsDemand(time uint32, areaId uint32, agentType agent.AgentType) {
 	getAgentsDemand := &agent.GetAgentsDemand{
 		Time:       time,
 		AreaId:     areaId,
-		AgentType:  0, //Ped
+		AgentType:  agentType,
 		StatusType: 2, // NONE
 		Meta:       "",
 	}
@@ -182,11 +182,11 @@ func (s *SynerexProvider) GetAgentsRouteDemand(agentsInfo []*agent.AgentInfo) {
 }
 
 // setAgentsSupply :　setAgentDemandに対する応答
-func (s *SynerexProvider) SetAgentsSupply(tid uint64, time uint32, areaId uint32) {
+func (s *SynerexProvider) SetAgentsSupply(tid uint64, time uint32, areaId uint32, agentType agent.AgentType) {
 	setAgentsSupply := &agent.SetAgentsSupply{
 		Time:       time,
 		AreaId:     areaId,
-		AgentType:  0, // Ped
+		AgentType:  agentType,
 		StatusType: 0,
 		Meta:       "",
 	}
@@ -204,11 +204,11 @@ func (s *SynerexProvider) SetAgentsSupply(tid uint64, time uint32, areaId uint32
 }
 
 // forwardAgentsSupply :　次の時刻のエージェント情報をSupplyする
-func (s *SynerexProvider) ForwardAgentsSupply(tid uint64, time uint32, areaId uint32, agentsInfo []*agent.AgentInfo) {
+func (s *SynerexProvider) ForwardAgentsSupply(tid uint64, time uint32, areaId uint32, agentsInfo []*agent.AgentInfo, agentType agent.AgentType) {
 	forwardAgentsSupply := &agent.ForwardAgentsSupply{
 		Time:       time,
 		AreaId:     areaId,
-		AgentType:  0, //Ped
+		AgentType:  agentType,
 		AgentsInfo: agentsInfo,
 		StatusType: 0, //OK
 		Meta:       "",
@@ -288,11 +288,11 @@ func (s *SynerexProvider) SetParticipantSupply(tid uint64, participantInfo *part
 }
 
 // getAgentsSupply :　同じエリアのエージェント情報を提供する
-func (s *SynerexProvider) GetAgentsSupply(tid uint64, time uint32, areaId uint32, agentsInfo []*agent.AgentInfo) {
+func (s *SynerexProvider) GetAgentsSupply(tid uint64, time uint32, areaId uint32, agentsInfo []*agent.AgentInfo, agentType agent.AgentType) {
 	getAgentsSupply := &agent.GetAgentsSupply{
 		Time:       time,
 		AreaId:     areaId,
-		AgentType:  0, //Ped
+		AgentType:  agentType, //Ped
 		AgentsInfo: agentsInfo,
 		StatusType: 0, //OK
 		Meta:       "",

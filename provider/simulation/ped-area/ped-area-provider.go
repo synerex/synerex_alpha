@@ -79,7 +79,7 @@ func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		}
 	}
 
-	sprovider.SetAgentsSupply(dm.GetId(), 1, uint32(*areaId))
+	sprovider.SetAgentsSupply(dm.GetId(), 1, uint32(*areaId), agent.AgentType(*agentType))
 }
 
 // Finish Fix
@@ -110,7 +110,7 @@ func getSameAreaAgents() []*agent.AgentInfo {
 	if len(sprovider.SameAreaIdList) != 0 {
 
 		// get Agent
-		sprovider.GetAgentsDemand(uint32(1), uint32(*areaId))
+		sprovider.GetAgentsDemand(uint32(1), uint32(*areaId), agent.AgentType(*agentType))
 
 		sameAreaPspMap := sprovider.Wait(sprovider.SameAreaIdList, sameCh)
 		fmt.Printf("sameArea: %v\n", sameAreaPspMap)
@@ -146,7 +146,7 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	pureNextAgents := sim.CalcNextAgents(sameAreaAgents)
 
 	// 計算後のエージェントを同じエリアの異種エージェントプロバイダへ送る
-	sprovider.ForwardAgentsSupply(dm.GetId(), nextTime, uint32(*areaId), pureNextAgents)
+	sprovider.ForwardAgentsSupply(dm.GetId(), nextTime, uint32(*areaId), pureNextAgents, agent.AgentType(*agentType))
 
 	// 同じエリアの異種エージェントプロバイダから計算後のエージェント情報を取得する
 	neighborAgents := make([]*agent.AgentInfo, 0)
@@ -234,7 +234,7 @@ func getAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	if isSameArea || isNeighborArea {
 
 		agentsInfo := sim.Agents
-		sprovider.GetAgentsSupply(dm.GetId(), getAgentsDemand.Time, uint32(*areaId), agentsInfo)
+		sprovider.GetAgentsSupply(dm.GetId(), getAgentsDemand.Time, uint32(*areaId), agentsInfo, agent.AgentType(*agentType))
 	}
 
 }
@@ -271,7 +271,6 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		case "GET_AGENTS_ROUTE_SUPPLY":
 			ch <- sp
 		case "GET_AGENTS_SUPPLY":
-			fmt.Printf("asdf2")
 			getAgentsSupply := sp.GetArg_GetAgentsSupply()
 			if getAgentsSupply.AreaId == uint32(*areaId) {
 				//ch <- sp
@@ -285,7 +284,6 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	// FORWARD_AGENTS_SUPPLY
 	//supplyType := simutil.CheckSupplyType(sp)
 	if supplyType == "FORWARD_AGENTS_SUPPLY" {
-		fmt.Printf("asdf")
 		//mu.Lock()
 		forwardAgentsSupply := sp.GetArg_ForwardAgentsSupply()
 		// not equal areaId and not AreaProvider
