@@ -3,12 +3,13 @@ package simutil
 import (
 	"fmt"
 	"math"
-	"strconv"
+	//"strconv"
 
 	//"encoding/json"
 	//"io/ioutil"
 	//"log"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
 	rvo "github.com/RuiHirano/rvo2-go/src/rvosimulator"
 )
 
@@ -145,7 +146,7 @@ func (rvoutil *RVO2Util) InvScale(scaledAgents []Agent) []*agent.AgentInfo {
 				Lon: goalLon,
 			}*/
 			route := simAgent.Route
-			currentLocation := route.Coord
+			//currentLocation := route.Coord
 			nextTransit := route.RouteInfo.NextTransit
 			transitPoint := route.RouteInfo.TransitPoint
 			destination := route.Destination
@@ -155,7 +156,8 @@ func (rvoutil *RVO2Util) InvScale(scaledAgents []Agent) []*agent.AgentInfo {
 			}
 
 			// calc direction, distance
-			direction, distance := CalcDirectionAndDistance(currentLocation.Lat, currentLocation.Lon, destination.Lat, destination.Lon)
+			// 現在の位置とゴールとの距離と角度を求める
+			direction, distance := CalcDirectionAndDistance(nextCoord.Lat, nextCoord.Lon, destination.Lat, destination.Lon)
 
 			if distance < 10 {
 				if nextTransit != nil {
@@ -264,60 +266,6 @@ func (rvoutil *RVO2Util) SetPreferredVelocities(sim *rvo.RVOSimulator, scaledAge
 	return nextScaledAgents
 }
 
-func ShowProgress(sim *rvo.RVOSimulator, nextAgents []Agent, step int) {
-	var agentPositions string
-	agentPositions = ""
-	for _, agent := range nextAgents {
-		agentPositions = agentPositions + " (" + strconv.FormatFloat(float64(agent.Coord.Lat), 'f', 4, 64) + "," + strconv.FormatFloat(float64(agent.Coord.Lon), 'f', 4, 64) + ") "
-	}
-	fmt.Printf("step=%v  t=%v  %v \n", step, strconv.FormatFloat(sim.GlobalTime, 'f', 3, 64), agentPositions)
-}
-
-// ConvertSimToRVOAgents: SimAgentsからRVOAgentsへ変換する関数
-/*func (rvoutil *RVO2Util) ConvertSimToRVOAgents() []*agent.AgentInfo{
-	rvoAgents := make([]Agent, 0)
-	simAgents := rvoutil.SynSim.Agents 
-	for i, simAgent := range simAgents {
-
-		agent := Agent{
-			Id:       simAgent.Id,
-			Coord:    simAgent.Route.Coord,
-			Velocity: velocity,
-			Goal:     goal,
-		}
-		rvoAgents = append(rvoAgents, agent)
-	}
-	return rvoAgents
-}
-
-// ConvertRVOToSimAgents: RVOAgentsからSimAgentsへ変換する関数
-func (rvoutil *RVO2Util) ConvertRVOToSimAgents() []*agent.AgentInfo{
-	simAgents := make([]*agent.AgentInfo, 0)
-	for i, rvoAgent := range rvoutil.RVOAgents {
-		
-		simAgent := rvoutil.SynSim.Agents[i]
-
-		route := &agent.Route{
-			Coord:       rvoAgent.Coord,
-			Direction:   simAgent.Route.Direction,
-			Speed:       simAgent.Route.Speed,
-			Destination: simAgent.Route.Destination,
-			Departure:   simAgent.Route.Departure,
-			RouteInfo:   simAgent.Route.RouteInfo,
-		}
-
-		agent := &agent.AgentInfo{
-			Time:        uint32(rvoutil.SynSim.GlobalTime) + 1,
-			AgentId:     simAgent.AgentId,
-			AgentType:   simAgent.AgentType,
-			AgentStatus: simAgent.AgentStatus,
-			Route:       route,
-		}
-		simAgents = append(simAgents, agent)
-	}
-	return simAgents
-}*/
-
 func (rvoutil *RVO2Util) CalcNextAgents() []*agent.AgentInfo{
 	timeStep := rvoutil.SynSim.TimeStep
 	neighborDist := 1.5
@@ -328,12 +276,6 @@ func (rvoutil *RVO2Util) CalcNextAgents() []*agent.AgentInfo{
 	maxSpeed := 0.01
 	sim := rvo.NewRVOSimulator(timeStep, neighborDist, maxneighbors, timeHorizon, timeHorizonObst, radius, maxSpeed, &rvo.Vector2{X: 0, Y: 0})
 
-	//mapData := readMapData()
-	//agents := readAgentData()
-
-	//agents := rvoutil.ConvertSimToRVOAgents()
-
-	
 
 	scaledAgents := rvoutil.Scale()
 	fmt.Printf("scaledagents is : %v\n", scaledAgents)
@@ -349,35 +291,47 @@ func (rvoutil *RVO2Util) CalcNextAgents() []*agent.AgentInfo{
 
 	SetupScenario(sim, scaledAgents)
 
+	// Stepを進める
 	sim.DoStep()
 
+	// 速度ベクトルをセットする
 	nextScaledAgents := rvoutil.SetPreferredVelocities(sim, scaledAgents)
 	fmt.Printf("nextScaledAgents is : %v\n", nextScaledAgents)
 
 	nextAgents := rvoutil.InvScale(nextScaledAgents)
-
-	//ShowProgress(sim, nextRVOAgents, step)
-
-	//nextAgents := rvoutil.ConvertRVOToSimAgents()
 
 	fmt.Printf("nextAgents is : %v\n", nextAgents)
 
 	return nextAgents
 }
 
-func CalcNextAgentsByRVO(synSim *SynerexSimulator) []*agent.AgentInfo{
+func (rvoutil *RVO2Util) IsAgentInControlledArea(agentInfo *agent.AgentInfo, areaInfo *area.AreaInfo, agentType int32) bool {
+	lat := agentInfo.Route.Coord.Lat
+	lon := agentInfo.Route.Coord.Lon
+	slat := areaInfo.ControlAreaCoord.StartLat
+	elat := areaInfo.ControlAreaCoord.EndLat
+	slon := areaInfo.ControlAreaCoord.StartLon
+	elon := areaInfo.ControlAreaCoord.EndLon
+	if agentInfo.AgentType.String() == agent.AgentType_name[agentType] && slat <= lat && lat < elat && slon <= lon && lon < elon {
+		return true
+	}
+	//log.Printf("agent type and coord is not match...\n\n")
+	return false
+}
+
+func (rvoutil *RVO2Util) CalcNextAgentsByRVO() []*agent.AgentInfo{
 	pureNextAgents := make([]*agent.AgentInfo, 0)
-	rvo2util := NewRVO2Util(synSim)
-	currentAgents := synSim.Agents
+	//rvo2util := NewRVO2Util(rvoutil.SynSim)
+	currentAgents := rvoutil.SynSim.Agents
 	//nextAgents := rvo2util.CalcNextAgents(sim.Agents, sameAreaAgents)
-	nextAgents := rvo2util.CalcNextAgents()
+	nextAgents := rvoutil.CalcNextAgents()
 	for i, agentInfo := range currentAgents {
 		nextAgent := nextAgents[i]
 		// 自エリアにいる場合、次のルートを計算する
-		if IsAgentInControlledArea(agentInfo, synSim.Area, synSim.AgentType) {
+		if rvoutil.IsAgentInControlledArea(agentInfo, rvoutil.SynSim.Area, rvoutil.SynSim.AgentType) {
 
 			pureNextAgent := &agent.AgentInfo{
-				Time:        uint32(synSim.GlobalTime) + 1,
+				Time:        uint32(rvoutil.SynSim.GlobalTime) + 1,
 				AgentId:     agentInfo.AgentId,
 				AgentType:   agentInfo.AgentType,
 				AgentStatus: agentInfo.AgentStatus,

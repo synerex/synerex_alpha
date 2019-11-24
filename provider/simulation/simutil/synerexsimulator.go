@@ -7,7 +7,7 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
-	"github.com/synerex/synerex_alpha/provider/simulation/simutil/routes"
+	//"github.com/synerex/synerex_alpha/provider/simulation/simutil/routes"
 )
 
 var (
@@ -15,7 +15,7 @@ var (
 )
 
 func init() {
-	isRVO2 = false
+	isRVO2 = true
 }
 
 // SynerexSimulator :
@@ -155,7 +155,8 @@ func (sim *SynerexSimulator) CalcNextAgents(sameAreaAgents []*agent.AgentInfo) [
 	pureNextAgents := make([]*agent.AgentInfo, 0)
 
 	if isRVO2 {
-		pureNextAgents = CalcNextAgentsByRVO(sim)
+		rvo2util := NewRVO2Util(sim)
+		pureNextAgents = rvo2util.CalcNextAgentsByRVO()
 		/*rvo2util := NewRVO2Util(sim)
 		currentAgents := sim.Agents
 		//nextAgents := rvo2util.CalcNextAgents(sim.Agents, sameAreaAgents)
@@ -179,7 +180,8 @@ func (sim *SynerexSimulator) CalcNextAgents(sameAreaAgents []*agent.AgentInfo) [
 	} else {
 
 		// Agentの次のPosition、Routeを決める
-		pureNextAgents = routes.CalcNextAgentsBySimple(sim)
+		simpleRoute := NewSimpleRoute(sim, sameAreaAgents)
+		pureNextAgents = simpleRoute.CalcNextAgentsBySimple()
 		/*for _, agentInfo := range sim.Agents {
 			// 自エリアにいる場合、次のルートを計算する
 			if IsAgentInControlledArea(agentInfo, sim.Area, sim.AgentType) {

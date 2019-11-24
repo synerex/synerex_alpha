@@ -7,7 +7,7 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
-	"github.com/synerex/synerex_alpha/api/simulation/simutil"
+	"github.com/synerex/synerex_alpha/provider/simulation/simutil"
 )
 
 var (
