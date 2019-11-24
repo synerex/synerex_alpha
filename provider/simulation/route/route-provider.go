@@ -121,7 +121,7 @@ func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 func calcRoutes(sLat float32, sLon float32, gLat float32, gLon float32, agentType int32) *agent.RouteInfo {
 	dLat := gLat - sLat
 	dLon := gLon - sLon
-	transitNum := 5
+	transitNum := 1
 	transitPoint := make([]*agent.Coord, 0)
 	latArray := make([]float64, 0)
 	lonArray := make([]float64, 0)

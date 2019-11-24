@@ -7,7 +7,16 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
+	"github.com/synerex/synerex_alpha/provider/simulation/simutil/routes"
 )
+
+var (
+	isRVO2 bool
+)
+
+func init() {
+	isRVO2 = false
+}
 
 // SynerexSimulator :
 type SynerexSimulator struct {
@@ -144,24 +153,52 @@ func (sim *SynerexSimulator) CalcNextAgents(sameAreaAgents []*agent.AgentInfo) [
 	// calc agent
 	//otherAgentsInfo := make([]*agent.AgentInfo, 0) // ??
 	pureNextAgents := make([]*agent.AgentInfo, 0)
-	for _, agentInfo := range sim.Agents {
-		// 自エリアにいる場合、次のルートを計算する
-		if IsAgentInControlledArea(agentInfo, sim.Area, sim.AgentType) {
 
-			nextRoute := sim.CalcNextRoute(agentInfo, sameAreaAgents)
+	if isRVO2 {
+		pureNextAgents = CalcNextAgentsByRVO(sim)
+		/*rvo2util := NewRVO2Util(sim)
+		currentAgents := sim.Agents
+		//nextAgents := rvo2util.CalcNextAgents(sim.Agents, sameAreaAgents)
+		nextAgents := rvo2util.CalcNextAgents()
+		for i, agentInfo := range currentAgents {
+			nextAgent := nextAgents[i]
+			// 自エリアにいる場合、次のルートを計算する
+			if IsAgentInControlledArea(agentInfo, sim.Area, sim.AgentType) {
 
-			pureNextAgent := &agent.AgentInfo{
-				Time:        uint32(sim.GlobalTime) + 1,
-				AgentId:     agentInfo.AgentId,
-				AgentType:   agentInfo.AgentType,
-				AgentStatus: agentInfo.AgentStatus,
-				Route:       nextRoute,
+				pureNextAgent := &agent.AgentInfo{
+					Time:        uint32(sim.GlobalTime) + 1,
+					AgentId:     agentInfo.AgentId,
+					AgentType:   agentInfo.AgentType,
+					AgentStatus: agentInfo.AgentStatus,
+					Route:       nextAgent.Route,
+				}
+
+				pureNextAgents = append(pureNextAgents, pureNextAgent)
 			}
+		}*/
+	} else {
 
-			pureNextAgents = append(pureNextAgents, pureNextAgent)
-		}
+		// Agentの次のPosition、Routeを決める
+		pureNextAgents = routes.CalcNextAgentsBySimple(sim)
+		/*for _, agentInfo := range sim.Agents {
+			// 自エリアにいる場合、次のルートを計算する
+			if IsAgentInControlledArea(agentInfo, sim.Area, sim.AgentType) {
+
+				nextRoute := sim.CalcNextRoute(agentInfo, sameAreaAgents)
+
+				pureNextAgent := &agent.AgentInfo{
+					Time:        uint32(sim.GlobalTime) + 1,
+					AgentId:     agentInfo.AgentId,
+					AgentType:   agentInfo.AgentType,
+					AgentStatus: agentInfo.AgentStatus,
+					Route:       nextRoute,
+				}
+
+				pureNextAgents = append(pureNextAgents, pureNextAgent)
+			}
+		}*/
+
 	}
-
 	return pureNextAgents
 }
 
