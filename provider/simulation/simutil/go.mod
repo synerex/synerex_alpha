@@ -1,6 +1,7 @@
 module github.com/synerex/synerex_alpha/provider/simulation/simutil
 
 require (
+	github.com/RuiHirano/rvo2-go v0.0.0-20191123125933-81940413d701 // indirect
 	github.com/synerex/synerex_alpha/api v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
@@ -26,5 +27,5 @@ replace (
 	github.com/synerex/synerex_alpha/nodeapi => ../../../nodeapi
 	github.com/synerex/synerex_alpha/provider/simulation/simutil => ../simutil
 	github.com/synerex/synerex_alpha/sxutil => ../../../sxutil
-	//github.com/synerex/synerex_alpha/provider/simulation/simutil/routes => ../simutil/routes
+//github.com/synerex/synerex_alpha/provider/simulation/simutil/routes => ../simutil/routes
 )

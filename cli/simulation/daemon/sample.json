@@ -1,74 +1,69 @@
 {
-	"clock": {
-		"time": "2019-09-30T09:30:00"
-	},
-	"area": [
-		{
-			"id": 1,
-			"name": "東山動植物園西"
-		},
-		{
-			"id": 2,
-			"name": "東山動植物園東"
-		}
-	],
-	"agent": [
-		{
-			"id": 1,
-			"type": "pedestrian",
-			"status": {
-				"name": "rui",
-				"age": "30",
-				"sex": "female"
-			},
-			"route": {
-				"coord": {
-					"lat": 35.152500,
-					"lon": 136.973200
-				},
-				"direction": 30,
-				"speed": 50,
-				"departure": {
-					"lat": 35.152500,
-					"lon": 136.973200
-				},
-				"destination": {
-					"lat": 35.160500,
-					"lon": 136.984000
-				}
-			},
-			"rule": {
-
-			}
-		},
-		{
-			"id": 2,
-			"type": "pedestrian",
-			"status": {
-				"name": "rui",
-				"age": "30",
-				"sex": "female"
-			},
-			"route": {
-				"coord": {
-					"lat": 35.156000,
-					"lon": 136.983000
-				},
-				"direction": 250,
-				"speed": 50,
-				"departure": {
-					"lat": 35.156000,
-					"lon": 136.983000
-				},
-				"destination": {
-					"lat": 35.153000,
-					"lon": 136.976000
-				}
-			},
-			"rule": {
-
-			}
-		}
-		
-	]
+    "clock": {
+        "time": "2019-09-30T09:30:00"
+    },
+    "area": [
+        {
+            "id": 1,
+            "name": "東山動植物園西"
+        },
+        {
+            "id": 2,
+            "name": "東山動植物園東"
+        }
+    ],
+    "agent": [
+        {
+            "id": 1,
+            "type": "pedestrian",
+            "status": {
+                "name": "rui",
+                "age": "30",
+                "sex": "female"
+            },
+            "route": {
+                "coord": {
+                    "lat": 35.1525,
+                    "lon": 136.9732
+                },
+                "direction": 30,
+                "speed": 200,
+                "departure": {
+                    "lat": 35.1525,
+                    "lon": 136.9732
+                },
+                "destination": {
+                    "lat": 35.1605,
+                    "lon": 136.983
+                }
+            },
+            "rule": {}
+        },
+        {
+            "id": 2,
+            "type": "pedestrian",
+            "status": {
+                "name": "rui",
+                "age": "30",
+                "sex": "female"
+            },
+            "route": {
+                "coord": {
+                    "lat": 35.1605,
+                    "lon": 136.983
+                },
+                "direction": 30,
+                "speed": 200,
+                "departure": {
+                    "lat": 35.1525,
+                    "lon": 136.9732
+                },
+                "destination": {
+                    "lat": 35.1525,
+                    "lon": 136.9732
+                }
+            },
+            "rule": {}
+        }
+    ]
 }

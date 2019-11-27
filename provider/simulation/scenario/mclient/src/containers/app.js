@@ -1,198 +1,249 @@
-import React from 'react';
+import React from "react";
 import {
-    Container, connectToHarmowareVis, HarmoVisLayers, MovesLayer, LineMapLayer, MovesInput, LoadingIcon, FpsDisplay, DepotsLayer, EventInfo, MovesbaseOperation, MovesBase, BasedProps
-} from 'harmoware-vis';
+    Container,
+    connectToHarmowareVis,
+    HarmoVisLayers,
+    MovesLayer,
+    LineMapLayer,
+    MovesInput,
+    LoadingIcon,
+    FpsDisplay,
+    DepotsLayer,
+    EventInfo,
+    MovesbaseOperation,
+    MovesBase,
+    BasedProps
+} from "harmoware-vis";
 
-import Controller from '../components/controller';
+import Controller from "../components/controller";
 
-import * as io from 'socket.io-client';
+import * as io from "socket.io-client";
 
 const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN; //Acquire Mapbox accesstoken
 
 class App extends Container {
-    constructor(props){
-	super(props);
-	const { setSecPerHour, setLeading, setTrailing }= props.actions;
-	setSecPerHour(3600);
-	setLeading(3);
-	setTrailing(3);
-	const socket = io();
-	this.state = {
-	    moveDataVisible: true,
-	    moveOptionVisible: false,
-	    depotOptionVisible: false,
-	    heatmapVisible: false,
-	    optionChange: false,
-	    popup: [0,0, ''],
-		linemapData: [{
-			"sourcePosition": [136.973172, 35.152476, 0],
-			"targetPosition": [136.984031, 35.152476, 0],
-		},
-		{
-			"sourcePosition": [136.973172, 35.160678, 0],
-			"targetPosition": [136.984031, 35.160678, 0],
-		},
-		{
-			"sourcePosition": [136.973172, 35.152476, 0],
-			"targetPosition": [136.973172, 35.160678, 0],
-		},
-		{
-			"sourcePosition": [136.984031, 35.152476, 0],
-			"targetPosition": [136.984031, 35.160678, 0],
-		},
+    constructor(props) {
+        super(props);
+        const { setSecPerHour, setLeading, setTrailing } = props.actions;
+        setSecPerHour(3600);
+        setLeading(3);
+        setTrailing(3);
+        const socket = io();
+        this.state = {
+            moveDataVisible: true,
+            moveOptionVisible: false,
+            depotOptionVisible: false,
+            heatmapVisible: false,
+            optionChange: false,
+            popup: [0, 0, ""],
+            linemapData: [
+                // area
+                {
+                    sourcePosition: [136.973172, 35.152476, 0],
+                    targetPosition: [136.984031, 35.152476, 0]
+                },
+                {
+                    sourcePosition: [136.973172, 35.160678, 0],
+                    targetPosition: [136.984031, 35.160678, 0]
+                },
+                {
+                    sourcePosition: [136.973172, 35.152476, 0],
+                    targetPosition: [136.973172, 35.160678, 0]
+                },
+                {
+                    sourcePosition: [136.984031, 35.152476, 0],
+                    targetPosition: [136.984031, 35.160678, 0]
+                },
 
-		{
-			"sourcePosition": [136.981014, 35.152476, 0],
-			"targetPosition": [136.990047, 35.152476, 0],
-		},
-		{
-			"sourcePosition": [136.981014, 35.160678, 0],
-			"targetPosition": [136.990047, 35.160678, 0],
-		},
-		{
-			"sourcePosition": [136.981014, 35.152476, 0],
-			"targetPosition": [136.981014, 35.160678, 0],
-		},
-		{
-			"sourcePosition": [136.990047, 35.152476, 0],
-			"targetPosition": [136.990047, 35.160678, 0],
-		},
+                {
+                    sourcePosition: [136.981014, 35.152476, 0],
+                    targetPosition: [136.990047, 35.152476, 0]
+                },
+                {
+                    sourcePosition: [136.981014, 35.160678, 0],
+                    targetPosition: [136.990047, 35.160678, 0]
+                },
+                {
+                    sourcePosition: [136.981014, 35.152476, 0],
+                    targetPosition: [136.981014, 35.160678, 0]
+                },
+                {
+                    sourcePosition: [136.990047, 35.152476, 0],
+                    targetPosition: [136.990047, 35.160678, 0]
+                },
+                // controlled
+                {
+                    sourcePosition: [136.9825, 35.152476, 0],
+                    targetPosition: [136.9825, 35.160678, 0],
+                    color: [255, 0, 255]
+                },
+                // object
+                {
+                    sourcePosition: [136.9830, 35.152476, 0],
+                    targetPosition: [136.9830, 35.156678, 0],
+                    color: [25, 100, 205]
+                },
+                {
+                    sourcePosition: [136.9830, 35.158476, 0],
+                    targetPosition: [136.9830, 35.160678, 0],
+                    color: [25, 100, 205]
+                }
+            ]
+        };
 
-		{
-			"sourcePosition": [136.982500, 35.152476, 0],
-			"targetPosition": [136.982500, 35.160678, 0],
-			"color": [255, 0, 255]
-		}
-		]
-	};
-
-	// for receiving event info.
-	socket.on('connect', ()=>{console.log("Socket.IO connected!")});
-	socket.on('event', this.getEvent.bind(this));
-	socket.on('disconnect', ()=>{console.log("Socket.IO disconnected!")});
-	
+        // for receiving event info.
+        socket.on("connect", () => {
+            console.log("Socket.IO connected!");
+        });
+        socket.on("event", this.getEvent.bind(this));
+        socket.on("disconnect", () => {
+            console.log("Socket.IO disconnected!");
+        });
     }
 
-    getEvent(socketsData){
-		//console.log("Get event4 socketsData!!", socketsData)
-	const {actions, movesbase, movedData} = this.props
-	const time = Date.now()/1000; // set time as now. (If data have time, ..)
-	const setMovesbase = [];
-	//const setMovedData = [];
-	const movesbasedata = [...movesbase]; // why copy !?
-	//const movedData2 = [...movedData]; // why copy !?
+    getEvent(socketsData) {
+        //console.log("Get event4 socketsData!!", socketsData)
+        const { actions, movesbase, movedData } = this.props;
+        const time = Date.now() / 1000; // set time as now. (If data have time, ..)
+        const setMovesbase = [];
+        //const setMovedData = [];
+        const movesbasedata = [...movesbase]; // why copy !?
+        //const movedData2 = [...movedData]; // why copy !?
 
-	console.log("socketData length", socketsData.length)
-	//console.log("movesbasedata length", movesbasedata.length)
+        console.log("socketData length", socketsData.length);
+        //console.log("movesbasedata length", movesbasedata.length)
 
-	socketsData.forEach((socketData) => {
-		const {mtype, id,  lat, lon, angle, speed, area } = JSON.parse(socketData);
-		
-		let hit = false;
-		movesbasedata.forEach((movedata)=>{
-			if(mtype === movedata.mtype && id === movedata.id){
-				hit = true;
-				movedata.arrivaltime = time;		
-				movedata.operation.push({
-		    		elapsedtime: time,
-		    		position:[lon, lat, 0],
-		    		angle,speed
-				});
-				
+        socketsData.forEach(socketData => {
+            const { mtype, id, lat, lon, angle, speed, area } = JSON.parse(
+                socketData
+            );
 
-				setMovesbase.push(movedata);
-			}
-		})
+            let hit = false;
+            movesbasedata.forEach(movedata => {
+                if (mtype === movedata.mtype && id === movedata.id) {
+                    hit = true;
+                    movedata.arrivaltime = time;
+                    movedata.operation.push({
+                        elapsedtime: time,
+                        position: [lon, lat, 0],
+                        angle,
+                        speed
+                    });
 
-		if(!hit){
-			let color = [0, 200, 0]
-			if (mtype === 0) {
-				color = [0, 200, 120]
-			}
-	    	setMovesbase.push({
-				mtype, id,
-				departuretime:time,
-				arrivaltime: time,
-				operation: [{
-		    	elapsedtime:time,
-				position:[lon, lat, 0],
-				angle, speed
-				}]
-	   		});
-			/*setMovedData.push({
+                    setMovesbase.push(movedata);
+                }
+            });
+
+            if (!hit) {
+                let color = [0, 200, 0];
+                if (mtype === 0) {
+                    color = [0, 200, 120];
+                }
+                setMovesbase.push({
+                    mtype,
+                    id,
+                    departuretime: time,
+                    arrivaltime: time,
+                    operation: [
+                        {
+                            elapsedtime: time,
+                            position: [lon, lat, 0],
+                            angle,
+                            speed
+                        }
+                    ]
+                });
+                /*setMovedData.push({
 				sourceColor: [255, 0, 255]
 	    });*/
-		}
-	});
+            }
+        });
 
-	console.log("lenth before", setMovesbase.length)
-		actions.updateMovesBase(setMovesbase);
-		//actions.updateMovedData(setMovedData);
-	
+        console.log("lenth before", setMovesbase.length);
+        actions.updateMovesBase(setMovesbase);
+        //actions.updateMovedData(setMovedData);
     }
 
-  deleteMovebase(maxKeepSecond) {
-    const { actions, animatePause, movesbase, settime } = this.props
-    const movesbasedata = [...movesbase];
-    const setMovesbase= [];
-    let dataModify = false;
-    const compareTime = settime - maxKeepSecond;
-    for (let i = 0, lengthi = movesbasedata.length; i < lengthi; i += 1) {
-	const { departuretime:propsdeparturetime, operation:propsoperation } = movesbasedata[i];
-      let departuretime = propsdeparturetime;
-      let startIndex = propsoperation.length;
-      for (let j = 0, lengthj = propsoperation.length; j < lengthj; j += 1) {
-        if(propsoperation[j].elapsedtime > compareTime){
-          startIndex = j;
-          departuretime = propsoperation[j].elapsedtime;
-          break;
+    deleteMovebase(maxKeepSecond) {
+        const { actions, animatePause, movesbase, settime } = this.props;
+        const movesbasedata = [...movesbase];
+        const setMovesbase = [];
+        let dataModify = false;
+        const compareTime = settime - maxKeepSecond;
+        for (let i = 0, lengthi = movesbasedata.length; i < lengthi; i += 1) {
+            const {
+                departuretime: propsdeparturetime,
+                operation: propsoperation
+            } = movesbasedata[i];
+            let departuretime = propsdeparturetime;
+            let startIndex = propsoperation.length;
+            for (
+                let j = 0, lengthj = propsoperation.length;
+                j < lengthj;
+                j += 1
+            ) {
+                if (propsoperation[j].elapsedtime > compareTime) {
+                    startIndex = j;
+                    departuretime = propsoperation[j].elapsedtime;
+                    break;
+                }
+            }
+            if (startIndex === 0) {
+                setMovesbase.push(Object.assign({}, movesbasedata[i]));
+            } else if (startIndex < propsoperation.length) {
+                setMovesbase.push(
+                    Object.assign({}, movesbasedata[i], {
+                        operation: propsoperation.slice(startIndex),
+                        departuretime
+                    })
+                );
+                dataModify = true;
+            } else {
+                dataModify = true;
+            }
         }
-      }
-      if(startIndex === 0){
-        setMovesbase.push(Object.assign({}, movesbasedata[i]));
-      }else
-      if(startIndex < propsoperation.length){
-        setMovesbase.push(Object.assign({}, movesbasedata[i], {
-            operation: propsoperation.slice(startIndex), departuretime
-	}));
-        dataModify = true;  
-      }else{
-        dataModify = true;
-      }
-    }
-    if(dataModify){
-      if(!animatePause){
-        actions.setAnimatePause(true);
-      }
-      actions.updateMovesBase(setMovesbase);
-      if(!animatePause){
-        actions.setAnimatePause(false);
-      }
-    }
-  }
-
-    getMoveDataChecked(e){
-	this.setState({ moveDataVisible: e.target.checked });
+        if (dataModify) {
+            if (!animatePause) {
+                actions.setAnimatePause(true);
+            }
+            actions.updateMovesBase(setMovesbase);
+            if (!animatePause) {
+                actions.setAnimatePause(false);
+            }
+        }
     }
 
-    getMoveOptionChecked(e){
-	this.setState({ moveOptionVisible: e.target.checked });
+    getMoveDataChecked(e) {
+        this.setState({ moveDataVisible: e.target.checked });
     }
 
-    getDepotOptionChecked(e){
-	this.setState({ depotOptionVisible: e.target.checked });
+    getMoveOptionChecked(e) {
+        this.setState({ moveOptionVisible: e.target.checked });
     }
 
-    getOptionChangeChecked(e){
-	this.setState({ optionChange: e.target.checked });
+    getDepotOptionChecked(e) {
+        this.setState({ depotOptionVisible: e.target.checked });
     }
-    
-    
+
+    getOptionChangeChecked(e) {
+        this.setState({ optionChange: e.target.checked });
+    }
+
     render() {
-	const props = this.props;
-	const { actions, clickedObject, inputFileName, viewport, deoptsData, loading,
-		routePaths, lightSettings, movesbase, movedData } = props;
-	/*var pedMovesbase = []
+        const props = this.props;
+        const {
+            actions,
+            clickedObject,
+            inputFileName,
+            viewport,
+            deoptsData,
+            loading,
+            routePaths,
+            lightSettings,
+            movesbase,
+            movedData
+        } = props;
+        /*var pedMovesbase = []
 	var pedMovedData = []
 	var carMovesbase = []
 	var carMovedData = []
@@ -212,67 +263,102 @@ class App extends Container {
 		console.log("carmobes", carMovesbase)
 		console.log("carmovedData", carMovedData)*/
 
-	const optionVisible = false;
-	const onHover = (el) => {
-	    if (el && el.object) {
-		let disptext = '';
-		const objctlist = Object.entries(el.object);
-		for (let i = 0, lengthi = objctlist.length; i < lengthi; i += 1) {
-		    const strvalue = objctlist[i][1].toString();
-		    disptext += i > 0 ? '\n' : '';
-		    disptext += (`${objctlist[i][0]}: ${strvalue}`);
-		}
-		this.setState({ popup: [el.x, el.y, disptext] });
-	    } else {
-		this.setState({ popup: [0, 0, ''] });
-	    }
-	};
-	
+        const optionVisible = false;
+        const onHover = el => {
+            if (el && el.object) {
+                let disptext = "";
+                const objctlist = Object.entries(el.object);
+                for (
+                    let i = 0, lengthi = objctlist.length;
+                    i < lengthi;
+                    i += 1
+                ) {
+                    const strvalue = objctlist[i][1].toString();
+                    disptext += i > 0 ? "\n" : "";
+                    disptext += `${objctlist[i][0]}: ${strvalue}`;
+                }
+                this.setState({ popup: [el.x, el.y, disptext] });
+            } else {
+                this.setState({ popup: [0, 0, ""] });
+            }
+        };
 
-	return (
-		<div>
-		<Controller {...props}
-	    deleteMovebase={this.deleteMovebase.bind(this)}
-	    getMoveDataChecked ={this.getMoveDataChecked.bind(this)}
-	    getMoveOptionChecked ={this.getMoveOptionChecked.bind(this)}
-	    getDepotOptionChecked ={this.getDepotOptionChecked.bind(this)}
-	    getOptionChangeChecked ={this.getOptionChangeChecked.bind(this)}
-		/>
-		<div className="harmovis_area">
-		<HarmoVisLayers
-	    viewport={viewport} actions={actions}
-	    mapboxApiAccessToken={MAPBOX_TOKEN}
-	    layers={
-			this.state.moveDataVisible && movedData.length > 0 ?
-			[
-				new LineMapLayer( {viewport,  linemapData: this.state.linemapData }),
-		    	new MovesLayer({ viewport, routePaths, movesbase, movedData,
-				     clickedObject, actions, lightSettings,
-				     visible: this.state.moveDataVisible,
-				     optionVisible: this.state.moveOptionVisible,
-					 optionChange: this.state.optionChange,
-					 iconChange: false,
-					 onHover}),
-			]:[
-				new LineMapLayer( {viewport, linemapData: this.state.linemapData }),
-			]
-		}/>
-		</div>
-		<svg width={viewport.width} height={viewport.height} className="harmovis_overlay">
-		<g fill="white" fontSize="12">
-		{this.state.popup[2].length > 0 ?
-		 this.state.popup[2].split('\n').map((value, index) =>
-						     <text
-						     x={this.state.popup[0] + 10} y={this.state.popup[1] + (index * 12)}
-						     key={index.toString()}
-						     >{value}</text>) : null
-		}
-            </g>
-		</svg>
-		        <LoadingIcon loading={loading} />
-        <FpsDisplay />
-	    </div>
-	);
+        return (
+            <div>
+                <Controller
+                    {...props}
+                    deleteMovebase={this.deleteMovebase.bind(this)}
+                    getMoveDataChecked={this.getMoveDataChecked.bind(this)}
+                    getMoveOptionChecked={this.getMoveOptionChecked.bind(this)}
+                    getDepotOptionChecked={this.getDepotOptionChecked.bind(
+                        this
+                    )}
+                    getOptionChangeChecked={this.getOptionChangeChecked.bind(
+                        this
+                    )}
+                />
+                <div className="harmovis_area">
+                    <HarmoVisLayers
+                        viewport={viewport}
+                        actions={actions}
+                        mapboxApiAccessToken={MAPBOX_TOKEN}
+                        layers={
+                            this.state.moveDataVisible && movedData.length > 0
+                                ? [
+                                      new LineMapLayer({
+                                          viewport,
+                                          linemapData: this.state.linemapData
+                                      }),
+                                      new MovesLayer({
+                                          viewport,
+                                          routePaths,
+                                          movesbase,
+                                          movedData,
+                                          clickedObject,
+                                          actions,
+                                          lightSettings,
+                                          visible: this.state.moveDataVisible,
+                                          optionVisible: this.state
+                                              .moveOptionVisible,
+                                          optionChange: this.state.optionChange,
+                                          iconChange: false,
+                                          onHover
+                                      })
+                                  ]
+                                : [
+                                      new LineMapLayer({
+                                          viewport,
+                                          linemapData: this.state.linemapData
+                                      })
+                                  ]
+                        }
+                    />
+                </div>
+                <svg
+                    width={viewport.width}
+                    height={viewport.height}
+                    className="harmovis_overlay"
+                >
+                    <g fill="white" fontSize="12">
+                        {this.state.popup[2].length > 0
+                            ? this.state.popup[2]
+                                  .split("\n")
+                                  .map((value, index) => (
+                                      <text
+                                          x={this.state.popup[0] + 10}
+                                          y={this.state.popup[1] + index * 12}
+                                          key={index.toString()}
+                                      >
+                                          {value}
+                                      </text>
+                                  ))
+                            : null}
+                    </g>
+                </svg>
+                <LoadingIcon loading={loading} />
+                <FpsDisplay />
+            </div>
+        );
     }
 }
 export default connectToHarmowareVis(App);

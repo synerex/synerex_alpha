@@ -1,7 +1,7 @@
 package simutil
 
 import (
-	//"fmt"
+	"fmt"
 	"log"
 	"math"
 
@@ -12,14 +12,14 @@ import (
 )
 
 type SimpleRoute struct {
-	SynSim *SynerexSimulator
+	SynSim         *SynerexSimulator
 	SameAreaAgents []*agent.AgentInfo
-	RVOAgents []Agent
+	RVOAgents      []Agent
 }
 
 func NewSimpleRoute(synSim *SynerexSimulator, sameAreaAgents []*agent.AgentInfo) *SimpleRoute {
 	r := &SimpleRoute{
-		SynSim: synSim,
+		SynSim:         synSim,
 		SameAreaAgents: sameAreaAgents,
 	}
 	return r
@@ -27,7 +27,7 @@ func NewSimpleRoute(synSim *SynerexSimulator, sameAreaAgents []*agent.AgentInfo)
 
 func (simple *SimpleRoute) CalcDirectionAndDistance(sLat float32, sLon float32, gLat float32, gLon float32) (float32, float32) {
 
-	r := 6378137 // equatorial radius
+	r := 6378137 // equatorial radius (m)
 	sLat = sLat * math.Pi / 180
 	sLon = sLon * math.Pi / 180
 	gLat = gLat * math.Pi / 180
@@ -61,6 +61,28 @@ func (simple *SimpleRoute) CalcMovedLatLon(sLat float32, sLon float32, gLat floa
 	return newLat, newLon
 }
 
+func (simple *SimpleRoute) DecideNextTransit(nextTransit *agent.Coord, transitPoint []*agent.Coord, distance float32, destination *agent.Coord) *agent.Coord {
+	// 距離が5m以下の場合
+	if distance < 5 {
+		if nextTransit != destination {
+			for i, tPoint := range transitPoint {
+				if tPoint.Lon == nextTransit.Lon && tPoint.Lat == nextTransit.Lat {
+					if i+1 == len(transitPoint) {
+						// すべての経由地を通った場合、nilにする
+						nextTransit = destination
+					} else {
+						// 次の経由地を設定する
+						nextTransit = transitPoint[i+1]
+					}
+				}
+			}
+		} else {
+			fmt.Printf("\x1b[30m\x1b[47m Arrived Destination! \x1b[0m\n")
+		}
+	}
+	return nextTransit
+}
+
 // Finish Fix
 func (simple *SimpleRoute) CalcNextRoute(agentInfo *agent.AgentInfo, sameAreaAgents []*agent.AgentInfo) *agent.Route {
 
@@ -71,16 +93,17 @@ func (simple *SimpleRoute) CalcNextRoute(agentInfo *agent.AgentInfo, sameAreaAge
 	transitPoint := route.RouteInfo.TransitPoint
 	destination := route.Destination
 	// passed all transit point
-	if nextTransit != nil {
-		destination = nextTransit
-	}
+	//if nextTransit != nil {
+	//	destination = nextTransit
+	//}
 
-	direction, distance := simple.CalcDirectionAndDistance(currentLocation.Lat, currentLocation.Lon, destination.Lat, destination.Lon)
+	direction, distance := simple.CalcDirectionAndDistance(currentLocation.Lat, currentLocation.Lon, nextTransit.Lat, nextTransit.Lon)
 	//newLat, newLon := simutil.CalcMovedLatLon(currentLocation.Lat, currentLocation.Lon, speed*1000/3600, direction)
-	newLat, newLon := simple.CalcMovedLatLon(currentLocation.Lat, currentLocation.Lon, destination.Lat, destination.Lon, distance, speed)
+	newLat, newLon := simple.CalcMovedLatLon(currentLocation.Lat, currentLocation.Lon, nextTransit.Lat, nextTransit.Lon, distance, speed)
 
 	// upate next trasit point
-	if distance < 10 {
+	nextTransit = simple.DecideNextTransit(nextTransit, transitPoint, distance, destination)
+	/*if distance < 5 {
 		if nextTransit != nil {
 			nextTransit2 := nextTransit
 			for i, tPoint := range transitPoint {
@@ -98,8 +121,10 @@ func (simple *SimpleRoute) CalcNextRoute(agentInfo *agent.AgentInfo, sameAreaAge
 			log.Printf("\x1b[30m\x1b[47m Arrived Destination! \x1b[0m\n")
 		}
 
-	}
+	}*/
 
+	//fmt.Printf("\x1b[30m\x1b[47m Position %v, NextTransit: %v, NextTransit: %v, Direction: %v, Distance: %v \x1b[0m\n", currentLocation, nextTransit, destination, direction, distance)
+	//fmt.Printf("\x1b[30m\x1b[47m 上下:  %v, 左右: %v \x1b[0m\n", nextTransit.Lat-currentLocation.Lat, nextTransit.Lon-currentLocation.Lon)
 	nextCoord := &agent.Coord{
 		Lat: currentLocation.Lat,
 		Lon: currentLocation.Lon,
@@ -146,7 +171,7 @@ func (simple *SimpleRoute) IsAgentInControlledArea(agentInfo *agent.AgentInfo, a
 	return false
 }
 
-func (simple *SimpleRoute) CalcNextAgentsBySimple() []*agent.AgentInfo{
+func (simple *SimpleRoute) CalcNextAgentsBySimple() []*agent.AgentInfo {
 	pureNextAgents := make([]*agent.AgentInfo, 0)
 	for _, agentInfo := range simple.SynSim.Agents {
 		// 自エリアにいる場合、次のルートを計算する

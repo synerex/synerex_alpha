@@ -1,7 +1,6 @@
 module github.com/synerex/synerex_alpha/provider/simulation/route-provider
 
 require (
-	github.com/RuiHirano/rvo2-go v0.0.0-20191123125933-81940413d701 // indirect
 	github.com/synerex/synerex_alpha/api v0.0.0
 	github.com/synerex/synerex_alpha/api/fleet v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0

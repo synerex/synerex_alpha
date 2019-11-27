@@ -748,16 +748,20 @@ func handleRun(target string) string {
 func calcRoute() Route {
 
 	sLon := float32(136.973300)
-	eLon := float32(136.989900)
+	eLon := float32(136.982000)
 	sLat := float32(35.152600)
 	eLat := float32(35.160500)
 	departure := Coord{
 		Lon: sLon + (eLon-sLon)*rand.Float32(),
 		Lat: sLat + (eLat-sLat)*rand.Float32(),
 	}
-	destination := Coord{
+	/*destination := Coord{
 		Lon: sLon + (eLon-sLon)*rand.Float32(),
 		Lat: sLat + (eLat-sLat)*rand.Float32(),
+	}*/
+	destination := Coord{
+		Lon: 136.989500,
+		Lat: 35.156476,
 	}
 	route := Route{
 		Coord:       departure,

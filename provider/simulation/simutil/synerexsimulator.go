@@ -2,7 +2,6 @@ package simutil
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
@@ -79,7 +78,7 @@ func (sim *SynerexSimulator) ForwardStep() ([]*agent.AgentInfo, error) {
 }
 
 // Finish Fix
-func (sim *SynerexSimulator) CalcNextRoute(agentInfo *agent.AgentInfo, sameAreaAgents []*agent.AgentInfo) *agent.Route {
+/*func (sim *SynerexSimulator) CalcNextRoute(agentInfo *agent.AgentInfo, sameAreaAgents []*agent.AgentInfo) *agent.Route {
 
 	route := agentInfo.Route
 	speed := route.Speed
@@ -147,7 +146,7 @@ func (sim *SynerexSimulator) CalcNextRoute(agentInfo *agent.AgentInfo, sameAreaA
 		RouteInfo:   routeInfo,
 	}
 	return nextRoute
-}
+}*/
 
 func (sim *SynerexSimulator) CalcNextAgents(sameAreaAgents []*agent.AgentInfo) []*agent.AgentInfo {
 	// calc agent
@@ -233,7 +232,7 @@ func (sim *SynerexSimulator) UpdateDuplicateAgents(pureNextAgentsInfo []*agent.A
 func (sim *SynerexSimulator) IsContainNeighborMap(areaId uint32) bool {
 	neighborMap := sim.Area.NeighborArea
 
-	fmt.Printf("idlist3 %v\n", neighborMap)
+	//fmt.Printf("idlist3 %v\n", neighborMap)
 	for _, neighborId := range neighborMap {
 		if areaId == neighborId {
 			return true
@@ -246,7 +245,7 @@ func (sim *SynerexSimulator) IsContainNeighborMap(areaId uint32) bool {
 func (sim *SynerexSimulator) CreateSyncIdList(participantsInfo []*participant.ParticipantInfo) ([]uint64, []uint64) {
 	sameAreaIdList := make([]uint64, 0)
 	neighborAreaIdList := make([]uint64, 0)
-	fmt.Printf("idlist %v\n", sim.Area)
+	//fmt.Printf("idlist %v\n", sim.Area)
 	for _, participantInfo := range participantsInfo {
 		tAgentType := participantInfo.AgentType
 		tAreaId := participantInfo.AreaId
@@ -259,7 +258,7 @@ func (sim *SynerexSimulator) CreateSyncIdList(participantsInfo []*participant.Pa
 			neighborAreaIdList = append(neighborAreaIdList, uint64(agentChannelId))
 		}
 		if isSameArea {
-			fmt.Printf("idlist2 %v")
+			//fmt.Printf("idlist2 %v")
 			channelId := participantInfo.ChannelId
 			agentChannelId := channelId.AgentChannelId
 			sameAreaIdList = append(sameAreaIdList, uint64(agentChannelId))
