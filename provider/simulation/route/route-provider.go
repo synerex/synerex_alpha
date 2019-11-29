@@ -144,24 +144,25 @@ func calcRoutes(sLat float32, sLon float32, gLat float32, gLon float32, agentTyp
 	}
 
 	nextTransit := &agent.Coord{}
-	/*if transitNum == 0 {
+	//通常用
+	if transitNum == 0 {
 		coord := &agent.Coord{
 			Lat: float32(gLat),
 			Lon: float32(gLon),
 		}
 		transitPoint = append(transitPoint, coord)
 		nextTransit = coord
-	}*/
+	}
 
 	// 壁を通過するテスト用
-	if transitNum == 0 {
+	/*if transitNum == 0 {
 		coord := &agent.Coord{
 			Lat: float32(35.156578),
 			Lon: float32(136.982500),
 		}
 		transitPoint = append(transitPoint, coord)
 		nextTransit = coord
-	}
+	}*/
 	for i := 0; i < transitNum; i++ {
 		coord := &agent.Coord{
 			Lat: float32(latArray[i]),

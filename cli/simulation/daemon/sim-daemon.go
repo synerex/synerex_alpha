@@ -760,9 +760,52 @@ func calcRoute() Route {
 		Lat: sLat + (eLat-sLat)*rand.Float32(),
 	}*/
 	destination := Coord{
-		Lon: 136.989500,
+		Lon: 136.98900,
 		Lat: 35.156476,
 	}
+	route := Route{
+		Coord:       departure,
+		Direction:   100 * rand.Float32(),
+		Speed:       100 * rand.Float32(),
+		Departure:   departure,
+		Destination: destination,
+	}
+
+	return route
+}
+
+// Test用。二つのエリアからエージェントが交わる想定
+func calcRoute2(agentNum int, i int) Route {
+
+	var departure, destination Coord
+	if i < agentNum/2 {
+		sLon := float32(136.974000)
+		eLon := float32(136.982000)
+		sLat := float32(35.152800)
+		eLat := float32(35.160200)
+		departure = Coord{
+			Lon: sLon + (eLon-sLon)*rand.Float32(),
+			Lat: sLat + (eLat-sLat)*rand.Float32(),
+		}
+		destination = Coord{
+			Lon: 136.988000,
+			Lat: 35.156476,
+		}
+	} else {
+		sLon := float32(136.982800)
+		eLon := float32(136.98800)
+		sLat := float32(35.152800)
+		eLat := float32(35.160200)
+		departure = Coord{
+			Lon: sLon + (eLon-sLon)*rand.Float32(),
+			Lat: sLat + (eLat-sLat)*rand.Float32(),
+		}
+		destination = Coord{
+			Lon: 136.974000,
+			Lat: 35.156476,
+		}
+	}
+
 	route := Route{
 		Coord:       departure,
 		Direction:   100 * rand.Float32(),

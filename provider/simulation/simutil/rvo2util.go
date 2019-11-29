@@ -288,6 +288,11 @@ func (rvoutil *RVO2Util) InvScale(scaledAgents []Agent) []*agent.AgentInfo {
 				RequiredTime:  route.RouteInfo.RequiredTime,
 			}
 
+			// ゴールに着いたら停止させる
+			if nextTransit == destination && distance < 40 {
+				nextCoord = route.Coord
+			}
+
 			nextRoute := &agent.Route{
 				Coord:       nextCoord,
 				Direction:   float32(direction),
@@ -385,11 +390,11 @@ func (rvoutil *RVO2Util) SetPreferredVelocities(sim *rvo.RVOSimulator, scaledAge
 func (rvoutil *RVO2Util) CalcNextAgents() []*agent.AgentInfo {
 	timeStep := rvoutil.SynSim.TimeStep
 	neighborDist := 1.5
-	maxneighbors := 100
+	maxneighbors := 10
 	timeHorizon := 1.5
 	timeHorizonObst := 2.0
-	radius := 0.03
-	maxSpeed := 0.01
+	radius := 0.025
+	maxSpeed := 0.05
 	sim := rvo.NewRVOSimulator(timeStep, neighborDist, maxneighbors, timeHorizon, timeHorizonObst, radius, maxSpeed, &rvo.Vector2{X: 0, Y: 0})
 
 	scaledAgents, scaledObstacles := rvoutil.Scale()
