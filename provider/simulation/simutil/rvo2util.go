@@ -134,7 +134,7 @@ func (rvoutil *RVO2Util) Scale() ([]Agent, []Obstacle) {
 	}
 
 	scaledObstacles := make([]Obstacle, 0)
-	obstacle1 := Obstacle{
+	/*obstacle1 := Obstacle{
 		Id: 1,
 		Position: []Coord{
 			Coord{
@@ -159,10 +159,10 @@ func (rvoutil *RVO2Util) Scale() ([]Agent, []Obstacle) {
 				Lon: 136.982500,
 			},
 		},
-	}
+	}*/
 	obstacles := []Obstacle{
-		obstacle1,
-		obstacle2,
+		//obstacle1,
+		//obstacle2,
 	}
 
 	for _, obstacle := range obstacles {

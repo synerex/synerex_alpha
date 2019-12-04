@@ -40,53 +40,51 @@ class App extends Container {
                 // area
                 {
                     sourcePosition: [136.973172, 35.152476, 0],
-                    targetPosition: [136.984031, 35.152476, 0]
+                    targetPosition: [136.984031, 35.152476, 0],
+                    strokeWidth: 6.0
                 },
                 {
                     sourcePosition: [136.973172, 35.160678, 0],
-                    targetPosition: [136.984031, 35.160678, 0]
+                    targetPosition: [136.984031, 35.160678, 0],
+                    strokeWidth: 6.0
                 },
                 {
                     sourcePosition: [136.973172, 35.152476, 0],
-                    targetPosition: [136.973172, 35.160678, 0]
+                    targetPosition: [136.973172, 35.160678, 0],
+                    strokeWidth: 6.0
                 },
                 {
                     sourcePosition: [136.984031, 35.152476, 0],
-                    targetPosition: [136.984031, 35.160678, 0]
+                    targetPosition: [136.984031, 35.160678, 0],
+                    strokeWidth: 6.0
                 },
 
                 {
                     sourcePosition: [136.981014, 35.152476, 0],
-                    targetPosition: [136.990047, 35.152476, 0]
+                    targetPosition: [136.990047, 35.152476, 0],
+                    strokeWidth: 6.0
                 },
                 {
                     sourcePosition: [136.981014, 35.160678, 0],
-                    targetPosition: [136.990047, 35.160678, 0]
+                    targetPosition: [136.990047, 35.160678, 0],
+                    strokeWidth: 6.0
                 },
                 {
                     sourcePosition: [136.981014, 35.152476, 0],
-                    targetPosition: [136.981014, 35.160678, 0]
+                    targetPosition: [136.981014, 35.160678, 0],
+                    strokeWidth: 6.0
                 },
                 {
                     sourcePosition: [136.990047, 35.152476, 0],
-                    targetPosition: [136.990047, 35.160678, 0]
+                    targetPosition: [136.990047, 35.160678, 0],
+                    strokeWidth: 6.0
                 },
                 // controlled
                 {
                     sourcePosition: [136.9825, 35.152476, 0],
                     targetPosition: [136.9825, 35.160678, 0],
-                    color: [255, 0, 255]
-                },
-                // object
-                {
-                    sourcePosition: [136.9830, 35.152476, 0],
-                    targetPosition: [136.9830, 35.156678, 0],
-                    color: [25, 100, 205]
-                },
-                {
-                    sourcePosition: [136.9830, 35.158476, 0],
-                    targetPosition: [136.9830, 35.160678, 0],
-                    color: [25, 100, 205]
+                    color: [255, 0, 255],
+                    strokeWidth: 6.0
                 }
             ]
         };
@@ -121,13 +119,20 @@ class App extends Container {
             let hit = false;
             movesbasedata.forEach(movedata => {
                 if (mtype === movedata.mtype && id === movedata.id) {
+                    let color = [0, 200, 0];
+                    if (id < 15) {
+                        color = [0, 200, 120];
+                    } else {
+                        color = [200, 0, 0];
+                    }
                     hit = true;
                     movedata.arrivaltime = time;
                     movedata.operation.push({
                         elapsedtime: time,
                         position: [lon, lat, 0],
                         angle,
-                        speed
+                        speed,
+                        color
                     });
 
                     setMovesbase.push(movedata);
@@ -135,9 +140,10 @@ class App extends Container {
             });
 
             if (!hit) {
-                let color = [0, 200, 0];
-                if (mtype === 0) {
-                    color = [0, 200, 120];
+                if (id < 15) {
+                    color = [0, 200, 0];
+                } else {
+                    color = [200, 0, 0];
                 }
                 setMovesbase.push({
                     mtype,
@@ -149,7 +155,8 @@ class App extends Container {
                             elapsedtime: time,
                             position: [lon, lat, 0],
                             angle,
-                            speed
+                            speed,
+                            color
                         }
                     ]
                 });

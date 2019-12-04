@@ -778,7 +778,7 @@ func calcRoute() Route {
 func calcRoute2(agentNum int, i int) Route {
 
 	var departure, destination Coord
-	if i < agentNum/2 {
+	if i < 15 {
 		sLon := float32(136.974000)
 		eLon := float32(136.982000)
 		sLat := float32(35.152800)
@@ -882,14 +882,14 @@ func handleOrder(order *Order) string {
 				agentsInfo := make([]AgentInfo, 0)
 				for i := 0; i < agentNum; i++ {
 					agentInfo := AgentInfo{
-						Id:   generateUid(i),
+						Id:   uint32(i),
 						Type: "pedestrian",
 						Status: Status{
 							Name: "A",
 							Age:  "20",
 							Sex:  "Femail",
 						},
-						Route: calcRoute(),
+						Route: calcRoute2(agentNum, i),
 					}
 					agentsInfo = append(agentsInfo, agentInfo)
 				}
