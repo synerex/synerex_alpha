@@ -20,7 +20,7 @@ participant Ped_AreaA
 participant Car_AreaA
 participant Ped_AreaB
 participant Car_AreaB
-end box
+end box 
 
 
 == StartUp ==

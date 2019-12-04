@@ -25,7 +25,7 @@ replace (
 	github.com/synerex/synerex_alpha/api/simulation/participant => ../../../api/simulation/participant
 	github.com/synerex/synerex_alpha/api/simulation/route => ../../../api/simulation/route
 	github.com/synerex/synerex_alpha/nodeapi => ../../../nodeapi
-	github.com/synerex/synerex_alpha/provider/simulation/simutil => ../simutil
+	github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/agent => ../simutil/objects/agent
 	github.com/synerex/synerex_alpha/sxutil => ../../../sxutil
 //github.com/synerex/synerex_alpha/provider/simulation/simutil/routes => ../simutil/routes
 )

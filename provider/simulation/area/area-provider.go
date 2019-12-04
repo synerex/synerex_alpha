@@ -13,7 +13,7 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
-	"github.com/synerex/synerex_alpha/provider/simulation/simutil"
+	"github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/provider"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 
@@ -24,28 +24,10 @@ import (
 )
 
 var (
-	serverAddr         = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
-	nodesrv            = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	idlist             []uint64
-	dmMap              map[uint64]*sxutil.DemandOpts
-	spMap              map[uint64]*sxutil.SupplyOpts
-	selection          bool
-	mu                 sync.Mutex
-	sclientArea        *sxutil.SMServiceClient
-	sclientAgent       *sxutil.SMServiceClient
-	sclientClock       *sxutil.SMServiceClient
-	sclientRoute       *sxutil.SMServiceClient
-	sclientParticipant *sxutil.SMServiceClient
-	data               *Data
+	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
+	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
+	sprovider  *provider.SynerexProvider
 )
-
-func init() {
-	idlist = make([]uint64, 0)
-	dmMap = make(map[uint64]*sxutil.DemandOpts)
-	spMap = make(map[uint64]*sxutil.SupplyOpts)
-	selection = false
-	data = new(Data)
-}
 
 func readMapData() []Map {
 	// JSONファイル読み込み
@@ -89,31 +71,16 @@ func getParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 
 	participantInfo := &participant.ParticipantInfo{
 		ChannelId: &participant.ChannelId{
-			ParticipantChannelId: uint32(sclientParticipant.ClientID),
-			AreaChannelId:        uint32(sclientArea.ClientID),
-			AgentChannelId:       uint32(sclientAgent.ClientID),
-			ClockChannelId:       uint32(sclientClock.ClientID),
-			RouteChannelId:       uint32(sclientRoute.ClientID),
+			ParticipantChannelId: uint32(sprovider.ParticipantClient.ClientID),
+			AreaChannelId:        uint32(sprovider.AreaClient.ClientID),
+			AgentChannelId:       uint32(sprovider.AgentClient.ClientID),
+			ClockChannelId:       uint32(sprovider.ClockClient.ClientID),
+			RouteChannelId:       uint32(sprovider.RouteClient.ClientID),
 		},
 		ProviderType: 1, // Area
 	}
 
-	getParticipantSupply := &participant.GetParticipantSupply{
-		ParticipantInfo: participantInfo,
-		StatusType:      0, // OK
-		Meta:            "",
-	}
-
-	nm := "getParticipant respnse by area-provider"
-	js := ""
-	opts := &sxutil.SupplyOpts{
-		Target:               dm.GetId(),
-		Name:                 nm,
-		JSON:                 js,
-		GetParticipantSupply: getParticipantSupply,
-	}
-
-	spMap, idlist = simutil.SendProposeSupply(sclientParticipant, opts, spMap, idlist)
+	sprovider.GetParticipantSupply(dm.GetId(), participantInfo)
 }
 
 // Finish Fix
@@ -122,31 +89,16 @@ func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 
 	participantInfo := &participant.ParticipantInfo{
 		ChannelId: &participant.ChannelId{
-			ParticipantChannelId: uint32(sclientParticipant.ClientID),
-			AreaChannelId:        uint32(sclientArea.ClientID),
-			AgentChannelId:       uint32(sclientAgent.ClientID),
-			ClockChannelId:       uint32(sclientClock.ClientID),
-			RouteChannelId:       uint32(sclientRoute.ClientID),
+			ParticipantChannelId: uint32(sprovider.ParticipantClient.ClientID),
+			AreaChannelId:        uint32(sprovider.AreaClient.ClientID),
+			AgentChannelId:       uint32(sprovider.AgentClient.ClientID),
+			ClockChannelId:       uint32(sprovider.ClockClient.ClientID),
+			RouteChannelId:       uint32(sprovider.RouteClient.ClientID),
 		},
 		ProviderType: 1, // Area
 	}
 
-	setParticipantSupply := &participant.SetParticipantSupply{
-		ParticipantInfo: participantInfo,
-		StatusType:      0, // OK
-		Meta:            "",
-	}
-
-	nm := "SetParticipant respnse by area-provider"
-	js := ""
-	opts := &sxutil.SupplyOpts{
-		Target:               dm.GetId(),
-		Name:                 nm,
-		JSON:                 js,
-		SetParticipantSupply: setParticipantSupply,
-	}
-
-	spMap, idlist = simutil.SendProposeSupply(sclientParticipant, opts, spMap, idlist)
+	sprovider.SetParticipantSupply(dm.GetId(), participantInfo)
 }
 
 // Finish Fix  , this is unused
@@ -180,22 +132,16 @@ func setParticipant(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	log.Println("setAgent")
 
-	nm := "setAgent respnse by area-provider"
-	js := ""
-	opts := &sxutil.SupplyOpts{
-		Target: dm.GetId(),
-		Name:   nm,
-		JSON:   js,
-	}
-
-	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts, spMap, idlist)
+	sprovider.SetAgentsSupply(dm.GetId(), 0, 0, agent.AgentType(0))
 }
 
 // Finish Fix
 func getAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	log.Println("getAgent")
 
-	getAgentsSupply := &agent.GetAgentsSupply{
+	sprovider.GetAgentsSupply(dm.GetId(), 0, 0, []*agent.AgentInfo{}, agent.AgentType(0))
+
+	/*getAgentsSupply := &agent.GetAgentsSupply{
 		Time:       uint32(1),
 		StatusType: 0, //OK
 		Meta:       "",
@@ -210,7 +156,7 @@ func getAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		GetAgentsSupply: getAgentsSupply,
 	}
 
-	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts, spMap, idlist)
+	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts, spMap, idlist)*/
 }
 
 // Finish Fix
@@ -241,7 +187,9 @@ func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 				},
 			}
 
-			getAreaSupply := &area.GetAreaSupply{
+			sprovider.GetAreaSupply(dm.GetId(), areaInfo)
+
+			/*getAreaSupply := &area.GetAreaSupply{
 				AreaInfo:   areaInfo,
 				StatusType: 0, //OK
 				Meta:       "",
@@ -256,7 +204,7 @@ func getArea(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 				GetAreaSupply: getAreaSupply,
 			}
 
-			spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)
+			spMap, idlist = simutil.SendProposeSupply(sclientArea, opts, spMap, idlist)*/
 		}
 	}
 }
@@ -304,44 +252,14 @@ func forwardClock(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 		Time: nextTime,
 	}
 
-	forwardClockSupply := &clock.ForwardClockSupply{
-		ClockInfo:  nextClockInfo,
-		StatusType: 0, //OK
-		Meta:       "",
-	}
+	sprovider.ForwardClockSupply(dm.GetId(), nextClockInfo)
 
-	nm2 := "forwardClock to ClockCh respnse by area-provider"
-	js2 := ""
-	opts2 := &sxutil.SupplyOpts{
-		Target:             dm.GetId(),
-		Name:               nm2,
-		JSON:               js2,
-		ForwardClockSupply: forwardClockSupply,
-	}
-
-	spMap, idlist = simutil.SendProposeSupply(sclientClock, opts2, spMap, idlist)
-
-	forwardAgentsSupply := &agent.ForwardAgentsSupply{
-		Time:       nextTime,
-		StatusType: 0, //OK
-		Meta:       "",
-	}
-
-	nm3 := "forwardClock to AgentCh respnse by area-provider"
-	js3 := ""
-	opts3 := &sxutil.SupplyOpts{
-		Target:              dm.GetId(),
-		Name:                nm3,
-		JSON:                js3,
-		ForwardAgentsSupply: forwardAgentsSupply,
-	}
-
-	spMap, idlist = simutil.SendProposeSupply(sclientAgent, opts3, spMap, idlist)
+	sprovider.ForwardAgentsSupply(dm.GetId(), 0, 0, []*agent.AgentInfo{}, agent.AgentType(0))
 }
 
 // callback for each Supply
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
-	demandType := simutil.CheckDemandType(dm)
+	demandType := sprovider.CheckDemandType(dm)
 	switch demandType {
 	case "GET_PARTICIPANT_DEMAND":
 		getParticipant(clt, dm)
@@ -381,28 +299,14 @@ func main() {
 
 	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Area}")
-	sclientAgent = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE, argJson)
-	sclientClock = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE, argJson)
-	sclientArea = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE, argJson)
-	sclientParticipant = sxutil.NewSMServiceClient(client, pb.ChannelType_PARTICIPANT_SERVICE, argJson)
-	sclientRoute = sxutil.NewSMServiceClient(client, pb.ChannelType_ROUTE_SERVICE, argJson)
 
+	// Clientとして登録
+	sprovider = provider.NewSynerexProvider()
+
+	// プロバイダのsetup
 	wg := sync.WaitGroup{}
-
 	wg.Add(1)
-	go simutil.SubscribeDemand(sclientAgent, demandCallback, &wg)
-	wg.Wait()
-
-	wg.Add(1)
-	go simutil.SubscribeDemand(sclientClock, demandCallback, &wg)
-	wg.Wait()
-
-	wg.Add(1)
-	go simutil.SubscribeDemand(sclientArea, demandCallback, &wg)
-	wg.Wait()
-
-	wg.Add(1)
-	go simutil.SubscribeDemand(sclientParticipant, demandCallback, &wg)
+	sprovider.SetupProvider(client, argJson, demandCallback, func(clt *sxutil.SMServiceClient, sp *pb.Supply) {}, &wg)
 	wg.Wait()
 
 	wg.Add(1)

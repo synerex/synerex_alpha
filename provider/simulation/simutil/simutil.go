@@ -6,7 +6,7 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
-	"github.com/synerex/synerex_alpha/sxutil"
+	agentObject "github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/agent"
 
 	//	"github.com/synerex/synerex_alpha/api/simulation/route"
 
@@ -18,7 +18,6 @@ import (
 var (
 	ch        chan *pb.Supply
 	startSync bool
-	//mu        sync.Mutex
 )
 
 func init() {
@@ -45,6 +44,12 @@ type IdListByChannel struct {
 	RouteIdList       []uint32
 }
 
+type Order2 struct {
+	Type       string
+	ClockInfo  ClockInfo
+	AreaInfo   AreaInfo
+	AgentsInfo []*agentObject.Pedestrian
+}
 type Order struct {
 	Type       string
 	ClockInfo  ClockInfo
@@ -386,33 +391,4 @@ func CheckSupplyType(sp *pb.Supply) string {
 	}
 
 	return "INVALID_TYPE"
-}
-
-func SendProposeSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap map[uint64]*sxutil.SupplyOpts, idlist []uint64) (map[uint64]*sxutil.SupplyOpts, []uint64) {
-	mu.Lock()
-	id := sclient.ProposeSupply(opts)
-	idlist = append(idlist, id) // my demand list
-	spMap[id] = opts            // my demand options
-	mu.Unlock()
-	//    log.Printf("Propose my supply as id %v, %v",id,idlist)
-	return spMap, idlist
-}
-
-func SendSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts, spMap map[uint64]*sxutil.SupplyOpts, idlist []uint64) (map[uint64]*sxutil.SupplyOpts, []uint64) {
-	mu.Lock()
-	id := sclient.RegisterSupply(opts)
-	idlist = append(idlist, id) // my demand list
-	spMap[id] = opts            // my demand options
-	mu.Unlock()
-	//    log.Printf("Register my supply as id %v, %v",id,idlist)
-	return spMap, idlist
-}
-
-func SendDemand(sclient *sxutil.SMServiceClient, opts *sxutil.DemandOpts, dmMap map[uint64]*sxutil.DemandOpts, idlist []uint64) (map[uint64]*sxutil.DemandOpts, []uint64) {
-	mu.Lock()
-	id := sclient.RegisterDemand(opts)
-	idlist = append(idlist, id) // my demand list
-	dmMap[id] = opts            // my demand options
-	mu.Unlock()
-	return dmMap, idlist
 }

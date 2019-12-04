@@ -86,6 +86,49 @@ class App extends Container {
                     color: [255, 0, 255],
                     strokeWidth: 6.0
                 }
+<<<<<<< Updated upstream
+=======
+
+                // wall1　下
+                /*{
+                    sourcePosition: [136.9823, 35.155078, 0],
+                    targetPosition: [136.9823, 35.152476, 0],
+                    color: [55, 100, 200],
+                    strokeWidth: 6.0
+                },
+                {
+                    sourcePosition: [136.9827, 35.155078, 0],
+                    targetPosition: [136.9827, 35.152476, 0],
+                    color: [55, 100, 200],
+                    strokeWidth: 6.0
+                },
+                {
+                    sourcePosition: [136.9823, 35.155078, 0],
+                    targetPosition: [136.9827, 35.155078, 0],
+                    color: [55, 100, 200],
+                    strokeWidth: 6.0
+                },
+
+                // wall2 上
+                {
+                    sourcePosition: [136.9823, 35.157576, 0],
+                    targetPosition: [136.9823, 35.160678, 0],
+                    color: [55, 100, 200],
+                    strokeWidth: 6.0
+                },
+                {
+                    sourcePosition: [136.9827, 35.157576, 0],
+                    targetPosition: [136.9827, 35.160678, 0],
+                    color: [55, 100, 200],
+                    strokeWidth: 6.0
+                },
+                {
+                    sourcePosition: [136.9823, 35.157576, 0],
+                    targetPosition: [136.9827, 35.157576, 0],
+                    color: [55, 100, 200],
+                    strokeWidth: 6.0
+                }*/
+>>>>>>> Stashed changes
             ]
         };
 

@@ -23,6 +23,7 @@ import (
 	"time"
 
 	gosocketio "github.com/mtfelian/golang-socketio"
+	"github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/agent"
 
 	"github.com/kardianos/service"
 )
@@ -747,10 +748,10 @@ func handleRun(target string) string {
 
 func calcRoute() Route {
 
-	sLon := float32(136.973300)
+	sLon := float32(136.974000)
 	eLon := float32(136.982000)
-	sLat := float32(35.152600)
-	eLat := float32(35.160500)
+	sLat := float32(35.152800)
+	eLat := float32(35.160200)
 	departure := Coord{
 		Lon: sLon + (eLon-sLon)*rand.Float32(),
 		Lat: sLat + (eLat-sLat)*rand.Float32(),
@@ -760,8 +761,8 @@ func calcRoute() Route {
 		Lat: sLat + (eLat-sLat)*rand.Float32(),
 	}*/
 	destination := Coord{
-		Lon: 136.98900,
-		Lat: 35.156476,
+		Lon: 136.98800,
+		Lat: 35.156208,
 	}
 	route := Route{
 		Coord:       departure,
@@ -781,8 +782,8 @@ func calcRoute2(agentNum int, i int) Route {
 	if i < 15 {
 		sLon := float32(136.974000)
 		eLon := float32(136.982000)
-		sLat := float32(35.152800)
-		eLat := float32(35.160200)
+		sLat := float32(35.153800)
+		eLat := float32(35.158200)
 		departure = Coord{
 			Lon: sLon + (eLon-sLon)*rand.Float32(),
 			Lat: sLat + (eLat-sLat)*rand.Float32(),
@@ -794,8 +795,8 @@ func calcRoute2(agentNum int, i int) Route {
 	} else {
 		sLon := float32(136.982800)
 		eLon := float32(136.98800)
-		sLat := float32(35.152800)
-		eLat := float32(35.160200)
+		sLat := float32(35.153800)
+		eLat := float32(35.158200)
 		departure = Coord{
 			Lon: sLon + (eLon-sLon)*rand.Float32(),
 			Lat: sLat + (eLat-sLat)*rand.Float32(),
@@ -810,6 +811,34 @@ func calcRoute2(agentNum int, i int) Route {
 		Coord:       departure,
 		Direction:   100 * rand.Float32(),
 		Speed:       100 * rand.Float32(),
+		Departure:   departure,
+		Destination: destination,
+	}
+
+	return route
+}
+
+// Agentオブジェクトの変換
+func calcRoute3() *agent.Route {
+
+	var departure, destination *agent.Coord
+	sLon := float64(136.982800)
+	eLon := float64(136.98800)
+	sLat := float64(35.152800)
+	eLat := float64(35.160200)
+	departure = &agent.Coord{
+		Longitude: sLon + (eLon-sLon)*rand.Float64(),
+		Latitude:  sLat + (eLat-sLat)*rand.Float64(),
+	}
+	destination = &agent.Coord{
+		Longitude: 136.974000,
+		Latitude:  35.156476,
+	}
+
+	route := &agent.Route{
+		Position:    departure,
+		Direction:   100 * rand.Float64(),
+		Speed:       100 * rand.Float64(),
 		Departure:   departure,
 		Destination: destination,
 	}
@@ -880,6 +909,18 @@ func handleOrder(order *Order) string {
 			} else if target == "SetAgent" {
 				agentNum, _ := strconv.Atoi(order.Option)
 				agentsInfo := make([]AgentInfo, 0)
+				/*for i := 0; i < agentNum; i++ {
+					ped := agent.NewPedestrian()
+					ped.Status = &agent.Status{
+						Name: "A",
+						Age:  "20",
+						Sex:  agent.Male,
+					}
+					ped.ID = uint64(generateUid(i))
+					ped.Type = agent.PEDESTRIAN
+					ped.Route = calcRoute3()
+					agentsInfo = append(agentsInfo, ped)
+				}*/
 				for i := 0; i < agentNum; i++ {
 					agentInfo := AgentInfo{
 						Id:   uint32(i),

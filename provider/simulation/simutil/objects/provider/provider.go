@@ -1,4 +1,4 @@
-package objects
+package provider
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
-	agentClass "github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/agent"
 	"github.com/synerex/synerex_alpha/sxutil"
 )
 
@@ -24,12 +23,6 @@ func init() {
 	//waitCh = make(chan *pb.Supply)
 }
 
-type Agents struct {
-	Pedestrian []*agentClass.Pedestrian
-	Car        []*agentClass.Car
-}
-
-//Todo なぜかエージェントが減る
 // SynerexSimulator :
 type SynerexProvider struct {
 	DmMap              map[uint64]*sxutil.DemandOpts
@@ -51,24 +44,56 @@ func NewSynerexProvider() *SynerexProvider {
 	return s
 }
 
-// RegisterClient :　ClientとしてNodeServerに登録する
-func (s *SynerexProvider) RegisterClient(client pb.SynerexClient, channelTypes []pb.ChannelType, argJson string) {
-	for _, channelType := range channelTypes {
-		switch channelType {
-		case pb.ChannelType_AGENT_SERVICE:
-			s.AgentClient = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE, argJson)
-		case pb.ChannelType_CLOCK_SERVICE:
-			s.ClockClient = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE, argJson)
-		case pb.ChannelType_AREA_SERVICE:
-			s.AreaClient = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE, argJson)
-		case pb.ChannelType_PARTICIPANT_SERVICE:
-			s.ParticipantClient = sxutil.NewSMServiceClient(client, pb.ChannelType_PARTICIPANT_SERVICE, argJson)
-		case pb.ChannelType_ROUTE_SERVICE:
-			s.RouteClient = sxutil.NewSMServiceClient(client, pb.ChannelType_ROUTE_SERVICE, argJson)
-		}
+// SubscribeAll: 全てのチャネルに登録、SubscribeSupply, SubscribeDemandする
+func (s *SynerexProvider) SetupProvider(client pb.SynerexClient, argJson string, demandCallback func(*sxutil.SMServiceClient, *pb.Demand), supplyCallback func(*sxutil.SMServiceClient, *pb.Supply), wg2 *sync.WaitGroup) {
 
-	}
+	s.AgentClient = sxutil.NewSMServiceClient(client, pb.ChannelType_AGENT_SERVICE, argJson)
+	s.ClockClient = sxutil.NewSMServiceClient(client, pb.ChannelType_CLOCK_SERVICE, argJson)
+	s.AreaClient = sxutil.NewSMServiceClient(client, pb.ChannelType_AREA_SERVICE, argJson)
+	s.ParticipantClient = sxutil.NewSMServiceClient(client, pb.ChannelType_PARTICIPANT_SERVICE, argJson)
+	s.RouteClient = sxutil.NewSMServiceClient(client, pb.ChannelType_ROUTE_SERVICE, argJson)
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go s.SubscribeDemand(s.AgentClient, demandCallback, &wg)
+	wg.Wait()
 
+	wg.Add(1)
+	go s.SubscribeDemand(s.ClockClient, demandCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go s.SubscribeDemand(s.AreaClient, demandCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go s.SubscribeDemand(s.ParticipantClient, demandCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go s.SubscribeDemand(s.RouteClient, demandCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go s.SubscribeSupply(s.ClockClient, supplyCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go s.SubscribeSupply(s.AreaClient, supplyCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go s.SubscribeSupply(s.AgentClient, supplyCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go s.SubscribeSupply(s.ParticipantClient, supplyCallback, &wg)
+	wg.Wait()
+
+	wg.Add(1)
+	go s.SubscribeSupply(s.RouteClient, supplyCallback, &wg)
+	wg.Wait()
+
+	wg2.Done()
 }
 
 func (s *SynerexProvider) SetRelateAreaIdList(sameAreaIdList []uint64, neighborAreaIdList []uint64) {
@@ -89,7 +114,6 @@ func (s *SynerexProvider) Wait(idList []uint64, waitCh chan *pb.Supply) map[uint
 
 				mu.Lock()
 				pspMap[psp.SenderId] = psp
-				fmt.Printf("get fromsendTowait %v\n, %v\n", uint32(psp.SenderId), uint32(idList[0]))
 				if isFinishSync(pspMap, idList) {
 
 					mu.Unlock()

@@ -8,6 +8,8 @@ require (
 	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/route v0.0.0
 	github.com/synerex/synerex_alpha/provider/simulation/simutil v0.0.0
+	github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/agent v0.0.0-00010101000000-000000000000 // indirect
+	github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/provider v0.0.0-00010101000000-000000000000 // indirect
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
 	google.golang.org/grpc v1.22.1
 )
@@ -28,5 +30,7 @@ replace (
 	github.com/synerex/synerex_alpha/api/simulation/route => ./../../../api/simulation/route
 	github.com/synerex/synerex_alpha/nodeapi => ./../../../nodeapi
 	github.com/synerex/synerex_alpha/provider/simulation/simutil => ../simutil
+	github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/agent => ../simutil/objects/agent
+	github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/provider => ../simutil/objects/provider
 	github.com/synerex/synerex_alpha/sxutil => ./../../../sxutil
 )

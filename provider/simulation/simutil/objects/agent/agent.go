@@ -22,7 +22,7 @@ type Route struct {
 	RequiredTime  float64
 }
 
-type Type int
+type Type int64
 
 const (
 	PEDESTRIAN Type = iota
@@ -30,13 +30,12 @@ const (
 )
 
 type Agent struct {
-	ID    uint64
-	Type  Type
-	Route *Route
+	ID   uint64
+	Type Type
 }
 
 // エージェントがエリアの中にいるかどうか
-func (a *Agent) IsInArea(mapCoord *Map) bool {
+func (a *Agent) IsInArea(mapCoord *MapCoord) bool {
 	lat := a.Route.Position.Latitude
 	lon := a.Route.Position.Longitude
 	if mapCoord.SLatitude < lat && lat < mapCoord.ELatitude && mapCoord.SLongitude < lon && lon < mapCoord.ELongitude {

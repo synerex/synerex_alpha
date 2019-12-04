@@ -8,10 +8,10 @@ import (
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
-	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
-	"github.com/synerex/synerex_alpha/provider/simulation/simutil"
+	"github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/provider"
+	"github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/simulator"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 
@@ -32,8 +32,8 @@ var (
 	ch                  chan *pb.Supply
 	sameCh              chan *pb.Supply
 	neighborCh          chan *pb.Supply
-	sprovider           *simutil.SynerexProvider
-	sim                 *simutil.SynerexSimulator
+	sprovider           *provider.SynerexProvider
+	sim                 *simulator.CarSimulator
 	CHANNEL_BUFFER_SIZE int
 )
 
@@ -44,33 +44,40 @@ func init() {
 	sameCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 }
 
-// Finish Fix
-// when start up,
+// SetArea: Map情報をDemandし、取得した情報をSetする関数
 func setArea() {
-
+	// Demandを送る
 	sprovider.GetAreaDemand(uint32(*clockTime), uint32(*areaId))
+	// Map情報の取得
 	sp := <-ch
 	getAreaSupply := sp.GetArg_GetAreaSupply()
 	areaInfo := getAreaSupply.AreaInfo
-	sim.Area = areaInfo
+	// Map情報のSet
+	mapInfo := agent.NewMap()
+	mapInfo.SetAll(areaInfo)
+	sim.SetMap(mapInfo)
+
 	log.Printf("finish setting area: %v", areaInfo)
 }
 
-// Finish Fix
+// SetAgents: AgentのRoute情報を取得し、Agent情報をセットする関数
 func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
-	log.Println("setAgent")
+	// Agent情報
 	setAgentsDemand := dm.GetArg_SetAgentsDemand()
 	agentsInfo := setAgentsDemand.AgentsInfo
 
-	// get route demand
+	// AgentのRoute情報を取得するDemand
 	sprovider.GetAgentsRouteDemand(agentsInfo)
-	log.Println("setAgent2")
+	// Route情報を取得
 	sp := <-ch
 	log.Println("GET_AGENTS_ROUTE_FINISH")
 	getAgentsRouteSupply := sp.GetArg_GetAgentsRouteSupply()
 	agentsInfo = getAgentsRouteSupply.AgentsInfo
 
-	for _, agentInfo := range agentsInfo {
+	// AgentsをMapにセットする
+	sim.setAgents(agentsInfo)
+
+	/*for _, agentInfo := range agentsInfo {
 		if simutil.IsAgentInControlledArea(agentInfo, sim.Area, int32(*agentType)) {
 			agentInfo.ControlArea = uint32(*areaId)
 		}
@@ -79,22 +86,19 @@ func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 			sim.AddAgent(agentInfo)
 			//sim.Agents = append(sim.Agents, agentInfo)
 		}
-	}
-
+	}*/
+	// AgentSet完了通知をおくる
 	sprovider.SetAgentsSupply(dm.GetId(), 1, uint32(*areaId), agent.AgentType(*agentType))
 }
 
-// Finish Fix
+// SetClock: Clock情報をセットする
 func setClock() {
-	log.Println("setClock")
-
-	// store AgentInfo data
+	// Clock情報をセット
 	sim.TimeStep = 1
 	sim.GlobalTime = float64(*clockTime)
-	//data.ClockInfo = clockInfo
 }
 
-func getAreaInfo() *area.AreaInfo {
+/*func getAreaInfo() *area.AreaInfo {
 
 	sprovider.GetAreaDemand(uint32(*clockTime), uint32(*areaId))
 
@@ -104,7 +108,7 @@ func getAreaInfo() *area.AreaInfo {
 	areaInfo := getAreaSupply.AreaInfo
 
 	return areaInfo
-}
+}*/
 
 func getSameAreaAgents() []*agent.AgentInfo {
 
@@ -243,7 +247,7 @@ func getAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 // Finish Fix
 // callback for each Supply
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
-	demandType := simutil.CheckDemandType(dm)
+	demandType := sprovider.CheckDemandType(dm)
 	switch demandType {
 	case "GET_PARTICIPANT_DEMAND":
 		getParticipant(clt, dm)
@@ -263,7 +267,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 // Finish Fix
 // callback for each Supply
 func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	supplyType := simutil.CheckSupplyType(sp)
+	supplyType := sprovider.CheckSupplyType(sp)
 	if sprovider.IsSupplyTarget(sp) {
 		switch supplyType {
 		case "GET_AREA_SUPPLY":
@@ -314,54 +318,18 @@ func main() {
 	sxutil.RegisterDeferFunction(func() { conn.Close() })
 
 	// synerex simulator
-	sim = simutil.NewSynerexSimulator(1, 1, 0)
+	sim = simulator.NewCarSimulator(1, 1, 0)
 
 	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:CarArea, AreaId: %d}", *areaId)
 
 	// Clientとして登録
-	sprovider = simutil.NewSynerexProvider()
-	channelTypes := []pb.ChannelType{
-		pb.ChannelType_AGENT_SERVICE,
-		pb.ChannelType_CLOCK_SERVICE,
-		pb.ChannelType_AREA_SERVICE,
-		pb.ChannelType_PARTICIPANT_SERVICE,
-		pb.ChannelType_ROUTE_SERVICE,
-	}
-	sprovider.RegisterClient(client, channelTypes, argJson)
+	sprovider = provider.NewSynerexProvider()
 
+	// プロバイダのsetup
 	wg := sync.WaitGroup{}
-
 	wg.Add(1)
-	go simutil.SubscribeDemand(sprovider.AgentClient, demandCallback, &wg)
-	wg.Wait()
-
-	wg.Add(1)
-	go simutil.SubscribeDemand(sprovider.ClockClient, demandCallback, &wg)
-	wg.Wait()
-
-	wg.Add(1)
-	go simutil.SubscribeDemand(sprovider.AreaClient, demandCallback, &wg)
-	wg.Wait()
-
-	wg.Add(1)
-	go simutil.SubscribeDemand(sprovider.ParticipantClient, demandCallback, &wg)
-	wg.Wait()
-
-	wg.Add(1)
-	go simutil.SubscribeSupply(sprovider.AreaClient, supplyCallback, &wg)
-	wg.Wait()
-
-	wg.Add(1)
-	go simutil.SubscribeSupply(sprovider.AgentClient, supplyCallback, &wg)
-	wg.Wait()
-
-	wg.Add(1)
-	go simutil.SubscribeSupply(sprovider.ParticipantClient, supplyCallback, &wg)
-	wg.Wait()
-
-	wg.Add(1)
-	go simutil.SubscribeSupply(sprovider.RouteClient, supplyCallback, &wg)
+	sprovider.SetupProvider(client, argJson, demandCallback, supplyCallback, &wg)
 	wg.Wait()
 
 	// start up(setArea)
