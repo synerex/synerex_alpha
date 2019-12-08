@@ -25,6 +25,7 @@ import (
 	"github.com/kardianos/service"
 	gosocketio "github.com/mtfelian/golang-socketio"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/common"
 	"github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/provider"
 )
 

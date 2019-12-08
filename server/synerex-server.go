@@ -1,13 +1,6 @@
 package main
 
 //go:generate protoc -I ../api --go_out=paths=source_relative:../api common/common.proto
-//go:generate protoc -I ../api --go_out=paths=source_relative:../api adservice/adservice.proto
-//go:generate protoc -I ../api  --go_out=paths=source_relative:../api fleet/fleet.proto
-//go:generate protoc -I ../api  --go_out=paths=source_relative:../api library/library.proto
-//go:generate protoc -I ../api  --go_out=paths=source_relative:../api rideshare/rideshare.proto
-//go:generate protoc -I ../api  --go_out=paths=source_relative:../api ptransit/ptransit.proto
-//go:generate protoc -I ../api  --go_out=paths=source_relative:../api routing/routing.proto
-//go:generate protoc -I ../api  --go_out=paths=source_relative:../api marketing/marketing.proto
 
 //go:generate protoc -I ../api  --go_out=paths=source_relative:../api simulation/agent/signal.proto
 //go:generate protoc -I ../api  --go_out=paths=source_relative:../api simulation/agent/train.proto
@@ -16,6 +9,7 @@ package main
 //go:generate protoc -I ../api  --go_out=paths=source_relative:../api simulation/agent/agent.proto
 //go:generate protoc -I ../api  --go_out=paths=source_relative:../api simulation/clock/clock.proto
 //go:generate protoc -I ../api  --go_out=paths=source_relative:../api simulation/area/area.proto
+//go:generate protoc -I ../api  --go_out=paths=source_relative:../api simulation/common/common.proto
 //go:generate protoc -I ../api  --go_out=paths=source_relative:../api simulation/synerex/synerex.proto
 //go:generate protoc -I ../api  --go_out=paths=source_relative:../api simulation/participant/participant.proto
 

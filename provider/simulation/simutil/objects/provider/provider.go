@@ -149,8 +149,8 @@ func isFinishSync(pspMap map[uint64]*pb.Supply, idlist []uint64) bool {
 	for _, id := range idlist {
 		isMatch := false
 		for _, sp := range pspMap {
-			senderId := uint32(sp.SenderId)
-			if uint32(id) == senderId {
+			senderId := uint64(sp.SenderId)
+			if uint64(id) == senderId {
 				isMatch = true
 			}
 		}
@@ -172,13 +172,11 @@ func (s *SynerexProvider) IsSupplyTarget(sp *pb.Supply) bool {
 }
 
 // getAgentsDemand :　同じエリアのエージェント情報を取得する
-func (s *SynerexProvider) GetAgentsDemand(time uint32, areaId uint32, agentType agent.AgentType) {
+func (s *SynerexProvider) GetAgentsDemand(time uint64, areaId uint64, agentType agent.AgentType) {
 	getAgentsDemand := &agent.GetAgentsDemand{
-		Time:       time,
-		AreaId:     areaId,
-		AgentType:  agentType,
-		StatusType: 2, // NONE
-		Meta:       "",
+		Time:      time,
+		AreaId:    areaId,
+		AgentType: agentType,
 	}
 
 	nm := "getAgents order by ped-area-provider"
@@ -192,12 +190,10 @@ func (s *SynerexProvider) GetAgentsDemand(time uint32, areaId uint32, agentType 
 }
 
 // getAreaDemand :　エリア情報を取得する
-func (s *SynerexProvider) GetAreaDemand(time uint32, areaId uint32) {
+func (s *SynerexProvider) GetAreaDemand(time uint64, areaId uint64) {
 	getAreaDemand := &area.GetAreaDemand{
-		Time:       time,
-		AreaId:     areaId,
-		StatusType: 2, //NONE
-		Meta:       "",
+		Time:   time,
+		AreaId: areaId,
 	}
 
 	nm := "getArea order by ped-area-provider"
@@ -209,9 +205,7 @@ func (s *SynerexProvider) GetAreaDemand(time uint32, areaId uint32) {
 // getAreaDemand :　エリア情報を取得する
 func (s *SynerexProvider) GetAreaSupply(tid uint64, areaInfo *area.AreaInfo) {
 	getAreaSupply := &area.GetAreaSupply{
-		AreaInfo:   areaInfo,
-		StatusType: 0, //OK
-		Meta:       "",
+		AreaInfo: areaInfo,
 	}
 
 	nm := "getArea respnse by area-provider"
@@ -227,11 +221,9 @@ func (s *SynerexProvider) GetAreaSupply(tid uint64, areaInfo *area.AreaInfo) {
 }
 
 // getAgentsRouteSupply :　エージェントのルート情報を提供する
-func (s *SynerexProvider) GetAgentsRouteSupply(tid uint64, agentsInfo []*agent.AgentInfo) {
+func (s *SynerexProvider) GetAgentsRouteSupply(tid uint64, agentsInfo []*agent.Agent) {
 	getAgentsRouteSupply := &agent.GetAgentsRouteSupply{
 		AgentsInfo: agentsInfo,
-		StatusType: 0, //OK
-		Meta:       "",
 	}
 
 	nm := "getRoute respnse by route-provider"
@@ -247,11 +239,9 @@ func (s *SynerexProvider) GetAgentsRouteSupply(tid uint64, agentsInfo []*agent.A
 }
 
 // getAgentsRouteDemand :　エージェントのルート情報を取得する
-func (s *SynerexProvider) GetAgentsRouteDemand(agentsInfo []*agent.AgentInfo) {
+func (s *SynerexProvider) GetAgentsRouteDemand(agentsInfo []*agent.Agent) {
 	getAgentsRouteDemand := &agent.GetAgentsRouteDemand{
 		AgentsInfo: agentsInfo,
-		StatusType: 2, //NONE
-		Meta:       "",
 	}
 
 	nm := "getAgentsRouteDemand order by ped-area-provider"
@@ -261,13 +251,11 @@ func (s *SynerexProvider) GetAgentsRouteDemand(agentsInfo []*agent.AgentInfo) {
 }
 
 // setAgentsSupply :　setAgentDemandに対する応答
-func (s *SynerexProvider) SetAgentsSupply(tid uint64, time uint32, areaId uint32, agentType agent.AgentType) {
+func (s *SynerexProvider) SetAgentsSupply(tid uint64, time uint64, areaId uint64, agentType agent.AgentType) {
 	setAgentsSupply := &agent.SetAgentsSupply{
-		Time:       time,
-		AreaId:     areaId,
-		AgentType:  agentType,
-		StatusType: 0,
-		Meta:       "",
+		Time:      time,
+		AreaId:    areaId,
+		AgentType: agentType,
 	}
 
 	nm := "setAgentSupply by ped-area-provider"
@@ -283,11 +271,9 @@ func (s *SynerexProvider) SetAgentsSupply(tid uint64, time uint32, areaId uint32
 }
 
 // setAgentsDemand :　Agentsを設置するDemand
-func (s *SynerexProvider) SetAgentsDemand(agentsInfo []*agent.AgentInfo) {
+func (s *SynerexProvider) SetAgentsDemand(agentsInfo []*agent.Agent) {
 	setAgentsDemand := &agent.SetAgentsDemand{
 		AgentsInfo: agentsInfo,
-		StatusType: 2, // NONE
-		Meta:       "",
 	}
 
 	nm := "SetAgentDemand"
@@ -298,14 +284,12 @@ func (s *SynerexProvider) SetAgentsDemand(agentsInfo []*agent.AgentInfo) {
 }
 
 // forwardAgentsSupply :　次の時刻のエージェント情報をSupplyする
-func (s *SynerexProvider) ForwardAgentsSupply(tid uint64, time uint32, areaId uint32, agentsInfo []*agent.AgentInfo, agentType agent.AgentType) {
+func (s *SynerexProvider) ForwardAgentsSupply(tid uint64, time uint64, areaId uint64, agentsInfo []*agent.Agent, agentType agent.AgentType) {
 	forwardAgentsSupply := &agent.ForwardAgentsSupply{
 		Time:       time,
 		AreaId:     areaId,
 		AgentType:  agentType,
 		AgentsInfo: agentsInfo,
-		StatusType: 0, //OK
-		Meta:       "",
 	}
 
 	opts := &sxutil.SupplyOpts{
@@ -320,9 +304,7 @@ func (s *SynerexProvider) ForwardAgentsSupply(tid uint64, time uint32, areaId ui
 // forwardClockSupply :　forwardClockDemandに対するSupply
 func (s *SynerexProvider) ForwardClockSupply(tid uint64, clockInfo *clock.ClockInfo) {
 	forwardClockSupply := &clock.ForwardClockSupply{
-		ClockInfo:  clockInfo,
-		StatusType: 0, // OK
-		Meta:       "",
+		ClockInfo: clockInfo,
 	}
 
 	nm := "forwardClock to clockCh respnse by ped-area-provider"
@@ -341,10 +323,8 @@ func (s *SynerexProvider) ForwardClockSupply(tid uint64, clockInfo *clock.ClockI
 // forwardClockDemand :　Clockを進めるDemand
 func (s *SynerexProvider) ForwardClockDemand(time uint64, cyclenum uint64) {
 	forwardClockDemand := &clock.ForwardClockDemand{
-		Time:       uint32(time),
-		CycleNum:   uint32(cyclenum),
-		StatusType: 2, // NONE
-		Meta:       "",
+		Time:     uint64(time),
+		CycleNum: uint64(cyclenum),
 	}
 
 	nm := "ForwardClockDemand"
@@ -360,8 +340,6 @@ func (s *SynerexProvider) GetParticipantSupply(tid uint64, participantInfo *part
 
 	getParticipantSupply := &participant.GetParticipantSupply{
 		ParticipantInfo: participantInfo,
-		StatusType:      0, // OK
-		Meta:            "",
 	}
 
 	nm := "getParticipant respnse by ped-area-provider"
@@ -381,8 +359,6 @@ func (s *SynerexProvider) GetParticipantDemand(participantInfo *participant.Part
 
 	getParticipantDemand := &participant.GetParticipantDemand{
 		ParticipantInfo: participantInfo,
-		StatusType:      2, // NONE
-		Meta:            "",
 	}
 
 	nm := "GetParticipantDemand"
@@ -397,8 +373,6 @@ func (s *SynerexProvider) SetParticipantSupply(tid uint64, participantInfo *part
 
 	setParticipantSupply := &participant.SetParticipantSupply{
 		ParticipantInfo: participantInfo,
-		StatusType:      0, // OK
-		Meta:            "",
 	}
 
 	nm := "SetParticipant respnse by ped-area-provider"
@@ -418,8 +392,6 @@ func (s *SynerexProvider) SetParticipantDemand(participantsInfo []*participant.P
 
 	setParticipantDemand := &participant.SetParticipantDemand{
 		ParticipantsInfo: participantsInfo,
-		StatusType:       2, // NONE
-		Meta:             "",
 	}
 
 	nm := "setParticipant order by scenario"
@@ -430,14 +402,12 @@ func (s *SynerexProvider) SetParticipantDemand(participantsInfo []*participant.P
 }
 
 // getAgentsSupply :　同じエリアのエージェント情報を提供する
-func (s *SynerexProvider) GetAgentsSupply(tid uint64, time uint32, areaId uint32, agentsInfo []*agent.AgentInfo, agentType agent.AgentType) {
+func (s *SynerexProvider) GetAgentsSupply(tid uint64, time uint64, areaId uint64, agentsInfo []*agent.Agent, agentType agent.AgentType) {
 	getAgentsSupply := &agent.GetAgentsSupply{
 		Time:       time,
 		AreaId:     areaId,
 		AgentType:  agentType, //Ped
 		AgentsInfo: agentsInfo,
-		StatusType: 0, //OK
-		Meta:       "",
 	}
 
 	nm := "getAgentSupply  by ped-area-provider"

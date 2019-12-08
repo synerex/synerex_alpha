@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-package api.participant;
+package api.synerex;
 
-option go_package="github.com/synerex/synerex_alpha/api/simulation/participant";
+option go_package="github.com/synerex/synerex_alpha/api/simulation/synerex";
 
 import "simulation/agent/agent.proto";
 import "simulation/area/area.proto";

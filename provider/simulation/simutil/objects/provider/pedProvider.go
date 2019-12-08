@@ -56,8 +56,3 @@ func (p *PedProvider) GetAgentsRoute(agents []*agent.Pedestrian, ch chan *pb.Sup
 func (p *PedProvider) SendAgentsRouteSupply(sp *pb.Supply, ch chan *pb.Supply) {
 	ch <- sp
 }
-
-// SynerexAgentsToProviderAgents : SynerexのAgents
-func (p *PedProvider) SynerexAgentsToProviderAgents([]*agent.AgentInfo) []*agent.Pedestrian {
-	ch <- sp
-}

@@ -5,39 +5,26 @@ import (
 	"math"
 
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/common"
 )
-
-type Sex int
-
-const (
-	Male Sex = iota
-	Female
-)
-
-type PedStatus struct {
-	Age  string
-	Name string
-	Sex  Sex
-}
 
 type Pedestrian struct {
-	*Agent // 埋め込み
-	Status *PedStatus
-	Route  *Route
+	*agent.Pedestrian
 }
 
-func NewPedestrian() *Pedestrian {
+func NewPedestrian(pedestrian *agent.Pedestrian) *Pedestrian {
 	p := &Pedestrian{
-		Agent: &Agent{},
+		Pedestrian: pedestrian,
 	}
 	return p
 }
 
 // エージェントがエリアの中にいるかどうか
-func (p *agent.AgentInfo) IsInArea(mapCoord *MapCoord) bool {
+func (p *Pedestrian) IsInArea(mapCoord *area.AreaCoord) bool {
 	lat := p.Route.Position.Latitude
 	lon := p.Route.Position.Longitude
-	if mapCoord.SLatitude < lat && lat < mapCoord.ELatitude && mapCoord.SLongitude < lon && lon < mapCoord.ELongitude {
+	if mapCoord.StartLat < lat && lat < mapCoord.EndLat && mapCoord.StartLon < lon && lon < mapCoord.EndLon {
 		return true
 	} else {
 		return false
@@ -45,7 +32,7 @@ func (p *agent.AgentInfo) IsInArea(mapCoord *MapCoord) bool {
 }
 
 // ある座標への距離と角度を返す関数
-func (p *Pedestrian) GetDirectionAndDistance(goal *Coord) (float64, float64) {
+func (p *Pedestrian) GetDirectionAndDistance(goal *common.Coord) (float64, float64) {
 	var direction, distance float64
 	r := 6378137 // equatorial radius (m)
 	sLat := p.Route.Position.Latitude * math.Pi / 180
@@ -68,7 +55,7 @@ func (p *Pedestrian) GetDirectionAndDistance(goal *Coord) (float64, float64) {
 }
 
 // ある座標に到着したかどうか
-func (p *Pedestrian) IsReachedGoal(goal *Coord, radius float64) bool {
+func (p *Pedestrian) IsReachedGoal(goal *common.Coord, radius float64) bool {
 
 	_, distance := p.GetDirectionAndDistance(goal)
 	// 距離がradius m以下の場合
@@ -99,95 +86,5 @@ func (p *Pedestrian) DecideNextTransit() {
 		} else {
 			fmt.Printf("\x1b[30m\x1b[47m Arrived Destination! \x1b[0m\n")
 		}
-	}
-}
-
-// grpc用のエージェント情報を格納する
-func (p *Pedestrian) SetGrpcAgent(grpcAgent *agent.AgentInfo) {
-
-	transitPoints := []*Coord{}
-	for _, tp := range grpcAgent.Route.RouteInfo.TransitPoint {
-		transitPoints = append(transitPoints, &Coord{
-			Latitude:  float64(tp.Lat),
-			Longitude: float64(tp.Lon),
-		})
-	}
-
-	p.ID = uint64(grpcAgent.AgentId)
-	p.Type = Type(grpcAgent.AgentType)
-	p.Status = &PedStatus{
-		Age:  grpcAgent.AgentStatus.Age,
-		Sex:  Sex(int(0)),
-		Name: grpcAgent.AgentStatus.Name,
-	}
-	p.Route = &Route{
-		Position: &Coord{
-			Latitude:  float64(grpcAgent.Route.Coord.Lat),
-			Longitude: float64(grpcAgent.Route.Coord.Lon),
-		},
-		Direction: float64(grpcAgent.Route.Direction),
-		Speed:     float64(grpcAgent.Route.Speed),
-		Departure: &Coord{
-			Latitude:  float64(grpcAgent.Route.Departure.Lat),
-			Longitude: float64(grpcAgent.Route.Departure.Lon),
-		},
-		Destination: &Coord{
-			Latitude:  float64(grpcAgent.Route.Destination.Lat),
-			Longitude: float64(grpcAgent.Route.Destination.Lon),
-		},
-		TransitPoints: transitPoints,
-		NextTransit: &Coord{
-			Latitude:  float64(grpcAgent.Route.RouteInfo.NextTransit.Lat),
-			Longitude: float64(grpcAgent.Route.RouteInfo.NextTransit.Lon),
-		},
-		TotalDistance: float64(grpcAgent.Route.RouteInfo.TotalDistance),
-		RequiredTime:  float64(grpcAgent.Route.RouteInfo.RequiredTime),
-	}
-}
-
-// grpc用のエージェント情報に変換して返す
-func (p *Pedestrian) GetGrpcAgent() *agent.AgentInfo {
-
-	transitPoint := []*agent.Coord{}
-	for _, tp := range p.Route.TransitPoints {
-		transitPoint = append(transitPoint, &agent.Coord{
-			Lat: float32(tp.Latitude),
-			Lon: float32(tp.Longitude),
-		})
-	}
-
-	return &agent.AgentInfo{
-		AgentId:   uint32(p.ID),
-		AgentType: agent.AgentType(int32(p.Type)),
-		AgentStatus: &agent.AgentStatus{
-			Age:  p.Status.Age,
-			Name: p.Status.Name,
-			Sex:  "",
-		},
-		Route: &agent.Route{
-			Coord: &agent.Coord{
-				Lat: float32(p.Route.Position.Latitude),
-				Lon: float32(p.Route.Position.Longitude),
-			},
-			Direction: float32(p.Route.Direction),
-			Speed:     float32(p.Route.Speed),
-			Destination: &agent.Coord{
-				Lat: float32(p.Route.Destination.Latitude),
-				Lon: float32(p.Route.Destination.Longitude),
-			},
-			Departure: &agent.Coord{
-				Lat: float32(p.Route.Departure.Latitude),
-				Lon: float32(p.Route.Departure.Longitude),
-			},
-			RouteInfo: &agent.RouteInfo{
-				TransitPoint: transitPoint,
-				NextTransit: &agent.Coord{
-					Lat: float32(p.Route.NextTransit.Latitude),
-					Lon: float32(p.Route.NextTransit.Longitude),
-				},
-				TotalDistance: float32(p.Route.TotalDistance),
-				RequiredTime:  float32(p.Route.RequiredTime),
-			},
-		},
 	}
 }
