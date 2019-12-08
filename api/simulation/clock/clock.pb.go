@@ -20,42 +20,12 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type StatusType int32
-
-const (
-	StatusType_OK   StatusType = 0
-	StatusType_NG   StatusType = 1
-	StatusType_NONE StatusType = 2
-)
-
-var StatusType_name = map[int32]string{
-	0: "OK",
-	1: "NG",
-	2: "NONE",
-}
-
-var StatusType_value = map[string]int32{
-	"OK":   0,
-	"NG":   1,
-	"NONE": 2,
-}
-
-func (x StatusType) String() string {
-	return proto.EnumName(StatusType_name, int32(x))
-}
-
-func (StatusType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_e96fed1976809896, []int{0}
-}
-
 type SetClockDemand struct {
-	Time                 uint32     `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	CycleDuration        uint32     `protobuf:"varint,2,opt,name=cycle_duration,json=cycleDuration,proto3" json:"cycle_duration,omitempty"`
-	StatusType           StatusType `protobuf:"varint,3,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
-	Meta                 string     `protobuf:"bytes,4,opt,name=meta,proto3" json:"meta,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Time                 uint64   `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	CycleDuration        uint64   `protobuf:"varint,2,opt,name=cycle_duration,json=cycleDuration,proto3" json:"cycle_duration,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *SetClockDemand) Reset()         { *m = SetClockDemand{} }
@@ -83,38 +53,22 @@ func (m *SetClockDemand) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SetClockDemand proto.InternalMessageInfo
 
-func (m *SetClockDemand) GetTime() uint32 {
+func (m *SetClockDemand) GetTime() uint64 {
 	if m != nil {
 		return m.Time
 	}
 	return 0
 }
 
-func (m *SetClockDemand) GetCycleDuration() uint32 {
+func (m *SetClockDemand) GetCycleDuration() uint64 {
 	if m != nil {
 		return m.CycleDuration
 	}
 	return 0
 }
 
-func (m *SetClockDemand) GetStatusType() StatusType {
-	if m != nil {
-		return m.StatusType
-	}
-	return StatusType_OK
-}
-
-func (m *SetClockDemand) GetMeta() string {
-	if m != nil {
-		return m.Meta
-	}
-	return ""
-}
-
 type SetClockSupply struct {
 	ClockInfo            *ClockInfo `protobuf:"bytes,1,opt,name=clock_info,json=clockInfo,proto3" json:"clock_info,omitempty"`
-	StatusType           StatusType `protobuf:"varint,2,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
-	Meta                 string     `protobuf:"bytes,3,opt,name=meta,proto3" json:"meta,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
 	XXX_unrecognized     []byte     `json:"-"`
 	XXX_sizecache        int32      `json:"-"`
@@ -152,28 +106,12 @@ func (m *SetClockSupply) GetClockInfo() *ClockInfo {
 	return nil
 }
 
-func (m *SetClockSupply) GetStatusType() StatusType {
-	if m != nil {
-		return m.StatusType
-	}
-	return StatusType_OK
-}
-
-func (m *SetClockSupply) GetMeta() string {
-	if m != nil {
-		return m.Meta
-	}
-	return ""
-}
-
 type ForwardClockDemand struct {
-	Time                 uint32     `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	CycleNum             uint32     `protobuf:"varint,2,opt,name=cycle_num,json=cycleNum,proto3" json:"cycle_num,omitempty"`
-	StatusType           StatusType `protobuf:"varint,3,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
-	Meta                 string     `protobuf:"bytes,4,opt,name=meta,proto3" json:"meta,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Time                 uint64   `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	CycleNum             uint64   `protobuf:"varint,2,opt,name=cycle_num,json=cycleNum,proto3" json:"cycle_num,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *ForwardClockDemand) Reset()         { *m = ForwardClockDemand{} }
@@ -201,38 +139,22 @@ func (m *ForwardClockDemand) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ForwardClockDemand proto.InternalMessageInfo
 
-func (m *ForwardClockDemand) GetTime() uint32 {
+func (m *ForwardClockDemand) GetTime() uint64 {
 	if m != nil {
 		return m.Time
 	}
 	return 0
 }
 
-func (m *ForwardClockDemand) GetCycleNum() uint32 {
+func (m *ForwardClockDemand) GetCycleNum() uint64 {
 	if m != nil {
 		return m.CycleNum
 	}
 	return 0
 }
 
-func (m *ForwardClockDemand) GetStatusType() StatusType {
-	if m != nil {
-		return m.StatusType
-	}
-	return StatusType_OK
-}
-
-func (m *ForwardClockDemand) GetMeta() string {
-	if m != nil {
-		return m.Meta
-	}
-	return ""
-}
-
 type ForwardClockSupply struct {
 	ClockInfo            *ClockInfo `protobuf:"bytes,1,opt,name=clock_info,json=clockInfo,proto3" json:"clock_info,omitempty"`
-	StatusType           StatusType `protobuf:"varint,2,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
-	Meta                 string     `protobuf:"bytes,3,opt,name=meta,proto3" json:"meta,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
 	XXX_unrecognized     []byte     `json:"-"`
 	XXX_sizecache        int32      `json:"-"`
@@ -270,28 +192,12 @@ func (m *ForwardClockSupply) GetClockInfo() *ClockInfo {
 	return nil
 }
 
-func (m *ForwardClockSupply) GetStatusType() StatusType {
-	if m != nil {
-		return m.StatusType
-	}
-	return StatusType_OK
-}
-
-func (m *ForwardClockSupply) GetMeta() string {
-	if m != nil {
-		return m.Meta
-	}
-	return ""
-}
-
 type BackClockDemand struct {
-	Time                 uint32     `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	CycleNum             uint32     `protobuf:"varint,2,opt,name=cycle_num,json=cycleNum,proto3" json:"cycle_num,omitempty"`
-	StatusType           StatusType `protobuf:"varint,3,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
-	Meta                 string     `protobuf:"bytes,4,opt,name=meta,proto3" json:"meta,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Time                 uint64   `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	CycleNum             uint64   `protobuf:"varint,2,opt,name=cycle_num,json=cycleNum,proto3" json:"cycle_num,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *BackClockDemand) Reset()         { *m = BackClockDemand{} }
@@ -319,38 +225,22 @@ func (m *BackClockDemand) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_BackClockDemand proto.InternalMessageInfo
 
-func (m *BackClockDemand) GetTime() uint32 {
+func (m *BackClockDemand) GetTime() uint64 {
 	if m != nil {
 		return m.Time
 	}
 	return 0
 }
 
-func (m *BackClockDemand) GetCycleNum() uint32 {
+func (m *BackClockDemand) GetCycleNum() uint64 {
 	if m != nil {
 		return m.CycleNum
 	}
 	return 0
 }
 
-func (m *BackClockDemand) GetStatusType() StatusType {
-	if m != nil {
-		return m.StatusType
-	}
-	return StatusType_OK
-}
-
-func (m *BackClockDemand) GetMeta() string {
-	if m != nil {
-		return m.Meta
-	}
-	return ""
-}
-
 type BackClockSupply struct {
 	ClockInfo            *ClockInfo `protobuf:"bytes,1,opt,name=clock_info,json=clockInfo,proto3" json:"clock_info,omitempty"`
-	StatusType           StatusType `protobuf:"varint,2,opt,name=status_type,json=statusType,proto3,enum=api.clock.StatusType" json:"status_type,omitempty"`
-	Meta                 string     `protobuf:"bytes,3,opt,name=meta,proto3" json:"meta,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
 	XXX_unrecognized     []byte     `json:"-"`
 	XXX_sizecache        int32      `json:"-"`
@@ -388,25 +278,11 @@ func (m *BackClockSupply) GetClockInfo() *ClockInfo {
 	return nil
 }
 
-func (m *BackClockSupply) GetStatusType() StatusType {
-	if m != nil {
-		return m.StatusType
-	}
-	return StatusType_OK
-}
-
-func (m *BackClockSupply) GetMeta() string {
-	if m != nil {
-		return m.Meta
-	}
-	return ""
-}
-
 type ClockInfo struct {
-	Time                 uint32   `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	CycleNum             uint32   `protobuf:"varint,2,opt,name=cycle_num,json=cycleNum,proto3" json:"cycle_num,omitempty"`
-	CycleDuration        uint32   `protobuf:"varint,3,opt,name=cycle_duration,json=cycleDuration,proto3" json:"cycle_duration,omitempty"`
-	CycleInterval        uint32   `protobuf:"varint,4,opt,name=cycle_interval,json=cycleInterval,proto3" json:"cycle_interval,omitempty"`
+	Time                 uint64   `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
+	CycleNum             uint64   `protobuf:"varint,2,opt,name=cycle_num,json=cycleNum,proto3" json:"cycle_num,omitempty"`
+	CycleDuration        uint64   `protobuf:"varint,3,opt,name=cycle_duration,json=cycleDuration,proto3" json:"cycle_duration,omitempty"`
+	CycleInterval        uint64   `protobuf:"varint,4,opt,name=cycle_interval,json=cycleInterval,proto3" json:"cycle_interval,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -437,28 +313,28 @@ func (m *ClockInfo) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ClockInfo proto.InternalMessageInfo
 
-func (m *ClockInfo) GetTime() uint32 {
+func (m *ClockInfo) GetTime() uint64 {
 	if m != nil {
 		return m.Time
 	}
 	return 0
 }
 
-func (m *ClockInfo) GetCycleNum() uint32 {
+func (m *ClockInfo) GetCycleNum() uint64 {
 	if m != nil {
 		return m.CycleNum
 	}
 	return 0
 }
 
-func (m *ClockInfo) GetCycleDuration() uint32 {
+func (m *ClockInfo) GetCycleDuration() uint64 {
 	if m != nil {
 		return m.CycleDuration
 	}
 	return 0
 }
 
-func (m *ClockInfo) GetCycleInterval() uint32 {
+func (m *ClockInfo) GetCycleInterval() uint64 {
 	if m != nil {
 		return m.CycleInterval
 	}
@@ -466,7 +342,6 @@ func (m *ClockInfo) GetCycleInterval() uint32 {
 }
 
 func init() {
-	proto.RegisterEnum("api.clock.StatusType", StatusType_name, StatusType_value)
 	proto.RegisterType((*SetClockDemand)(nil), "api.clock.SetClockDemand")
 	proto.RegisterType((*SetClockSupply)(nil), "api.clock.SetClockSupply")
 	proto.RegisterType((*ForwardClockDemand)(nil), "api.clock.ForwardClockDemand")
@@ -479,29 +354,23 @@ func init() {
 func init() { proto.RegisterFile("simulation/clock/clock.proto", fileDescriptor_e96fed1976809896) }
 
 var fileDescriptor_e96fed1976809896 = []byte{
-	// 373 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x94, 0x41, 0x4b, 0xeb, 0x40,
-	0x14, 0x85, 0xdf, 0xa4, 0xa5, 0x34, 0xb7, 0xb4, 0xaf, 0x0c, 0xef, 0x41, 0x40, 0x17, 0xa5, 0xa0,
-	0x14, 0x17, 0x09, 0xb4, 0xa8, 0xfb, 0x5a, 0x95, 0x22, 0xa4, 0x90, 0xba, 0x72, 0x13, 0xa6, 0xe9,
-	0xd4, 0x0e, 0x4d, 0x32, 0x43, 0x32, 0xa3, 0xe6, 0x2f, 0xb8, 0x10, 0x14, 0xc4, 0xbf, 0x2b, 0x9d,
-	0xb6, 0xb1, 0x56, 0x41, 0x0a, 0x2e, 0xba, 0xc9, 0x9c, 0x9c, 0xb9, 0xdc, 0x7b, 0xf8, 0x60, 0x2e,
-	0xec, 0xa7, 0x2c, 0x52, 0x21, 0x91, 0x8c, 0xc7, 0x4e, 0x10, 0xf2, 0x60, 0xb6, 0xf8, 0xda, 0x22,
-	0xe1, 0x92, 0x63, 0x93, 0x08, 0x66, 0x6b, 0xa3, 0xf9, 0x86, 0xa0, 0x36, 0xa4, 0xf2, 0x6c, 0xfe,
-	0xd3, 0xa3, 0x11, 0x89, 0xc7, 0x18, 0x43, 0x51, 0xb2, 0x88, 0x5a, 0xa8, 0x81, 0x5a, 0x55, 0x4f,
-	0x6b, 0x7c, 0x00, 0xb5, 0x20, 0x0b, 0x42, 0xea, 0x8f, 0x55, 0xa2, 0xbb, 0x5a, 0x86, 0xbe, 0xad,
-	0x6a, 0xb7, 0xb7, 0x34, 0xf1, 0x09, 0x54, 0x52, 0x49, 0xa4, 0x4a, 0x7d, 0x99, 0x09, 0x6a, 0x15,
-	0x1a, 0xa8, 0x55, 0x6b, 0xff, 0xb7, 0xf3, 0x71, 0xf6, 0x50, 0xdf, 0x5e, 0x67, 0x82, 0x7a, 0x90,
-	0xe6, 0x7a, 0x3e, 0x32, 0xa2, 0x92, 0x58, 0xc5, 0x06, 0x6a, 0x99, 0x9e, 0xd6, 0xcd, 0xe7, 0xb5,
-	0x64, 0x43, 0x25, 0x44, 0x98, 0xe1, 0x0e, 0x80, 0x6e, 0xe3, 0xb3, 0x78, 0xc2, 0x75, 0xbe, 0x4a,
-	0xfb, 0xdf, 0x5a, 0x77, 0x5d, 0xdb, 0x8f, 0x27, 0xdc, 0x33, 0x83, 0x95, 0xdc, 0xcc, 0x64, 0x6c,
-	0x9b, 0xa9, 0xf0, 0x39, 0x13, 0xbe, 0xe0, 0xc9, 0x3d, 0x49, 0xc6, 0x3f, 0x11, 0xdb, 0x03, 0x73,
-	0x41, 0x2c, 0x56, 0xd1, 0x12, 0x56, 0x59, 0x1b, 0xae, 0x8a, 0x7e, 0x95, 0xd3, 0xeb, 0x46, 0xa6,
-	0x5d, 0x61, 0xf5, 0x84, 0xe0, 0x6f, 0x97, 0x04, 0xb3, 0x9d, 0x01, 0xf5, 0xb2, 0x1e, 0x68, 0x57,
-	0x28, 0x3d, 0x22, 0x30, 0xf3, 0x21, 0xdb, 0xf3, 0xf9, 0xfa, 0x2e, 0x0b, 0xdf, 0xbd, 0xcb, 0xbc,
-	0x8c, 0xc5, 0x92, 0x26, 0x77, 0x24, 0xd4, 0x60, 0x56, 0x65, 0xfd, 0xa5, 0x79, 0x74, 0x08, 0xf0,
-	0x11, 0x1d, 0x97, 0xc0, 0x18, 0x5c, 0xd5, 0xff, 0xcc, 0x4f, 0xf7, 0xb2, 0x8e, 0x70, 0x19, 0x8a,
-	0xee, 0xc0, 0x3d, 0xaf, 0x1b, 0xdd, 0xd3, 0x9b, 0xe3, 0x5b, 0x26, 0xa7, 0x6a, 0x64, 0x07, 0x3c,
-	0x72, 0xd2, 0x2c, 0xa6, 0x09, 0x7d, 0x58, 0x9d, 0x3e, 0x09, 0xc5, 0x94, 0x38, 0x44, 0x30, 0x67,
-	0x73, 0x09, 0x8d, 0x4a, 0x7a, 0xff, 0x74, 0xde, 0x03, 0x00, 0x00, 0xff, 0xff, 0x92, 0xbf, 0x09,
-	0x09, 0x9f, 0x04, 0x00, 0x00,
+	// 281 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x92, 0x4f, 0x4b, 0xc3, 0x40,
+	0x10, 0xc5, 0x89, 0x06, 0x31, 0x2b, 0x56, 0x58, 0x3c, 0x04, 0xf4, 0x20, 0x01, 0xc1, 0xd3, 0x06,
+	0x2c, 0xe2, 0x3d, 0xb6, 0x85, 0x20, 0x78, 0x68, 0x6f, 0x5e, 0xc2, 0x76, 0xb3, 0xb5, 0x4b, 0xf7,
+	0x1f, 0xdb, 0x5d, 0x35, 0x5f, 0xc1, 0x4f, 0x2d, 0x4e, 0xd3, 0x3f, 0x4a, 0x41, 0x4a, 0x2e, 0xbb,
+	0xc3, 0x9b, 0xc7, 0x9b, 0x1f, 0xcc, 0xa0, 0xeb, 0xa5, 0x50, 0x41, 0x52, 0x2f, 0x8c, 0xce, 0x99,
+	0x34, 0x6c, 0xb1, 0x7a, 0x89, 0x75, 0xc6, 0x1b, 0x9c, 0x50, 0x2b, 0x08, 0x08, 0xd9, 0x33, 0xea,
+	0x4d, 0xb8, 0x7f, 0xfa, 0xa9, 0x07, 0x5c, 0x51, 0x5d, 0x63, 0x8c, 0x62, 0x2f, 0x14, 0x4f, 0xa3,
+	0x9b, 0xe8, 0x2e, 0x1e, 0x43, 0x8d, 0x6f, 0x51, 0x8f, 0x35, 0x4c, 0xf2, 0xaa, 0x0e, 0x0e, 0x42,
+	0xd3, 0x23, 0xe8, 0x9e, 0x83, 0x3a, 0x68, 0xc5, 0x6c, 0xb8, 0x0d, 0x9b, 0x04, 0x6b, 0x65, 0x83,
+	0xfb, 0x08, 0xc1, 0x9c, 0x4a, 0xe8, 0x99, 0x81, 0xc8, 0xb3, 0xfb, 0x4b, 0xb2, 0x19, 0x4f, 0xc0,
+	0x5b, 0xea, 0x99, 0x19, 0x27, 0x6c, 0x5d, 0x66, 0x43, 0x84, 0x47, 0xc6, 0x7d, 0x50, 0x57, 0xff,
+	0xc7, 0x75, 0x85, 0x92, 0x15, 0x97, 0x0e, 0xaa, 0x45, 0x3a, 0x05, 0xe1, 0x25, 0xa8, 0xac, 0xfc,
+	0x1d, 0xd3, 0x85, 0xa8, 0x40, 0x17, 0x05, 0x65, 0x8b, 0x4e, 0x38, 0xa3, 0x9d, 0x8c, 0x2e, 0x2c,
+	0x5f, 0x11, 0x4a, 0x36, 0x8d, 0x83, 0x31, 0xf6, 0xac, 0xf2, 0x78, 0xcf, 0x2a, 0xb7, 0x36, 0xa1,
+	0x3d, 0x77, 0xef, 0x54, 0xa6, 0xf1, 0x8e, 0xad, 0x6c, 0xc5, 0xe2, 0xf1, 0xf5, 0xe1, 0x4d, 0xf8,
+	0x79, 0x98, 0x12, 0x66, 0x54, 0xbe, 0x6c, 0x34, 0x77, 0xfc, 0x73, 0xfd, 0x57, 0x54, 0xda, 0x39,
+	0xcd, 0xa9, 0x15, 0xf9, 0xdf, 0x73, 0x9c, 0x9e, 0xc0, 0x25, 0xf6, 0xbf, 0x03, 0x00, 0x00, 0xff,
+	0xff, 0xa1, 0x54, 0x7a, 0x29, 0xa9, 0x02, 0x00, 0x00,
 }

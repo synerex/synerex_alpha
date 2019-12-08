@@ -3,54 +3,40 @@ syntax = "proto3";
 package api.participant;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/participant";
-//import "common/common.proto";
 
 
 message GetParticipantDemand {
     ParticipantInfo participant_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
 }
 
 message GetParticipantSupply {
     ParticipantInfo participant_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
 }
 
 message SetParticipantDemand {
     repeated ParticipantInfo participants_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
 }
 
 message SetParticipantSupply {
     ParticipantInfo participant_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
 }
 
 
 message ParticipantInfo {
     ChannelId channel_id = 1;
     ProviderType provider_type = 2;
-    uint32 area_id = 3;
+    uint64 area_id = 3;
     AgentType agent_type = 4;
 }
 
 message ChannelId {
-    uint32 participant_channel_id = 1;
-    uint32 area_channel_id = 2;
-    uint32 agent_channel_id = 3;
-    uint32 clock_channel_id = 4;
-    uint32 route_channel_id = 5;
+    uint64 participant_channel_id = 1;
+    uint64 area_channel_id = 2;
+    uint64 agent_channel_id = 3;
+    uint64 clock_channel_id = 4;
+    uint64 route_channel_id = 5;
 }
 
-enum StatusType {
-    OK = 0;
-    NG = 1;
-    NONE = 2;
-}
 
 enum AgentType {
     PEDESTRIAN = 0;

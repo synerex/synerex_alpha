@@ -6,54 +6,37 @@ option go_package="github.com/synerex/synerex_alpha/api/simulation/clock";
 //import "common/common.proto";
 
 message SetClockDemand{
-    uint32 time = 1;
-    uint32 cycle_duration = 2;
-    StatusType status_type = 3;
-    string meta = 4;
+    uint64 time = 1;
+    uint64 cycle_duration = 2;
 }
 
 message SetClockSupply{
     ClockInfo clock_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
 }
 
 message ForwardClockDemand{
-    uint32 time = 1;
-    uint32 cycle_num = 2;
-    StatusType status_type = 3;
-    string meta = 4;
+    uint64 time = 1;
+    uint64 cycle_num = 2;
 }
 
 message ForwardClockSupply{
     ClockInfo clock_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
 }
 
 message BackClockDemand{
-    uint32 time = 1;
-    uint32 cycle_num = 2;
-    StatusType status_type = 3;
-    string meta = 4;
+    uint64 time = 1;
+    uint64 cycle_num = 2;
 }
 
 message BackClockSupply{
     ClockInfo clock_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
 }
 
 message ClockInfo {
-        uint32 time = 1;
-        uint32 cycle_num = 2;
-        uint32 cycle_duration = 3;
-        uint32 cycle_interval = 4;
+        uint64 time = 1;
+        uint64 cycle_num = 2;
+        uint64 cycle_duration = 3;
+        uint64 cycle_interval = 4;
 }
 
-enum StatusType {
-    OK = 0;
-    NG = 1;
-    NONE = 2;
-}
 

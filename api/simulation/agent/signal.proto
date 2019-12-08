@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package api.signal;
+
+option go_package="github.com/synerex/synerex_alpha/api/simulation/agent";
+
+message Signal {
+    SignalStatus status = 4;
+}
+
+
+message SignalStatus {
+    string age = 1;
+    string sex = 2;
+    string name = 3;
+}

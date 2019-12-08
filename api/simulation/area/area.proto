@@ -7,36 +7,26 @@ option go_package="github.com/synerex/synerex_alpha/api/simulation/area";
 
 
 message GetAreaDemand {
-    uint32 time = 1;
-    uint32 area_id = 2;
-    StatusType status_type = 3;
-    string meta = 4;
+    uint64 time = 1;
+    uint64 area_id = 2;
 }
 
 message GetAreaSupply {
     AreaInfo area_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
 }
 
 message AreaInfo {
-    uint32 time = 1;
-    uint32 area_id = 2;
+    uint64 time = 1;
+    uint64 area_id = 2;
     string area_name = 3;
-    repeated uint32 neighbor_area = 4;
+    repeated uint64 neighbor_area = 4;
     AreaCoord area_coord = 5;
     AreaCoord control_area_coord = 6;
 }
 
 message AreaCoord {
-    float start_lat = 1;
-    float start_lon = 2;
-    float end_lat = 3;
-    float end_lon = 4;
-}
-
-enum StatusType {
-    OK = 0;
-    NG = 1;
-    NONE = 2;
+    double start_lat = 1;
+    double start_lon = 2;
+    double end_lat = 3;
+    double end_lon = 4;
 }

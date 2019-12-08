@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package api.participant;
+
+option go_package="github.com/synerex/synerex_alpha/api/simulation/participant";
+
+import "simulation/agent/agent.proto";
+import "simulation/area/area.proto";
+import "simulation/clock/clock.proto";
+import "simulation/participant/participant.proto";
+
+message SimDemand {
+        // participant info
+        DemandType demand_type = 1;
+
+        // meta data
+        StatusType status_type = 2;
+	    string meta = 3;
+
+		// demand data
+        oneof data {
+            agent.GetAgentsDemand get_agents_demand = 4;
+			agent.SetAgentsDemand set_agents_demand = 5;
+			agent.GetAgentRouteDemand get_agent_route_demand = 6;
+			agent.GetAgentsRouteDemand get_agents_route_demand = 7;
+			area.GetAreaDemand get_area_demand = 8;
+			participant.GetParticipantDemand get_participant_demand = 9;
+			participant.SetParticipantDemand set_participant_demand = 10;
+			clock.SetClockDemand set_clock_demand = 11;
+			clock.ForwardClockDemand forward_clock_demand = 12;
+			clock.BackClockDemand back_clock_demand = 13;
+        }
+    }
+
+ message SimSupply {
+        // demand type
+        SupplyType supply_type = 1;
+
+        // meta data
+        StatusType status_type = 2;
+        string meta = 3;
+
+		// supply data
+        oneof data {
+            agent.GetAgentsSupply get_agents_supply = 4;
+			agent.SetAgentsSupply set_agents_supply = 5;
+			agent.ForwardAgentsSupply forward_agents_supply = 6;
+			agent.GetAgentRouteSupply get_agent_route_supply = 7;
+			agent.GetAgentsRouteSupply get_agents_route_supply = 8;
+			area.GetAreaSupply get_area_supply = 9;
+			participant.GetParticipantSupply get_participant_supply = 10;
+			participant.SetParticipantSupply set_participant_supply = 11;
+			clock.SetClockSupply set_clock_supply = 12;
+			clock.ForwardClockSupply forward_clock_supply = 13;
+			clock.BackClockSupply back_clock_supply = 14;
+        }
+    }
+
+enum StatusType {
+    OK = 0;
+    NG = 1;
+    NONE = 2;
+}
+
+enum DemandType {
+    GET_AGENTS_DEMAND = 0;
+    SET_AGENTS_DEMAND = 1;
+    GET_AGENTS_ROUTE_DEMAND = 2;
+    SET_AGENTS_ROUTE_DEMAND = 3;
+    GET_AREA_DEMAND = 4;
+	GET_PARTICIPANT_DEMAND = 5;
+	SET_PARTICIPANT_DEMAND = 6;
+	SET_CLOCK_DEMAND = 7;
+	FORWARD_CLOCK_DEMAND = 8;
+	BACK_CLOCK_DEMAND = 9;
+}
+
+enum SupplyType {
+    GET_AGENTS_SUPPLY = 0;
+    SET_AGENTS_SUPPLY = 1;
+	FORWARD_AGENTS_SUPPLY = 2;
+    GET_AGENTS_ROUTE_SUPPLY = 3;
+    SET_AGENTS_ROUTE_SUPPLY = 4;
+    GET_AREA_SUPPLY = 5;
+	GET_PARTICIPANT_SUPPLY = 6;
+	SET_PARTICIPANT_SUPPLY = 7;
+	SET_CLOCK_SUPPLY = 8;
+	FORWARD_CLOCK_SUPPLY = 9;
+	BACK_CLOCK_SUPPLY = 10;
+}
+
+

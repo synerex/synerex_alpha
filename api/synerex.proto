@@ -16,7 +16,6 @@ import "marketing/marketing.proto";
 import "simulation/area/area.proto";
 import "simulation/agent/agent.proto";
 import "simulation/clock/clock.proto";
-import "simulation/route/route.proto";
 import "simulation/participant/participant.proto";
 
 service Synerex {

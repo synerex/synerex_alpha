@@ -32,11 +32,10 @@ var (
 	port                = flag.Int("port", 10080, "HarmoVis Provider Listening Port")
 	clockTime           = flag.Int("time", 1, "Time")
 	version             = "0.01"
-	agentPspMap         map[uint64]*pb.Supply
 	participantPspMap   map[uint64]*pb.Supply
 	syncForwardCh       chan *pb.Supply
 	syncParticipantCh   chan *pb.Supply
-	syncGetAgentCh      chan *pb.Supply
+	syncSetAgentsCh     chan *pb.Supply
 	startCollectId      bool
 	isStop              bool
 	isStart             bool
@@ -55,7 +54,7 @@ var (
 	assetsDir           http.FileSystem
 	ioserv              *gosocketio.Server
 	CHANNEL_BUFFER_SIZE int
-	sprovider           *provider.SynerexProvider
+	sprovider           *provider.ScenarioProvider
 )
 
 func init() {
@@ -64,7 +63,6 @@ func init() {
 	forwardAgentIdList = make([]uint64, 0)
 	participantIdList = make([]uint64, 0)
 	setAgentIdList = make([]uint64, 0)
-	agentPspMap = make(map[uint64]*pb.Supply)
 	participantPspMap = make(map[uint64]*pb.Supply)
 	isStop = false
 	isSetClock = false
@@ -75,7 +73,7 @@ func init() {
 	startSync = false
 	syncForwardCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	syncParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	syncGetAgentCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	syncSetAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	data = new(Data)
 	data.ClockInfo = &clock.ClockInfo{
 		Time: uint32(*clockTime),
@@ -84,14 +82,6 @@ func init() {
 
 type Data struct {
 	ClockInfo *clock.ClockInfo
-}
-
-type ChannelIdList struct {
-	ParticipantChannelId uint32
-	AreaChannelId        uint32
-	AgentChannelId       uint32
-	ClockChannelId       uint32
-	RouteChannelId       uint32
 }
 
 type MapMarker struct {
@@ -210,19 +200,17 @@ func orderStopClock() {
 	}
 }*/
 
-// Finish Fix
-func orderSetAgents(agentsInfo []*agent.AgentInfo) {
+// orderSetAgents: agentをセットするDemandを出す関数
+func orderSetAgents(order *provider.SetAgentsOrder) {
 	if isGetParticipant == false {
 		fmt.Printf("Error... please order getParticipant")
 	} else {
 
 		sprovider.SetAgentsDemand(agentsInfo)
 
-		syncGetAgentCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-		sprovider.Wait(setAgentIdList, syncGetAgentCh)
-		fmt.Printf("SET_AGENTS_FINISH!")
+		syncSetAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+		sprovider.Wait(setAgentIdList, syncSetAgentsCh)
 		isSetAgent = true
-		agentPspMap = make(map[uint64]*pb.Supply)
 	}
 }
 
@@ -304,53 +292,13 @@ func callbackStartClock(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 
 // Finish Fix
 func callbackSetAgent(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	syncGetAgentCh <- sp
+	syncSetAgentsCh <- sp
 }
 
 // Finish Fix
 func callbackSetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	syncParticipantCh <- sp
 }
-
-// Finish Fix
-/*func callbackSetClock(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	log.Println("Got for set_clock callback")
-	if clt.IsSupplyTarget(sp, idlist) {
-		spMap[sp.SenderId] = sp
-
-		callback := func(pspMap map[uint64]*pb.Supply) {
-			fmt.Printf("Callback SetClock! return OK to Simulation Synerex Engine")
-			isSetClock = true
-		}
-		syncClockIdList := idListByChannel.ClockIdList
-		syncProposeSupply(sp, syncClockIdList, pspMap, callback)
-
-	} else {
-		log.Printf("This is not propose supply \n")
-	}
-}
-
-func callbackSetArea(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	log.Println("Got for set_area callback")
-	if clt.IsSupplyTarget(sp, idlist) {
-
-		//		opts :=	dmMap[sp.TargetId]
-		//		log.Printf("Got Supply for %v as '%v'",opts, sp )
-		spMap[sp.SenderId] = sp
-
-		callback := func(pspMap map[uint64]*pb.Supply) {
-			fmt.Printf("Callback SetArea! return OK to Simulation Synerex Engine")
-			isSetArea = true
-			//pspMap = make(map[uint64]*pb.Supply)
-		}
-
-		syncAreaIdList := idListByChannel.AreaIdList
-		syncProposeSupply(sp, syncAreaIdList, pspMap, callback)
-
-	} else {
-		log.Printf("This is not propose supply \n")
-	}
-}*/
 
 // create sync id list
 func createSyncIdList(participantsInfo []*participant.ParticipantInfo) ([]uint64, []uint64, []uint64) {
@@ -431,16 +379,20 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	log.Println("Got supply callback", supplyType)
 	if sprovider.IsSupplyTarget(sp) {
 		switch supplyType {
-		case "GET_PARTICIPANT_SUPPLY":
+		case provider.GET_PARTICIPANT_SUPPLY:
 			callbackGetParticipant(clt, sp)
-		case "SET_PARTICIPANT_SUPPLY":
-			callbackSetParticipant(clt, sp)
-		case "SET_AGENTS_SUPPLY":
-			callbackSetAgent(clt, sp)
-		case "FORWARD_AGENTS_SUPPLY":
-			callbackStartClock(clt, sp)
-		case "FORWARD_CLOCK_SUPPLY":
-			callbackStartClock(clt, sp)
+		case provider.SET_PARTICIPANT_SUPPLY:
+			sprovider.sendToWait(sp, syncParticipantCh)
+			//callbackSetParticipant(clt, sp)
+		case provider.SET_AGENTS_SUPPLY:
+			sprovider.sendToWait(sp, syncSetAgentsCh)
+			//callbackSetAgent(clt, sp)
+		case provider.FORWARD_AGENTS_SUPPLY:
+			sprovider.sendToWait(sp, syncForwardCh)
+			//callbackStartClock(clt, sp)
+		case provider.FORWARD_CLOCK_SUPPLY:
+			sprovider.sendToWait(sp, syncForwardCh)
+			//callbackStartClock(clt, sp)
 		default:
 			fmt.Println("order is invalid")
 		}
@@ -487,26 +439,42 @@ func runClient() *gosocketio.Client {
 		fmt.Println("Go socket.io connected ")
 		c.Emit("setCh", "Scenario")
 	})
+	sioClient.On(provider.SET_AGENTS, func(c *gosocketio.Channel, order *provider.SetAgentsOrder) {
+		fmt.Printf("set agent %v, \n", order)
+		orderSetAgents(order)
+	})
 
-	sioClient.On("scenario", func(c *gosocketio.Channel, order *simutil.Order) {
-		log.Printf("get order is: %v\n", order)
+	sioClient.On(provider.GET_PARTICIPANT, func(c *gosocketio.Channel, order *provider.GetParticipantOrder) {
+		orderGetParticipant()
+	})
+
+	sioClient.On(provider.START_CLOCK, func(c *gosocketio.Channel, order *provider.StartClockOrder) {
+		orderStartClock()
+	})
+
+	sioClient.On(provider.STOP_CLOCK, func(c *gosocketio.Channel, order *provider.StopClockOrder) {
+		orderStopClock()
+	})
+
+	/*sioClient.On("scenario", func(c *gosocketio.Channel, order *simutil.OrderTest) {
+		log.Printf("get order is: %v\n", (*order.Agents[0].Status))
 		Order = order.Type
 		switch Order {
 		case "GetParticipant":
 			//			fmt.Println("getParticipant")
 			orderGetParticipant()
-		/*case "SetTime":
+		case "SetTime":
 			fmt.Println("setClock")
 			clockInfo := order.ClockInfo
 			orderSetClock(clockInfo)
 		case "SetArea":
 			fmt.Println("setArea")
 			areaInfo := order.AreaInfo
-			orderSetArea(areaInfo)*/
+			orderSetArea(areaInfo)
 		case "SetAgent":
-			fmt.Printf("set agent %v, \n", order.AgentsInfo)
-			agentsInfo := simutil.ConvertAgentsInfo(order.AgentsInfo)
-			orderSetAgents(agentsInfo)
+			fmt.Printf("set agent %v, \n", order.Agents)
+			//agentsInfo := simutil.ConvertAgentsInfo(order.AgentsInfo)
+			//orderSetAgents(agentsInfo)
 		case "Start":
 			//			fmt.Println("start clock")
 			orderStartClock()
@@ -517,7 +485,7 @@ func runClient() *gosocketio.Client {
 			fmt.Println("error")
 		}
 
-	})
+	})*/
 
 	sioClient.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel, param interface{}) {
 		fmt.Println("Go socket.io disconnected ", c)
@@ -590,7 +558,7 @@ func main() {
 	argJson := fmt.Sprintf("{Client:Scenario}")
 
 	// Clientとして登録
-	sprovider = provider.NewSynerexProvider()
+	sprovider = provider.NewScenarioProvider()
 
 	// プロバイダのsetup
 	wg := sync.WaitGroup{}

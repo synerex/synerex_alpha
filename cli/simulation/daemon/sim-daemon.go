@@ -22,10 +22,10 @@ import (
 	"syscall"
 	"time"
 
-	gosocketio "github.com/mtfelian/golang-socketio"
-	"github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/agent"
-
 	"github.com/kardianos/service"
+	gosocketio "github.com/mtfelian/golang-socketio"
+	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/provider"
 )
 
 var version = "0.04"
@@ -846,6 +846,34 @@ func calcRoute3() *agent.Route {
 	return route
 }
 
+// Agentオブジェクトの変換
+func calcRoute4() *agent.Route {
+
+	var departure, destination *agent.Coord
+	sLon := float64(136.982800)
+	eLon := float64(136.98800)
+	sLat := float64(35.152800)
+	eLat := float64(35.160200)
+	departure = &agent.Coord{
+		Longitude: sLon + (eLon-sLon)*rand.Float64(),
+		Latitude:  sLat + (eLat-sLat)*rand.Float64(),
+	}
+	destination = &agent.Coord{
+		Longitude: 136.974000,
+		Latitude:  35.156476,
+	}
+
+	route := &agent.PedRoute{
+		Position:    departure,
+		Direction:   100 * rand.Float64(),
+		Speed:       100 * rand.Float64(),
+		Departure:   departure,
+		Destination: destination,
+	}
+
+	return route
+}
+
 func generateUid(i int) uint32 {
 	time := time.Now().Unix() + int64(i)
 	return uint32(time)
@@ -858,6 +886,11 @@ func createRandomAgentType() string {
 	} else {
 		return "pedestrian"
 	}
+}
+
+type SimOrder struct {
+	Type   string
+	Agents []*agent.Agent
 }
 
 func handleOrder(order *Order) string {
@@ -884,66 +917,65 @@ func handleOrder(order *Order) string {
 					var order2 Order2
 					// getParticipant
 					order2.Type = "GetParticipant"
-					sioCh.Scenario.Emit("scenario", order2)
+					order := &provider.SetAgentsOrder{
+						Type: provider.GET_PARTICIPANT,
+					}
+					sioCh.Scenario.Emit(provider.GET_PARTICIPANT, order)
 					time.Sleep(4 * time.Second)
-					/*// setTime
-					order2.Type = "SetTime"
-					order2.ClockInfo = simData.Clock
-					sioCh.Scenario.Emit("scenario", order2)
-					time.Sleep(1 * time.Second)
-					// setArea
-					for _, areaInfo := range simData.Area{
-						order2.Type = "SetArea"
-						order2.AreaInfo = areaInfo
-						sioCh.Scenario.Emit("scenario", order2)
-						time.Sleep(1 * time.Second)
-					}*/
+
 					// setAgent
 					order2.Type = "SetAgent"
 					order2.AgentsInfo = simData.Agent
-					sioCh.Scenario.Emit("scenario", order2)
-					time.Sleep(1 * time.Second)
 
+					order = &provider.SetAgentsOrder{
+						Type: provider.SET_AGENTS,
+						//Peds: agents,
+					}
+
+					sioCh.Scenario.Emit(provider.SET_AGENTS, order)
+					time.Sleep(1 * time.Second)
 				}
 
+			} else if target == "GetParticipant" {
+				order := &provider.SetAgentsOrder{
+					Type: provider.GET_PARTICIPANT,
+				}
+				sioCh.Scenario.Emit(provider.GET_PARTICIPANT, order)
 			} else if target == "SetAgent" {
 				agentNum, _ := strconv.Atoi(order.Option)
-				agentsInfo := make([]AgentInfo, 0)
-				/*for i := 0; i < agentNum; i++ {
-					ped := agent.NewPedestrian()
-					ped.Status = &agent.Status{
-						Name: "A",
-						Age:  "20",
-						Sex:  agent.Male,
-					}
-					ped.ID = uint64(generateUid(i))
-					ped.Type = agent.PEDESTRIAN
-					ped.Route = calcRoute3()
-					agentsInfo = append(agentsInfo, ped)
-				}*/
+				agents := make([]agent.Agent, 0)
+
 				for i := 0; i < agentNum; i++ {
-					agentInfo := AgentInfo{
-						Id:   uint32(i),
-						Type: "pedestrian",
-						Status: Status{
-							Name: "A",
-							Age:  "20",
-							Sex:  "Femail",
+					agent := &agent.Agent{
+						Id:   uint64(i),
+						Type: agent.AgentType_PEDESTRIAN,
+						Data: &agent.Pedestrian{
+							Status: &agent.PedStatus{
+								Age:  "20",
+								Name: "rui",
+							},
+							Route: calcRoute4(),
 						},
-						Route: calcRoute2(agentNum, i),
 					}
-					agentsInfo = append(agentsInfo, agentInfo)
+					agents = append(agents, agent)
 				}
 
-				var order2 Order2
-				order2.Type = "SetAgent"
-				order2.AgentsInfo = agentsInfo
-				sioCh.Scenario.Emit("scenario", order2)
+				order := &provider.SetAgentsOrder{
+					Type: provider.SET_AGENTS,
+					Peds: agents,
+				}
+				sioCh.Scenario.Emit(provider.SET_AGENTS, order)
 				time.Sleep(1 * time.Second)
-			} else {
-				var order2 Order2
-				order2.Type = target
-				sioCh.Scenario.Emit("scenario", order2)
+			} else if target == "StartClock" {
+				order := &provider.StartClockOrder{
+					Type: provider.START_CLOCK,
+				}
+				sioCh.Scenario.Emit(provider.START_CLOCK, order)
+			} else if target == "StopClock" {
+				order := &provider.StopClockOrder{
+					Type: provider.STOP_CLOCK,
+				}
+				sioCh.Scenario.Emit(provider.STOP_CLOCK, order)
 			}
 
 			res = "ok"

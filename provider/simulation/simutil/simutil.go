@@ -8,10 +8,6 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	agentObject "github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/agent"
 
-	//	"github.com/synerex/synerex_alpha/api/simulation/route"
-
-	//"time"
-
 	"math"
 )
 
@@ -55,6 +51,11 @@ type Order struct {
 	ClockInfo  ClockInfo
 	AreaInfo   AreaInfo
 	AgentsInfo []AgentInfo
+}
+
+type OrderTest struct {
+	Type   string
+	Agents []*agentObject.Pedestrian
 }
 
 type Coord struct {

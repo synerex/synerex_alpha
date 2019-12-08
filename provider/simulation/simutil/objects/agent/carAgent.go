@@ -34,7 +34,7 @@ func (p *Car) SetGrpcAgent(grpcAgent *agent.AgentInfo) {
 
 	p.ID = uint64(grpcAgent.AgentId)
 	p.Type = Type(grpcAgent.AgentType)
-	p.Status = &Status{
+	p.Status = &CarStatus{
 		Age:  grpcAgent.AgentStatus.Age,
 		Sex:  Sex(int(0)),
 		Name: grpcAgent.AgentStatus.Name,

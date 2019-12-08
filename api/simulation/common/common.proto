@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package api.common;
+
+option go_package="github.com/synerex/synerex_alpha/api/simulation/common";
+
+message Coord {
+    double latitude = 1;
+    double longitude = 2;
+}

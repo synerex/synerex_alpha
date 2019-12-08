@@ -27,7 +27,7 @@ var (
 	cycleInterval       = flag.Int("interval", 1, "Interval")
 	cycleDuration       = flag.Int("duration", 1, "Duration")
 	mu                  sync.Mutex
-	ch                  chan *pb.Supply
+	var (
 	sameCh              chan *pb.Supply
 	neighborCh          chan *pb.Supply
 	sprovider           *provider.SynerexProvider
@@ -62,19 +62,23 @@ func setArea() {
 func setAgents(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 
 	// Agent情報
-	setAgentsDemand := dm.GetArg_SetAgentsDemand()
-	agentsInfo := setAgentsDemand.AgentsInfo
+	peds := sprovider.GetAgents(dm)
+	//setAgentsDemand := dm.GetArg_SetAgentsDemand()
+	//agentsInfo := setAgentsDemand.AgentsInfo
 
-	// AgentのRoute情報を取得するDemand
+	// AgentのRoute情報を取得
+	peds = sprovider.GetAgentsRoute(peds, ch)
+	/*// AgentのRoute情報を取得するDemand
 	sprovider.GetAgentsRouteDemand(agentsInfo)
 	// Route情報を取得
 	sp := <-ch
 	log.Println("GET_AGENTS_ROUTE_FINISH")
 	getAgentsRouteSupply := sp.GetArg_GetAgentsRouteSupply()
-	agentsInfo = getAgentsRouteSupply.AgentsInfo
+	agentsInfo = getAgentsRouteSupply.AgentsInfo*/
 
 	// AgentsをMapにセットする
-	sim.setAgents(agentsInfo)
+	//sim.setAgents(agentsInfo)
+	sim.setAgents(peds)
 
 	/*for _, agentInfo := range agentsInfo {
 		if simutil.IsAgentInControlledArea(agentInfo, sim.Area, int32(*agentType)) {
@@ -275,7 +279,8 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		case "GET_AREA_SUPPLY":
 			ch <- sp
 		case "GET_AGENTS_ROUTE_SUPPLY":
-			ch <- sp
+			sprovider.SendAgentsRouteSupply(sp, ch)
+			//ch <- sp
 		case "GET_AGENTS_SUPPLY":
 			getAgentsSupply := sp.GetArg_GetAgentsSupply()
 			if getAgentsSupply.AreaId == uint32(*areaId) {

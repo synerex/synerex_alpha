@@ -20,7 +20,6 @@ require (
 	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/participant v0.0.0
-	github.com/synerex/synerex_alpha/api/simulation/route v0.0.0
 	github.com/synerex/synerex_alpha/nodeapi v0.0.0
 	golang.org/x/oauth2 v0.0.0-20181203162652-d668ce993890 // indirect
 	google.golang.org/appengine v1.4.0 // indirect
@@ -42,7 +41,6 @@ replace (
 	github.com/synerex/synerex_alpha/api/simulation/area => ../api/simulation/area
 	github.com/synerex/synerex_alpha/api/simulation/clock => ../api/simulation/clock
 	github.com/synerex/synerex_alpha/api/simulation/participant => ../api/simulation/participant
-	github.com/synerex/synerex_alpha/api/simulation/route => ../api/simulation/route
 	github.com/synerex/synerex_alpha/monitor/monitorapi => ../monitor/monitorapi
 	github.com/synerex/synerex_alpha/nodeapi => ../nodeapi
 	github.com/synerex/synerex_alpha/sxutil => ../sxutil
