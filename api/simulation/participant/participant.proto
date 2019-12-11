@@ -43,5 +43,6 @@ enum ProviderType {
     CAR = 2;
     PED = 3;
     ROUTE = 4;
+	VISUALIZATION = 5;
 }
 
