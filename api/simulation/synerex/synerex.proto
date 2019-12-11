@@ -23,7 +23,7 @@ message SimDemand {
 			agent.SetAgentsRequest set_agents_request = 5;
 			agent.VisualizeAgentsRequest visualise_agents_request = 6;
 			area.GetAreaRequest get_area_request = 7;
-			participant.RegistParticipantRequest resist_participant_request = 8;
+			participant.RegistParticipantRequest regist_participant_request = 8;
 			participant.SetParticipantsRequest set_participants_request = 9;
 			clock.GetClockRequest get_clock_request = 10;
 			clock.SetClockRequest set_clock_request = 11;
@@ -70,7 +70,7 @@ enum DemandType {
     SET_AGENTS_REQUEST = 1;
     VISUALIZE_AGENTS_REQUEST = 2;
     GET_AREA_REQUEST = 3;
-	RESIST_PARTICIPANT_REQUEST = 4;
+	REGIST_PARTICIPANT_REQUEST = 4;
 	SET_PARTICIPANTS_REQUEST = 5;
 	GET_CLOCK_REQUEST = 6;
 	SET_CLOCK_REQUEST = 7;
@@ -85,7 +85,7 @@ enum SupplyType {
 	GET_NEIGHBOR_AREA_AGENTS_RESPONSE = 1;
     SET_AGENTS_RESPONSE = 2;
     GET_AREA_RESPONSE = 3;
-	RESIST_PARTICIPANT_RESPONSE = 4;
+	REGIST_PARTICIPANT_RESPONSE = 4;
 	SET_PARTICIPANTS_RESPONSE = 5;
 	GET_CLOCK_RESPONSE = 6;
 	SET_CLOCK_RESPONSE = 7;
