@@ -6,6 +6,7 @@ package agent
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
+	common "github.com/synerex/synerex_alpha/api/simulation/common"
 	math "math"
 )
 
@@ -20,471 +21,259 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type AgentType int32
-
-const (
-	AgentType_PEDESTRIAN AgentType = 0
-	AgentType_CAR        AgentType = 1
-	AgentType_TRAIN      AgentType = 2
-	AgentType_SIGNAL     AgentType = 3
-)
-
-var AgentType_name = map[int32]string{
-	0: "PEDESTRIAN",
-	1: "CAR",
-	2: "TRAIN",
-	3: "SIGNAL",
+type GetSameAreaAgentsRequest struct {
+	AreaId               uint64           `protobuf:"varint,1,opt,name=area_id,json=areaId,proto3" json:"area_id,omitempty"`
+	AgentType            common.AgentType `protobuf:"varint,2,opt,name=agent_type,json=agentType,proto3,enum=api.common.AgentType" json:"agent_type,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
 }
 
-var AgentType_value = map[string]int32{
-	"PEDESTRIAN": 0,
-	"CAR":        1,
-	"TRAIN":      2,
-	"SIGNAL":     3,
-}
-
-func (x AgentType) String() string {
-	return proto.EnumName(AgentType_name, int32(x))
-}
-
-func (AgentType) EnumDescriptor() ([]byte, []int) {
+func (m *GetSameAreaAgentsRequest) Reset()         { *m = GetSameAreaAgentsRequest{} }
+func (m *GetSameAreaAgentsRequest) String() string { return proto.CompactTextString(m) }
+func (*GetSameAreaAgentsRequest) ProtoMessage()    {}
+func (*GetSameAreaAgentsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_fce67ac898dc274e, []int{0}
 }
 
-type GetAgentsDemand struct {
-	Time                 uint64    `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	AreaId               uint64    `protobuf:"varint,2,opt,name=area_id,json=areaId,proto3" json:"area_id,omitempty"`
-	AgentType            AgentType `protobuf:"varint,3,opt,name=agent_type,json=agentType,proto3,enum=api.agent.AgentType" json:"agent_type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+func (m *GetSameAreaAgentsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetSameAreaAgentsRequest.Unmarshal(m, b)
+}
+func (m *GetSameAreaAgentsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetSameAreaAgentsRequest.Marshal(b, m, deterministic)
+}
+func (m *GetSameAreaAgentsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetSameAreaAgentsRequest.Merge(m, src)
+}
+func (m *GetSameAreaAgentsRequest) XXX_Size() int {
+	return xxx_messageInfo_GetSameAreaAgentsRequest.Size(m)
+}
+func (m *GetSameAreaAgentsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetSameAreaAgentsRequest.DiscardUnknown(m)
 }
 
-func (m *GetAgentsDemand) Reset()         { *m = GetAgentsDemand{} }
-func (m *GetAgentsDemand) String() string { return proto.CompactTextString(m) }
-func (*GetAgentsDemand) ProtoMessage()    {}
-func (*GetAgentsDemand) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{0}
-}
+var xxx_messageInfo_GetSameAreaAgentsRequest proto.InternalMessageInfo
 
-func (m *GetAgentsDemand) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetAgentsDemand.Unmarshal(m, b)
-}
-func (m *GetAgentsDemand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetAgentsDemand.Marshal(b, m, deterministic)
-}
-func (m *GetAgentsDemand) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetAgentsDemand.Merge(m, src)
-}
-func (m *GetAgentsDemand) XXX_Size() int {
-	return xxx_messageInfo_GetAgentsDemand.Size(m)
-}
-func (m *GetAgentsDemand) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetAgentsDemand.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GetAgentsDemand proto.InternalMessageInfo
-
-func (m *GetAgentsDemand) GetTime() uint64 {
-	if m != nil {
-		return m.Time
-	}
-	return 0
-}
-
-func (m *GetAgentsDemand) GetAreaId() uint64 {
+func (m *GetSameAreaAgentsRequest) GetAreaId() uint64 {
 	if m != nil {
 		return m.AreaId
 	}
 	return 0
 }
 
-func (m *GetAgentsDemand) GetAgentType() AgentType {
+func (m *GetSameAreaAgentsRequest) GetAgentType() common.AgentType {
 	if m != nil {
 		return m.AgentType
 	}
-	return AgentType_PEDESTRIAN
+	return common.AgentType_PEDESTRIAN
 }
 
-type GetAgentsSupply struct {
-	Time                 uint64    `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	AreaId               uint64    `protobuf:"varint,2,opt,name=area_id,json=areaId,proto3" json:"area_id,omitempty"`
-	AgentType            AgentType `protobuf:"varint,3,opt,name=agent_type,json=agentType,proto3,enum=api.agent.AgentType" json:"agent_type,omitempty"`
-	AgentsInfo           []*Agent  `protobuf:"bytes,4,rep,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+type GetSameAreaAgentsResponse struct {
+	Agents               []*Agent `protobuf:"bytes,1,rep,name=agents,proto3" json:"agents,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *GetAgentsSupply) Reset()         { *m = GetAgentsSupply{} }
-func (m *GetAgentsSupply) String() string { return proto.CompactTextString(m) }
-func (*GetAgentsSupply) ProtoMessage()    {}
-func (*GetAgentsSupply) Descriptor() ([]byte, []int) {
+func (m *GetSameAreaAgentsResponse) Reset()         { *m = GetSameAreaAgentsResponse{} }
+func (m *GetSameAreaAgentsResponse) String() string { return proto.CompactTextString(m) }
+func (*GetSameAreaAgentsResponse) ProtoMessage()    {}
+func (*GetSameAreaAgentsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_fce67ac898dc274e, []int{1}
 }
 
-func (m *GetAgentsSupply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetAgentsSupply.Unmarshal(m, b)
+func (m *GetSameAreaAgentsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetSameAreaAgentsResponse.Unmarshal(m, b)
 }
-func (m *GetAgentsSupply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetAgentsSupply.Marshal(b, m, deterministic)
+func (m *GetSameAreaAgentsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetSameAreaAgentsResponse.Marshal(b, m, deterministic)
 }
-func (m *GetAgentsSupply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetAgentsSupply.Merge(m, src)
+func (m *GetSameAreaAgentsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetSameAreaAgentsResponse.Merge(m, src)
 }
-func (m *GetAgentsSupply) XXX_Size() int {
-	return xxx_messageInfo_GetAgentsSupply.Size(m)
+func (m *GetSameAreaAgentsResponse) XXX_Size() int {
+	return xxx_messageInfo_GetSameAreaAgentsResponse.Size(m)
 }
-func (m *GetAgentsSupply) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetAgentsSupply.DiscardUnknown(m)
+func (m *GetSameAreaAgentsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetSameAreaAgentsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_GetAgentsSupply proto.InternalMessageInfo
+var xxx_messageInfo_GetSameAreaAgentsResponse proto.InternalMessageInfo
 
-func (m *GetAgentsSupply) GetTime() uint64 {
+func (m *GetSameAreaAgentsResponse) GetAgents() []*Agent {
 	if m != nil {
-		return m.Time
-	}
-	return 0
-}
-
-func (m *GetAgentsSupply) GetAreaId() uint64 {
-	if m != nil {
-		return m.AreaId
-	}
-	return 0
-}
-
-func (m *GetAgentsSupply) GetAgentType() AgentType {
-	if m != nil {
-		return m.AgentType
-	}
-	return AgentType_PEDESTRIAN
-}
-
-func (m *GetAgentsSupply) GetAgentsInfo() []*Agent {
-	if m != nil {
-		return m.AgentsInfo
+		return m.Agents
 	}
 	return nil
 }
 
-type SetAgentsDemand struct {
-	AgentsInfo           []*Agent `protobuf:"bytes,1,rep,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
+type GetNeighborAreaAgentsResponse struct {
+	Agents               []*Agent `protobuf:"bytes,1,rep,name=agents,proto3" json:"agents,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *SetAgentsDemand) Reset()         { *m = SetAgentsDemand{} }
-func (m *SetAgentsDemand) String() string { return proto.CompactTextString(m) }
-func (*SetAgentsDemand) ProtoMessage()    {}
-func (*SetAgentsDemand) Descriptor() ([]byte, []int) {
+func (m *GetNeighborAreaAgentsResponse) Reset()         { *m = GetNeighborAreaAgentsResponse{} }
+func (m *GetNeighborAreaAgentsResponse) String() string { return proto.CompactTextString(m) }
+func (*GetNeighborAreaAgentsResponse) ProtoMessage()    {}
+func (*GetNeighborAreaAgentsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_fce67ac898dc274e, []int{2}
 }
 
-func (m *SetAgentsDemand) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SetAgentsDemand.Unmarshal(m, b)
+func (m *GetNeighborAreaAgentsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GetNeighborAreaAgentsResponse.Unmarshal(m, b)
 }
-func (m *SetAgentsDemand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SetAgentsDemand.Marshal(b, m, deterministic)
+func (m *GetNeighborAreaAgentsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GetNeighborAreaAgentsResponse.Marshal(b, m, deterministic)
 }
-func (m *SetAgentsDemand) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SetAgentsDemand.Merge(m, src)
+func (m *GetNeighborAreaAgentsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GetNeighborAreaAgentsResponse.Merge(m, src)
 }
-func (m *SetAgentsDemand) XXX_Size() int {
-	return xxx_messageInfo_SetAgentsDemand.Size(m)
+func (m *GetNeighborAreaAgentsResponse) XXX_Size() int {
+	return xxx_messageInfo_GetNeighborAreaAgentsResponse.Size(m)
 }
-func (m *SetAgentsDemand) XXX_DiscardUnknown() {
-	xxx_messageInfo_SetAgentsDemand.DiscardUnknown(m)
+func (m *GetNeighborAreaAgentsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_GetNeighborAreaAgentsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SetAgentsDemand proto.InternalMessageInfo
+var xxx_messageInfo_GetNeighborAreaAgentsResponse proto.InternalMessageInfo
 
-func (m *SetAgentsDemand) GetAgentsInfo() []*Agent {
+func (m *GetNeighborAreaAgentsResponse) GetAgents() []*Agent {
 	if m != nil {
-		return m.AgentsInfo
+		return m.Agents
 	}
 	return nil
 }
 
-type SetAgentsSupply struct {
-	Time                 uint64    `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	AreaId               uint64    `protobuf:"varint,2,opt,name=area_id,json=areaId,proto3" json:"area_id,omitempty"`
-	AgentType            AgentType `protobuf:"varint,3,opt,name=agent_type,json=agentType,proto3,enum=api.agent.AgentType" json:"agent_type,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
+type SetAgentsRequest struct {
+	Agents               []*Agent `protobuf:"bytes,1,rep,name=agents,proto3" json:"agents,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *SetAgentsSupply) Reset()         { *m = SetAgentsSupply{} }
-func (m *SetAgentsSupply) String() string { return proto.CompactTextString(m) }
-func (*SetAgentsSupply) ProtoMessage()    {}
-func (*SetAgentsSupply) Descriptor() ([]byte, []int) {
+func (m *SetAgentsRequest) Reset()         { *m = SetAgentsRequest{} }
+func (m *SetAgentsRequest) String() string { return proto.CompactTextString(m) }
+func (*SetAgentsRequest) ProtoMessage()    {}
+func (*SetAgentsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_fce67ac898dc274e, []int{3}
 }
 
-func (m *SetAgentsSupply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_SetAgentsSupply.Unmarshal(m, b)
+func (m *SetAgentsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetAgentsRequest.Unmarshal(m, b)
 }
-func (m *SetAgentsSupply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_SetAgentsSupply.Marshal(b, m, deterministic)
+func (m *SetAgentsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetAgentsRequest.Marshal(b, m, deterministic)
 }
-func (m *SetAgentsSupply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SetAgentsSupply.Merge(m, src)
+func (m *SetAgentsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetAgentsRequest.Merge(m, src)
 }
-func (m *SetAgentsSupply) XXX_Size() int {
-	return xxx_messageInfo_SetAgentsSupply.Size(m)
+func (m *SetAgentsRequest) XXX_Size() int {
+	return xxx_messageInfo_SetAgentsRequest.Size(m)
 }
-func (m *SetAgentsSupply) XXX_DiscardUnknown() {
-	xxx_messageInfo_SetAgentsSupply.DiscardUnknown(m)
+func (m *SetAgentsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetAgentsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_SetAgentsSupply proto.InternalMessageInfo
+var xxx_messageInfo_SetAgentsRequest proto.InternalMessageInfo
 
-func (m *SetAgentsSupply) GetTime() uint64 {
+func (m *SetAgentsRequest) GetAgents() []*Agent {
 	if m != nil {
-		return m.Time
+		return m.Agents
 	}
-	return 0
+	return nil
 }
 
-func (m *SetAgentsSupply) GetAreaId() uint64 {
-	if m != nil {
-		return m.AreaId
-	}
-	return 0
+type SetAgentsResponse struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *SetAgentsSupply) GetAgentType() AgentType {
-	if m != nil {
-		return m.AgentType
-	}
-	return AgentType_PEDESTRIAN
-}
-
-type ForwardAgentsSupply struct {
-	Time                 uint64    `protobuf:"varint,1,opt,name=time,proto3" json:"time,omitempty"`
-	AreaId               uint64    `protobuf:"varint,2,opt,name=area_id,json=areaId,proto3" json:"area_id,omitempty"`
-	AgentType            AgentType `protobuf:"varint,3,opt,name=agent_type,json=agentType,proto3,enum=api.agent.AgentType" json:"agent_type,omitempty"`
-	AgentsInfo           []*Agent  `protobuf:"bytes,4,rep,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
-	XXX_unrecognized     []byte    `json:"-"`
-	XXX_sizecache        int32     `json:"-"`
-}
-
-func (m *ForwardAgentsSupply) Reset()         { *m = ForwardAgentsSupply{} }
-func (m *ForwardAgentsSupply) String() string { return proto.CompactTextString(m) }
-func (*ForwardAgentsSupply) ProtoMessage()    {}
-func (*ForwardAgentsSupply) Descriptor() ([]byte, []int) {
+func (m *SetAgentsResponse) Reset()         { *m = SetAgentsResponse{} }
+func (m *SetAgentsResponse) String() string { return proto.CompactTextString(m) }
+func (*SetAgentsResponse) ProtoMessage()    {}
+func (*SetAgentsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_fce67ac898dc274e, []int{4}
 }
 
-func (m *ForwardAgentsSupply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ForwardAgentsSupply.Unmarshal(m, b)
+func (m *SetAgentsResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SetAgentsResponse.Unmarshal(m, b)
 }
-func (m *ForwardAgentsSupply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ForwardAgentsSupply.Marshal(b, m, deterministic)
+func (m *SetAgentsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SetAgentsResponse.Marshal(b, m, deterministic)
 }
-func (m *ForwardAgentsSupply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ForwardAgentsSupply.Merge(m, src)
+func (m *SetAgentsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetAgentsResponse.Merge(m, src)
 }
-func (m *ForwardAgentsSupply) XXX_Size() int {
-	return xxx_messageInfo_ForwardAgentsSupply.Size(m)
+func (m *SetAgentsResponse) XXX_Size() int {
+	return xxx_messageInfo_SetAgentsResponse.Size(m)
 }
-func (m *ForwardAgentsSupply) XXX_DiscardUnknown() {
-	xxx_messageInfo_ForwardAgentsSupply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ForwardAgentsSupply proto.InternalMessageInfo
-
-func (m *ForwardAgentsSupply) GetTime() uint64 {
-	if m != nil {
-		return m.Time
-	}
-	return 0
+func (m *SetAgentsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetAgentsResponse.DiscardUnknown(m)
 }
 
-func (m *ForwardAgentsSupply) GetAreaId() uint64 {
+var xxx_messageInfo_SetAgentsResponse proto.InternalMessageInfo
+
+type VisualizeAgentsRequest struct {
+	AreaId               uint64           `protobuf:"varint,1,opt,name=area_id,json=areaId,proto3" json:"area_id,omitempty"`
+	AgentType            common.AgentType `protobuf:"varint,2,opt,name=agent_type,json=agentType,proto3,enum=api.common.AgentType" json:"agent_type,omitempty"`
+	Agents               []*Agent         `protobuf:"bytes,3,rep,name=agents,proto3" json:"agents,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
+	XXX_unrecognized     []byte           `json:"-"`
+	XXX_sizecache        int32            `json:"-"`
+}
+
+func (m *VisualizeAgentsRequest) Reset()         { *m = VisualizeAgentsRequest{} }
+func (m *VisualizeAgentsRequest) String() string { return proto.CompactTextString(m) }
+func (*VisualizeAgentsRequest) ProtoMessage()    {}
+func (*VisualizeAgentsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_fce67ac898dc274e, []int{5}
+}
+
+func (m *VisualizeAgentsRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_VisualizeAgentsRequest.Unmarshal(m, b)
+}
+func (m *VisualizeAgentsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_VisualizeAgentsRequest.Marshal(b, m, deterministic)
+}
+func (m *VisualizeAgentsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VisualizeAgentsRequest.Merge(m, src)
+}
+func (m *VisualizeAgentsRequest) XXX_Size() int {
+	return xxx_messageInfo_VisualizeAgentsRequest.Size(m)
+}
+func (m *VisualizeAgentsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_VisualizeAgentsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_VisualizeAgentsRequest proto.InternalMessageInfo
+
+func (m *VisualizeAgentsRequest) GetAreaId() uint64 {
 	if m != nil {
 		return m.AreaId
 	}
 	return 0
 }
 
-func (m *ForwardAgentsSupply) GetAgentType() AgentType {
+func (m *VisualizeAgentsRequest) GetAgentType() common.AgentType {
 	if m != nil {
 		return m.AgentType
 	}
-	return AgentType_PEDESTRIAN
+	return common.AgentType_PEDESTRIAN
 }
 
-func (m *ForwardAgentsSupply) GetAgentsInfo() []*Agent {
+func (m *VisualizeAgentsRequest) GetAgents() []*Agent {
 	if m != nil {
-		return m.AgentsInfo
-	}
-	return nil
-}
-
-type GetAgentRouteDemand struct {
-	AgentsInfo           *Agent   `protobuf:"bytes,1,opt,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *GetAgentRouteDemand) Reset()         { *m = GetAgentRouteDemand{} }
-func (m *GetAgentRouteDemand) String() string { return proto.CompactTextString(m) }
-func (*GetAgentRouteDemand) ProtoMessage()    {}
-func (*GetAgentRouteDemand) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{5}
-}
-
-func (m *GetAgentRouteDemand) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetAgentRouteDemand.Unmarshal(m, b)
-}
-func (m *GetAgentRouteDemand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetAgentRouteDemand.Marshal(b, m, deterministic)
-}
-func (m *GetAgentRouteDemand) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetAgentRouteDemand.Merge(m, src)
-}
-func (m *GetAgentRouteDemand) XXX_Size() int {
-	return xxx_messageInfo_GetAgentRouteDemand.Size(m)
-}
-func (m *GetAgentRouteDemand) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetAgentRouteDemand.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GetAgentRouteDemand proto.InternalMessageInfo
-
-func (m *GetAgentRouteDemand) GetAgentsInfo() *Agent {
-	if m != nil {
-		return m.AgentsInfo
-	}
-	return nil
-}
-
-type GetAgentRouteSupply struct {
-	AgentsInfo           *Agent   `protobuf:"bytes,1,opt,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *GetAgentRouteSupply) Reset()         { *m = GetAgentRouteSupply{} }
-func (m *GetAgentRouteSupply) String() string { return proto.CompactTextString(m) }
-func (*GetAgentRouteSupply) ProtoMessage()    {}
-func (*GetAgentRouteSupply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{6}
-}
-
-func (m *GetAgentRouteSupply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetAgentRouteSupply.Unmarshal(m, b)
-}
-func (m *GetAgentRouteSupply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetAgentRouteSupply.Marshal(b, m, deterministic)
-}
-func (m *GetAgentRouteSupply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetAgentRouteSupply.Merge(m, src)
-}
-func (m *GetAgentRouteSupply) XXX_Size() int {
-	return xxx_messageInfo_GetAgentRouteSupply.Size(m)
-}
-func (m *GetAgentRouteSupply) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetAgentRouteSupply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GetAgentRouteSupply proto.InternalMessageInfo
-
-func (m *GetAgentRouteSupply) GetAgentsInfo() *Agent {
-	if m != nil {
-		return m.AgentsInfo
-	}
-	return nil
-}
-
-type GetAgentsRouteDemand struct {
-	AgentsInfo           []*Agent `protobuf:"bytes,1,rep,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *GetAgentsRouteDemand) Reset()         { *m = GetAgentsRouteDemand{} }
-func (m *GetAgentsRouteDemand) String() string { return proto.CompactTextString(m) }
-func (*GetAgentsRouteDemand) ProtoMessage()    {}
-func (*GetAgentsRouteDemand) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{7}
-}
-
-func (m *GetAgentsRouteDemand) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetAgentsRouteDemand.Unmarshal(m, b)
-}
-func (m *GetAgentsRouteDemand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetAgentsRouteDemand.Marshal(b, m, deterministic)
-}
-func (m *GetAgentsRouteDemand) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetAgentsRouteDemand.Merge(m, src)
-}
-func (m *GetAgentsRouteDemand) XXX_Size() int {
-	return xxx_messageInfo_GetAgentsRouteDemand.Size(m)
-}
-func (m *GetAgentsRouteDemand) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetAgentsRouteDemand.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GetAgentsRouteDemand proto.InternalMessageInfo
-
-func (m *GetAgentsRouteDemand) GetAgentsInfo() []*Agent {
-	if m != nil {
-		return m.AgentsInfo
-	}
-	return nil
-}
-
-type GetAgentsRouteSupply struct {
-	AgentsInfo           []*Agent `protobuf:"bytes,1,rep,name=agents_info,json=agentsInfo,proto3" json:"agents_info,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *GetAgentsRouteSupply) Reset()         { *m = GetAgentsRouteSupply{} }
-func (m *GetAgentsRouteSupply) String() string { return proto.CompactTextString(m) }
-func (*GetAgentsRouteSupply) ProtoMessage()    {}
-func (*GetAgentsRouteSupply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{8}
-}
-
-func (m *GetAgentsRouteSupply) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GetAgentsRouteSupply.Unmarshal(m, b)
-}
-func (m *GetAgentsRouteSupply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GetAgentsRouteSupply.Marshal(b, m, deterministic)
-}
-func (m *GetAgentsRouteSupply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GetAgentsRouteSupply.Merge(m, src)
-}
-func (m *GetAgentsRouteSupply) XXX_Size() int {
-	return xxx_messageInfo_GetAgentsRouteSupply.Size(m)
-}
-func (m *GetAgentsRouteSupply) XXX_DiscardUnknown() {
-	xxx_messageInfo_GetAgentsRouteSupply.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GetAgentsRouteSupply proto.InternalMessageInfo
-
-func (m *GetAgentsRouteSupply) GetAgentsInfo() []*Agent {
-	if m != nil {
-		return m.AgentsInfo
+		return m.Agents
 	}
 	return nil
 }
 
 type Agent struct {
-	Id   uint64    `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Type AgentType `protobuf:"varint,2,opt,name=type,proto3,enum=api.agent.AgentType" json:"type,omitempty"`
+	Id   uint64           `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Type common.AgentType `protobuf:"varint,2,opt,name=type,proto3,enum=api.common.AgentType" json:"type,omitempty"`
 	// Types that are valid to be assigned to Data:
 	//	*Agent_Pedestrian
 	//	*Agent_Car
@@ -500,7 +289,7 @@ func (m *Agent) Reset()         { *m = Agent{} }
 func (m *Agent) String() string { return proto.CompactTextString(m) }
 func (*Agent) ProtoMessage()    {}
 func (*Agent) Descriptor() ([]byte, []int) {
-	return fileDescriptor_fce67ac898dc274e, []int{9}
+	return fileDescriptor_fce67ac898dc274e, []int{6}
 }
 
 func (m *Agent) XXX_Unmarshal(b []byte) error {
@@ -528,11 +317,11 @@ func (m *Agent) GetId() uint64 {
 	return 0
 }
 
-func (m *Agent) GetType() AgentType {
+func (m *Agent) GetType() common.AgentType {
 	if m != nil {
 		return m.Type
 	}
-	return AgentType_PEDESTRIAN
+	return common.AgentType_PEDESTRIAN
 }
 
 type isAgent_Data interface {
@@ -609,53 +398,45 @@ func (*Agent) XXX_OneofWrappers() []interface{} {
 }
 
 func init() {
-	proto.RegisterEnum("api.agent.AgentType", AgentType_name, AgentType_value)
-	proto.RegisterType((*GetAgentsDemand)(nil), "api.agent.GetAgentsDemand")
-	proto.RegisterType((*GetAgentsSupply)(nil), "api.agent.GetAgentsSupply")
-	proto.RegisterType((*SetAgentsDemand)(nil), "api.agent.SetAgentsDemand")
-	proto.RegisterType((*SetAgentsSupply)(nil), "api.agent.SetAgentsSupply")
-	proto.RegisterType((*ForwardAgentsSupply)(nil), "api.agent.ForwardAgentsSupply")
-	proto.RegisterType((*GetAgentRouteDemand)(nil), "api.agent.GetAgentRouteDemand")
-	proto.RegisterType((*GetAgentRouteSupply)(nil), "api.agent.GetAgentRouteSupply")
-	proto.RegisterType((*GetAgentsRouteDemand)(nil), "api.agent.GetAgentsRouteDemand")
-	proto.RegisterType((*GetAgentsRouteSupply)(nil), "api.agent.GetAgentsRouteSupply")
+	proto.RegisterType((*GetSameAreaAgentsRequest)(nil), "api.agent.GetSameAreaAgentsRequest")
+	proto.RegisterType((*GetSameAreaAgentsResponse)(nil), "api.agent.GetSameAreaAgentsResponse")
+	proto.RegisterType((*GetNeighborAreaAgentsResponse)(nil), "api.agent.GetNeighborAreaAgentsResponse")
+	proto.RegisterType((*SetAgentsRequest)(nil), "api.agent.SetAgentsRequest")
+	proto.RegisterType((*SetAgentsResponse)(nil), "api.agent.SetAgentsResponse")
+	proto.RegisterType((*VisualizeAgentsRequest)(nil), "api.agent.VisualizeAgentsRequest")
 	proto.RegisterType((*Agent)(nil), "api.agent.Agent")
 }
 
 func init() { proto.RegisterFile("simulation/agent/agent.proto", fileDescriptor_fce67ac898dc274e) }
 
 var fileDescriptor_fce67ac898dc274e = []byte{
-	// 502 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x54, 0x4d, 0x6b, 0xdb, 0x40,
-	0x10, 0xd5, 0x97, 0x15, 0x3c, 0x2e, 0x8e, 0xd8, 0x04, 0x2a, 0x4c, 0x0b, 0xae, 0x4f, 0xa2, 0x14,
-	0x99, 0x3a, 0x94, 0x1e, 0xda, 0x8b, 0x12, 0xa7, 0x91, 0xa0, 0x98, 0xb0, 0xf2, 0xa9, 0x17, 0x33,
-	0xb1, 0x36, 0xce, 0x82, 0x2d, 0x89, 0xd5, 0x9a, 0xd6, 0xc7, 0xfe, 0x99, 0x1e, 0xfa, 0x2b, 0x8b,
-	0x56, 0xb2, 0x2b, 0x6c, 0x92, 0x36, 0x85, 0x96, 0x5e, 0xf6, 0x63, 0xe6, 0xcd, 0x9b, 0x9d, 0x99,
-	0xe5, 0xc1, 0xb3, 0x82, 0xaf, 0xd6, 0x4b, 0x94, 0x3c, 0x4b, 0x87, 0xb8, 0x60, 0xa9, 0xac, 0x56,
-	0x3f, 0x17, 0x99, 0xcc, 0x48, 0x1b, 0x73, 0xee, 0x2b, 0x43, 0xef, 0xc5, 0x01, 0x30, 0x67, 0x09,
-	0x2b, 0xa4, 0xe0, 0x98, 0x56, 0xe8, 0x5e, 0xef, 0x00, 0x32, 0x47, 0x51, 0xfb, 0x0e, 0xf3, 0x48,
-	0x81, 0x7c, 0x1b, 0xf9, 0xfc, 0xc0, 0x5b, 0xf0, 0x45, 0x8a, 0xcb, 0xca, 0x3d, 0x28, 0xe0, 0xf8,
-	0x8a, 0xc9, 0xa0, 0x74, 0x14, 0x63, 0xb6, 0xc2, 0x34, 0x21, 0x04, 0x2c, 0xc9, 0x57, 0xcc, 0xd5,
-	0xfb, 0xba, 0x67, 0x51, 0x75, 0x26, 0x4f, 0xe1, 0x08, 0x05, 0xc3, 0x19, 0x4f, 0x5c, 0x43, 0x99,
-	0xed, 0xf2, 0x1a, 0x25, 0xe4, 0x0c, 0x40, 0xb1, 0xce, 0xe4, 0x26, 0x67, 0xae, 0xd9, 0xd7, 0xbd,
-	0xee, 0xe8, 0xd4, 0xdf, 0xd5, 0xe6, 0x2b, 0xe6, 0xe9, 0x26, 0x67, 0xb4, 0x8d, 0xdb, 0xe3, 0xe0,
-	0x9b, 0xde, 0xc8, 0x1a, 0xaf, 0xf3, 0x7c, 0xb9, 0xf9, 0xfb, 0x59, 0xc9, 0x6b, 0xe8, 0xa8, 0x4b,
-	0x31, 0xe3, 0xe9, 0x6d, 0xe6, 0x5a, 0x7d, 0xd3, 0xeb, 0x8c, 0x9c, 0xfd, 0x28, 0x5a, 0x31, 0x17,
-	0x51, 0x7a, 0x9b, 0x0d, 0xc6, 0x70, 0x1c, 0xef, 0x75, 0x67, 0x8f, 0x45, 0xff, 0x0d, 0x96, 0xa2,
-	0xc1, 0xf2, 0xaf, 0xaa, 0x1d, 0x7c, 0xd7, 0xe1, 0xe4, 0x43, 0x26, 0x3e, 0xa3, 0x48, 0xfe, 0xff,
-	0x3e, 0x87, 0x70, 0xb2, 0xfd, 0x0f, 0x34, 0x5b, 0x4b, 0x76, 0x5f, 0xaf, 0xf5, 0x47, 0x33, 0xd5,
-	0x55, 0xff, 0x01, 0x53, 0x04, 0xa7, 0xbb, 0x3f, 0xfa, 0xe0, 0xa3, 0xcc, 0xc7, 0x53, 0xdd, 0xf7,
-	0xaa, 0x5f, 0x53, 0x7d, 0x35, 0xa0, 0xa5, 0xac, 0xa4, 0x0b, 0x06, 0x4f, 0xea, 0x31, 0x1a, 0x3c,
-	0x21, 0x1e, 0x58, 0x6a, 0x4a, 0xc6, 0x03, 0x53, 0x52, 0x08, 0xf2, 0x1e, 0xe0, 0xa7, 0xc0, 0xa8,
-	0xa9, 0x76, 0x46, 0x3d, 0x85, 0x6f, 0xe8, 0xce, 0xf5, 0xee, 0x18, 0x6a, 0xb4, 0x81, 0x27, 0x7d,
-	0x30, 0xe7, 0x28, 0x5c, 0x4b, 0x85, 0x3d, 0x51, 0x61, 0xa5, 0x16, 0x5d, 0xa0, 0x08, 0x35, 0x5a,
-	0xba, 0x88, 0x07, 0x2d, 0xa5, 0x40, 0x6e, 0xab, 0xd1, 0xe6, 0x4a, 0x93, 0xa6, 0xe5, 0x1a, 0x6a,
-	0xb4, 0x02, 0x90, 0x57, 0x60, 0x57, 0x6a, 0xe4, 0xda, 0x0a, 0x4a, 0x14, 0xb4, 0x16, 0xa8, 0x58,
-	0x6d, 0xa1, 0x46, 0x6b, 0xcc, 0xb9, 0x0d, 0x56, 0x82, 0x12, 0x5f, 0xbe, 0x83, 0xf6, 0xae, 0x24,
-	0xd2, 0x05, 0xb8, 0xbe, 0x1c, 0x5f, 0xc6, 0x53, 0x1a, 0x05, 0x13, 0x47, 0x23, 0x47, 0x60, 0x5e,
-	0x04, 0xd4, 0xd1, 0x49, 0x1b, 0x5a, 0x53, 0x1a, 0x44, 0x13, 0xc7, 0x20, 0x00, 0x76, 0x1c, 0x5d,
-	0x4d, 0x82, 0x8f, 0x8e, 0x79, 0xfe, 0xf6, 0xd3, 0x9b, 0x05, 0x97, 0x77, 0xeb, 0x1b, 0x7f, 0x9e,
-	0xad, 0x86, 0xc5, 0x26, 0x65, 0x82, 0x7d, 0xd9, 0xee, 0x33, 0x5c, 0xe6, 0x77, 0x38, 0xc4, 0x9c,
-	0x0f, 0xf7, 0x65, 0xf3, 0xc6, 0x56, 0x82, 0x79, 0xf6, 0x23, 0x00, 0x00, 0xff, 0xff, 0x91, 0x09,
-	0x62, 0x4e, 0xd7, 0x05, 0x00, 0x00,
+	// 436 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x93, 0xcf, 0x8b, 0xd3, 0x40,
+	0x14, 0xc7, 0x9b, 0xfe, 0x88, 0xec, 0x5b, 0x59, 0xd6, 0x11, 0x75, 0x2c, 0xae, 0xc4, 0x9e, 0x22,
+	0x48, 0x0a, 0x55, 0xf1, 0xb2, 0x97, 0x5d, 0x91, 0xed, 0x5e, 0x44, 0xa6, 0x8b, 0x07, 0x2f, 0xe5,
+	0xb5, 0x79, 0xb4, 0x03, 0x4d, 0x32, 0xce, 0x4c, 0xc0, 0x7a, 0xf4, 0x3f, 0xf0, 0x3f, 0x96, 0xcc,
+	0xa4, 0x31, 0x1a, 0x61, 0x05, 0xf1, 0x92, 0x37, 0x99, 0xef, 0xe7, 0xbd, 0xef, 0xbc, 0xe1, 0x0d,
+	0x3c, 0x31, 0x32, 0x2b, 0x77, 0x68, 0x65, 0x91, 0x4f, 0x71, 0x43, 0xb9, 0xf5, 0xdf, 0x44, 0xe9,
+	0xc2, 0x16, 0xec, 0x08, 0x95, 0x4c, 0xdc, 0xc6, 0xf8, 0x59, 0x07, 0x54, 0x94, 0x92, 0xb1, 0x5a,
+	0x62, 0xee, 0xe9, 0xf1, 0xb8, 0x83, 0xac, 0x51, 0xd7, 0x5a, 0xd7, 0xc7, 0x6a, 0x94, 0x87, 0xcc,
+	0xb3, 0x8e, 0x6a, 0xe4, 0x26, 0xc7, 0x5d, 0x2d, 0x3f, 0x6d, 0xc9, 0xeb, 0x22, 0xcb, 0x9a, 0xe0,
+	0xf5, 0x89, 0x04, 0x7e, 0x45, 0x76, 0x81, 0x19, 0x5d, 0x68, 0xc2, 0x8b, 0xaa, 0x80, 0x11, 0xf4,
+	0xb9, 0x24, 0x63, 0xd9, 0x23, 0xb8, 0x83, 0x9a, 0x70, 0x29, 0x53, 0x1e, 0x44, 0x41, 0x3c, 0x14,
+	0x61, 0xf5, 0x7b, 0x9d, 0xb2, 0x57, 0x00, 0xce, 0x6a, 0x69, 0xf7, 0x8a, 0x78, 0x3f, 0x0a, 0xe2,
+	0x93, 0xd9, 0x83, 0xa4, 0x6a, 0xb8, 0xae, 0xed, 0xea, 0xdc, 0xec, 0x15, 0x89, 0x23, 0x3c, 0x2c,
+	0x27, 0xef, 0xe0, 0xf1, 0x1f, 0xac, 0x8c, 0x2a, 0x72, 0x43, 0x2c, 0x86, 0xd0, 0x91, 0x86, 0x07,
+	0xd1, 0x20, 0x3e, 0x9e, 0x9d, 0x26, 0xcd, 0xfd, 0xf9, 0x6a, 0xa2, 0xd6, 0x27, 0xd7, 0x70, 0x76,
+	0x45, 0xf6, 0x3d, 0xc9, 0xcd, 0x76, 0x55, 0xe8, 0x7f, 0x2a, 0x75, 0x0e, 0xa7, 0x0b, 0xb2, 0xbf,
+	0x36, 0xfd, 0xf7, 0xd9, 0xf7, 0xe1, 0x5e, 0x2b, 0xdb, 0x9b, 0x4f, 0xbe, 0x07, 0xf0, 0xf0, 0xa3,
+	0x34, 0x25, 0xee, 0xe4, 0x57, 0xfa, 0x9f, 0xd7, 0xd9, 0x3a, 0xe8, 0xe0, 0x96, 0x83, 0x7e, 0xeb,
+	0xc3, 0xc8, 0xed, 0xb0, 0x13, 0xe8, 0x37, 0xee, 0x7d, 0x99, 0xb2, 0xe7, 0x30, 0xbc, 0xdd, 0xd3,
+	0x21, 0xec, 0x1c, 0xe0, 0xe7, 0xd4, 0xf2, 0x41, 0x14, 0xc4, 0xc7, 0xb3, 0xb1, 0x4b, 0x68, 0x0d,
+	0xf3, 0x87, 0x66, 0x39, 0xef, 0x89, 0x16, 0xcf, 0x22, 0x18, 0xac, 0x51, 0xf3, 0xa1, 0x4b, 0xbb,
+	0xeb, 0x7d, 0x50, 0x27, 0x6f, 0x51, 0xcf, 0x7b, 0xa2, 0x92, 0x58, 0x0c, 0x23, 0x37, 0xd6, 0x7c,
+	0xe4, 0x18, 0xdf, 0x8d, 0x1f, 0xf4, 0x9b, 0xea, 0x3b, 0xef, 0x09, 0x0f, 0xb0, 0x17, 0x10, 0xfa,
+	0x11, 0xe7, 0xa1, 0x43, 0x99, 0x43, 0xeb, 0xa9, 0x5f, 0xb8, 0x30, 0xef, 0x89, 0x9a, 0xb9, 0x0c,
+	0x61, 0x98, 0xa2, 0xc5, 0xcb, 0x37, 0x9f, 0x5e, 0x6f, 0xa4, 0xdd, 0x96, 0xab, 0xaa, 0xc1, 0xa9,
+	0xd9, 0xe7, 0xa4, 0xe9, 0xcb, 0x21, 0x2e, 0x71, 0xa7, 0xb6, 0x38, 0x45, 0x25, 0xa7, 0xbf, 0x3f,
+	0xa7, 0x55, 0xe8, 0x1e, 0xca, 0xcb, 0x1f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x58, 0x1a, 0xb8, 0x6b,
+	0xef, 0x03, 0x00, 0x00,
 }

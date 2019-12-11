@@ -6,22 +6,20 @@ option go_package="github.com/synerex/synerex_alpha/api/simulation/area";
 
 
 
-message GetAreaDemand {
-    uint64 time = 1;
-    uint64 area_id = 2;
+message GetAreaRequest {
+    uint64 id = 1;
 }
 
-message GetAreaSupply {
-    AreaInfo area_info = 1;
+message GetAreaResponse {
+    Area area = 1;
 }
 
-message AreaInfo {
-    uint64 time = 1;
-    uint64 area_id = 2;
-    string area_name = 3;
-    repeated uint64 neighbor_area = 4;
-    AreaCoord area_coord = 5;
-    AreaCoord control_area_coord = 6;
+message Area {
+    uint64 id = 1;
+    string name = 2;
+    repeated uint64 neighbor_areas = 3;
+    AreaCoord duplicate_area = 4;
+    AreaCoord control_area = 5;
 }
 
 message AreaCoord {

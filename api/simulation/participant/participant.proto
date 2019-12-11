@@ -4,29 +4,28 @@ package api.participant;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/participant";
 
+import "simulation/common/common.proto";
 
-message GetParticipantDemand {
-    ParticipantInfo participant_info = 1;
+message RegistParticipantRequest {
+    Participant participant = 1;
 }
 
-message GetParticipantSupply {
-    ParticipantInfo participant_info = 1;
+message RegistParticipantResponse {
 }
 
-message SetParticipantDemand {
-    repeated ParticipantInfo participants_info = 1;
+message SetParticipantsRequest {
+    repeated Participant participants = 1;
 }
 
-message SetParticipantSupply {
-    ParticipantInfo participant_info = 1;
+message SetParticipantsResponse {
 }
 
 
-message ParticipantInfo {
+message Participant {
     ChannelId channel_id = 1;
     ProviderType provider_type = 2;
     uint64 area_id = 3;
-    AgentType agent_type = 4;
+    common.AgentType agent_type = 4;
 }
 
 message ChannelId {
@@ -38,17 +37,11 @@ message ChannelId {
 }
 
 
-enum AgentType {
-    PEDESTRIAN = 0;
-    CAR = 1;
-}
-
 enum ProviderType {
     SCENARIO = 0;
     AREA = 1;
-    CAR_AREA = 2;
-    PED_AREA = 3;
+    CAR = 2;
+    PED = 3;
     ROUTE = 4;
 }
-
 

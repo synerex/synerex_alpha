@@ -8,56 +8,37 @@ import "simulation/agent/pedestrian.proto";
 import "simulation/agent/car.proto";
 import "simulation/agent/train.proto";
 import "simulation/agent/signal.proto";
+import "simulation/common/common.proto";
 
-message GetAgentsDemand {
-    uint64 time = 1;
-    uint64 area_id = 2;
-    AgentType agent_type = 3;
+message GetSameAreaAgentsRequest {
+    uint64 area_id = 1;
+    common.AgentType agent_type = 2;
 }
 
-message GetAgentsSupply {
-    uint64 time = 1;
-    uint64 area_id = 2;
-    AgentType agent_type = 3;
-    repeated Agent agents_info = 4;
+message GetSameAreaAgentsResponse {
+    repeated Agent agents = 1;
 }
 
-message SetAgentsDemand {
-    repeated Agent agents_info = 1;
+message GetNeighborAreaAgentsResponse {
+    repeated Agent agents = 1;
 }
 
-message SetAgentsSupply {
-    uint64 time = 1;
-    uint64 area_id = 2;
-    AgentType agent_type = 3;
+message SetAgentsRequest {
+    repeated Agent agents = 1;
 }
 
-message ForwardAgentsSupply {
-    uint64 time = 1;
-    uint64 area_id = 2;
-    AgentType agent_type = 3;
-    repeated Agent agents_info = 4;
+message SetAgentsResponse {
 }
 
-message GetAgentRouteDemand {
-    Agent agents_info = 1;
-}
-
-message GetAgentRouteSupply {
-    Agent agents_info = 1;
-}
-
-message GetAgentsRouteDemand {
-    repeated Agent agents_info = 1;
-}
-
-message GetAgentsRouteSupply {
-    repeated Agent agents_info = 1;
+message VisualizeAgentsRequest {
+    uint64 area_id = 1;
+    common.AgentType agent_type = 2;
+    repeated Agent agents = 3;
 }
 
 message Agent {
     uint64 id = 1;
-    AgentType type = 2;
+    common.AgentType type = 2;
 	oneof data {
 		pedestrian.Pedestrian pedestrian = 3;
 		car.Car car = 4;
@@ -66,9 +47,3 @@ message Agent {
 	}
 }
 
-enum AgentType {
-    PEDESTRIAN = 0;
-    CAR = 1;
-	TRAIN = 2;
-	SIGNAL = 3;
-}

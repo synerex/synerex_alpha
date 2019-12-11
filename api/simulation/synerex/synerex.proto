@@ -19,16 +19,18 @@ message SimDemand {
 
 		// demand data
         oneof data {
-            agent.GetAgentsDemand get_agents_demand = 4;
-			agent.SetAgentsDemand set_agents_demand = 5;
-			agent.GetAgentRouteDemand get_agent_route_demand = 6;
-			agent.GetAgentsRouteDemand get_agents_route_demand = 7;
-			area.GetAreaDemand get_area_demand = 8;
-			participant.GetParticipantDemand get_participant_demand = 9;
-			participant.SetParticipantDemand set_participant_demand = 10;
-			clock.SetClockDemand set_clock_demand = 11;
-			clock.ForwardClockDemand forward_clock_demand = 12;
-			clock.BackClockDemand back_clock_demand = 13;
+            agent.GetSameAreaAgentsRequest get_same_area_agents_request = 4;
+			agent.SetAgentsRequest set_agents_request = 5;
+			agent.VisualizeAgentsRequest visualise_agents_request = 6;
+			area.GetAreaRequest get_area_request = 7;
+			participant.RegistParticipantRequest resist_participant_request = 8;
+			participant.SetParticipantsRequest set_participants_request = 9;
+			clock.GetClockRequest get_clock_request = 10;
+			clock.SetClockRequest set_clock_request = 11;
+			clock.StartClockRequest start_clock_request = 12;
+			clock.StopClockRequest stop_clock_request = 13;
+			clock.ForwardClockRequest forward_clock_request = 14;
+			clock.BackClockRequest back_clock_request = 15;
         }
     }
 
@@ -42,17 +44,18 @@ message SimDemand {
 
 		// supply data
         oneof data {
-            agent.GetAgentsSupply get_agents_supply = 4;
-			agent.SetAgentsSupply set_agents_supply = 5;
-			agent.ForwardAgentsSupply forward_agents_supply = 6;
-			agent.GetAgentRouteSupply get_agent_route_supply = 7;
-			agent.GetAgentsRouteSupply get_agents_route_supply = 8;
-			area.GetAreaSupply get_area_supply = 9;
-			participant.GetParticipantSupply get_participant_supply = 10;
-			participant.SetParticipantSupply set_participant_supply = 11;
-			clock.SetClockSupply set_clock_supply = 12;
-			clock.ForwardClockSupply forward_clock_supply = 13;
-			clock.BackClockSupply back_clock_supply = 14;
+            agent.GetSameAreaAgentsResponse get_same_area_agents_response = 4;
+			agent.GetNeighborAreaAgentsResponse get_neighbor_area_agents_response = 5;
+			agent.SetAgentsResponse set_agents_response = 6;
+			area.GetAreaResponse get_area_response = 7;
+			participant.RegistParticipantResponse regist_participant_response = 8;
+			participant.SetParticipantsResponse set_participants_response = 9;
+			clock.GetClockResponse get_clock_response = 10;
+			clock.SetClockResponse set_clock_response = 11;
+			clock.StartClockResponse start_clock_response = 12;
+			clock.StopClockResponse stop_clock_response = 13;
+			clock.ForwardClockResponse forward_clock_response = 14;
+			clock.BackClockResponse back_clock_response = 15;
         }
     }
 
@@ -63,30 +66,33 @@ enum StatusType {
 }
 
 enum DemandType {
-    GET_AGENTS_DEMAND = 0;
-    SET_AGENTS_DEMAND = 1;
-    GET_AGENTS_ROUTE_DEMAND = 2;
-    SET_AGENTS_ROUTE_DEMAND = 3;
-    GET_AREA_DEMAND = 4;
-	GET_PARTICIPANT_DEMAND = 5;
-	SET_PARTICIPANT_DEMAND = 6;
-	SET_CLOCK_DEMAND = 7;
-	FORWARD_CLOCK_DEMAND = 8;
-	BACK_CLOCK_DEMAND = 9;
+    GET_SAME_AREA_AGENTS_REQUEST = 0;
+    SET_AGENTS_REQUEST = 1;
+    VISUALIZE_AGENTS_REQUEST = 2;
+    GET_AREA_REQUEST = 3;
+	RESIST_PARTICIPANT_REQUEST = 4;
+	SET_PARTICIPANTS_REQUEST = 5;
+	GET_CLOCK_REQUEST = 6;
+	SET_CLOCK_REQUEST = 7;
+	START_CLOCK_REQUEST = 8;
+	STOP_CLOCK_REQUEST = 9;
+	FORWARD_CLOCK_REQUEST = 10;
+	BACK_CLOCK_REQUEST = 11;
 }
 
 enum SupplyType {
-    GET_AGENTS_SUPPLY = 0;
-    SET_AGENTS_SUPPLY = 1;
-	FORWARD_AGENTS_SUPPLY = 2;
-    GET_AGENTS_ROUTE_SUPPLY = 3;
-    SET_AGENTS_ROUTE_SUPPLY = 4;
-    GET_AREA_SUPPLY = 5;
-	GET_PARTICIPANT_SUPPLY = 6;
-	SET_PARTICIPANT_SUPPLY = 7;
-	SET_CLOCK_SUPPLY = 8;
-	FORWARD_CLOCK_SUPPLY = 9;
-	BACK_CLOCK_SUPPLY = 10;
+    GET_SAME_AREA_AGENTS_RESPONSE = 0;
+	GET_NEIGHBOR_AREA_AGENTS_RESPONSE = 1;
+    SET_AGENTS_RESPONSE = 2;
+    GET_AREA_RESPONSE = 3;
+	RESIST_PARTICIPANT_RESPONSE = 4;
+	SET_PARTICIPANTS_RESPONSE = 5;
+	GET_CLOCK_RESPONSE = 6;
+	SET_CLOCK_RESPONSE = 7;
+	START_CLOCK_RESPONSE = 8;
+	STOP_CLOCK_RESPONSE = 9;
+	FORWARD_CLOCK_RESPONSE = 10;
+	BACK_CLOCK_RESPONSE = 11;
 }
 
 
