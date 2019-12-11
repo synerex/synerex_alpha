@@ -48,8 +48,8 @@ var orderCmds = [...]orderCmdInfo{
 		CmdName: "SetAll",
 	},
 	{
-		Aliases: []string{"SetTime", "setTime", "settime", "set-time"},
-		CmdName: "SetTime",
+		Aliases: []string{"SetClock", "setClock", "setclock", "set-clock"},
+		CmdName: "SetClock",
 	},
 	{
 		Aliases: []string{"SetArea", "setArea", "setarea", "set-area"},
@@ -64,12 +64,12 @@ var orderCmds = [...]orderCmdInfo{
 		CmdName: "GetParticipant",
 	},
 	{
-		Aliases: []string{"Start", "start"},
-		CmdName: "Start",
+		Aliases: []string{"StartClock", "startClock", "start"},
+		CmdName: "StartClock",
 	},
 	{
-		Aliases: []string{"Stop", "stop"},
-		CmdName: "Stop",
+		Aliases: []string{"StopClock", "stopClock", "stop"},
+		CmdName: "StopClock",
 	},
 	{
 		Aliases: []string{"Clear", "clear"},

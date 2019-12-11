@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -25,8 +24,9 @@ import (
 	"github.com/kardianos/service"
 	gosocketio "github.com/mtfelian/golang-socketio"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
-	"github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/provider"
+	"github.com/synerex/synerex_alpha/api/simulation/synerex"
 )
 
 var version = "0.04"
@@ -56,66 +56,9 @@ type SubCommands struct {
 	RunFunc     func()
 }
 
-type Order2 struct {
-	Type       string
-	ClockInfo  ClockInfo
-	AreaInfo   AreaInfo
-	AgentsInfo []AgentInfo
-}
-
 type Order struct {
 	Type   string
 	Option string
-}
-
-type Options struct {
-	optJsonName string
-	optAgentNum int
-}
-
-type Coord struct {
-	Lat float32 `json:"lat"`
-	Lon float32 `json:"lon"`
-}
-
-type Route struct {
-	Coord       Coord   `json:"coord"`
-	Direction   float32 `json:"direction"`
-	Speed       float32 `json:"speed"`
-	Departure   Coord   `json:"departure"`
-	Destination Coord   `json:"destination"`
-}
-
-type Status struct {
-	Name string `json:"name"`
-	Age  string `json:"age"`
-	Sex  string `json:"sex"`
-}
-
-type Rule struct {
-}
-
-type ClockInfo struct {
-	Time string `json:"time"`
-}
-
-type AreaInfo struct {
-	Id   uint32 `json:"id"`
-	Name string `json:"name"`
-}
-
-type AgentInfo struct {
-	Id     uint32 `json:"id"`
-	Type   string `json:"type"`
-	Status Status `json:"status"`
-	Route  Route  `json:"route"`
-	Rule   Rule   `json:"rule"`
-}
-
-type SimData struct {
-	Clock ClockInfo   `json:"clock"`
-	Area  []AreaInfo  `json:"area"`
-	Agent []AgentInfo `json:"agent"`
 }
 
 // for Structures for Github json.
@@ -207,7 +150,7 @@ func init() {
 			Description: "Order",
 		},
 		{
-			CmdName:     "SetTime",
+			CmdName:     "SetClock",
 			Description: "Order",
 		},
 		{
@@ -219,11 +162,11 @@ func init() {
 			Description: "Order",
 		},
 		{
-			CmdName:     "Start",
+			CmdName:     "StartClock",
 			Description: "Order",
 		},
 		{
-			CmdName:     "Stop",
+			CmdName:     "StopClock",
 			Description: "Order",
 		},
 		{
@@ -747,7 +690,7 @@ func handleRun(target string) string {
 	return "Can't find command " + target
 }
 
-func calcRoute() Route {
+/*func calcRoute() Route {
 
 	sLon := float32(136.974000)
 	eLon := float32(136.982000)
@@ -757,10 +700,6 @@ func calcRoute() Route {
 		Lon: sLon + (eLon-sLon)*rand.Float32(),
 		Lat: sLat + (eLat-sLat)*rand.Float32(),
 	}
-	/*destination := Coord{
-		Lon: sLon + (eLon-sLon)*rand.Float32(),
-		Lat: sLat + (eLat-sLat)*rand.Float32(),
-	}*/
 	destination := Coord{
 		Lon: 136.98800,
 		Lat: 35.156208,
@@ -845,21 +784,21 @@ func calcRoute3() *agent.Route {
 	}
 
 	return route
-}
+}*/
 
 // Agentオブジェクトの変換
-func calcRoute4() *agent.Route {
+func calcRoute() *agent.PedRoute {
 
-	var departure, destination *agent.Coord
+	var departure, destination *common.Coord
 	sLon := float64(136.982800)
 	eLon := float64(136.98800)
 	sLat := float64(35.152800)
 	eLat := float64(35.160200)
-	departure = &agent.Coord{
+	departure = &common.Coord{
 		Longitude: sLon + (eLon-sLon)*rand.Float64(),
 		Latitude:  sLat + (eLat-sLat)*rand.Float64(),
 	}
-	destination = &agent.Coord{
+	destination = &common.Coord{
 		Longitude: 136.974000,
 		Latitude:  35.156476,
 	}
@@ -889,19 +828,15 @@ func createRandomAgentType() string {
 	}
 }
 
-type SimOrder struct {
-	Type   string
-	Agents []*agent.Agent
-}
-
 func handleOrder(order *Order) string {
 	target := order.Type
+	fmt.Printf("Target is : %v\n", target)
 	for _, sc := range cmdArray {
 		if sc.CmdName == target {
 			var res string
 			if target == "SetAll" {
 				// JSONファイル読み込み
-				jsonName := order.Option
+				/*jsonName := order.Option
 				fmt.Printf("jsonName is : %v\n", order.Option)
 				bytes, err := ioutil.ReadFile(jsonName)
 				if err != nil {
@@ -935,48 +870,72 @@ func handleOrder(order *Order) string {
 
 					sioCh.Scenario.Emit(provider.SET_AGENTS, order)
 					time.Sleep(1 * time.Second)
+				}*/
+			} else if target == "SetClock" {
+				setClockRequest := &clock.SetClockRequest{
+					Clock: &clock.Clock{
+						GlobalTime: float64(0),
+						TimeStep:   float64(1),
+					},
+				}
+				simDemand := &synerex.SimDemand{
+					DemandType: synerex.DemandType_SET_CLOCK_REQUEST,
+					StatusType: synerex.StatusType_NONE,
+					Data:       &synerex.SimDemand_SetClockRequest{setClockRequest},
 				}
 
-			} else if target == "GetParticipant" {
-				order := &provider.SetAgentsOrder{
-					Type: provider.GET_PARTICIPANT,
-				}
-				sioCh.Scenario.Emit(provider.GET_PARTICIPANT, order)
+				sioCh.Scenario.Emit(synerex.DemandType_SET_CLOCK_REQUEST.String(), simDemand)
 			} else if target == "SetAgent" {
 				agentNum, _ := strconv.Atoi(order.Option)
-				agents := make([]agent.Agent, 0)
+				agents := make([]*agent.Agent, 0)
 
 				for i := 0; i < agentNum; i++ {
 					agent := &agent.Agent{
 						Id:   uint64(i),
-						Type: agent.AgentType_PEDESTRIAN,
-						Data: &agent.Pedestrian{
-							Status: &agent.PedStatus{
-								Age:  "20",
-								Name: "rui",
+						Type: common.AgentType_PEDESTRIAN,
+						Data: &agent.Agent_Pedestrian{
+							Pedestrian: &agent.Pedestrian{
+								Status: &agent.PedStatus{
+									Age:  "20",
+									Name: "rui",
+								},
+								Route: calcRoute(),
 							},
-							Route: calcRoute4(),
 						},
 					}
 					agents = append(agents, agent)
 				}
 
-				order := &provider.SetAgentsOrder{
-					Type: provider.SET_AGENTS,
-					Peds: agents,
+				setAgentsRequest := &agent.SetAgentsRequest{
+					Agents: agents,
 				}
-				sioCh.Scenario.Emit(provider.SET_AGENTS, order)
-				time.Sleep(1 * time.Second)
+
+				simDemand := &synerex.SimDemand{
+					DemandType: synerex.DemandType_SET_AGENTS_REQUEST,
+					StatusType: synerex.StatusType_NONE,
+					Data:       &synerex.SimDemand_SetAgentsRequest{setAgentsRequest},
+				}
+				sioCh.Scenario.Emit(synerex.DemandType_SET_AGENTS_REQUEST.String(), simDemand)
+				//time.Sleep(1 * time.Second)
 			} else if target == "StartClock" {
-				order := &provider.StartClockOrder{
-					Type: provider.START_CLOCK,
+				startClockRequest := &clock.StartClockRequest{
+					StepNum: uint64(1),
 				}
-				sioCh.Scenario.Emit(provider.START_CLOCK, order)
+				simDemand := &synerex.SimDemand{
+					DemandType: synerex.DemandType_START_CLOCK_REQUEST,
+					StatusType: synerex.StatusType_NONE,
+					Data:       &synerex.SimDemand_StartClockRequest{startClockRequest},
+				}
+				sioCh.Scenario.Emit(synerex.DemandType_START_CLOCK_REQUEST.String(), simDemand)
+
 			} else if target == "StopClock" {
-				order := &provider.StopClockOrder{
-					Type: provider.STOP_CLOCK,
+				stopClockRequest := &clock.StopClockRequest{}
+				simDemand := &synerex.SimDemand{
+					DemandType: synerex.DemandType_STOP_CLOCK_REQUEST,
+					StatusType: synerex.StatusType_NONE,
+					Data:       &synerex.SimDemand_StopClockRequest{stopClockRequest},
 				}
-				sioCh.Scenario.Emit(provider.STOP_CLOCK, order)
+				sioCh.Scenario.Emit(synerex.DemandType_STOP_CLOCK_REQUEST.String(), simDemand)
 			}
 
 			res = "ok"
