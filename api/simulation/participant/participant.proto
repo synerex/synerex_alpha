@@ -13,6 +13,13 @@ message RegistParticipantRequest {
 message RegistParticipantResponse {
 }
 
+message DeleteParticipantRequest {
+    Participant participant = 1;
+}
+
+message DeleteParticipantResponse {
+}
+
 message SetParticipantsRequest {
     repeated Participant participants = 1;
 }
@@ -41,7 +48,7 @@ enum ProviderType {
     SCENARIO = 0;
     AREA = 1;
     CAR = 2;
-    PED = 3;
+    PEDESTRIAN = 3;
     ROUTE = 4;
 	VISUALIZATION = 5;
 }

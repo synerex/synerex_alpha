@@ -3,7 +3,6 @@ module github.com/synerex/synerex_alpha/api
 require (
 	github.com/golang/protobuf v1.3.2
 	github.com/stretchr/testify v1.2.2
-	github.com/synerex/synerex_alpha/api/common v0.0.2
 	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0

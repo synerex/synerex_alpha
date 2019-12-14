@@ -283,7 +283,7 @@ func (clt *SMServiceClient) SelectDemand(dm *api.Demand) error {
 func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMServiceClient, *api.Supply), wg *sync.WaitGroup) error {
 	ch := clt.getChannel()
 	smc, err := clt.Client.SubscribeSupply(ctx, ch)
-	log.Printf("Test3 %v", ch)
+	//log.Printf("Test3 %v", ch)
 	wg.Done()
 	if err != nil {
 		log.Printf("%v SubscribeSupply Error %v", clt, err)
@@ -312,7 +312,7 @@ func (clt *SMServiceClient) SubscribeSupply(ctx context.Context, spcb func(*SMSe
 func (clt *SMServiceClient) SubscribeDemand(ctx context.Context, dmcb func(*SMServiceClient, *api.Demand), wg *sync.WaitGroup) error {
 	ch := clt.getChannel()
 	dmc, err := clt.Client.SubscribeDemand(ctx, ch)
-	log.Printf("Test3 %v", ch)
+	//log.Printf("Test3 %v", ch)
 	wg.Done()
 	if err != nil {
 		log.Printf("%v SubscribeDemand Error %v", clt, err)

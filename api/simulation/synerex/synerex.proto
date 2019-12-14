@@ -24,13 +24,14 @@ message SimDemand {
 			agent.VisualizeAgentsRequest visualise_agents_request = 6;
 			area.GetAreaRequest get_area_request = 7;
 			participant.RegistParticipantRequest regist_participant_request = 8;
-			participant.SetParticipantsRequest set_participants_request = 9;
-			clock.GetClockRequest get_clock_request = 10;
-			clock.SetClockRequest set_clock_request = 11;
-			clock.StartClockRequest start_clock_request = 12;
-			clock.StopClockRequest stop_clock_request = 13;
-			clock.ForwardClockRequest forward_clock_request = 14;
-			clock.BackClockRequest back_clock_request = 15;
+			participant.DeleteParticipantRequest delete_participant_request = 9;
+			participant.SetParticipantsRequest set_participants_request = 10;
+			clock.GetClockRequest get_clock_request = 11;
+			clock.SetClockRequest set_clock_request = 12;
+			clock.StartClockRequest start_clock_request = 13;
+			clock.StopClockRequest stop_clock_request = 14;
+			clock.ForwardClockRequest forward_clock_request = 15;
+			clock.BackClockRequest back_clock_request = 16;
         }
     }
 
@@ -49,13 +50,14 @@ message SimDemand {
 			agent.SetAgentsResponse set_agents_response = 6;
 			area.GetAreaResponse get_area_response = 7;
 			participant.RegistParticipantResponse regist_participant_response = 8;
-			participant.SetParticipantsResponse set_participants_response = 9;
-			clock.GetClockResponse get_clock_response = 10;
-			clock.SetClockResponse set_clock_response = 11;
-			clock.StartClockResponse start_clock_response = 12;
-			clock.StopClockResponse stop_clock_response = 13;
-			clock.ForwardClockResponse forward_clock_response = 14;
-			clock.BackClockResponse back_clock_response = 15;
+			participant.DeleteParticipantResponse delete_participant_response = 9;
+			participant.SetParticipantsResponse set_participants_response = 10;
+			clock.GetClockResponse get_clock_response = 11;
+			clock.SetClockResponse set_clock_response = 12;
+			clock.StartClockResponse start_clock_response = 13;
+			clock.StopClockResponse stop_clock_response = 14;
+			clock.ForwardClockResponse forward_clock_response = 15;
+			clock.BackClockResponse back_clock_response = 16;
         }
     }
 
@@ -71,13 +73,14 @@ enum DemandType {
     VISUALIZE_AGENTS_REQUEST = 2;
     GET_AREA_REQUEST = 3;
 	REGIST_PARTICIPANT_REQUEST = 4;
-	SET_PARTICIPANTS_REQUEST = 5;
-	GET_CLOCK_REQUEST = 6;
-	SET_CLOCK_REQUEST = 7;
-	START_CLOCK_REQUEST = 8;
-	STOP_CLOCK_REQUEST = 9;
-	FORWARD_CLOCK_REQUEST = 10;
-	BACK_CLOCK_REQUEST = 11;
+	DELETE_PARTICIPANT_REQUEST = 5;
+	SET_PARTICIPANTS_REQUEST = 6;
+	GET_CLOCK_REQUEST = 7;
+	SET_CLOCK_REQUEST = 8;
+	START_CLOCK_REQUEST = 9;
+	STOP_CLOCK_REQUEST = 10;
+	FORWARD_CLOCK_REQUEST = 11;
+	BACK_CLOCK_REQUEST = 12;
 }
 
 enum SupplyType {
@@ -86,13 +89,14 @@ enum SupplyType {
     SET_AGENTS_RESPONSE = 2;
     GET_AREA_RESPONSE = 3;
 	REGIST_PARTICIPANT_RESPONSE = 4;
-	SET_PARTICIPANTS_RESPONSE = 5;
-	GET_CLOCK_RESPONSE = 6;
-	SET_CLOCK_RESPONSE = 7;
-	START_CLOCK_RESPONSE = 8;
-	STOP_CLOCK_RESPONSE = 9;
-	FORWARD_CLOCK_RESPONSE = 10;
-	BACK_CLOCK_RESPONSE = 11;
+	DELETE_PARTICIPANT_RESPONSE = 5;
+	SET_PARTICIPANTS_RESPONSE = 6;
+	GET_CLOCK_RESPONSE = 7;
+	SET_CLOCK_RESPONSE = 8;
+	START_CLOCK_RESPONSE = 9;
+	STOP_CLOCK_RESPONSE = 10;
+	FORWARD_CLOCK_RESPONSE = 11;
+	BACK_CLOCK_RESPONSE = 12;
 }
 
 

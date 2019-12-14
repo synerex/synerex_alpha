@@ -119,13 +119,8 @@ func handleOrder(cmd *cobra.Command, args []string) {
 					switch ci.CmdName {
 					case "SetAll":
 						order.Option = o.optJsonName
-					case "SetTime":
-					case "SetArea":
 					case "SetAgent":
 						order.Option = o.optAgentNum
-					case "Start":
-					case "Stop":
-					case "Clear":
 					}
 
 					fmt.Printf("simulator: Starting '%s'\n", ci.CmdName)

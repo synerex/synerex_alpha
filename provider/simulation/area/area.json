@@ -1,0 +1,36 @@
+[
+    {
+        "id": 1,
+        "name": "東山動植物園西",
+        "duplicateArea": {
+            "startLon": 136.973172,
+            "endLon": 136.984031,
+            "startLat": 35.152476,
+            "endLat": 35.160678
+        },
+        "controlArea": {
+            "startLon": 136.973172,
+            "endLon": 136.9825,
+            "startLat": 35.152476,
+            "endLat": 35.160678
+        },
+        "neighborAreas": [2]
+    },
+    {
+        "id": 2,
+        "name": "東山動植物園東",
+        "duplicateArea": {
+            "startLon": 136.981014,
+            "endLon": 136.990047,
+            "startLat": 35.152476,
+            "endLat": 35.160678
+        },
+        "controlArea": {
+            "startLon": 136.9825,
+            "endLon": 136.990047,
+            "startLat": 35.152476,
+            "endLat": 35.160678
+        },
+        "neighborAreas": [1]
+    }
+]

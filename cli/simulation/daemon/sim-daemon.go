@@ -4,6 +4,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,9 +25,9 @@ import (
 	"github.com/kardianos/service"
 	gosocketio "github.com/mtfelian/golang-socketio"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
-	"github.com/synerex/synerex_alpha/api/simulation/clock"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
-	"github.com/synerex/synerex_alpha/api/simulation/synerex"
+	"github.com/synerex/synerex_alpha/api/simulation/daemon"
+	"google.golang.org/grpc"
 )
 
 var version = "0.04"
@@ -43,6 +44,7 @@ var providerMap map[string]*exec.Cmd
 var providerMutex sync.RWMutex
 
 var githubBranch string
+var client daemon.SimDaemonClient
 
 type SynerexService struct {
 }
@@ -170,11 +172,11 @@ func init() {
 			Description: "Order",
 		},
 		{
-			CmdName:     "Forward",
+			CmdName:     "ForwardClock",
 			Description: "Order",
 		},
 		{
-			CmdName:     "Back",
+			CmdName:     "BackClock",
 			Description: "Order",
 		},
 		{
@@ -830,6 +832,7 @@ func createRandomAgentType() string {
 
 func handleOrder(order *Order) string {
 	target := order.Type
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	fmt.Printf("Target is : %v\n", target)
 	for _, sc := range cmdArray {
 		if sc.CmdName == target {
@@ -848,43 +851,18 @@ func handleOrder(order *Order) string {
 				if err := json.Unmarshal(bytes, &simData); err != nil {
 					log.Fatal(err)
 				}
-				//fmt.Printf("simData is : %v\n", simData.Clock)
-				if simData.Clock.Time != "" && simData.Area != nil && simData.Agent != nil {
-					var order2 Order2
-					// getParticipant
-					order2.Type = "GetParticipant"
-					order := &provider.SetAgentsOrder{
-						Type: provider.GET_PARTICIPANT,
-					}
-					sioCh.Scenario.Emit(provider.GET_PARTICIPANT, order)
-					time.Sleep(4 * time.Second)
-
-					// setAgent
-					order2.Type = "SetAgent"
-					order2.AgentsInfo = simData.Agent
-
-					order = &provider.SetAgentsOrder{
-						Type: provider.SET_AGENTS,
-						//Peds: agents,
-					}
-
-					sioCh.Scenario.Emit(provider.SET_AGENTS, order)
-					time.Sleep(1 * time.Second)
-				}*/
+				*/
 			} else if target == "SetClock" {
-				setClockRequest := &clock.SetClockRequest{
-					Clock: &clock.Clock{
-						GlobalTime: float64(0),
-						TimeStep:   float64(1),
-					},
+				message := &daemon.SetClockMessage{
+					GlobalTime: float64(345),
+					TimeStep:   float64(1),
 				}
-				simDemand := &synerex.SimDemand{
-					DemandType: synerex.DemandType_SET_CLOCK_REQUEST,
-					StatusType: synerex.StatusType_NONE,
-					Data:       &synerex.SimDemand_SetClockRequest{setClockRequest},
+				r, err := client.SetClockOrder(ctx, message)
+				if err != nil {
+					log.Fatalf("could not order: %v", err)
 				}
+				log.Printf("Response: %s", r.Ok)
 
-				sioCh.Scenario.Emit(synerex.DemandType_SET_CLOCK_REQUEST.String(), simDemand)
 			} else if target == "SetAgent" {
 				agentNum, _ := strconv.Atoi(order.Option)
 				agents := make([]*agent.Agent, 0)
@@ -906,36 +884,33 @@ func handleOrder(order *Order) string {
 					agents = append(agents, agent)
 				}
 
-				setAgentsRequest := &agent.SetAgentsRequest{
+				message := &daemon.SetAgentsMessage{
 					Agents: agents,
 				}
-
-				simDemand := &synerex.SimDemand{
-					DemandType: synerex.DemandType_SET_AGENTS_REQUEST,
-					StatusType: synerex.StatusType_NONE,
-					Data:       &synerex.SimDemand_SetAgentsRequest{setAgentsRequest},
+				r, err := client.SetAgentsOrder(ctx, message)
+				if err != nil {
+					log.Fatalf("could not order: %v", err)
 				}
-				sioCh.Scenario.Emit(synerex.DemandType_SET_AGENTS_REQUEST.String(), simDemand)
-				//time.Sleep(1 * time.Second)
+				log.Printf("Response: %s", r.Ok)
+
 			} else if target == "StartClock" {
-				startClockRequest := &clock.StartClockRequest{
+
+				message := &daemon.StartClockMessage{
 					StepNum: uint64(1),
 				}
-				simDemand := &synerex.SimDemand{
-					DemandType: synerex.DemandType_START_CLOCK_REQUEST,
-					StatusType: synerex.StatusType_NONE,
-					Data:       &synerex.SimDemand_StartClockRequest{startClockRequest},
+				r, err := client.StartClockOrder(ctx, message)
+				if err != nil {
+					log.Fatalf("could not order: %v", err)
 				}
-				sioCh.Scenario.Emit(synerex.DemandType_START_CLOCK_REQUEST.String(), simDemand)
+				log.Printf("Response: %s", r.Ok)
 
 			} else if target == "StopClock" {
-				stopClockRequest := &clock.StopClockRequest{}
-				simDemand := &synerex.SimDemand{
-					DemandType: synerex.DemandType_STOP_CLOCK_REQUEST,
-					StatusType: synerex.StatusType_NONE,
-					Data:       &synerex.SimDemand_StopClockRequest{stopClockRequest},
+				message := &daemon.StopClockMessage{}
+				r, err := client.StopClockOrder(ctx, message)
+				if err != nil {
+					log.Fatalf("could not order: %v", err)
 				}
-				sioCh.Scenario.Emit(synerex.DemandType_STOP_CLOCK_REQUEST.String(), simDemand)
+				log.Printf("Response: %s", r.Ok)
 			}
 
 			res = "ok"
@@ -1263,6 +1238,15 @@ func main() {
 			}
 		}
 	}()
+
+	// Connect Daemon Server
+	conn, err := grpc.Dial("127.0.0.1:9996", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	client = daemon.NewSimDaemonClient(conn)
+	fmt.Println("Succsess Connection with Daemon Server ")
 
 	//	logger.Info("Starting Synerex Engine "+version)
 	status, err := serv.Manage(svc)
