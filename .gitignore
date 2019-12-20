@@ -25,7 +25,7 @@ provider/multi/multi-provider
 provider/taxi/taxi-provider
 provider/user/user-provider
 server/synerex-server
-provider/simulation/scenario/mclient/node_modules
+provider/simulation/visualization/mclient/node_modules
 
 # Go module file
 go.sum
