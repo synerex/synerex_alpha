@@ -774,6 +774,26 @@ func (s *SynerexCommunicator) CollectParticipantsRequest() {
 	s.sendDemand(s.MyClients.ParticipantClient, opts)
 }
 
+// NotifyStartUpRequest :　参加者を共有するDemand
+func (s *SynerexCommunicator) NotifyStartUpRequest(providerType participant.ProviderType) {
+
+	notifyStartUpRequest := &participant.NotifyStartUpRequest{
+		ProviderType: providerType,
+	}
+
+	simDemand := &synerex.SimDemand{
+		DemandType: synerex.DemandType_NOTIFY_START_UP_REQUEST,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimDemand_NotifyStartUpRequest{notifyStartUpRequest},
+	}
+
+	nm := "notifyStartUp"
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SimDemand: simDemand}
+
+	s.sendDemand(s.MyClients.ParticipantClient, opts)
+}
+
 func (s *SynerexCommunicator) sendProposeSupply(sclient *sxutil.SMServiceClient, opts *sxutil.SupplyOpts) {
 	mu.Lock()
 	id := sclient.ProposeSupply(opts)

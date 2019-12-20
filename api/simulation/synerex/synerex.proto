@@ -27,13 +27,14 @@ message SimDemand {
 			participant.DeleteParticipantRequest delete_participant_request = 9;
 			participant.SetParticipantsRequest set_participants_request = 10;
 			participant.CollectParticipantsRequest collect_participants_request = 11;
-			participant.DownScenarioRequest down_scenario_request = 12;
-			clock.GetClockRequest get_clock_request = 13;
-			clock.SetClockRequest set_clock_request = 14;
-			clock.StartClockRequest start_clock_request = 15;
-			clock.StopClockRequest stop_clock_request = 16;
-			clock.ForwardClockRequest forward_clock_request = 17;
-			clock.BackClockRequest back_clock_request = 18;
+			participant.NotifyStartUpRequest notify_start_up_request = 12;
+			participant.DownScenarioRequest down_scenario_request = 13;
+			clock.GetClockRequest get_clock_request = 14;
+			clock.SetClockRequest set_clock_request = 15;
+			clock.StartClockRequest start_clock_request = 16;
+			clock.StopClockRequest stop_clock_request = 17;
+			clock.ForwardClockRequest forward_clock_request = 18;
+			clock.BackClockRequest back_clock_request = 19;
         }
     }
 
@@ -80,14 +81,15 @@ enum DemandType {
 	DELETE_PARTICIPANT_REQUEST = 4;
 	SET_PARTICIPANTS_REQUEST = 5;
 	COLLECT_PARTICIPANTS_REQUEST = 6;
-	GET_CLOCK_REQUEST = 7;
-	SET_CLOCK_REQUEST = 8;
-	START_CLOCK_REQUEST = 9;
-	STOP_CLOCK_REQUEST = 10;
-	FORWARD_CLOCK_REQUEST = 11;
-	BACK_CLOCK_REQUEST = 12;
-    CLEAR_AGENTS_REQUEST = 13;
-    DOWN_SCENARIO_REQUEST = 14;
+	NOTIFY_START_UP_REQUEST = 7;
+	GET_CLOCK_REQUEST = 8;
+	SET_CLOCK_REQUEST = 9;
+	START_CLOCK_REQUEST = 10;
+	STOP_CLOCK_REQUEST = 11;
+	FORWARD_CLOCK_REQUEST = 12;
+	BACK_CLOCK_REQUEST = 13;
+    CLEAR_AGENTS_REQUEST = 14;
+    DOWN_SCENARIO_REQUEST = 15;
 }
 
 enum SupplyType {

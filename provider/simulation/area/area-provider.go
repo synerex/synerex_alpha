@@ -7,6 +7,7 @@ import (
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/api/simulation/synerex"
 	"github.com/synerex/synerex_alpha/provider/simulation/area/communicator"
 	"github.com/synerex/synerex_alpha/sxutil"
@@ -45,20 +46,26 @@ func readAreaData() []*area.Area {
 	if err := json.Unmarshal(bytes, &areaData); err != nil {
 		log.Fatal(err)
 	}
-	fmt.Printf("areaData is : %v\n", areaData)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Area data got. \n AreaData lenth : %v \x1b[0m\n", len(areaData))
 	return areaData
+}
+
+// notifyStartUp : 起動時に、他プロバイダの参加者情報を集める
+func notifyStartUp() {
+
+	// 情報をプロバイダに送信
+	com.NotifyStartUpRequest(participant.ProviderType_AREA)
 }
 
 func callbackGetAreaRequest(dm *pb.Demand) {
 	areaId := dm.GetSimDemand().GetGetAreaRequest().GetId()
 	targetId := dm.GetId()
-	fmt.Printf("getArea2: %v\n", areaId)
 	// AreaDataからエリア情報を取得
 	for _, data := range areaData {
 		if data.Id == areaId {
-			fmt.Printf("getArea3: %v\n")
 			// area情報を送信
 			com.GetAreaResponse(targetId, data)
+			log.Printf("\x1b[30m\x1b[47m \n Finish: Area information sent. \n AreaData : %v \x1b[0m\n", data)
 			break
 		}
 	}
@@ -67,15 +74,10 @@ func callbackGetAreaRequest(dm *pb.Demand) {
 // callback for each Supply
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 
-	fmt.Printf("registParticipant: %v\n", dm)
 	switch dm.GetSimDemand().DemandType {
-
-	//case synerex.DemandType_SET_PARTICIPANTS_REQUEST:
-	//	log.Printf("\x1b[30m\x1b[47m \n SetParticipantsRequest \x1b[0m\n")
 
 	case synerex.DemandType_GET_AREA_REQUEST:
 		// エリアを取得する要求
-		fmt.Printf("getArea: %v\n", dm)
 		callbackGetAreaRequest(dm)
 	default:
 		//log.Println("demand callback is invalid.")
@@ -119,6 +121,9 @@ func main() {
 
 	// start up(setArea)
 	wg.Add(1)
+
+	// 起動したことを通知
+	notifyStartUp()
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!

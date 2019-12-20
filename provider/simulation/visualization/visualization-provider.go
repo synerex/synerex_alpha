@@ -7,6 +7,7 @@ import (
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
 	"github.com/synerex/synerex_alpha/api/simulation/synerex"
 	"github.com/synerex/synerex_alpha/provider/simulation/visualization/communicator"
@@ -119,7 +120,7 @@ func registParticipant() {
 	err := com.WaitRegistParticipantResponse()
 
 	if err != nil {
-		log.Printf("\x1b[30m\x1b[47m \n Error: %v \x1b[0m\n", err)
+		log.Printf("\x1b[31m\x1b[47m \n Error: %v \x1b[0m\n", err)
 	}else{
 		// クロック情報を取得する
 		getClock()
@@ -171,15 +172,21 @@ func getClock() {
 
 // callbackForwardClockRequest: クロックを進める関数
 func callbackForwardClockRequest(dm *pb.Demand) {
+	log.Printf("\x1b[30m\x1b[47m \n Start: Clock forwarded \n Time:  %v \x1b[0m\n", sim.GlobalTime)
 	dm.GetSimDemand().GetForwardClockRequest().GetStepNum()
 	targetId := dm.GetId()
+
+	agents := com.WaitVisualizeAgentsResponse()
+
+	// Harmowareに送る
+	sendToHarmowareVis(agents)
 
 	// clockを進める
 	sim.ForwardGlobalTime()
 
 	// セット完了通知を送る
 	com.ForwardClockResponse(targetId)
-	log.Printf("\x1b[30m\x1b[47m \n Finish Forward Clock \n Time:  %v \x1b[0m\n", sim.GlobalTime)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock forwarded \n Time:  %v \x1b[0m\n", sim.GlobalTime)
 }
 
 // callbackSetClock: Clock情報をセットする要求
@@ -196,8 +203,8 @@ func callbackSetClockRequest(dm *pb.Demand) {
 	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock information set. \n GlobalTime:  %v \n TimeStep: %v \x1b[0m\n", sim.GlobalTime, sim.TimeStep)
 }
 
-// callbackCollectParticipantsRequest:
-func callbackCollectParticipantsRequest(dm *pb.Demand) {
+// callbackScenarioStartUpRequest:
+func callbackScenarioStartUpRequest(dm *pb.Demand) {
 	// 新規参加登録 
 	// TODO: Why go-routin ? 
 	go registParticipant()
@@ -213,18 +220,7 @@ func callbackDownScenarioRequest(dm *pb.Demand) {
 	isDownScenario = true
 	// 返答を返す
 	com.DownScenarioResponse(targetId)
-	log.Printf("\x1b[30m\x1b[47m \n Error: scenario-provider crashed...\n Please restart scenario-provider.   \x1b[0m\n")
-}
-
-// callbackVisualizeAgentsResponse: Agentを可視化する関数
-func callbackVisualizeAgentsResponse(sp *pb.Supply) {
-
-	// agentsを取得
-	agents := sp.GetSimSupply().GetVisualizeAgentsResponse().GetAgents()
-
-	// Harmowareに送る
-	sendToHarmowareVis(agents)
-
+	log.Printf("\x1b[31m\x1b[47m \n Error: scenario-provider crashed...\n Please restart scenario-provider.   \x1b[0m\n")
 }
 
 // callback for each Supply
@@ -243,9 +239,13 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case synerex.DemandType_DOWN_SCENARIO_REQUEST:
 		// Scenarioがダウンした場合の要求
 		callbackDownScenarioRequest(dm)
-	case synerex.DemandType_COLLECT_PARTICIPANTS_REQUEST:
-		// シナリオプロバイダが参加者リストを募集する要求
-		callbackCollectParticipantsRequest(dm)
+	case synerex.DemandType_NOTIFY_START_UP_REQUEST:
+		// プロバイダ起動時の要求
+		providerType := dm.GetSimDemand().GetNotifyStartUpRequest().GetProviderType()
+		if providerType == participant.ProviderType_SCENARIO {
+			// scenario-provider起動時
+			callbackScenarioStartUpRequest(dm)
+		}
 	default:
 		//log.Println("demand callback is invalid.")
 	}
@@ -265,7 +265,7 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		com.SendToDeleteParticipantResponse(sp)
 	case synerex.SupplyType_VISUALIZE_AGENTS_RESPONSE:
 		// エージェントを可視化する要求
-		callbackVisualizeAgentsResponse(sp)
+		com.SendToVisualizeAgentsResponse(sp)
 	default:
 		//fmt.Println("order is invalid")
 	}

@@ -9,6 +9,7 @@ import (
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/api/simulation/synerex"
 	"github.com/synerex/synerex_alpha/provider/simulation/pedestrian/communicator"
 	"github.com/synerex/synerex_alpha/provider/simulation/pedestrian/simulator"
@@ -38,10 +39,15 @@ func getArea() {
 	// エリアを取得するRequest
 	com.GetAreaRequest(areaId)
 	// Responseの待機
-	areaInfo := com.WaitGetAreaResponse()
-	// エリア情報をセット
-	sim.SetArea(areaInfo)
-	log.Printf("\x1b[30m\x1b[47m \n Finish Get Area \n AreaId:  %v \n AreaName: %v \x1b[0m\n", sim.GetArea().Id, sim.GetArea().Name)
+	areaInfo, err := com.WaitGetAreaResponse()
+
+	if err != nil {
+		log.Printf("\x1b[31m\x1b[47m \n Error: %v \x1b[0m\n", err)
+	}else{
+		// エリア情報をセット
+		sim.SetArea(areaInfo)
+		log.Printf("\x1b[30m\x1b[47m \n Finish: Area information got. \n AreaId:  %v \n AreaName: %v \x1b[0m\n", sim.GetArea().Id, sim.GetArea().Name)
+	}
 }
 
 // registParticipant: 新規参加登録をする関数
@@ -54,7 +60,7 @@ func registParticipant() {
 	// Responseの待機
 	err := com.WaitRegistParticipantResponse()
 	if err != nil {
-		log.Printf("\x1b[30m\x1b[47m \n Error: %v \x1b[0m\n", err)
+		log.Printf("\x1b[31m\x1b[47m \n Error: %v \x1b[0m\n", err)
 	}else{
 		// クロック情報を取得する
 		getClock()
@@ -94,6 +100,7 @@ func callbackSetParticipantsRequest(dm *pb.Demand) {
 func getClock() {
 	// エリアを取得するRequest
 	com.GetClockRequest()
+
 	// Responseの待機
 	clockInfo := com.WaitGetClockResponse()
 	// エリア情報をセット
@@ -154,14 +161,20 @@ func callbackClearAgentsRequest(dm *pb.Demand) {
 	log.Printf("\x1b[30m\x1b[47m \n Finish: Agents cleared.  \n Total:  %v \x1b[0m\n", len(sim.GetAgents()))
 }
 
-// callbackCollectParticipantsRequest:
-func callbackCollectParticipantsRequest(dm *pb.Demand) {
+// callbackScenarioStartUpRequest:
+func callbackScenarioStartUpRequest(dm *pb.Demand) {
 	// 新規参加登録 
 	// TODO: Why go-routin ? 
 	go registParticipant()
 	
 	// scenarioが再開された
 	isDownScenario = false
+}
+
+// callbackAreaStartUpRequest:
+func callbackAreaStartUpRequest(dm *pb.Demand) {
+	// エリアを取得する
+	getArea()
 }
 
 // callbackDownScenarioRequest:
@@ -171,7 +184,7 @@ func callbackDownScenarioRequest(dm *pb.Demand) {
 	isDownScenario = true
 	// 返答を返す
 	com.DownScenarioResponse(targetId)
-	log.Printf("\x1b[30m\x1b[47m \n Error: scenario-provider crashed...\n Please restart scenario-provider.   \x1b[0m\n")
+	log.Printf("\x1b[31m\x1b[47m \n Error: scenario-provider crashed...\n Please restart scenario-provider.   \x1b[0m\n")
 }
 
 // callbackForwardClock: Agentを計算し、クロックを進める要求
@@ -187,8 +200,6 @@ func callbackForwardClockRequest(dm *pb.Demand) {
 	// 次の時間のエージェントを計算する
 	// agentがDuplicateで計算されている？
 	nextControlAgents := sim.ForwardStep(sameAreaAgents)
-	
-	fmt.Printf("controlAgents:  %v\n ", len(nextControlAgents))
 
 	// 隣接エリアにエージェントの情報を送信
 	com.GetNeighborAreaAgentsResponse(targetId, nextControlAgents)
@@ -196,11 +207,9 @@ func callbackForwardClockRequest(dm *pb.Demand) {
 	// 次の時刻の隣接しているエリアの同じAgentTypeのエージェント情報を取得する
 	// 同じデータを取得している？
 	neighborAreaAgents := com.WaitGetNeighborAreaAgentsResponse()
-	fmt.Printf("neighborAgents: %v\n ", len(neighborAreaAgents))
 
 	// 重複エリアのエージェントを更新する
 	nextDuplicateAgents := sim.UpdateDuplicateAgents(nextControlAgents, neighborAreaAgents)
-	fmt.Printf("duplicateAgents: %v\n ", len(nextDuplicateAgents))
 
 	// Agentsをセットする
 	sim.SetAgents(nextDuplicateAgents)
@@ -223,9 +232,16 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case synerex.DemandType_SET_PARTICIPANTS_REQUEST:
 		// 参加者リストをセットする要求
 		callbackSetParticipantsRequest(dm)
-	case synerex.DemandType_COLLECT_PARTICIPANTS_REQUEST:
-		// シナリオプロバイダが参加者リストを募集する要求
-		callbackCollectParticipantsRequest(dm)
+	case synerex.DemandType_NOTIFY_START_UP_REQUEST:
+		// プロバイダ起動時の要求
+		providerType := dm.GetSimDemand().GetNotifyStartUpRequest().GetProviderType()
+		if providerType == participant.ProviderType_SCENARIO {
+			// scenario-provider起動時
+			callbackScenarioStartUpRequest(dm)
+		}else if providerType == participant.ProviderType_AREA {
+			// area-provider起動時
+			callbackAreaStartUpRequest(dm)
+		}
 	case synerex.DemandType_SET_AGENTS_REQUEST:
 		// Agentをセットする要求
 		callbackSetAgentsRequest(dm)

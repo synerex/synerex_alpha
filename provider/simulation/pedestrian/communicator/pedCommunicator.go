@@ -141,13 +141,24 @@ func (p *PedCommunicator) GetMyParticipant(areaId uint64) *participant.Participa
 }
 
 // WaitGetAreaResponse : GetAreaResponseを待機する
-func (p *PedCommunicator) WaitGetAreaResponse() *area.Area {
+func (p *PedCommunicator) WaitGetAreaResponse() (*area.Area, error) {
 	// channelの初期化
 	p.GetAreaCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	// Response取得
-	sp := <-p.GetAreaCh
-	areaInfo := sp.GetSimSupply().GetGetAreaResponse().GetArea()
-	return areaInfo
+
+	errch := make(chan error, 1)
+	// timeout
+	go func(){
+		time.Sleep(2*time.Second)
+		errch <- fmt.Errorf("timeout occor...\n area-provider closed ?\n You don't have to restart this provider. \n Please start area-provider.")
+		return
+	}()
+	select {
+	case err := <- errch:
+		return nil, err
+	case sp := <- p.GetAreaCh:
+		areaInfo := sp.GetSimSupply().GetGetAreaResponse().GetArea()
+		return areaInfo, nil
+	}
 }
 
 // SendToGetAreaResponse : GetAreaResponseを送る

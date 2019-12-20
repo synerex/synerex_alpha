@@ -6,6 +6,7 @@ import (
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
+	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	//"github.com/synerex/synerex_alpha/api/simulation/common"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/provider/simulation/simutil/communicator"
@@ -99,7 +100,7 @@ func (p *VisualizationCommunicator) CreateWaitIdList() {
 			getClockIdList = append(getClockIdList, clockChannelId)
 			deleteParticipantIdList = append(deleteParticipantIdList, participantChannelId)
 		}
-		if providerType != participant.ProviderType_SCENARIO { // agentTypeにNONEを作るべき
+		if providerType != participant.ProviderType_SCENARIO && providerType != participant.ProviderType_VISUALIZATION { // agentTypeにNONEを作るべき
 			visualizeAgentsIdList = append(visualizeAgentsIdList, agentChannelId)
 		}
 	}
@@ -159,6 +160,27 @@ func (p *VisualizationCommunicator) WaitDeleteParticipantResponse() {
 // SendToDeleteParticipantResponse : DeleteParticipantResponseを送る
 func (p *VisualizationCommunicator) SendToDeleteParticipantResponse(sp *pb.Supply) {
 	p.SendToWait(sp, p.DeleteParticipantCh)
+}
+
+// WaitVisualizeAgentsResponse : VisualizeAgentsResponseを待機する
+func (p *VisualizationCommunicator) WaitVisualizeAgentsResponse() []*agent.Agent{
+	fmt.Printf("debug2 %v", p.VisualizeAgentsIdList)
+	// channelの初期化
+	p.VisualizeAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	// spの待機
+	pspMap := p.Wait(p.VisualizeAgentsIdList, p.VisualizeAgentsCh)
+	// agentsをまとめる
+	totalAgents := make([]*agent.Agent, 0)
+	for _, sp := range pspMap{
+		agents := sp.GetSimSupply().GetVisualizeAgentsResponse().GetAgents()
+		totalAgents = append(totalAgents, agents...)
+	}
+	return totalAgents
+}
+
+// SendToVisualizeAgentsResponse : VisualizeAgentsResponseを送る
+func (p *VisualizationCommunicator) SendToVisualizeAgentsResponse(sp *pb.Supply) {
+	p.SendToWait(sp, p.VisualizeAgentsCh)
 }
 
 // WaitGetClockResponse : GetClockResponseを待機する

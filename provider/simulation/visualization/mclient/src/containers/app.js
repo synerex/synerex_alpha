@@ -295,7 +295,7 @@ class App extends Container {
             movesbase,
             movedData
         } = props;
-        console.log("viewPort: ", viewport);
+        //console.log("viewPort: ", viewport);
         /*var pedMovesbase = []
 	var pedMovedData = []
 	var carMovesbase = []

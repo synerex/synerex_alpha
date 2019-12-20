@@ -10,6 +10,7 @@ import (
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
 	"github.com/synerex/synerex_alpha/api/simulation/synerex"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/provider/simulation/car/communicator"
 	"github.com/synerex/synerex_alpha/provider/simulation/car/simulator"
 	"github.com/synerex/synerex_alpha/sxutil"
@@ -38,10 +39,15 @@ func getArea() {
 	// エリアを取得するRequest
 	com.GetAreaRequest(areaId)
 	// Responseの待機
-	areaInfo := com.WaitGetAreaResponse()
-	// エリア情報をセット
-	sim.SetArea(areaInfo)
-	log.Printf("\x1b[30m\x1b[47m \n Finish Get Area \n AreaId:  %v \n AreaName: %v \x1b[0m\n", sim.GetArea().Id, sim.GetArea().Name)
+	areaInfo, err := com.WaitGetAreaResponse()
+
+	if err != nil {
+		log.Printf("\x1b[31m\x1b[47m \n Error: %v \x1b[0m\n", err)
+	}else{
+		// エリア情報をセット
+		sim.SetArea(areaInfo)
+		log.Printf("\x1b[30m\x1b[47m \n Finish: Area information get. \n AreaId:  %v \n AreaName: %v \x1b[0m\n", sim.GetArea().Id, sim.GetArea().Name)
+	}
 }
 
 // registParticipant: 新規参加登録をする関数
@@ -53,7 +59,7 @@ func registParticipant() {
 	// Responseの待機
 	err := com.WaitRegistParticipantResponse()
 	if err != nil {
-		log.Printf("\x1b[30m\x1b[47m \n Error: %v \x1b[0m\n", err)
+		log.Printf("\x1b[31m\x1b[47m \n Error: %v \x1b[0m\n", err)
 	}else{
 		// クロック情報を取得する
 		getClock()
@@ -153,14 +159,20 @@ func callbackClearAgentsRequest(dm *pb.Demand) {
 	log.Printf("\x1b[30m\x1b[47m \n Finish: Agents cleared.  \n Total:  %v \x1b[0m\n", len(sim.GetAgents()))
 }
 
-// callbackCollectParticipantsRequest: Agent情報をセットする要求
-func callbackCollectParticipantsRequest(dm *pb.Demand) {
+// callbackScenarioStartUpRequest:
+func callbackScenarioStartUpRequest(dm *pb.Demand) {
 	// 新規参加登録 
 	// TODO: Why go-routin ? 
 	go registParticipant()
 	
 	// scenarioが再開された
 	isDownScenario = false
+}
+
+// callbackAreaStartUpRequest:
+func callbackAreaStartUpRequest(dm *pb.Demand) {
+	// エリアを取得する
+	getArea()
 }
 
 
@@ -171,7 +183,7 @@ func callbackDownScenarioRequest(dm *pb.Demand) {
 	isDownScenario = true
 	// 返答を返す
 	com.DownScenarioResponse(targetId)
-	log.Printf("\x1b[30m\x1b[47m \n Error: scenario-provider crashed...\n Please restart scenario-provider.   \x1b[0m\n")
+	log.Printf("\x1b[31m\x1b[47m \n Error: scenario-provider crashed...\n Please restart scenario-provider.   \x1b[0m\n")
 }
 
 // callbackForwardClock: Agentを計算し、クロックを進める要求
@@ -219,9 +231,16 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case synerex.DemandType_SET_PARTICIPANTS_REQUEST:
 		// 参加者リストをセットする要求
 		callbackSetParticipantsRequest(dm)
-	case synerex.DemandType_COLLECT_PARTICIPANTS_REQUEST:
-		// シナリオプロバイダが参加者リストを募集する要求
-		callbackCollectParticipantsRequest(dm)
+	case synerex.DemandType_NOTIFY_START_UP_REQUEST:
+		// プロバイダ起動時の要求
+		providerType := dm.GetSimDemand().GetNotifyStartUpRequest().GetProviderType()
+		if providerType == participant.ProviderType_SCENARIO {
+			// scenario-provider起動時
+			callbackScenarioStartUpRequest(dm)
+		}else if providerType == participant.ProviderType_AREA {
+			// area-provider起動時
+			callbackAreaStartUpRequest(dm)
+		}
 	case synerex.DemandType_SET_AGENTS_REQUEST:
 		// 参加者リストをセットする要求
 		callbackSetAgentsRequest(dm)

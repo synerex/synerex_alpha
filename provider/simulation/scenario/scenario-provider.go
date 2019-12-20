@@ -15,19 +15,16 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/daemon"
 	"github.com/synerex/synerex_alpha/api/simulation/synerex"
+	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/provider/simulation/scenario/communicator"
 	"github.com/synerex/synerex_alpha/provider/simulation/scenario/simulator"
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 )
 
-// プロバイダ順番関係なく
 // rvo2適用
 // daemonでprovider起動setup
-
-// scenario以外のプロバイダを自由に起動可能/scenarioは参加者管理ができている
-// scenarioを途中で起動可能/ 各プロバイダは参加者登録、クロック同期ができている
-// 起動停止(ctl+c)を二回押すことをなくす
+// daemonをサーバとしてscenarioに命令
 
 var (
 	serverAddr       = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
@@ -134,11 +131,10 @@ func setClock(globalTime float64, timeStep float64) (bool, error) {
 	return true, nil
 }
 
-// collectParticipants : 起動時に、他プロバイダの参加者情報を集める
-func collectParticipants() {
-
-	// 情報をプロバイダに送信
-	com.CollectParticipantsRequest()
+// notifyStartUp : 起動時に、他プロバイダの参加者情報を集める
+func notifyStartUp() {
+	// 起動をプロバイダに通知
+	com.NotifyStartUpRequest(participant.ProviderType_SCENARIO)
 }
 
 // callbackRegistParticipantRequest: 新規参加者を登録するための関数
@@ -157,7 +153,7 @@ func callbackRegistParticipantRequest(dm *pb.Demand) {
 	// SetParticipantsResponseの待機
 	err := com.WaitSetParticipantsResponse()
 	if err != nil{
-		log.Printf("\x1b[30m\x1b[47m \n Error: %v \x1b[0m\n", err)
+		log.Printf("\x1b[31m\x1b[47m \n Error: %v \x1b[0m\n", err)
 	}
 
 	// 新規参加者に登録完了通知
@@ -354,7 +350,7 @@ func main() {
 
 	wg.Add(1)
 	// 起動時、プロバイダがいれば登録する
-	collectParticipants()
+	notifyStartUp()
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
