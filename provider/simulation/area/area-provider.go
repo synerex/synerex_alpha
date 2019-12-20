@@ -49,21 +49,6 @@ func readAreaData() []*area.Area {
 	return areaData
 }
 
-type Coord struct {
-	StartLat float32 `json:"slat"`
-	EndLat   float32 `json:"elat"`
-	StartLon float32 `json:"slon"`
-	EndLon   float32 `json:"elon"`
-}
-
-type Map struct {
-	Id         uint32   `json:"id"`
-	Name       string   `json:"name"`
-	Coord      Coord    `json:"coord"`
-	Controlled Coord    `json:"controlled"`
-	Neighbor   []uint32 `json:"neighbor"`
-}
-
 func callbackGetAreaRequest(dm *pb.Demand) {
 	areaId := dm.GetSimDemand().GetGetAreaRequest().GetId()
 	targetId := dm.GetId()
@@ -85,9 +70,12 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	fmt.Printf("registParticipant: %v\n", dm)
 	switch dm.GetSimDemand().DemandType {
 
+	//case synerex.DemandType_SET_PARTICIPANTS_REQUEST:
+	//	log.Printf("\x1b[30m\x1b[47m \n SetParticipantsRequest \x1b[0m\n")
+
 	case synerex.DemandType_GET_AREA_REQUEST:
 		// エリアを取得する要求
-		fmt.Printf("getArea: %v\n")
+		fmt.Printf("getArea: %v\n", dm)
 		callbackGetAreaRequest(dm)
 	default:
 		//log.Println("demand callback is invalid.")

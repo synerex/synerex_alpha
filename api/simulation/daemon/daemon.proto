@@ -8,6 +8,7 @@ import "simulation/agent/agent.proto";
 
 service SimDaemon {
     rpc SetAgentsOrder(SetAgentsMessage) returns (Response) {}
+	rpc ClearAgentsOrder(ClearAgentsMessage) returns (Response) {}
 	rpc SetClockOrder(SetClockMessage) returns (Response) {}
 	rpc StartClockOrder(StartClockMessage) returns (Response) {}
 	rpc StopClockOrder(StopClockMessage) returns (Response) {}
@@ -20,6 +21,9 @@ message Response {
 
 message SetAgentsMessage {
 	repeated agent.Agent agents = 1;
+}
+
+message ClearAgentsMessage {
 }
 
 message SetClockMessage {

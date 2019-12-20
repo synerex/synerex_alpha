@@ -27,6 +27,16 @@ message SetParticipantsRequest {
 message SetParticipantsResponse {
 }
 
+message DownScenarioRequest {
+}
+
+message DownScenarioResponse {
+}
+
+message CollectParticipantsRequest {
+    Participant participant = 1;
+}
+
 
 message Participant {
     ChannelId channel_id = 1;

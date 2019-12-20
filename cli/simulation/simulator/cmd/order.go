@@ -56,8 +56,12 @@ var orderCmds = [...]orderCmdInfo{
 		CmdName: "SetArea",
 	},
 	{
-		Aliases: []string{"SetAgent", "setAgent", "setagent", "set-agent"},
-		CmdName: "SetAgent",
+		Aliases: []string{"SetAgents", "setAgents", "setagents", "set-agents", "SetAgent", "setAgent", "setagent", "set-agent"},
+		CmdName: "SetAgents",
+	},
+	{
+		Aliases: []string{"ClearAgents", "clearAgents", "clearagents", "clear-agents", "ClearAgent", "clearAgent", "clearagent", "clear-agent"},
+		CmdName: "ClearAgents",
 	},
 	{
 		Aliases: []string{"GetParticipant", "getParticipant", "getparticipant", "get-participant"},
@@ -119,7 +123,7 @@ func handleOrder(cmd *cobra.Command, args []string) {
 					switch ci.CmdName {
 					case "SetAll":
 						order.Option = o.optJsonName
-					case "SetAgent":
+					case "SetAgents":
 						order.Option = o.optAgentNum
 					}
 

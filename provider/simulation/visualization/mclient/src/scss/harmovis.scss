@@ -1,0 +1,223 @@
+
+body {
+  margin: 0px;
+  padding: 0;
+  overflow: hidden;
+  color: white;
+  background: black;
+  a {
+    color: white;
+    text-decoration: none;
+  }
+  a:hover {
+    color: white;
+    text-decoration: underline;
+  }
+}
+
+div.harmovis_controller {
+  font-size: 10pt; 
+  z-index: 100; 
+  position: fixed; 
+  top: 10px; 
+  right: 20px;
+  width:260px;
+  ul {
+    list-style-type: none; 
+    padding: 0px; 
+    margin: 0px; 
+    li {
+        margin:0px 0px 8px 0px;
+    }
+    div.form-check{
+	input[type="checkbox"],label{
+	  cursor: pointer;
+	  }
+    }
+  }
+  
+  ul.flex_list {
+    list-style-type: none; 
+    padding: 0px; 
+    margin: 0px; 
+    li.flex_row {
+      padding: 5px 0px; 
+      display: flex;
+      flex-direction: row;
+    }
+    li.flex_column {
+      @extend .flex_row;
+      flex-direction: column;
+    }
+  }
+  div.container {
+    width: 100%;
+  }
+  div.harmovis_input_button_column {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    label {
+      @extend .harmovis_button;
+      input[type="file"] {
+        display: none;
+      }
+    }
+    div {
+      white-space: nowrap;
+      overflow: hidden;
+      text-Overflow: ellipsis;
+      margin: -6px 0px 0px 0px
+    }
+  }
+  .harmovis_input_button_row {
+    @extend .harmovis_input_button_column;
+    flex-direction: row;
+    label {
+      margin: 0px 8px 0px 0px;
+    }
+    div {
+      margin: 0px;
+    }
+  }
+}
+
+div.harmovis_area { 
+  position: fixed; 
+  padding-top: 0px; 
+  width: 100%; 
+  height: 100vh; 
+}
+
+svg.harmovis_overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+label.harmovis_button,
+button.harmovis_button {
+  background: #808080;
+  border-radius: 2px;
+  color: #FFFFFF;
+  cursor: pointer;
+  font-size: 12px;
+  letter-spacing: .026em;
+  line-height: 14px;
+  padding: 3px 12px;
+  text-align: center;
+  transition: all .2s ease;
+  vertical-align: middle;
+  border-width: 0px;
+  box-shadow: 1px 1px 1px #555;
+  white-space: nowrap;
+  margin: 0px 2px;
+  &:hover {
+    background: #A0A0A0;
+  }
+}
+
+input.harmovis_input_range[type="range"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: rgba(255, 255, 255, 0.7);
+  height: 2px;
+  margin: 8px 0px;
+  border-radius: 2px;
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    cursor: pointer;
+    position: relative;
+    width: 10px;
+    height: 16px;
+    display: block;
+    background: #808080;
+    border-radius: 2px;
+    -webkit-border-radius: 2px;
+    box-shadow: 1px 1px 1px #555;
+    transition: all .2s ease;
+    &:hover {
+      background: #A0A0A0;
+    }
+  }
+}
+
+input.harmovis_input_number[type="number"],
+input.harmovis_input_number[type="number"]::-webkit-outer-spin-button,
+input.harmovis_input_number[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  background: rgba( 0, 0, 0, 0 );
+  color: #FFFFFF;
+  text-align: center;
+  margin: 0px;
+  border: 0px;
+  border-color: #FFFFFF;
+  padding: 0px;
+}
+
+div.harmovis_footer {
+  font-size: 8pt; 
+  z-index: 105; 
+  position: fixed; 
+  bottom: 8px; 
+  left: 10px;
+}
+
+div.harmovis_fpsRate {
+  font-size: 8pt; 
+  z-index: 105; 
+  position: fixed; 
+  bottom: 10px; 
+  right: 20px;
+  display: block;
+  span {
+    margin: 0px 2px;
+  }
+}
+
+div.harmovis_controller_new {
+  font-size: 10pt; 
+  z-index: 100; 
+  position: fixed; 
+  top: 10px; 
+  right: 20px;
+  width: 260px;
+  ul {
+    list-style-type: none;
+    li {
+      margin: 0px 0px 8px 0px;
+      input {
+      	    width: 100px;
+      }
+    }
+    div.form-check {
+      input[type="checkbox"],label {
+        cursor: pointer;
+      }
+    }
+  }
+  div.harmovis_input_button_column_new {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    label {
+      input[type="file"] {
+        display: none;
+      }
+    }
+    div {
+      white-space: nowrap;
+      overflow: hidden;
+      text-Overflow: ellipsis;
+      margin: -6px 0px 0px 0px;
+    }
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    cursor: pointer;
+  }
+  span.button_span {
+    display: flex;
+    justify-content: center;
+  }
+}

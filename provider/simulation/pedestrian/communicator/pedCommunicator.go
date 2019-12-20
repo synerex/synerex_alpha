@@ -1,8 +1,8 @@
 package communicator
 
 import (
-	//"fmt"
-	//"log"
+	"fmt"
+	"time"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
@@ -92,10 +92,11 @@ func (p *PedCommunicator) RegistClients(client pb.SynerexClient, argJson string)
 }
 
 // CreateWaitIdList : 同期するためのIdListを作成する関数
-func (p *PedCommunicator) CreateWaitIdList(myAgentType common.AgentType, myAreaId uint64) {
+func (p *PedCommunicator) CreateWaitIdList(myAgentType common.AgentType, myAreaId uint64, neighborAreaIds []uint64) {
 	getClockIdList := make([]uint64, 0)
 	deleteParticipantIdList := make([]uint64, 0)
 	getSameAreaAgentsIdList := make([]uint64, 0)
+	getNeighborAreaAgentsIdList := make([]uint64, 0)
 	for _, participantInfo := range p.Participants {
 		providerType := participantInfo.GetProviderType()
 		//agentType := participantInfo.GetAgentType()
@@ -111,10 +112,16 @@ func (p *PedCommunicator) CreateWaitIdList(myAgentType common.AgentType, myAreaI
 		if myAreaId == areaId {
 			getSameAreaAgentsIdList = append(getSameAreaAgentsIdList, agentChannelId)
 		}
+		for _, neighborAreaId := range neighborAreaIds {
+			if neighborAreaId == areaId{
+				getNeighborAreaAgentsIdList = append(getNeighborAreaAgentsIdList, agentChannelId)
+			}
+		}
 	}
 	p.DeleteParticipantIdList = deleteParticipantIdList
 	p.GetClockIdList = getClockIdList
 	p.GetSameAreaAgentsIdList = getSameAreaAgentsIdList
+	p.GetNeighborAreaAgentsIdList = getNeighborAreaAgentsIdList
 }
 
 func (p *PedCommunicator) GetMyParticipant(areaId uint64) *participant.Participant {
@@ -149,12 +156,29 @@ func (p *PedCommunicator) SendToGetAreaResponse(sp *pb.Supply) {
 }
 
 // WaitRegistParticipantResponse : RegistParticipantResponseを待機する
-func (p *PedCommunicator) WaitRegistParticipantResponse() {
+func (p *PedCommunicator) WaitRegistParticipantResponse() error{
+
+
 	// channelの初期化
 	p.RegistParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	// Response取得
-	<-p.RegistParticipantCh
+
+	errch := make(chan error, 1)
+
+	// timeout
+	go func(){
+		time.Sleep(2*time.Second)
+		errch <- fmt.Errorf("timeout occor...\n scenario-provider closed ?\n You don't have to restart this provider. \n Please start scenario-provider.")
+		return
+	}()
+	select {
+	case err := <- errch:
+		return err
+	case <- p.RegistParticipantCh:
+		return nil
+	}
+
 }
+
 
 // SendToRegistParticipantResponse : RegistParticipantResponseを送る
 func (p *PedCommunicator) SendToRegistParticipantResponse(sp *pb.Supply) {
@@ -167,12 +191,6 @@ func (p *PedCommunicator) WaitDeleteParticipantResponse() {
 	p.DeleteParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	// spの待機
 	p.Wait(p.DeleteParticipantIdList, p.DeleteParticipantCh)
-	// SimSupplyを取得
-	// Responseチェック
-	/*var simSupply *clock.Clock
-	for _, sp := range spMap {
-		simSupply = sp.GetSimSupply()
-	}*/
 }
 
 // SendToDeleteParticipantResponse : DeleteParticipantResponseを送る
@@ -202,8 +220,6 @@ func (p *PedCommunicator) SendToGetClockResponse(sp *pb.Supply) {
 
 // WaitGetSameAreaAgentsResponse : GetSameAreaAgentsResponseを待機する
 func (p *PedCommunicator) WaitGetSameAreaAgentsResponse() []*agent.Agent {
-	// channelの初期化
-	p.GetSameAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	spMap := p.Wait(p.GetSameAreaAgentsIdList, p.GetSameAreaAgentsCh)
 	// Agentsを取得
 	sameAgents := make([]*agent.Agent, 0)
@@ -211,6 +227,8 @@ func (p *PedCommunicator) WaitGetSameAreaAgentsResponse() []*agent.Agent {
 		agents := sp.GetSimSupply().GetGetSameAreaAgentsResponse().GetAgents()
 		sameAgents = append(sameAgents, agents...)
 	}
+	// channelの初期化
+	p.GetSameAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	return sameAgents
 }
 

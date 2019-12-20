@@ -19,6 +19,8 @@ require (
 	github.com/sirupsen/logrus v1.2.0
 	github.com/stretchr/objx v0.2.0 // indirect
 	github.com/synerex/synerex_alpha/api v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/common v0.0.0-00010101000000-000000000000 // indirect
+	github.com/synerex/synerex_alpha/api/simulation/synerex v0.0.0-00010101000000-000000000000 // indirect
 	github.com/synerex/synerex_alpha/monitor/monitorapi v0.0.0
 	github.com/synerex/synerex_alpha/nodeapi v0.0.0
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
@@ -48,7 +50,9 @@ replace (
 	github.com/synerex/synerex_alpha/api/simulation/agent => ../api/simulation/agent
 	github.com/synerex/synerex_alpha/api/simulation/area => ../api/simulation/area
 	github.com/synerex/synerex_alpha/api/simulation/clock => ../api/simulation/clock
+	github.com/synerex/synerex_alpha/api/simulation/common => ../api/simulation/common
 	github.com/synerex/synerex_alpha/api/simulation/participant => ../api/simulation/participant
+	github.com/synerex/synerex_alpha/api/simulation/synerex => ../api/simulation/synerex
 	github.com/synerex/synerex_alpha/monitor/monitorapi => ../monitor/monitorapi
 	github.com/synerex/synerex_alpha/nodeapi => ../nodeapi
 	github.com/synerex/synerex_alpha/sxutil => ../sxutil

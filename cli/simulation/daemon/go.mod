@@ -2,6 +2,7 @@ module sim-daemon
 
 require (
 	github.com/google/gops v0.3.5
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/websocket v1.4.0 // indirect
 	github.com/kardianos/osext v0.0.0-20170510131534-ae77be60afb1 // indirect
 	github.com/kardianos/service v0.0.0-20180910224244-b1866cf76903

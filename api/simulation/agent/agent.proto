@@ -30,7 +30,13 @@ message SetAgentsRequest {
 message SetAgentsResponse {
 }
 
-message VisualizeAgentsRequest {
+message ClearAgentsRequest {
+}
+
+message ClearAgentsResponse {
+}
+
+message VisualizeAgentsResponse {
     uint64 area_id = 1;
     common.AgentType agent_type = 2;
     repeated Agent agents = 3;

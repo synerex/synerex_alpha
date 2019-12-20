@@ -39,9 +39,44 @@ func (sim *CarSimulator) SetArea(areaInfo *area.Area) {
 	sim.Area = areaInfo
 }
 
-// SetAgents :　Agentsを追加する関数
+// GetArea :　Areaを取得する関数
+func (sim *CarSimulator) GetArea() *area.Area {
+	return sim.Area
+}
+
+// AddAgents :　Agentsを追加する関数
+func (sim *CarSimulator) AddAgents(agentsInfo []*agent.Agent) {
+	newAgents := make([]*agent.Agent, 0)
+	for _, agentInfo := range agentsInfo {
+		if agentInfo.Type == common.AgentType_CAR {
+			carInfo := car.NewCar(agentInfo)
+			if carInfo.IsInArea(sim.Area.DuplicateArea){
+				newAgents = append(newAgents, agentInfo)
+			}
+		}
+	}
+	sim.Agents = append(sim.Agents, newAgents...)
+}
+
+// SetAgents :　Agentsをセットする関数
 func (sim *CarSimulator) SetAgents(agentsInfo []*agent.Agent) {
-	sim.Agents = agentsInfo
+	newAgents := make([]*agent.Agent, 0)
+	for _, agentInfo := range agentsInfo {
+		if agentInfo.Type == common.AgentType_CAR {
+			newAgents = append(newAgents, agentInfo)
+		}
+	}
+	sim.Agents = newAgents
+}
+
+// ClearAgents :　Agentsを追加する関数
+func (sim *CarSimulator) ClearAgents() {
+	sim.Agents = make([]*agent.Agent, 0)
+}
+
+// GetAgents :　Agentsを取得する関数
+func (sim *CarSimulator) GetAgents() []*agent.Agent {
+	return sim.Agents
 }
 
 // UpdateDuplicateAgents :　重複エリアのエージェントを更新する関数
@@ -73,18 +108,11 @@ func (sim *CarSimulator) UpdateDuplicateAgents(pureNextAgentsInfo []*agent.Agent
 
 // ForwardStep :　次の時刻のエージェントを計算する関数
 func (sim *CarSimulator) ForwardStep(sameAreaAgents []*agent.Agent) []*agent.Agent {
-	IsRVO2 := true
-	pureNextAgents := make([]*agent.Agent, 0)
+	nextControlAgents := sim.GetAgents()
 
-	if IsRVO2 {
-		// RVO2
-		//rvo2route := NewRVO2Route(sim.TimeStep, sim.GlobalTime, sim.Map, sim.Agents, sim.AgentType)
-		//pureNextAgents = rvo2route.CalcNextAgentsByRVO()
-	} else {
-		// 干渉なしで目的地へ進む
-		//simpleRoute := NewSimpleRoute(sim.TimeStep, sim.GlobalTime, sim.Map, sim.Agents, sim.AgentType)
-		//pureNextAgents = simpleRoute.CalcNextAgentsBySimple()
+	// 干渉なしで目的地へ進む
+	simpleRoute := NewSimpleRoute(sim.TimeStep, sim.GlobalTime, sim.Area, sim.Agents, sim.AgentType)
+	nextControlAgents = simpleRoute.CalcNextAgents()
 
-	}
-	return pureNextAgents
+	return nextControlAgents
 }

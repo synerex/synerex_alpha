@@ -9,6 +9,7 @@ import (
 
 	"context"
 	"net"
+	"time"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
@@ -19,6 +20,14 @@ import (
 	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
 )
+
+// プロバイダ順番関係なく
+// rvo2適用
+// daemonでprovider起動setup
+
+// scenario以外のプロバイダを自由に起動可能/scenarioは参加者管理ができている
+// scenarioを途中で起動可能/ 各プロバイダは参加者登録、クロック同期ができている
+// 起動停止(ctl+c)を二回押すことをなくす
 
 var (
 	serverAddr       = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
@@ -52,32 +61,39 @@ func init() {
 
 // startClock:
 func startClock(stepNum uint64) {
+
 	com.ForwardClockRequest(stepNum)
 
 	com.WaitForwardClockResponse()
 
 	// calc next time
 	sim.ForwardStep()
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock forwarded \n Time:  %v \x1b[0m\n", sim.GlobalTime)
+
+	// 待機
+	time.Sleep(time.Duration(sim.TimeStep) * time.Second)
 
 	// 次のサイクルを行う
 	if isStop != true {
-		log.Printf("Start Next Clock")
 		startClock(stepNum)
 	} else {
-		log.Printf("Stop Clock")
+		log.Printf("\x1b[30m\x1b[47m \n Finish: Clock stopped \n GlobalTime:  %v \n TimeStep: %v \x1b[0m\n", sim.GlobalTime, sim.TimeStep)
 		isStop = false
 		isStart = false
+		// exit goroutin
+		return
 	}
 
 }
 
 // stopClock: Clockを停止する
-func stopClock() {
+func stopClock() (bool, error) {
 	isStop = true
+	return true, nil
 }
 
 // setAgents: agentをセットするDemandを出す関数
-func setAgents(agents []*agent.Agent) {
+func setAgents(agents []*agent.Agent) (bool, error) {
 
 	// エージェントを設置するリクエスト
 	com.SetAgentsRequest(agents)
@@ -86,14 +102,43 @@ func setAgents(agents []*agent.Agent) {
 	com.WaitSetAgentsResponse()
 
 	isSetAgent = true
-	fmt.Printf("Finish Set Agents %v\n", agents)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Agents set \n Add: %v \x1b[0m\n", len(agents))
+	return true, nil
+}
 
+// ClearAgents: agentを消去するDemandを出す関数
+func clearAgents() (bool, error) {
+
+	// エージェントを設置するリクエスト
+	com.ClearAgentsRequest()
+
+	// 同期のため待機
+	com.WaitClearAgentsResponse()
+
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Agents cleared. \x1b[0m\n")
+	return true, nil
 }
 
 // setClock : クロック情報をDaemonから受け取りセットする
-func setClock(globalTime float64, timeStep float64) {
+func setClock(globalTime float64, timeStep float64) (bool, error) {
+	// クロックをセット
 	sim.SetGlobalTime(globalTime)
 	sim.SetTimeStep(timeStep)
+
+	// クロック情報をプロバイダに送信
+	clockInfo := sim.GetClock()
+	com.SetClockRequest(clockInfo)
+	// Responseを待機
+	com.WaitSetClockResponse()
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock information set. \n GlobalTime:  %v \n TimeStep: %v \x1b[0m\n", sim.GlobalTime, sim.TimeStep)
+	return true, nil
+}
+
+// collectParticipants : 起動時に、他プロバイダの参加者情報を集める
+func collectParticipants() {
+
+	// 情報をプロバイダに送信
+	com.CollectParticipantsRequest()
 }
 
 // callbackRegistParticipantRequest: 新規参加者を登録するための関数
@@ -103,17 +148,22 @@ func callbackRegistParticipantRequest(dm *pb.Demand) {
 	// IdListに保存
 	com.AddParticipant(participant)
 
+	// 同期するためのIdListを作成
+	com.CreateWaitIdList()
+
 	// 新規の参加者情報を参加プロバイダに送信
 	com.SetParticipantsRequest()
 
 	// SetParticipantsResponseの待機
-	com.WaitSetParticipantsResponse()
+	err := com.WaitSetParticipantsResponse()
+	if err != nil{
+		log.Printf("\x1b[30m\x1b[47m \n Error: %v \x1b[0m\n", err)
+	}
 
 	// 新規参加者に登録完了通知
 	com.RegistParticipantResponse(dm)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: New participant registed  \x1b[0m\n")
 
-	// 同期するためのIdListを作成
-	com.CreateWaitIdList()
 }
 
 // callbackDeleteParticipantRequest: 参加者を削除するための関数
@@ -122,19 +172,19 @@ func callbackDeleteParticipantRequest(dm *pb.Demand) {
 	participant := dm.GetSimDemand().GetDeleteParticipantRequest().GetParticipant()
 	// IdListに保存
 	com.DeleteParticipant(participant)
-
-	// 新規の参加者情報を参加プロバイダに送信
-	com.SetParticipantsRequest()
-
-	// SetParticipantsResponseの待機
-	com.WaitSetParticipantsResponse()
-
-	// 新規参加者に登録完了通知
-	com.DeleteParticipantResponse(dm)
-
+	
 	// 同期するためのIdListを作成
 	com.CreateWaitIdList()
 
+	// 新規の参加者情報を参加プロバイダに送信
+	com.SetParticipantsRequest()
+	
+	// SetParticipantsResponseの待機
+	com.WaitSetParticipantsResponse()
+	
+	// 新規参加者に登録完了通知
+	com.DeleteParticipantResponse(dm)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Participant deleted \x1b[0m\n")
 }
 
 // callbackGetClockRequest: 新規参加者がクロック情報を取得する関数
@@ -146,6 +196,18 @@ func callbackGetClockRequest(dm *pb.Demand) {
 	com.GetClockResponse(dm, clock)
 }
 
+// notifyDownScenario: 新規参加者がクロック情報を取得する関数
+func notifyDownScenario() {
+
+	// 参加取り消しをするRequest
+	com.DownScenarioRequest()
+
+	// Responseの待機
+	com.WaitDownScenarioResponse()
+
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Scenario-provider notified clash-infomation. \x1b[0m\n")
+}
+
 // Supplyのコールバック関数
 func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	// check if supply is match with my demand.
@@ -154,8 +216,14 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 		com.SendToSetParticipantsResponse(sp)
 	case synerex.SupplyType_SET_AGENTS_RESPONSE:
 		com.SendToSetAgentsResponse(sp)
+	case synerex.SupplyType_CLEAR_AGENTS_RESPONSE:
+		com.SendToClearAgentsResponse(sp)
+	case synerex.SupplyType_SET_CLOCK_RESPONSE:
+		com.SendToSetClockResponse(sp)
 	case synerex.SupplyType_FORWARD_CLOCK_RESPONSE:
 		com.SendToForwardClockResponse(sp)
+	case synerex.SupplyType_DOWN_SCENARIO_RESPONSE:
+		com.SendToDownScenarioResponse(sp)
 	default:
 		//fmt.Println("order is invalid")
 	}
@@ -185,8 +253,15 @@ type simDaemonServer struct {
 func (s *simDaemonServer) SetAgentsOrder(ctx context.Context, in *daemon.SetAgentsMessage) (*daemon.Response, error) {
 	log.Printf("Received:SetAgents")
 	agents := in.GetAgents()
-	setAgents(agents)
-	return &daemon.Response{Ok: true}, nil
+	ok, err := setAgents(agents)
+	return &daemon.Response{Ok: ok}, err
+}
+
+// ClearAgentsOrder
+func (s *simDaemonServer) ClearAgentsOrder(ctx context.Context, in *daemon.ClearAgentsMessage) (*daemon.Response, error) {
+	log.Printf("Received:ClearAgents")
+	ok, err := clearAgents()
+	return &daemon.Response{Ok: ok}, err
 }
 
 // SetClock
@@ -194,24 +269,31 @@ func (s *simDaemonServer) SetClockOrder(ctx context.Context, in *daemon.SetClock
 	log.Printf("Received:SetClock")
 	globalTime := in.GetGlobalTime()
 	timeStep := in.GetTimeStep()
-	setClock(globalTime, timeStep)
-	return &daemon.Response{Ok: true}, nil
+	ok, err := setClock(globalTime, timeStep)
+	return &daemon.Response{Ok: ok}, err
 }
 
 // StartClock
 func (s *simDaemonServer) StartClockOrder(ctx context.Context, in *daemon.StartClockMessage) (*daemon.Response, error) {
 	log.Printf("Received:StartClock")
 	stepNum := in.GetStepNum()
-	startClock(stepNum)
+	if isStart {
+		log.Printf("\x1b[30m\x1b[47m \n Simulator is already started. \x1b[0m\n")
+	} else {
+		isStart = true
+		go startClock(stepNum)
+	}
 	return &daemon.Response{Ok: true}, nil
 }
 
 // StopClock
 func (s *simDaemonServer) StopClockOrder(ctx context.Context, in *daemon.StopClockMessage) (*daemon.Response, error) {
 	log.Printf("Received:StopClock")
-	stopClock()
-	return &daemon.Response{Ok: true}, nil
+	ok, err := stopClock()
+	return &daemon.Response{Ok: ok}, err
 }
+
+
 
 func runDaemonServer() {
 	// Scenarioとの通信サーバ
@@ -225,48 +307,6 @@ func runDaemonServer() {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }
-
-// rucClient: sim-daemonとsocket通信するクライアント接続
-/*func runClient() *gosocketio.Client {
-	log.Println("RUN_CLIENT")
-	var sioErr error
-	sioClient, sioErr := gosocketio.Dial("ws://localhost:9995/socket.io/?EIO=3&transport=websocket", transport.DefaultWebsocketTransport())
-	if sioErr != nil {
-		log.Println("se: Error to connect with se-daemon. You have to start se-daemon first.") //,err)
-		os.Exit(1)
-	} else {
-		log.Println("se: connect OK")
-	}
-	sioClient.On(gosocketio.OnConnection, func(c *gosocketio.Channel, param interface{}) {
-		fmt.Println("Go socket.io connected ")
-		c.Emit("setCh", "Scenario")
-	})
-	sioClient.On(synerex.DemandType_SET_AGENTS_REQUEST.String(), func(c *gosocketio.Channel, simDemand *synerex.SimDemand) {
-		agents := simDemand.GetSetAgentsRequest().GetAgents()
-		setAgents(agents)
-	})
-
-	sioClient.On(synerex.DemandType_SET_CLOCK_REQUEST.String(), func(c *gosocketio.Channel, simDemand *synerex.SimDemand) {
-		clock := simDemand.GetSetClockRequest().GetClock()
-		setClock(clock)
-	})
-
-	sioClient.On(synerex.DemandType_START_CLOCK_REQUEST.String(), func(c *gosocketio.Channel, simDemand *synerex.SimDemand) {
-		fmt.Printf("startclock %v\n", simDemand)
-		stepNum := simDemand.GetStartClockRequest().GetStepNum()
-		startClock(stepNum)
-	})
-
-	sioClient.On(synerex.DemandType_STOP_CLOCK_REQUEST.String(), func(c *gosocketio.Channel, simDemand *synerex.SimDemand) {
-		stopClock()
-	})
-
-	sioClient.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel, param interface{}) {
-		fmt.Println("Go socket.io disconnected ", c)
-	})
-
-	return sioClient
-}*/
 
 func main() {
 
@@ -285,14 +325,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
-	sxutil.RegisterDeferFunction(func() { conn.Close() })
-
-	/*// run socket.io client
-	sioClient := runClient()
-	log.Printf("Running Sio Client..\n")
-	if sioClient == nil {
-		os.Exit(1)
-	}*/
+	sxutil.RegisterDeferFunction(func() { notifyDownScenario(); conn.Close() })
 
 	// run daemon server
 	go runDaemonServer()
@@ -320,8 +353,9 @@ func main() {
 	wg.Wait()
 
 	wg.Add(1)
+	// 起動時、プロバイダがいれば登録する
+	collectParticipants()
 
-	//orderGetParticipant()
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
 

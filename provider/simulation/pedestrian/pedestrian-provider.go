@@ -19,11 +19,19 @@ import (
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	areaId     = uint64(*flag.Int("areaId", 1, "Area Id")) // Area B
+	areaIdFlag     = flag.Int("areaId", 1, "Area Id") 
 	agentType  = common.AgentType_PEDESTRIAN               // PEDESTRIAN
 	com        *communicator.PedCommunicator
 	sim        *simulator.PedSimulator
+	areaId uint64
+	isDownScenario bool
 )
+
+func init(){
+	flag.Parse()
+	areaId = uint64(*areaIdFlag)
+	isDownScenario = false
+}
 
 // getArea: 起動時にエリアを取得する関数
 func getArea() {
@@ -33,29 +41,39 @@ func getArea() {
 	areaInfo := com.WaitGetAreaResponse()
 	// エリア情報をセット
 	sim.SetArea(areaInfo)
-	fmt.Printf("Finish Get Area\n")
+	log.Printf("\x1b[30m\x1b[47m \n Finish Get Area \n AreaId:  %v \n AreaName: %v \x1b[0m\n", sim.GetArea().Id, sim.GetArea().Name)
 }
 
 // registParticipant: 新規参加登録をする関数
 func registParticipant() {
+
 	// 新規参加登録をするRequest
 	participant := com.GetMyParticipant(areaId)
 	com.RegistParticipantRequest(participant)
 
 	// Responseの待機
-	com.WaitRegistParticipantResponse()
-	fmt.Printf("Finish Regist Participant\n")
+	err := com.WaitRegistParticipantResponse()
+	if err != nil {
+		log.Printf("\x1b[30m\x1b[47m \n Error: %v \x1b[0m\n", err)
+	}else{
+		// クロック情報を取得する
+		getClock()
+		log.Printf("\x1b[30m\x1b[47m \n Finish: This provider registered in scenario-provider \x1b[0m\n")
+	}
+	return
 }
 
 // deleteParticipant: プロバイダ停止時に参加取り消しをする
 func deleteParticipant() {
+	if isDownScenario == false{
 	// 参加取り消しをするRequest
 	participant := com.GetMyParticipant(areaId)
 	com.DeleteParticipantRequest(participant)
 
 	// Responseの待機
 	com.WaitDeleteParticipantResponse()
-	fmt.Printf("Finish Delete Participant\n")
+	log.Printf("\x1b[30m\x1b[47m \n Finish: This provider deleted from participants list in scenario-provider. \x1b[0m\n")
+	}
 }
 
 // callbackSetParticipants: 参加者リストをセットする要求
@@ -66,11 +84,10 @@ func callbackSetParticipantsRequest(dm *pb.Demand) {
 	com.SetParticipants(participants)
 
 	// 同期するためのIdListを作成
-	com.CreateWaitIdList(agentType, areaId)
+	com.CreateWaitIdList(agentType, areaId, sim.Area.NeighborAreas)
 
 	// セット完了通知を送る
 	com.SetParticipantsResponse(targetId)
-
 }
 
 // getClock: クロック情報を取得する関数
@@ -83,7 +100,7 @@ func getClock() {
 	sim.SetGlobalTime(clockInfo.GlobalTime)
 	sim.SetTimeStep(clockInfo.TimeStep)
 
-	fmt.Printf("Finish Get Clock\n")
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock information set. \n GlobalTime:  %v \n TimeStep: %v \x1b[0m\n", sim.GlobalTime, sim.TimeStep)
 }
 
 // callbackSetAgents: Agent情報をセットする要求
@@ -91,12 +108,26 @@ func callbackSetAgentsRequest(dm *pb.Demand) {
 	agents := dm.GetSimDemand().GetSetAgentsRequest().GetAgents()
 	targetId := dm.GetId()
 
-	// Agent情報をセットする
-	sim.SetAgents(agents)
+	// Agent情報を追加する
+	sim.AddAgents(agents)
 
 	// セット完了通知を送る
 	com.SetAgentsResponse(targetId)
-	fmt.Printf("Finish Set Agents\n")
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Agents information set. \n Total:  %v \n Add: %v \x1b[0m\n", len(sim.GetAgents()), len(agents))
+}
+
+// callbackSetClock: Clock情報をセットする要求
+func callbackSetClockRequest(dm *pb.Demand) {
+	clockInfo := dm.GetSimDemand().GetSetClockRequest().GetClock()
+	targetId := dm.GetId()
+
+	// Clock情報をセットする
+	sim.SetGlobalTime(clockInfo.GlobalTime)
+	sim.SetTimeStep(clockInfo.TimeStep)
+
+	// セット完了通知を送る
+	com.SetClockResponse(targetId)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock information set. \n GlobalTime:  %v \n TimeStep: %v \x1b[0m\n", sim.GlobalTime, sim.TimeStep)
 }
 
 // callbackGetSameAreaAgentsRequest: Agent情報をセットする要求
@@ -112,6 +143,37 @@ func callbackGetSameAreaAgentsRequest(dm *pb.Demand) {
 	}
 }
 
+// callbackClearAgentsRequest: Agent情報を消去する要求
+func callbackClearAgentsRequest(dm *pb.Demand) {
+	targetId := dm.GetId()
+
+	// エージェントをクリアする
+	sim.ClearAgents()
+	// Responseを送る
+	com.ClearAgentsResponse(targetId)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Agents cleared.  \n Total:  %v \x1b[0m\n", len(sim.GetAgents()))
+}
+
+// callbackCollectParticipantsRequest:
+func callbackCollectParticipantsRequest(dm *pb.Demand) {
+	// 新規参加登録 
+	// TODO: Why go-routin ? 
+	go registParticipant()
+	
+	// scenarioが再開された
+	isDownScenario = false
+}
+
+// callbackDownScenarioRequest:
+func callbackDownScenarioRequest(dm *pb.Demand) {
+	targetId := dm.GetId()
+	// scenarioがダウンした
+	isDownScenario = true
+	// 返答を返す
+	com.DownScenarioResponse(targetId)
+	log.Printf("\x1b[30m\x1b[47m \n Error: scenario-provider crashed...\n Please restart scenario-provider.   \x1b[0m\n")
+}
+
 // callbackForwardClock: Agentを計算し、クロックを進める要求
 func callbackForwardClockRequest(dm *pb.Demand) {
 	dm.GetSimDemand().GetForwardClockRequest().GetStepNum()
@@ -123,26 +185,37 @@ func callbackForwardClockRequest(dm *pb.Demand) {
 	sameAreaAgents := com.WaitGetSameAreaAgentsResponse()
 
 	// 次の時間のエージェントを計算する
-	pureNextAgents := sim.ForwardStep(sameAreaAgents)
+	// agentがDuplicateで計算されている？
+	nextControlAgents := sim.ForwardStep(sameAreaAgents)
+	
+	fmt.Printf("controlAgents:  %v\n ", len(nextControlAgents))
+
+	// 隣接エリアにエージェントの情報を送信
+	com.GetNeighborAreaAgentsResponse(targetId, nextControlAgents)
 
 	// 次の時刻の隣接しているエリアの同じAgentTypeのエージェント情報を取得する
+	// 同じデータを取得している？
 	neighborAreaAgents := com.WaitGetNeighborAreaAgentsResponse()
+	fmt.Printf("neighborAgents: %v\n ", len(neighborAreaAgents))
 
 	// 重複エリアのエージェントを更新する
-	nextAgents := sim.UpdateDuplicateAgents(pureNextAgents, neighborAreaAgents)
+	nextDuplicateAgents := sim.UpdateDuplicateAgents(nextControlAgents, neighborAreaAgents)
+	fmt.Printf("duplicateAgents: %v\n ", len(nextDuplicateAgents))
 
 	// Agentsをセットする
-	sim.SetAgents(nextAgents)
+	sim.SetAgents(nextDuplicateAgents)
 
 	// クロックを進める
 	sim.ForwardGlobalTime()
 
+	// 可視化プロバイダへ送信
+	com.VisualizeAgentsResponse(nextControlAgents, areaId, agentType)
+
 	// セット完了通知を送る
 	com.ForwardClockResponse(targetId)
-	fmt.Printf("Finish Forward Clock\n")
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock forwarded. \n Time:  %v \n Agents Num: %v \x1b[0m\n", sim.GlobalTime, len(nextControlAgents))
 }
 
-// CLEAR
 // callback for each Supply
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	switch dm.GetSimDemand().DemandType {
@@ -150,36 +223,53 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case synerex.DemandType_SET_PARTICIPANTS_REQUEST:
 		// 参加者リストをセットする要求
 		callbackSetParticipantsRequest(dm)
+	case synerex.DemandType_COLLECT_PARTICIPANTS_REQUEST:
+		// シナリオプロバイダが参加者リストを募集する要求
+		callbackCollectParticipantsRequest(dm)
 	case synerex.DemandType_SET_AGENTS_REQUEST:
 		// Agentをセットする要求
 		callbackSetAgentsRequest(dm)
+	case synerex.DemandType_CLEAR_AGENTS_REQUEST:
+		// Agentをクリアする要求
+		callbackClearAgentsRequest(dm)
 	case synerex.DemandType_FORWARD_CLOCK_REQUEST:
 		// クロックを進める要求
 		callbackForwardClockRequest(dm)
+	case synerex.DemandType_SET_CLOCK_REQUEST:
+		// クロックをセットする要求
+		callbackSetClockRequest(dm)
 	case synerex.DemandType_GET_SAME_AREA_AGENTS_REQUEST:
 		// 同じエリアのエージェントの要求
 		callbackGetSameAreaAgentsRequest(dm)
+	case synerex.DemandType_DOWN_SCENARIO_REQUEST:
+		// Scenarioがダウンした場合の要求
+		callbackDownScenarioRequest(dm)
 	default:
 		//log.Println("demand callback is invalid.")
 	}
 }
 
-// CLEAR
 // callback for each Supply
 func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 
 	switch sp.GetSimSupply().SupplyType {
 	case synerex.SupplyType_GET_AREA_RESPONSE:
+		// エリア情報の取得
 		com.SendToGetAreaResponse(sp)
 	case synerex.SupplyType_GET_CLOCK_RESPONSE:
+		// Clock情報の取得
 		com.SendToGetClockResponse(sp)
 	case synerex.SupplyType_GET_SAME_AREA_AGENTS_RESPONSE:
+		// 同じエリアの異種エージェント情報の取得
 		com.SendToGetSameAreaAgentsResponse(sp)
 	case synerex.SupplyType_GET_NEIGHBOR_AREA_AGENTS_RESPONSE:
+		// 隣接エリアの同種エージェント情報の取得
 		com.SendToGetNeighborAreaAgentsResponse(sp)
 	case synerex.SupplyType_REGIST_PARTICIPANT_RESPONSE:
+		// 参加者登録完了通知の取得
 		com.SendToRegistParticipantResponse(sp)
 	case synerex.SupplyType_DELETE_PARTICIPANT_RESPONSE:
+		// 参加者削除完了通知の取得
 		com.SendToDeleteParticipantResponse(sp)
 
 	default:
@@ -189,7 +279,6 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 }
 
 func main() {
-	flag.Parse()
 	log.Printf("area id is: %v, agent type is %v", areaId, agentType)
 
 	sxutil.RegisterNodeName(*nodesrv, "PedProvider", false)
@@ -231,8 +320,6 @@ func main() {
 	getArea()
 	// 新規参加登録
 	registParticipant()
-	// クロック情報を取得する
-	getClock()
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!

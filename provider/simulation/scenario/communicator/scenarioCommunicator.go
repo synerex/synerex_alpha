@@ -1,6 +1,8 @@
 package communicator
 
 import (
+	"fmt"
+	"time"
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/provider/simulation/simutil/communicator"
@@ -19,11 +21,19 @@ func init() {
 type ScenarioCommunicator struct {
 	*communicator.SynerexCommunicator //埋め込み
 	SetAgentsIdList                   []uint64
+	ClearAgentsIdList                 []uint64
 	ForwardClockIdList                []uint64
 	SetParticipantsIdList             []uint64
 	ForwardClockCh                    chan *pb.Supply
 	SetParticipantsCh                 chan *pb.Supply
 	SetAgentsCh                       chan *pb.Supply
+	ClearAgentsCh                     chan *pb.Supply
+	GetClockCh                        chan *pb.Supply
+	GetClockIdList                    []uint64
+	DownScenarioCh                        chan *pb.Supply
+	DownScenarioIdList                    []uint64
+	SetClockCh                        chan *pb.Supply
+	SetClockIdList                    []uint64
 }
 
 // NewScenarioCommunicator:
@@ -31,12 +41,20 @@ func NewScenarioCommunicator() *ScenarioCommunicator {
 
 	communicator := &ScenarioCommunicator{
 		SynerexCommunicator:   communicator.NewSynerexCommunicator(),
+		SetClockIdList:        make([]uint64, 0),
+		SetClockCh:            make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
+		GetClockIdList:        make([]uint64, 0),
+		GetClockCh:            make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
+		DownScenarioIdList:        make([]uint64, 0),
+		DownScenarioCh:            make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
 		SetAgentsIdList:       make([]uint64, 0),
+		ClearAgentsIdList:     make([]uint64, 0),
 		ForwardClockIdList:    make([]uint64, 0),
 		SetParticipantsIdList: make([]uint64, 0),
 		ForwardClockCh:        make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
 		SetParticipantsCh:     make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
 		SetAgentsCh:           make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
+		ClearAgentsCh:         make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
 	}
 
 	return communicator
@@ -76,59 +94,16 @@ func (s *ScenarioCommunicator) RegistClients(client pb.SynerexClient, argJson st
 
 }
 
-func (s *ScenarioCommunicator) SetSetAgentsIdList(setAgentsIdList []uint64) {
-	s.SetAgentsIdList = setAgentsIdList
-}
-
-func (s *ScenarioCommunicator) GetSetAgentsIdList() []uint64 {
-	return s.SetAgentsIdList
-}
-
-func (s *ScenarioCommunicator) SetForwardClockIdList(forwardClockIdList []uint64) {
-	s.ForwardClockIdList = forwardClockIdList
-}
-
-func (s *ScenarioCommunicator) GetForwardClockIdList() []uint64 {
-	return s.ForwardClockIdList
-}
-
-func (s *ScenarioCommunicator) SetSetParticipantsIdList(setParticipantsIdList []uint64) {
-	s.SetParticipantsIdList = setParticipantsIdList
-}
-
-func (s *ScenarioCommunicator) GetSetParticipantsIdList() []uint64 {
-	return s.SetParticipantsIdList
-}
-
-func (s *ScenarioCommunicator) SetSetAgentsCh(setAgentsCh chan *pb.Supply) {
-	s.SetAgentsCh = setAgentsCh
-}
-
-func (s *ScenarioCommunicator) GetSetAgentsCh() chan *pb.Supply {
-	return s.SetAgentsCh
-}
-
-func (s *ScenarioCommunicator) SetForwardClockCh(forwardClockCh chan *pb.Supply) {
-	s.ForwardClockCh = forwardClockCh
-}
-
-func (s *ScenarioCommunicator) GetForwardClockCh() chan *pb.Supply {
-	return s.ForwardClockCh
-}
-
-func (s *ScenarioCommunicator) SetSetParticipantsCh(setParticipantsCh chan *pb.Supply) {
-	s.SetParticipantsCh = setParticipantsCh
-}
-
-func (s *ScenarioCommunicator) GetSetParticipantsCh() chan *pb.Supply {
-	return s.SetParticipantsCh
-}
 
 // CreateWaitIdList : 同期するためのIdListを作成する関数
 func (s *ScenarioCommunicator) CreateWaitIdList() {
 	setAgentsIdList := make([]uint64, 0)
+	clearAgentsIdList := make([]uint64, 0)
 	setParticipantsIdList := make([]uint64, 0)
 	forwardClockIdList := make([]uint64, 0)
+	getClockIdList := make([]uint64, 0)
+	setClockIdList := make([]uint64, 0)
+	downScenarioIdList := make([]uint64, 0)
 	for _, participantInfo := range s.Participants {
 		providerType := participantInfo.GetProviderType()
 		agentChannelId := participantInfo.GetChannelId().GetAgentChannelId()
@@ -137,49 +112,127 @@ func (s *ScenarioCommunicator) CreateWaitIdList() {
 
 		if providerType != participant.ProviderType_SCENARIO && providerType != participant.ProviderType_AREA {
 			forwardClockIdList = append(forwardClockIdList, clockChannelId)
+			getClockIdList = append(getClockIdList, clockChannelId)
+			setClockIdList = append(setClockIdList, clockChannelId)
+			downScenarioIdList = append(downScenarioIdList, participantChannelId)
 		}
 		if providerType != participant.ProviderType_SCENARIO && providerType != participant.ProviderType_AREA && providerType != participant.ProviderType_VISUALIZATION {
 			setParticipantsIdList = append(setParticipantsIdList, participantChannelId)
 			setAgentsIdList = append(setAgentsIdList, agentChannelId)
+			clearAgentsIdList = append(clearAgentsIdList, agentChannelId)
 		}
 	}
-	s.SetSetAgentsIdList(setAgentsIdList)
-	s.SetSetParticipantsIdList(setParticipantsIdList)
-	s.SetForwardClockIdList(forwardClockIdList)
+	s.SetAgentsIdList = setAgentsIdList
+	s.ClearAgentsIdList = clearAgentsIdList
+	s.SetParticipantsIdList = setParticipantsIdList
+	s.ForwardClockIdList = forwardClockIdList
+	s.GetClockIdList = getClockIdList
+	s.SetClockIdList = setClockIdList
+	s.DownScenarioIdList = downScenarioIdList
 }
 
 // WaitSetAgentsResponse : SetAgentsResponseを待機する
 func (s *ScenarioCommunicator) WaitSetAgentsResponse() {
 	// channelの初期化
-	s.SetSetAgentsCh(make(chan *pb.Supply, CHANNEL_BUFFER_SIZE))
-	s.Wait(s.GetSetAgentsIdList(), s.GetSetAgentsCh())
+	s.SetAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	s.Wait(s.SetAgentsIdList, s.SetAgentsCh)
 }
 
 // SendToSetAgentsResponse : SetAgentsResponseを送る
 func (s *ScenarioCommunicator) SendToSetAgentsResponse(sp *pb.Supply) {
-	s.SendToWait(sp, s.GetSetAgentsCh())
+	s.SendToWait(sp, s.SetAgentsCh)
+}
+
+// WaitClearAgentsResponse : ClearAgentsResponseを待機する
+func (s *ScenarioCommunicator) WaitClearAgentsResponse() {
+	// channelの初期化
+	s.ClearAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	s.Wait(s.ClearAgentsIdList, s.ClearAgentsCh)
+}
+
+// SendToClearAgentsResponse : ClearAgentsResponseを送る
+func (s *ScenarioCommunicator) SendToClearAgentsResponse(sp *pb.Supply) {
+	s.SendToWait(sp, s.ClearAgentsCh)
+}
+
+// WaitDownScenarioResponse : DownScenarioResponseを待機する
+func (s *ScenarioCommunicator) WaitDownScenarioResponse() {
+	if len(s.DownScenarioIdList) != 0{
+		// channelの初期化
+		s.DownScenarioCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+		s.Wait(s.DownScenarioIdList, s.DownScenarioCh)
+	}
+}
+
+// SendToDownScenarioResponse : DownScenarioResponseを送る
+func (s *ScenarioCommunicator) SendToDownScenarioResponse(sp *pb.Supply) {
+	s.SendToWait(sp, s.DownScenarioCh)
+}
+
+// WaitGetClockResponse : GetClockResponseを待機する
+func (s *ScenarioCommunicator) WaitGetClockResponse() {
+	// channelの初期化
+	s.GetClockCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	s.Wait(s.GetClockIdList, s.GetClockCh)
+}
+
+// SendToGetClockResponse : GetClockResponseを送る
+func (s *ScenarioCommunicator) SendToGetClockResponse(sp *pb.Supply) {
+	s.SendToWait(sp, s.GetClockCh)
+}
+
+// WaitSetClockResponse : SetClockResponseを待機する
+func (s *ScenarioCommunicator) WaitSetClockResponse() {
+	// channelの初期化
+	s.SetClockCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	s.Wait(s.SetClockIdList, s.SetClockCh)
+}
+
+// SendToSetClockResponse : SetClockResponseを送る
+func (s *ScenarioCommunicator) SendToSetClockResponse(sp *pb.Supply) {
+	s.SendToWait(sp, s.SetClockCh)
 }
 
 // WaitSetParticipantsResponse : SetParticipantsResponseを待機する
-func (s *ScenarioCommunicator) WaitSetParticipantsResponse() {
-	// channelの初期化
-	s.SetSetParticipantsCh(make(chan *pb.Supply, CHANNEL_BUFFER_SIZE))
-	s.Wait(s.GetSetParticipantsIdList(), s.GetSetParticipantsCh())
+func (s *ScenarioCommunicator) WaitSetParticipantsResponse() error{
+	// Participantが自分しかいない場合、スキップする
+	if len(s.SetParticipantsIdList) == 0{
+		return nil
+	} else {
+		// channelの初期化
+		s.SetParticipantsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+
+		errch := make(chan error, 1)
+		go func(){
+			s.Wait(s.SetParticipantsIdList, s.SetParticipantsCh)
+			errch <- nil
+		}()
+		// timeout
+		go func(){
+			time.Sleep(2*time.Second)
+			errch <- fmt.Errorf("timeout occor...\n")
+			return
+		}()
+		select {
+		case err := <- errch:
+			return err
+		}
+	}
 }
 
 // SendToSetParticipantsResponse : SetParticipantsResponseを送る
 func (s *ScenarioCommunicator) SendToSetParticipantsResponse(sp *pb.Supply) {
-	s.SendToWait(sp, s.GetSetParticipantsCh())
+	s.SendToWait(sp, s.SetParticipantsCh)
 }
 
 // WaitForwardClockResponse : ForwardClockResponseを待機する
 func (s *ScenarioCommunicator) WaitForwardClockResponse() {
 	// channelの初期化
-	s.SetForwardClockCh(make(chan *pb.Supply, CHANNEL_BUFFER_SIZE))
-	s.Wait(s.GetForwardClockIdList(), s.GetForwardClockCh())
+	s.ForwardClockCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	s.Wait(s.ForwardClockIdList, s.ForwardClockCh)
 }
 
 // SendToForwardClockResponse : ForwardClockResponseを送る
 func (s *ScenarioCommunicator) SendToForwardClockResponse(sp *pb.Supply) {
-	s.SendToWait(sp, s.GetForwardClockCh())
+	s.SendToWait(sp, s.ForwardClockCh)
 }

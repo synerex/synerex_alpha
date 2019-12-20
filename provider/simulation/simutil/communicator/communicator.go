@@ -1,8 +1,8 @@
 package communicator
 
 import (
-	"context"
 	"fmt"
+	"context"
 	"log"
 	"sync"
 
@@ -56,6 +56,7 @@ func (s *SynerexCommunicator) SetClients(clients *Clients) {
 
 func (s *SynerexCommunicator) AddParticipant(participant *participant.Participant) {
 	s.Participants = append(s.Participants, participant)
+	fmt.Printf("debug add participant", s.Participants)
 }
 
 func (s *SynerexCommunicator) DeleteParticipant(targetPar *participant.Participant) {
@@ -67,6 +68,7 @@ func (s *SynerexCommunicator) DeleteParticipant(targetPar *participant.Participa
 			newParticipants = append(newParticipants, par)
 		}
 	}
+	fmt.Printf("debug delete participant", newParticipants)
 	s.SetParticipants(newParticipants)
 }
 
@@ -138,13 +140,17 @@ func (s *SynerexCommunicator) Wait(idList []uint64, waitCh chan *pb.Supply) map[
 			case psp := <-waitCh:
 
 				mu.Lock()
+				// spのidがidListに入っているか
+				if isSpInIdList(psp, idList){
 				pspMap[psp.SenderId] = psp
+				// 同期が終了したかどうか
 				if isFinishSync(pspMap, idList) {
 
 					mu.Unlock()
 					wg.Done()
 					return
 				}
+			}
 				mu.Unlock()
 
 			}
@@ -156,8 +162,18 @@ func (s *SynerexCommunicator) Wait(idList []uint64, waitCh chan *pb.Supply) map[
 
 // SendToWait: Waitしているchに受け取ったsupplyを送る
 func (s *SynerexCommunicator) SendToWait(sp *pb.Supply, waitCh chan *pb.Supply) {
-	fmt.Printf("sendTowait")
 	waitCh <- sp
+}
+
+// isSpInIdList : spのidがidListに入っているか
+func isSpInIdList(sp *pb.Supply, idlist []uint64) bool {
+	senderId := sp.SenderId
+	for _, id := range idlist {
+		if senderId == id{
+			return true
+		}
+	}
+	return false
 }
 
 // isFinishSync : 必要な全てのSupplyを受け取り同期が完了したかどうか
@@ -230,7 +246,6 @@ func (s *SynerexCommunicator) GetAreaResponse(tid uint64, areaInfo *area.Area) {
 	s.sendProposeSupply(s.MyClients.AreaClient, opts)
 }
 
-// CLEAR OK
 // getClockRequest :　エリア情報を取得する
 func (s *SynerexCommunicator) GetClockRequest() {
 	getClockRequest := &clock.GetClockRequest{}
@@ -269,6 +284,70 @@ func (s *SynerexCommunicator) GetClockResponse(dm *pb.Demand, clockInfo *clock.C
 	}
 
 	s.sendProposeSupply(s.MyClients.ClockClient, opts)
+}
+
+// SetClockRequest : クロック情報をセットする
+func (s *SynerexCommunicator) SetClockRequest(clockInfo *clock.Clock) {
+	setClockRequest := &clock.SetClockRequest{
+		Clock: clockInfo,
+	}
+
+	simDemand := &synerex.SimDemand{
+		DemandType: synerex.DemandType_SET_CLOCK_REQUEST,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimDemand_SetClockRequest{setClockRequest},
+	}
+
+	nm := ""
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SimDemand: simDemand}
+	s.sendDemand(s.MyClients.ClockClient, opts)
+}
+
+// SetClockSupply :　SetClockのResponse
+func (s *SynerexCommunicator) SetClockResponse(targetId uint64) {
+	setClockResponse := &clock.SetClockResponse{}
+
+	simSupply := &synerex.SimSupply{
+		SupplyType: synerex.SupplyType_SET_CLOCK_RESPONSE,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimSupply_SetClockResponse{setClockResponse},
+	}
+
+	nm := "setClock respnse by area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target:    targetId,
+		Name:      nm,
+		JSON:      js,
+		SimSupply: simSupply,
+	}
+
+	s.sendProposeSupply(s.MyClients.ClockClient, opts)
+}
+
+// getNeighborAreaAgentsResponse :　getNeighborAreaAgentDemandに対する応答
+func (s *SynerexCommunicator) GetNeighborAreaAgentsResponse(targetId uint64, agents []*agent.Agent) {
+	getNeighborAreaAgentsResponse := &agent.GetNeighborAreaAgentsResponse{
+		Agents: agents,
+	}
+
+	simSupply := &synerex.SimSupply{
+		SupplyType: synerex.SupplyType_GET_NEIGHBOR_AREA_AGENTS_RESPONSE,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimSupply_GetNeighborAreaAgentsResponse{getNeighborAreaAgentsResponse},
+	}
+
+	nm := "getNeighborAreaAgentSupply by ped-area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target:    targetId,
+		Name:      nm,
+		JSON:      js,
+		SimSupply: simSupply,
+	}
+
+	s.sendProposeSupply(s.MyClients.AgentClient, opts)
 }
 
 // getSameAreaAgentsResponse :　getSameAreaAgentDemandに対する応答
@@ -356,25 +435,68 @@ func (s *SynerexCommunicator) SetAgentsRequest(agents []*agent.Agent) {
 	s.sendDemand(s.MyClients.AgentClient, opts)
 }
 
+// ClearAgentsResponse :　clearAgentDemandに対する応答
+func (s *SynerexCommunicator) ClearAgentsResponse(targetId uint64) {
+	clearAgentsResponse := &agent.ClearAgentsResponse{}
+
+	simSupply := &synerex.SimSupply{
+		SupplyType: synerex.SupplyType_CLEAR_AGENTS_RESPONSE,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimSupply_ClearAgentsResponse{clearAgentsResponse},
+	}
+
+	nm := "ClearAgentSupply by ped-area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target:    targetId,
+		Name:      nm,
+		JSON:      js,
+		SimSupply: simSupply,
+	}
+
+	s.sendProposeSupply(s.MyClients.AgentClient, opts)
+}
+
+// ClearAgentsDemand :　Agentsを消去するDemand
+func (s *SynerexCommunicator) ClearAgentsRequest() {
+	clearAgentsRequest := &agent.ClearAgentsRequest{}
+
+	simDemand := &synerex.SimDemand{
+		DemandType: synerex.DemandType_CLEAR_AGENTS_REQUEST,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimDemand_ClearAgentsRequest{clearAgentsRequest},
+	}
+
+	nm := "ClearAgentDemand"
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SimDemand: simDemand}
+
+	s.sendDemand(s.MyClients.AgentClient, opts)
+}
+
 // setAgentsDemand :　Agentsを設置するDemand
-func (s *SynerexCommunicator) VisualizeAgentsRequest(agents []*agent.Agent, areaId uint64, agentType common.AgentType) {
-	visualizeAgentsRequest := &agent.VisualizeAgentsRequest{
+func (s *SynerexCommunicator) VisualizeAgentsResponse(agents []*agent.Agent, areaId uint64, agentType common.AgentType) {
+	visualizeAgentsResponse := &agent.VisualizeAgentsResponse{
 		AreaId:    areaId,
 		AgentType: agentType,
 		Agents:    agents,
 	}
 
-	simDemand := &synerex.SimDemand{
-		DemandType: synerex.DemandType_VISUALIZE_AGENTS_REQUEST,
+	simSupply := &synerex.SimSupply{
+		SupplyType: synerex.SupplyType_VISUALIZE_AGENTS_RESPONSE,
 		StatusType: synerex.StatusType_NONE,
-		Data:       &synerex.SimDemand_VisualiseAgentsRequest{visualizeAgentsRequest},
+		Data:       &synerex.SimSupply_VisualizeAgentsResponse{visualizeAgentsResponse},
 	}
 
-	nm := "SetAgentDemand"
+	nm := "VisualizeAgents to agentCh "
 	js := ""
-	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SimDemand: simDemand}
+	opts := &sxutil.SupplyOpts{
+		Name:      nm,
+		JSON:      js,
+		SimSupply: simSupply,
+	}
 
-	s.sendDemand(s.MyClients.AgentClient, opts)
+	s.sendSupply(s.MyClients.AgentClient, opts)
 }
 
 // forwardClockResponse :　forwardClockDemandに対するResponse
@@ -418,6 +540,48 @@ func (s *SynerexCommunicator) ForwardClockRequest(stepNum uint64) {
 
 	s.sendDemand(s.MyClients.ClockClient, opts)
 }
+
+// downScenarioResponse :　Scenarioの障害のResponse
+func (s *SynerexCommunicator) DownScenarioResponse(tid uint64) {
+	downScenarioResponse := &participant.DownScenarioResponse{}
+
+	simSupply := &synerex.SimSupply{
+		SupplyType: synerex.SupplyType_DOWN_SCENARIO_RESPONSE,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimSupply_DownScenarioResponse{downScenarioResponse},
+	}
+
+	nm := "downScenario to clockCh "
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target:    tid,
+		Name:      nm,
+		JSON:      js,
+		SimSupply: simSupply,
+	}
+
+	s.sendProposeSupply(s.MyClients.ParticipantClient, opts)
+
+}
+
+// downScenarioRequest :　Scenarioの障害を知らせる
+func (s *SynerexCommunicator) DownScenarioRequest() {
+	downScenarioRequest := &participant.DownScenarioRequest{
+	}
+
+	simDemand := &synerex.SimDemand{
+		DemandType: synerex.DemandType_DOWN_SCENARIO_REQUEST,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimDemand_DownScenarioRequest{downScenarioRequest},
+	}
+
+	nm := "DownScenarioDemand"
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SimDemand: simDemand}
+
+	s.sendDemand(s.MyClients.ParticipantClient, opts)
+}
+
 
 // backClockResponse :　backClockDemandに対するResponse
 func (s *SynerexCommunicator) BackClockResponse(tid uint64) {
@@ -586,6 +750,24 @@ func (s *SynerexCommunicator) SetParticipantsRequest() {
 	}
 
 	nm := "setParticipants order by scenario"
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SimDemand: simDemand}
+
+	s.sendDemand(s.MyClients.ParticipantClient, opts)
+}
+
+// CollectParticipantsRequest :　参加者を共有するDemand
+func (s *SynerexCommunicator) CollectParticipantsRequest() {
+
+	collectParticipantsRequest := &participant.CollectParticipantsRequest{}
+
+	simDemand := &synerex.SimDemand{
+		DemandType: synerex.DemandType_COLLECT_PARTICIPANTS_REQUEST,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimDemand_CollectParticipantsRequest{collectParticipantsRequest},
+	}
+
+	nm := "collectParticipants order by scenario"
 	js := ""
 	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SimDemand: simDemand}
 

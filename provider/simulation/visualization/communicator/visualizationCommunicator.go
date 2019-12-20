@@ -1,12 +1,12 @@
 package communicator
 
 import (
-	//"fmt"
-	//"log"
+	"fmt"
+	"time"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/clock"
-	"github.com/synerex/synerex_alpha/api/simulation/common"
+	//"github.com/synerex/synerex_alpha/api/simulation/common"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/provider/simulation/simutil/communicator"
 	"github.com/synerex/synerex_alpha/sxutil"
@@ -84,7 +84,7 @@ func (p *VisualizationCommunicator) RegistClients(client pb.SynerexClient, argJs
 }
 
 // CreateWaitIdList : 同期するためのIdListを作成する関数
-func (p *VisualizationCommunicator) CreateWaitIdList(myAgentType common.AgentType, myAreaId uint64) {
+func (p *VisualizationCommunicator) CreateWaitIdList() {
 	getClockIdList := make([]uint64, 0)
 	deleteParticipantIdList := make([]uint64, 0)
 	visualizeAgentsIdList := make([]uint64, 0)
@@ -123,11 +123,24 @@ func (p *VisualizationCommunicator) GetMyParticipant() *participant.Participant 
 }
 
 // WaitRegistParticipantResponse : RegistParticipantResponseを待機する
-func (p *VisualizationCommunicator) WaitRegistParticipantResponse() {
+func (p *VisualizationCommunicator) WaitRegistParticipantResponse() error{
 	// channelの初期化
 	p.RegistParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	// Response取得
-	<-p.RegistParticipantCh
+
+	errch := make(chan error, 1)
+
+	// timeout
+	go func(){
+		time.Sleep(2*time.Second)
+		errch <- fmt.Errorf("timeout occor...\n scenario-provider closed ?\n You don't have to restart this provider. \n Please start scenario-provider.")
+		return
+	}()
+	select {
+	case err := <- errch:
+		return err
+	case <- p.RegistParticipantCh:
+		return nil
+	}
 }
 
 // SendToRegistParticipantResponse : RegistParticipantResponseを送る
@@ -141,13 +154,6 @@ func (p *VisualizationCommunicator) WaitDeleteParticipantResponse() {
 	p.DeleteParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	// spの待機
 	p.Wait(p.DeleteParticipantIdList, p.DeleteParticipantCh)
-	/*// ClockInfoを取得
-	var clockInfo *clock.Clock
-	for _, sp := range spMap {
-		clockInfo = sp.GetSimSupply().GetDeleteParticipantResponse().DeleteParticipant()
-	}
-
-	return clockInfo*/
 }
 
 // SendToDeleteParticipantResponse : DeleteParticipantResponseを送る

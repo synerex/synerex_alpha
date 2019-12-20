@@ -1,8 +1,6 @@
 package simulator
 
 import (
-	"time"
-
 	"github.com/synerex/synerex_alpha/provider/simulation/simutil/simulator"
 )
 
@@ -24,6 +22,4 @@ func NewScenarioSimulator(timeStep float64, globalTime float64) *ScenarioSimulat
 // ForwardStep :
 func (sim *ScenarioSimulator) ForwardStep() {
 	sim.GlobalTime = sim.GlobalTime + sim.TimeStep
-	// 待機
-	time.Sleep(time.Duration(sim.TimeStep) * time.Second)
 }

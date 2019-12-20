@@ -10,8 +10,9 @@ message Coord {
 }
 
 enum AgentType {
-    PEDESTRIAN = 0;
-    CAR = 1;
-	TRAIN = 2;
-	SIGNAL = 3;
+	NONE = 0;
+    PEDESTRIAN = 1;
+    CAR = 2;
+	TRAIN = 3;
+	SIGNAL = 4;
 }

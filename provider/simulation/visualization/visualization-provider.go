@@ -34,7 +34,12 @@ var (
 	ioserv     *gosocketio.Server
 	com        *communicator.VisualizationCommunicator
 	sim        *simulator.VisualizationSimulator
+	isDownScenario bool
 )
+
+func init(){
+	isDownScenario = false
+}
 
 type MapMarker struct {
 	mtype int32   `json:"mtype"`
@@ -55,8 +60,6 @@ func (m *MapMarker) GetJson() string {
 
 // sendToHarmowareVis: harmowareVisに情報を送信する関数
 func sendToHarmowareVis(sumAgents []*agent.Agent) {
-
-	log.Printf("\x1b[30m\x1b[47m \n FORWARD_CLOCK_FINISH \n TIME:  %v \n Agents Num: %v \x1b[0m\n", sim.GlobalTime, len(sumAgents))
 
 	if sumAgents != nil {
 		jsonAgents := make([]string, 0)
@@ -113,19 +116,29 @@ func registParticipant() {
 	participant := com.GetMyParticipant()
 	com.RegistParticipantRequest(participant)
 	// Responseの待機
-	com.WaitRegistParticipantResponse()
-	fmt.Printf("Finish Regist Participant\n")
+	err := com.WaitRegistParticipantResponse()
+
+	if err != nil {
+		log.Printf("\x1b[30m\x1b[47m \n Error: %v \x1b[0m\n", err)
+	}else{
+		// クロック情報を取得する
+		getClock()
+		log.Printf("\x1b[30m\x1b[47m \n Finish: This provider registered in scenario-provider \x1b[0m\n")
+	}
+	return
 }
 
 // deleteParticipant: プロバイダ停止時に参加取り消しをする
 func deleteParticipant() {
-	// 参加取り消しをするRequest
-	participant := com.GetMyParticipant()
-	com.DeleteParticipantRequest(participant)
-
-	// Responseの待機
-	com.WaitDeleteParticipantResponse()
-	fmt.Printf("Finish Delete Participant\n")
+	if isDownScenario == false{
+		// 参加取り消しをするRequest
+		participant := com.GetMyParticipant()
+		com.DeleteParticipantRequest(participant)
+	
+		// Responseの待機
+		com.WaitDeleteParticipantResponse()
+		log.Printf("\x1b[30m\x1b[47m \n Finish: This provider deleted from participants list in scenario-provider. \x1b[0m\n")
+	}
 }
 
 // callbackSetParticipants: 参加者リストをセットする要求
@@ -135,12 +148,16 @@ func callbackSetParticipantsRequest(dm *pb.Demand) {
 	// 参加者情報をセットする
 	com.SetParticipants(participants)
 
+	// 同期するためのIdListを作成
+	com.CreateWaitIdList()
+
 	// セット完了通知を送る
 	com.SetParticipantsResponse(targetId)
 }
 
 // getClock: クロック情報を取得する関数
 func getClock() {
+
 	// エリアを取得するRequest
 	com.GetClockRequest()
 	// Responseの待機
@@ -148,7 +165,8 @@ func getClock() {
 	// エリア情報をセット
 	sim.SetGlobalTime(clockInfo.GlobalTime)
 	sim.SetTimeStep(clockInfo.TimeStep)
-	fmt.Printf("Finish Get Clock\n")
+
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock information set. \n GlobalTime:  %v \n TimeStep: %v \x1b[0m\n", sim.GlobalTime, sim.TimeStep)
 }
 
 // callbackForwardClockRequest: クロックを進める関数
@@ -161,33 +179,52 @@ func callbackForwardClockRequest(dm *pb.Demand) {
 
 	// セット完了通知を送る
 	com.ForwardClockResponse(targetId)
-	fmt.Printf("Finish Forward Clock\n")
+	log.Printf("\x1b[30m\x1b[47m \n Finish Forward Clock \n Time:  %v \x1b[0m\n", sim.GlobalTime)
 }
 
-// callbackVisualizeAgentsRequest: Agentを可視化する関数
-func callbackVisualizeAgentsRequest(dm *pb.Demand) {
+// callbackSetClock: Clock情報をセットする要求
+func callbackSetClockRequest(dm *pb.Demand) {
+	clockInfo := dm.GetSimDemand().GetSetClockRequest().GetClock()
+	targetId := dm.GetId()
+
+	// Clock情報をセットする
+	sim.SetGlobalTime(clockInfo.GlobalTime)
+	sim.SetTimeStep(clockInfo.TimeStep)
+
+	// セット完了通知を送る
+	com.SetClockResponse(targetId)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock information set. \n GlobalTime:  %v \n TimeStep: %v \x1b[0m\n", sim.GlobalTime, sim.TimeStep)
+}
+
+// callbackCollectParticipantsRequest:
+func callbackCollectParticipantsRequest(dm *pb.Demand) {
+	// 新規参加登録 
+	// TODO: Why go-routin ? 
+	go registParticipant()
+	
+	// scenarioが再開された
+	isDownScenario = false
+}
+
+// callbackDownScenarioRequest:
+func callbackDownScenarioRequest(dm *pb.Demand) {
+	targetId := dm.GetId()
+	// scenarioがダウンした
+	isDownScenario = true
+	// 返答を返す
+	com.DownScenarioResponse(targetId)
+	log.Printf("\x1b[30m\x1b[47m \n Error: scenario-provider crashed...\n Please restart scenario-provider.   \x1b[0m\n")
+}
+
+// callbackVisualizeAgentsResponse: Agentを可視化する関数
+func callbackVisualizeAgentsResponse(sp *pb.Supply) {
 
 	// agentsを取得
-	agents := dm.GetSimDemand().GetVisualiseAgentsRequest().GetAgents()
+	agents := sp.GetSimSupply().GetVisualizeAgentsResponse().GetAgents()
 
 	// Harmowareに送る
 	sendToHarmowareVis(agents)
 
-}
-
-// CLEAR
-// callback for each Supply
-func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	switch sp.GetSimSupply().SupplyType {
-	case synerex.SupplyType_DELETE_PARTICIPANT_RESPONSE:
-		com.SendToDeleteParticipantResponse(sp)
-	case synerex.SupplyType_GET_CLOCK_RESPONSE:
-		com.SendToGetClockResponse(sp)
-	case synerex.SupplyType_REGIST_PARTICIPANT_RESPONSE:
-		com.SendToRegistParticipantResponse(sp)
-	default:
-		//fmt.Println("order is invalid")
-	}
 }
 
 // callback for each Supply
@@ -200,11 +237,37 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case synerex.DemandType_FORWARD_CLOCK_REQUEST:
 		// クロックを進める要求
 		callbackForwardClockRequest(dm)
-	case synerex.DemandType_VISUALIZE_AGENTS_REQUEST:
-		// エージェントを可視化する要求
-		callbackVisualizeAgentsRequest(dm)
+	case synerex.DemandType_SET_CLOCK_REQUEST:
+		// クロックをセットする要求
+		callbackSetClockRequest(dm)
+	case synerex.DemandType_DOWN_SCENARIO_REQUEST:
+		// Scenarioがダウンした場合の要求
+		callbackDownScenarioRequest(dm)
+	case synerex.DemandType_COLLECT_PARTICIPANTS_REQUEST:
+		// シナリオプロバイダが参加者リストを募集する要求
+		callbackCollectParticipantsRequest(dm)
 	default:
 		//log.Println("demand callback is invalid.")
+	}
+}
+
+// callback for each Supply
+func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
+	switch sp.GetSimSupply().SupplyType {
+	case synerex.SupplyType_GET_CLOCK_RESPONSE:
+		// Clock情報の取得
+		com.SendToGetClockResponse(sp)
+	case synerex.SupplyType_REGIST_PARTICIPANT_RESPONSE:
+		// 参加者登録完了通知の取得
+		com.SendToRegistParticipantResponse(sp)
+	case synerex.SupplyType_DELETE_PARTICIPANT_RESPONSE:
+		// 参加者削除完了通知の取得
+		com.SendToDeleteParticipantResponse(sp)
+	case synerex.SupplyType_VISUALIZE_AGENTS_RESPONSE:
+		// エージェントを可視化する要求
+		callbackVisualizeAgentsResponse(sp)
+	default:
+		//fmt.Println("order is invalid")
 	}
 }
 
@@ -276,6 +339,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
+
+	// Clientとして登録
+	com = communicator.NewVisualizationCommunicator()
+
 	sxutil.RegisterDeferFunction(func() { deleteParticipant(); conn.Close() })
 
 	// run socket.io server
@@ -291,8 +358,6 @@ func main() {
 	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Visualization}")
 
-	// Clientとして登録
-	com = communicator.NewVisualizationCommunicator()
 
 	// プロバイダのsetup
 	wg := sync.WaitGroup{}
@@ -305,8 +370,6 @@ func main() {
 
 	// 新規参加登録
 	registParticipant()
-	// クロック情報を取得する
-	getClock()
 
 	wg.Add(1)
 	serveMux := http.NewServeMux()

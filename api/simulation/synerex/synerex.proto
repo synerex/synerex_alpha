@@ -21,17 +21,19 @@ message SimDemand {
         oneof data {
             agent.GetSameAreaAgentsRequest get_same_area_agents_request = 4;
 			agent.SetAgentsRequest set_agents_request = 5;
-			agent.VisualizeAgentsRequest visualise_agents_request = 6;
+			agent.ClearAgentsRequest clear_agents_request = 6;
 			area.GetAreaRequest get_area_request = 7;
 			participant.RegistParticipantRequest regist_participant_request = 8;
 			participant.DeleteParticipantRequest delete_participant_request = 9;
 			participant.SetParticipantsRequest set_participants_request = 10;
-			clock.GetClockRequest get_clock_request = 11;
-			clock.SetClockRequest set_clock_request = 12;
-			clock.StartClockRequest start_clock_request = 13;
-			clock.StopClockRequest stop_clock_request = 14;
-			clock.ForwardClockRequest forward_clock_request = 15;
-			clock.BackClockRequest back_clock_request = 16;
+			participant.CollectParticipantsRequest collect_participants_request = 11;
+			participant.DownScenarioRequest down_scenario_request = 12;
+			clock.GetClockRequest get_clock_request = 13;
+			clock.SetClockRequest set_clock_request = 14;
+			clock.StartClockRequest start_clock_request = 15;
+			clock.StopClockRequest stop_clock_request = 16;
+			clock.ForwardClockRequest forward_clock_request = 17;
+			clock.BackClockRequest back_clock_request = 18;
         }
     }
 
@@ -48,16 +50,19 @@ message SimDemand {
             agent.GetSameAreaAgentsResponse get_same_area_agents_response = 4;
 			agent.GetNeighborAreaAgentsResponse get_neighbor_area_agents_response = 5;
 			agent.SetAgentsResponse set_agents_response = 6;
-			area.GetAreaResponse get_area_response = 7;
-			participant.RegistParticipantResponse regist_participant_response = 8;
-			participant.DeleteParticipantResponse delete_participant_response = 9;
-			participant.SetParticipantsResponse set_participants_response = 10;
-			clock.GetClockResponse get_clock_response = 11;
-			clock.SetClockResponse set_clock_response = 12;
-			clock.StartClockResponse start_clock_response = 13;
-			clock.StopClockResponse stop_clock_response = 14;
-			clock.ForwardClockResponse forward_clock_response = 15;
-			clock.BackClockResponse back_clock_response = 16;
+			agent.ClearAgentsResponse clear_agents_response = 7;
+			agent.VisualizeAgentsResponse visualize_agents_response = 8;
+			area.GetAreaResponse get_area_response = 9;
+			participant.RegistParticipantResponse regist_participant_response = 10;
+			participant.DeleteParticipantResponse delete_participant_response = 11;
+			participant.SetParticipantsResponse set_participants_response = 12;
+			participant.DownScenarioResponse down_scenario_response = 13;
+			clock.GetClockResponse get_clock_response = 14;
+			clock.SetClockResponse set_clock_response = 15;
+			clock.StartClockResponse start_clock_response = 16;
+			clock.StopClockResponse stop_clock_response = 17;
+			clock.ForwardClockResponse forward_clock_response = 18;
+			clock.BackClockResponse back_clock_response = 19;
         }
     }
 
@@ -70,17 +75,19 @@ enum StatusType {
 enum DemandType {
     GET_SAME_AREA_AGENTS_REQUEST = 0;
     SET_AGENTS_REQUEST = 1;
-    VISUALIZE_AGENTS_REQUEST = 2;
-    GET_AREA_REQUEST = 3;
-	REGIST_PARTICIPANT_REQUEST = 4;
-	DELETE_PARTICIPANT_REQUEST = 5;
-	SET_PARTICIPANTS_REQUEST = 6;
+    GET_AREA_REQUEST = 2;
+	REGIST_PARTICIPANT_REQUEST = 3;
+	DELETE_PARTICIPANT_REQUEST = 4;
+	SET_PARTICIPANTS_REQUEST = 5;
+	COLLECT_PARTICIPANTS_REQUEST = 6;
 	GET_CLOCK_REQUEST = 7;
 	SET_CLOCK_REQUEST = 8;
 	START_CLOCK_REQUEST = 9;
 	STOP_CLOCK_REQUEST = 10;
 	FORWARD_CLOCK_REQUEST = 11;
 	BACK_CLOCK_REQUEST = 12;
+    CLEAR_AGENTS_REQUEST = 13;
+    DOWN_SCENARIO_REQUEST = 14;
 }
 
 enum SupplyType {
@@ -97,6 +104,9 @@ enum SupplyType {
 	STOP_CLOCK_RESPONSE = 10;
 	FORWARD_CLOCK_RESPONSE = 11;
 	BACK_CLOCK_RESPONSE = 12;
+    CLEAR_AGENTS_RESPONSE = 13;
+    VISUALIZE_AGENTS_RESPONSE = 14;
+    DOWN_SCENARIO_RESPONSE = 15;
 }
 
 

@@ -22,6 +22,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/kardianos/service"
 	gosocketio "github.com/mtfelian/golang-socketio"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
@@ -160,7 +161,11 @@ func init() {
 			Description: "Order",
 		},
 		{
-			CmdName:     "SetAgent",
+			CmdName:     "SetAgents",
+			Description: "Order",
+		},
+		{
+			CmdName:     "ClearAgents",
 			Description: "Order",
 		},
 		{
@@ -805,12 +810,17 @@ func calcRoute() *agent.PedRoute {
 		Latitude:  35.156476,
 	}
 
+	transitPoints := make([]*common.Coord, 0)
+	transitPoints = append(transitPoints, destination)
+
 	route := &agent.PedRoute{
 		Position:    departure,
 		Direction:   100 * rand.Float64(),
 		Speed:       100 * rand.Float64(),
 		Departure:   departure,
 		Destination: destination,
+		TransitPoints: transitPoints,
+		NextTransit: destination,
 	}
 
 	return route
@@ -854,7 +864,7 @@ func handleOrder(order *Order) string {
 				*/
 			} else if target == "SetClock" {
 				message := &daemon.SetClockMessage{
-					GlobalTime: float64(345),
+					GlobalTime: float64(0),
 					TimeStep:   float64(1),
 				}
 				r, err := client.SetClockOrder(ctx, message)
@@ -863,25 +873,28 @@ func handleOrder(order *Order) string {
 				}
 				log.Printf("Response: %s", r.Ok)
 
-			} else if target == "SetAgent" {
+			} else if target == "SetAgents" {
 				agentNum, _ := strconv.Atoi(order.Option)
 				agents := make([]*agent.Agent, 0)
 
 				for i := 0; i < agentNum; i++ {
-					agent := &agent.Agent{
-						Id:   uint64(i),
-						Type: common.AgentType_PEDESTRIAN,
-						Data: &agent.Agent_Pedestrian{
-							Pedestrian: &agent.Pedestrian{
-								Status: &agent.PedStatus{
-									Age:  "20",
-									Name: "rui",
+					uuid, err := uuid.NewRandom()
+					if err == nil {
+						agent := &agent.Agent{
+							Id:   uint64(uuid.ID()),
+							Type: common.AgentType_PEDESTRIAN,
+							Data: &agent.Agent_Pedestrian{
+								Pedestrian: &agent.Pedestrian{
+									Status: &agent.PedStatus{
+										Age:  "20",
+										Name: "rui",
+									},
+									Route: calcRoute(),
 								},
-								Route: calcRoute(),
 							},
-						},
+						}
+						agents = append(agents, agent)
 					}
-					agents = append(agents, agent)
 				}
 
 				message := &daemon.SetAgentsMessage{
@@ -907,6 +920,13 @@ func handleOrder(order *Order) string {
 			} else if target == "StopClock" {
 				message := &daemon.StopClockMessage{}
 				r, err := client.StopClockOrder(ctx, message)
+				if err != nil {
+					log.Fatalf("could not order: %v", err)
+				}
+				log.Printf("Response: %s", r.Ok)
+			} else if target == "ClearAgents" {
+				message := &daemon.ClearAgentsMessage{}
+				r, err := client.ClearAgentsOrder(ctx, message)
 				if err != nil {
 					log.Fatalf("could not order: %v", err)
 				}
@@ -1093,8 +1113,6 @@ func (sesrv *SynerexService) run() error {
 		//		fmt.Printf("Get Run Command %s\n", nid)
 		logger.Infof("order from %s as %s", c.IP(), c.Id())
 		logger.Infof("Get order command %s %v", nid, order)
-
-		//test :=  map[string]string{"Order": nid, "Meta": "test"}
 
 		return handleOrder(order)
 	})

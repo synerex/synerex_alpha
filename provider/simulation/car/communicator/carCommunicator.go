@@ -1,8 +1,8 @@
 package communicator
 
 import (
-	//"fmt"
-	//"log"
+	"fmt"
+	"time"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
@@ -92,10 +92,11 @@ func (p *CarCommunicator) RegistClients(client pb.SynerexClient, argJson string)
 }
 
 // CreateWaitIdList : 同期するためのIdListを作成する関数
-func (p *CarCommunicator) CreateWaitIdList(myAgentType common.AgentType, myAreaId uint64) {
+func (p *CarCommunicator) CreateWaitIdList(myAgentType common.AgentType, myAreaId uint64, neighborAreaIds []uint64) {
 	getClockIdList := make([]uint64, 0)
 	deleteParticipantIdList := make([]uint64, 0)
 	getSameAreaAgentsIdList := make([]uint64, 0)
+	getNeighborAreaAgentsIdList := make([]uint64, 0)
 	for _, participantInfo := range p.Participants {
 		providerType := participantInfo.GetProviderType()
 		//agentType := participantInfo.GetAgentType()
@@ -111,10 +112,16 @@ func (p *CarCommunicator) CreateWaitIdList(myAgentType common.AgentType, myAreaI
 		if myAreaId == areaId {
 			getSameAreaAgentsIdList = append(getSameAreaAgentsIdList, agentChannelId)
 		}
+		for _, neighborAreaId := range neighborAreaIds {
+			if neighborAreaId == areaId{
+				getNeighborAreaAgentsIdList = append(getNeighborAreaAgentsIdList, agentChannelId)
+			}
+		}
 	}
 	p.DeleteParticipantIdList = deleteParticipantIdList
 	p.GetClockIdList = getClockIdList
 	p.GetSameAreaAgentsIdList = getSameAreaAgentsIdList
+	p.GetNeighborAreaAgentsIdList = getNeighborAreaAgentsIdList
 }
 
 func (p *CarCommunicator) GetMyParticipant(areaId uint64) *participant.Participant {
@@ -149,11 +156,24 @@ func (p *CarCommunicator) SendToGetAreaResponse(sp *pb.Supply) {
 }
 
 // WaitRegistParticipantResponse : RegistParticipantResponseを待機する
-func (p *CarCommunicator) WaitRegistParticipantResponse() {
+func (p *CarCommunicator) WaitRegistParticipantResponse() error{
 	// channelの初期化
 	p.RegistParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	// Response取得
-	<-p.RegistParticipantCh
+
+	errch := make(chan error, 1)
+
+	// timeout
+	go func(){
+		time.Sleep(2*time.Second)
+		errch <- fmt.Errorf("timeout occor...\n scenario-provider closed ?\n You don't have to restart this provider. \n Please start scenario-provider.")
+		return
+	}()
+	select {
+	case err := <- errch:
+		return err
+	case <- p.RegistParticipantCh:
+		return nil
+	}
 }
 
 // SendToRegistParticipantResponse : RegistParticipantResponseを送る
@@ -167,11 +187,6 @@ func (p *CarCommunicator) WaitDeleteParticipantResponse() {
 	p.DeleteParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	// spの待機
 	p.Wait(p.DeleteParticipantIdList, p.DeleteParticipantCh)
-	/*// ClockInfoを取得
-	var clockInfo *clock.Clock
-	for _, sp := range spMap {
-		clockInfo = sp.GetSimSupply().GetDeleteParticipantResponse().DeleteParticipant()
-	}*/
 
 }
 
