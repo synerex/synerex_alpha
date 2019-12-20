@@ -5,67 +5,51 @@ import (
 	"log"
 	"sync"
 
-	pb "github.com/synerex/synerex_alpha/api"
-	"github.com/synerex/synerex_alpha/api/simulation/agent"
-	"github.com/synerex/synerex_alpha/api/simulation/clock"
-	"github.com/synerex/synerex_alpha/provider/simulation/simutil"
-	"github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/provider"
-	"github.com/synerex/synerex_alpha/sxutil"
-
-	//	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"fmt"
-	"net/http"
-	"os"
-	"path/filepath"
+
+	"context"
+	"net"
 	"time"
 
-	gosocketio "github.com/mtfelian/golang-socketio"
-	"github.com/mtfelian/golang-socketio/transport"
-	"github.com/synerex/synerex_alpha/api/simulation/participant"
+	pb "github.com/synerex/synerex_alpha/api"
+	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/daemon"
+	"github.com/synerex/synerex_alpha/api/simulation/synerex"
+	"github.com/synerex/synerex_alpha/provider/simulation/scenario/communicator"
+	"github.com/synerex/synerex_alpha/provider/simulation/scenario/simulator"
+	"github.com/synerex/synerex_alpha/sxutil"
 	"google.golang.org/grpc"
-	//	"os/exec"
 )
 
+// プロバイダ順番関係なく
+// rvo2適用
+// daemonでprovider起動setup
+
+// scenario以外のプロバイダを自由に起動可能/scenarioは参加者管理ができている
+// scenarioを途中で起動可能/ 各プロバイダは参加者登録、クロック同期ができている
+// 起動停止(ctl+c)を二回押すことをなくす
+
 var (
-	serverAddr          = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
-	nodesrv             = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
-	port                = flag.Int("port", 10080, "HarmoVis Provider Listening Port")
-	clockTime           = flag.Int("time", 1, "Time")
-	version             = "0.01"
-	agentPspMap         map[uint64]*pb.Supply
-	participantPspMap   map[uint64]*pb.Supply
-	syncForwardCh       chan *pb.Supply
-	syncParticipantCh   chan *pb.Supply
-	syncGetAgentCh      chan *pb.Supply
-	startCollectId      bool
-	isStop              bool
-	isStart             bool
-	isSetClock          bool
-	isSetArea           bool
-	isSetAgent          bool
-	isGetParticipant    bool
-	forwardAgentIdList  []uint64
-	participantIdList   []uint64
-	setAgentIdList      []uint64
-	Order               string
-	mu                  sync.Mutex
-	participantsInfo    []*participant.ParticipantInfo
-	data                *Data
-	startSync           bool
-	assetsDir           http.FileSystem
-	ioserv              *gosocketio.Server
-	CHANNEL_BUFFER_SIZE int
-	sprovider           *provider.SynerexProvider
+	serverAddr       = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
+	nodesrv          = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
+	port             = flag.Int("port", 10080, "HarmoVis Provider Listening Port")
+	daemonPort       = ":9996"
+	clockTime        = flag.Int("time", 1, "Time")
+	version          = "0.01"
+	startCollectId   bool
+	isStop           bool
+	isStart          bool
+	isSetClock       bool
+	isSetArea        bool
+	isSetAgent       bool
+	isGetParticipant bool
+	mu               sync.Mutex
+	startSync        bool
+	com              *communicator.ScenarioCommunicator
+	sim              *simulator.ScenarioSimulator
 )
 
 func init() {
-	CHANNEL_BUFFER_SIZE = 10
-	Order = ""
-	forwardAgentIdList = make([]uint64, 0)
-	participantIdList = make([]uint64, 0)
-	setAgentIdList = make([]uint64, 0)
-	agentPspMap = make(map[uint64]*pb.Supply)
-	participantPspMap = make(map[uint64]*pb.Supply)
 	isStop = false
 	isSetClock = false
 	isSetAgent = false
@@ -73,483 +57,255 @@ func init() {
 	isStart = false
 	isGetParticipant = false
 	startSync = false
-	syncForwardCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	syncParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	syncGetAgentCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	data = new(Data)
-	data.ClockInfo = &clock.ClockInfo{
-		Time: uint32(*clockTime),
-	}
 }
 
-type Data struct {
-	ClockInfo *clock.ClockInfo
-}
+// startClock:
+func startClock(stepNum uint64) {
 
-type ChannelIdList struct {
-	ParticipantChannelId uint32
-	AreaChannelId        uint32
-	AgentChannelId       uint32
-	ClockChannelId       uint32
-	RouteChannelId       uint32
-}
+	com.ForwardClockRequest(stepNum)
 
-type MapMarker struct {
-	mtype int32   `json:"mtype"`
-	id    int32   `json:"id"`
-	lat   float32 `json:"lat"`
-	lon   float32 `json:"lon"`
-	angle float32 `json:"angle"`
-	speed int32   `json:"speed"`
-	area  int32   `json:"area"`
-}
+	com.WaitForwardClockResponse()
 
-// Finish Fix
-/*func orderSetClock(clockInfo simutil.ClockInfo) {
-	if isGetParticipant == false {
-		fmt.Printf("Error... please order getParticipant")
+	// calc next time
+	sim.ForwardStep()
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock forwarded \n Time:  %v \x1b[0m\n", sim.GlobalTime)
+
+	// 待機
+	time.Sleep(time.Duration(sim.TimeStep) * time.Second)
+
+	// 次のサイクルを行う
+	if isStop != true {
+		startClock(stepNum)
 	} else {
-		firstTime := uint32(1)
-
-		clockInfo := &clock.ClockInfo{
-			Time:          firstTime,
-			CycleNum:      uint32(1),
-			CycleDuration: uint32(1),
-			CycleInterval: uint32(1),
-		}
-		data.ClockInfo = clockInfo
-
-		setClockDemand := &clock.SetClockDemand{
-			Time:          firstTime,
-			CycleDuration: uint32(1),
-			StatusType:    2, // NONE
-			Meta:          "",
-		}
-
-		nm := "SetClockDemand"
-		js := ""
-		opts := &sxutil.DemandOpts{Name: nm, JSON: js, SetClockDemand: setClockDemand}
-
-		dmMap, idlist = simutil.SendDemand(sclientClock, opts, dmMap, idlist)
-	}
-}*/
-
-// Finish Fix
-func orderStartClock() {
-	if isGetParticipant == false {
-		fmt.Printf("Error... please order getParticipant")
-	} else if isSetAgent == false {
-		fmt.Printf("Error... please order setAgent")
-	} else {
-		isStart = true
-		// forward clock
-		//time := data.ClockInfo.Time
-		cycleNum := 1
-		sprovider.ForwardClockDemand(uint64(data.ClockInfo.Time), uint64(cycleNum))
-
-		syncForwardCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-		forwardPspMap := sprovider.Wait(forwardAgentIdList, syncForwardCh)
-
-		sendToSimulator(forwardPspMap)
-
-		// calc next time
-		nextTime := data.ClockInfo.Time + 1
-		clockInfo := &clock.ClockInfo{
-			Time:          uint32(nextTime),
-			CycleNum:      uint32(1),
-			CycleDuration: uint32(1),
-			CycleInterval: uint32(1),
-		}
-		data.ClockInfo = clockInfo
-
-		time.Sleep(1 * time.Second)
-
-		if isStop == false {
-			log.Printf("FORWARD_CLOCK")
-			orderStartClock()
-		} else {
-			fmt.Printf("Stop clock!")
-			isStop = false
-			isStart = false
-		}
-
-	}
-}
-
-// Finish Fix
-func orderStopClock() {
-	if isGetParticipant == false {
-		fmt.Printf("Error... please order getParticipant")
-	} else {
-		if isStart == true {
-			isStop = true
-		} else {
-			fmt.Printf("Clock has not been started. ")
-		}
-	}
-}
-
-// Fix  : this don't need ?
-/*func orderSetArea(areaInfo simutil.AreaInfo) {
-	if isGetParticipant == false {
-		fmt.Printf("Error... please order getParticipant")
-	} else {
-		areaDemand := area.AreaDemand{
-			Time: uint32(1),
-			AreaId: areaInfo.Id, // A
-			DemandType: 0, // SET
-			StatusType: 2, // NONE
-			Meta: "",
-		}
-
-		nm := "setArea order by scenario"
-		js := ""
-		opts := &sxutil.DemandOpts{Name: nm, JSON: js, AreaDemand: &areaDemand}
-
-		dmMap, idlist = simutil.SendDemand(sclientArea, opts, dmMap, idlist)
-	}
-}*/
-
-// Finish Fix
-func orderSetAgents(agentsInfo []*agent.AgentInfo) {
-	if isGetParticipant == false {
-		fmt.Printf("Error... please order getParticipant")
-	} else {
-
-		sprovider.SetAgentsDemand(agentsInfo)
-
-		syncGetAgentCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-		sprovider.Wait(setAgentIdList, syncGetAgentCh)
-		fmt.Printf("SET_AGENTS_FINISH!")
-		isSetAgent = true
-		agentPspMap = make(map[uint64]*pb.Supply)
-	}
-}
-
-// Finish Fix
-func orderGetParticipant() {
-	participantInfo := &participant.ParticipantInfo{
-		ChannelId: &participant.ChannelId{
-			ParticipantChannelId: uint32(sprovider.ParticipantClient.ClientID),
-			AreaChannelId:        uint32(sprovider.AreaClient.ClientID),
-			AgentChannelId:       uint32(sprovider.AgentClient.ClientID),
-			ClockChannelId:       uint32(sprovider.ClockClient.ClientID),
-			RouteChannelId:       uint32(sprovider.RouteClient.ClientID),
-		},
-		ProviderType: 0, //Scenario
-	}
-	sprovider.GetParticipantDemand(participantInfo)
-}
-
-// Finish Fix
-func orderSetParticipant() {
-
-	// send participantID to participant provider
-	sprovider.SetParticipantDemand(participantsInfo)
-
-	syncParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	sprovider.Wait(participantIdList, syncParticipantCh)
-	fmt.Printf("SET_PARTICIPANT_FINISH!")
-	participantPspMap = make(map[uint64]*pb.Supply)
-
-}
-
-func (m *MapMarker) GetJson() string {
-	s := fmt.Sprintf("{\"mtype\":%d,\"id\":%d,\"lat\":%f,\"lon\":%f,\"angle\":%f,\"speed\":%d,\"area\":%d}",
-		m.mtype, m.id, m.lat, m.lon, m.angle, m.speed, m.area)
-	return s
-}
-
-// Fix now
-func sendToSimulator(pspMap map[uint64]*pb.Supply) {
-	sumAgentsInfo := make([]*agent.AgentInfo, 0)
-	for _, psp := range pspMap {
-		supplyType := sprovider.CheckSupplyType(psp)
-		switch supplyType {
-		case "FORWARD_AGENTS_SUPPLY":
-			forwardAgentsSupply := psp.GetArg_ForwardAgentsSupply()
-			agentsInfo := forwardAgentsSupply.AgentsInfo
-			sumAgentsInfo = append(sumAgentsInfo, agentsInfo...)
-		default:
-			//fmt.Println("SupplyType is invalid")
-		}
-	}
-	log.Printf("\x1b[30m\x1b[47m \n FORWARD_CLOCK_FINISH \n TIME:  %v \n Agents Num: %v \x1b[0m\n", data.ClockInfo.Time, len(sumAgentsInfo))
-
-	if sumAgentsInfo != nil {
-		jsonAgentsInfo := make([]string, 0)
-		for _, agentInfo := range sumAgentsInfo {
-			mm := &MapMarker{
-				mtype: int32(agentInfo.AgentType), // depends on type of Ped: 0, Car , 1
-				id:    int32(agentInfo.AgentId),
-				lat:   float32(agentInfo.Route.Coord.Lat),
-				lon:   float32(agentInfo.Route.Coord.Lon),
-				angle: float32(agentInfo.Route.Direction),
-				speed: int32(agentInfo.Route.Speed),
-				area:  int32(agentInfo.ControlArea),
-			}
-			jsonAgentsInfo = append(jsonAgentsInfo, mm.GetJson())
-		}
-		mu.Lock()
-		ioserv.BroadcastToAll("event", jsonAgentsInfo)
-		mu.Unlock()
-	}
-}
-
-// Finish Fix
-func callbackStartClock(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	syncForwardCh <- sp
-
-}
-
-// Finish Fix
-func callbackSetAgent(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	syncGetAgentCh <- sp
-}
-
-// Finish Fix
-func callbackSetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	syncParticipantCh <- sp
-}
-
-// Finish Fix
-/*func callbackSetClock(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	log.Println("Got for set_clock callback")
-	if clt.IsSupplyTarget(sp, idlist) {
-		spMap[sp.SenderId] = sp
-
-		callback := func(pspMap map[uint64]*pb.Supply) {
-			fmt.Printf("Callback SetClock! return OK to Simulation Synerex Engine")
-			isSetClock = true
-		}
-		syncClockIdList := idListByChannel.ClockIdList
-		syncProposeSupply(sp, syncClockIdList, pspMap, callback)
-
-	} else {
-		log.Printf("This is not propose supply \n")
-	}
-}
-
-func callbackSetArea(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	log.Println("Got for set_area callback")
-	if clt.IsSupplyTarget(sp, idlist) {
-
-		//		opts :=	dmMap[sp.TargetId]
-		//		log.Printf("Got Supply for %v as '%v'",opts, sp )
-		spMap[sp.SenderId] = sp
-
-		callback := func(pspMap map[uint64]*pb.Supply) {
-			fmt.Printf("Callback SetArea! return OK to Simulation Synerex Engine")
-			isSetArea = true
-			//pspMap = make(map[uint64]*pb.Supply)
-		}
-
-		syncAreaIdList := idListByChannel.AreaIdList
-		syncProposeSupply(sp, syncAreaIdList, pspMap, callback)
-
-	} else {
-		log.Printf("This is not propose supply \n")
-	}
-}*/
-
-// create sync id list
-func createSyncIdList(participantsInfo []*participant.ParticipantInfo) ([]uint64, []uint64, []uint64) {
-	setAgentIdList := make([]uint64, 0)
-	forwardAgentIdList := make([]uint64, 0)
-	participantIdList := make([]uint64, 0)
-
-	for _, participantInfo := range participantsInfo {
-		tProviderType := participantInfo.ProviderType
-		isSetAgent := tProviderType.String() == "CAR_AREA" || tProviderType.String() == "PED_AREA"
-		isForwardAgent := tProviderType.String() == "CAR_AREA" || tProviderType.String() == "PED_AREA" || tProviderType.String() == "AREA"
-		isSetParticipant := tProviderType.String() == "CAR_AREA" || tProviderType.String() == "PED_AREA"
-		if isSetAgent {
-			channelId := participantInfo.ChannelId
-			agentChannelId := channelId.AgentChannelId
-			setAgentIdList = append(setAgentIdList, uint64(agentChannelId))
-		}
-		if isForwardAgent {
-
-			channelId := participantInfo.ChannelId
-			agentChannelId := channelId.AgentChannelId
-			clockChannelId := channelId.ClockChannelId
-			forwardAgentIdList = append(forwardAgentIdList, uint64(agentChannelId))
-			forwardAgentIdList = append(forwardAgentIdList, uint64(clockChannelId))
-		}
-		if isSetParticipant {
-			channelId := participantInfo.ChannelId
-			participantChannelId := channelId.ParticipantChannelId
-			participantIdList = append(participantIdList, uint64(participantChannelId))
-		}
-
-	}
-	return setAgentIdList, participantIdList, forwardAgentIdList
-}
-
-// Finish Fix
-func collectParticipantId(clt *sxutil.SMServiceClient, d int) {
-
-	for i := 0; i < d; i++ {
-		time.Sleep(1 * time.Second)
-		log.Printf("waiting... %v", i+1)
+		log.Printf("\x1b[30m\x1b[47m \n Finish: Clock stopped \n GlobalTime:  %v \n TimeStep: %v \x1b[0m\n", sim.GlobalTime, sim.TimeStep)
+		isStop = false
+		isStart = false
+		// exit goroutin
+		return
 	}
 
-	mu.Lock()
-	participantsInfo = simutil.CreateParticipantsInfo(participantPspMap)
-	setAgentIdList, participantIdList, forwardAgentIdList = createSyncIdList(participantsInfo)
-
-	startCollectId = false
-	isGetParticipant = true
-	participantPspMap = make(map[uint64]*pb.Supply)
-
-	mu.Unlock()
-	// setParticipant
-	Order = "SetParticipant"
-	orderSetParticipant()
 }
 
-// Finish Fix
-func callbackGetParticipant(clt *sxutil.SMServiceClient, sp *pb.Supply) {
-	log.Println("Got for get_participant callback")
+// stopClock: Clockを停止する
+func stopClock() (bool, error) {
+	isStop = true
+	return true, nil
+}
 
-	mu.Lock()
-	participantPspMap[sp.SenderId] = sp
+// setAgents: agentをセットするDemandを出す関数
+func setAgents(agents []*agent.Agent) (bool, error) {
 
-	if !startCollectId {
-		log.Println("start selection")
-		startCollectId = true
-		go collectParticipantId(clt, 2)
+	// エージェントを設置するリクエスト
+	com.SetAgentsRequest(agents)
+
+	// 同期のため待機
+	com.WaitSetAgentsResponse()
+
+	isSetAgent = true
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Agents set \n Add: %v \x1b[0m\n", len(agents))
+	return true, nil
+}
+
+// ClearAgents: agentを消去するDemandを出す関数
+func clearAgents() (bool, error) {
+
+	// エージェントを設置するリクエスト
+	com.ClearAgentsRequest()
+
+	// 同期のため待機
+	com.WaitClearAgentsResponse()
+
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Agents cleared. \x1b[0m\n")
+	return true, nil
+}
+
+// setClock : クロック情報をDaemonから受け取りセットする
+func setClock(globalTime float64, timeStep float64) (bool, error) {
+	// クロックをセット
+	sim.SetGlobalTime(globalTime)
+	sim.SetTimeStep(timeStep)
+
+	// クロック情報をプロバイダに送信
+	clockInfo := sim.GetClock()
+	com.SetClockRequest(clockInfo)
+	// Responseを待機
+	com.WaitSetClockResponse()
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock information set. \n GlobalTime:  %v \n TimeStep: %v \x1b[0m\n", sim.GlobalTime, sim.TimeStep)
+	return true, nil
+}
+
+// collectParticipants : 起動時に、他プロバイダの参加者情報を集める
+func collectParticipants() {
+
+	// 情報をプロバイダに送信
+	com.CollectParticipantsRequest()
+}
+
+// callbackRegistParticipantRequest: 新規参加者を登録するための関数
+func callbackRegistParticipantRequest(dm *pb.Demand) {
+
+	participant := dm.GetSimDemand().GetRegistParticipantRequest().GetParticipant()
+	// IdListに保存
+	com.AddParticipant(participant)
+
+	// 同期するためのIdListを作成
+	com.CreateWaitIdList()
+
+	// 新規の参加者情報を参加プロバイダに送信
+	com.SetParticipantsRequest()
+
+	// SetParticipantsResponseの待機
+	err := com.WaitSetParticipantsResponse()
+	if err != nil{
+		log.Printf("\x1b[30m\x1b[47m \n Error: %v \x1b[0m\n", err)
 	}
 
-	mu.Unlock()
+	// 新規参加者に登録完了通知
+	com.RegistParticipantResponse(dm)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: New participant registed  \x1b[0m\n")
+
 }
 
-// callback for each Supply
+// callbackDeleteParticipantRequest: 参加者を削除するための関数
+func callbackDeleteParticipantRequest(dm *pb.Demand) {
+
+	participant := dm.GetSimDemand().GetDeleteParticipantRequest().GetParticipant()
+	// IdListに保存
+	com.DeleteParticipant(participant)
+	
+	// 同期するためのIdListを作成
+	com.CreateWaitIdList()
+
+	// 新規の参加者情報を参加プロバイダに送信
+	com.SetParticipantsRequest()
+	
+	// SetParticipantsResponseの待機
+	com.WaitSetParticipantsResponse()
+	
+	// 新規参加者に登録完了通知
+	com.DeleteParticipantResponse(dm)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Participant deleted \x1b[0m\n")
+}
+
+// callbackGetClockRequest: 新規参加者がクロック情報を取得する関数
+func callbackGetClockRequest(dm *pb.Demand) {
+	// Clock情報を取得
+	clock := sim.GetClock()
+
+	// Clock情報を新規参加者へ送る
+	com.GetClockResponse(dm, clock)
+}
+
+// notifyDownScenario: 新規参加者がクロック情報を取得する関数
+func notifyDownScenario() {
+
+	// 参加取り消しをするRequest
+	com.DownScenarioRequest()
+
+	// Responseの待機
+	com.WaitDownScenarioResponse()
+
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Scenario-provider notified clash-infomation. \x1b[0m\n")
+}
+
+// Supplyのコールバック関数
 func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 	// check if supply is match with my demand.
-	supplyType := sprovider.CheckSupplyType(sp)
-	log.Println("Got supply callback", supplyType)
-	if sprovider.IsSupplyTarget(sp) {
-		switch supplyType {
-		case "GET_PARTICIPANT_SUPPLY":
-			callbackGetParticipant(clt, sp)
-		case "SET_PARTICIPANT_SUPPLY":
-			callbackSetParticipant(clt, sp)
-		case "SET_AGENTS_SUPPLY":
-			callbackSetAgent(clt, sp)
-		case "FORWARD_AGENTS_SUPPLY":
-			callbackStartClock(clt, sp)
-		case "FORWARD_CLOCK_SUPPLY":
-			callbackStartClock(clt, sp)
-		default:
-			fmt.Println("order is invalid")
-		}
+	switch sp.GetSimSupply().SupplyType {
+	case synerex.SupplyType_SET_PARTICIPANTS_RESPONSE:
+		com.SendToSetParticipantsResponse(sp)
+	case synerex.SupplyType_SET_AGENTS_RESPONSE:
+		com.SendToSetAgentsResponse(sp)
+	case synerex.SupplyType_CLEAR_AGENTS_RESPONSE:
+		com.SendToClearAgentsResponse(sp)
+	case synerex.SupplyType_SET_CLOCK_RESPONSE:
+		com.SendToSetClockResponse(sp)
+	case synerex.SupplyType_FORWARD_CLOCK_RESPONSE:
+		com.SendToForwardClockResponse(sp)
+	case synerex.SupplyType_DOWN_SCENARIO_RESPONSE:
+		com.SendToDownScenarioResponse(sp)
+	default:
+		//fmt.Println("order is invalid")
 	}
 }
 
-func runServer() *gosocketio.Server {
-
-	currentRoot, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
+// Demandのコールバック関数
+func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
+	// check if supply is match with my demand.
+	switch dm.GetSimDemand().DemandType {
+	case synerex.DemandType_REGIST_PARTICIPANT_REQUEST:
+		callbackRegistParticipantRequest(dm)
+	case synerex.DemandType_DELETE_PARTICIPANT_REQUEST:
+		callbackDeleteParticipantRequest(dm)
+	case synerex.DemandType_GET_CLOCK_REQUEST:
+		callbackGetClockRequest(dm)
+	default:
+		//fmt.Println("order is invalid")
 	}
-	d := filepath.Join(currentRoot, "mclient", "build")
 
-	assetsDir = http.Dir(d)
-	log.Println("AssetDir:", assetsDir)
-
-	assetsDir = http.Dir(d)
-	server := gosocketio.NewServer()
-
-	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
-		log.Printf("Connected from %s as %s", c.IP(), c.Id())
-		// do something.
-	})
-
-	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
-		log.Printf("Disconnected from %s as %s", c.IP(), c.Id())
-	})
-
-	return server
 }
 
-func runClient() *gosocketio.Client {
-	log.Println("RUN_CLIENT")
-	var sioErr error
-	sioClient, sioErr := gosocketio.Dial("ws://localhost:9995/socket.io/?EIO=3&transport=websocket", transport.DefaultWebsocketTransport())
-	if sioErr != nil {
-		log.Println("se: Error to connect with se-daemon. You have to start se-daemon first.") //,err)
-		os.Exit(1)
+// simServer: scenarioと通信を行うサーバ
+type simDaemonServer struct {
+}
+
+// SetAgentsOrder
+func (s *simDaemonServer) SetAgentsOrder(ctx context.Context, in *daemon.SetAgentsMessage) (*daemon.Response, error) {
+	log.Printf("Received:SetAgents")
+	agents := in.GetAgents()
+	ok, err := setAgents(agents)
+	return &daemon.Response{Ok: ok}, err
+}
+
+// ClearAgentsOrder
+func (s *simDaemonServer) ClearAgentsOrder(ctx context.Context, in *daemon.ClearAgentsMessage) (*daemon.Response, error) {
+	log.Printf("Received:ClearAgents")
+	ok, err := clearAgents()
+	return &daemon.Response{Ok: ok}, err
+}
+
+// SetClock
+func (s *simDaemonServer) SetClockOrder(ctx context.Context, in *daemon.SetClockMessage) (*daemon.Response, error) {
+	log.Printf("Received:SetClock")
+	globalTime := in.GetGlobalTime()
+	timeStep := in.GetTimeStep()
+	ok, err := setClock(globalTime, timeStep)
+	return &daemon.Response{Ok: ok}, err
+}
+
+// StartClock
+func (s *simDaemonServer) StartClockOrder(ctx context.Context, in *daemon.StartClockMessage) (*daemon.Response, error) {
+	log.Printf("Received:StartClock")
+	stepNum := in.GetStepNum()
+	if isStart {
+		log.Printf("\x1b[30m\x1b[47m \n Simulator is already started. \x1b[0m\n")
 	} else {
-		log.Println("se: connect OK")
+		isStart = true
+		go startClock(stepNum)
 	}
-	sioClient.On(gosocketio.OnConnection, func(c *gosocketio.Channel, param interface{}) {
-		fmt.Println("Go socket.io connected ")
-		c.Emit("setCh", "Scenario")
-	})
-
-	sioClient.On("scenario", func(c *gosocketio.Channel, order *simutil.Order) {
-		log.Printf("get order is: %v\n", order)
-		Order = order.Type
-		switch Order {
-		case "GetParticipant":
-			//			fmt.Println("getParticipant")
-			orderGetParticipant()
-		/*case "SetTime":
-			fmt.Println("setClock")
-			clockInfo := order.ClockInfo
-			orderSetClock(clockInfo)
-		case "SetArea":
-			fmt.Println("setArea")
-			areaInfo := order.AreaInfo
-			orderSetArea(areaInfo)*/
-		case "SetAgent":
-			fmt.Printf("set agent %v, \n", order.AgentsInfo)
-			agentsInfo := simutil.ConvertAgentsInfo(order.AgentsInfo)
-			orderSetAgents(agentsInfo)
-		case "Start":
-			//			fmt.Println("start clock")
-			orderStartClock()
-		case "Stop":
-			//			fmt.Println("stop clock")
-			orderStopClock()
-		default:
-			fmt.Println("error")
-		}
-
-	})
-
-	sioClient.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel, param interface{}) {
-		fmt.Println("Go socket.io disconnected ", c)
-	})
-
-	return sioClient
+	return &daemon.Response{Ok: true}, nil
 }
 
-// assetsFileHandler for static Data
-func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet && r.Method != http.MethodHead {
-		return
-	}
+// StopClock
+func (s *simDaemonServer) StopClockOrder(ctx context.Context, in *daemon.StopClockMessage) (*daemon.Response, error) {
+	log.Printf("Received:StopClock")
+	ok, err := stopClock()
+	return &daemon.Response{Ok: ok}, err
+}
 
-	file := r.URL.Path
-	//	log.Printf("Open File '%s'",file)
-	if file == "/" {
-		file = "/index.html"
-	}
-	f, err := assetsDir.Open(file)
-	if err != nil {
-		log.Printf("can't open file %s: %v\n", file, err)
-		return
-	}
-	defer f.Close()
 
-	fi, err := f.Stat()
+
+func runDaemonServer() {
+	// Scenarioとの通信サーバ
+	lis, err := net.Listen("tcp", daemonPort)
 	if err != nil {
-		log.Printf("can't open file %s: %v\n", file, err)
-		return
+		log.Fatalf("failed to listen: %v", err)
 	}
-	http.ServeContent(w, r, file, fi.ModTime(), f)
+	s := grpc.NewServer()
+	daemon.RegisterSimDaemonServer(s, &simDaemonServer{})
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("failed to serve: %v", err)
+	}
 }
 
 func main() {
@@ -569,49 +325,37 @@ func main() {
 	if err != nil {
 		log.Fatalf("fail to dial: %v", err)
 	}
-	sxutil.RegisterDeferFunction(func() { conn.Close() })
+	sxutil.RegisterDeferFunction(func() { notifyDownScenario(); conn.Close() })
 
-	// run socket.io server
-	ioserv = runServer()
-	log.Printf("Running Sio Server..\n")
-	if ioserv == nil {
-		os.Exit(1)
-	}
-
-	// run socket.io client
-	sioClient := runClient()
-	log.Printf("Running Sio Client..\n")
-	if sioClient == nil {
-		os.Exit(1)
-	}
+	// run daemon server
+	go runDaemonServer()
+	log.Printf("Running Daemon Server..\n")
 
 	// connect to synerex server
 	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Scenario}")
 
-	// Clientとして登録
-	sprovider = provider.NewSynerexProvider()
+	// simulator
+	timeStep := float64(1)
+	globalTime := float64(0)
+	sim = simulator.NewScenarioSimulator(timeStep, globalTime)
 
-	// プロバイダのsetup
+	// Communicator
+	com = communicator.NewScenarioCommunicator()
+
+	// Communicatorのsetup
 	wg := sync.WaitGroup{}
 	wg.Add(1)
-	sprovider.SetupProvider(client, argJson, func(clt *sxutil.SMServiceClient, dm *pb.Demand) {}, supplyCallback, &wg)
+	// channelごとのClientを作成
+	com.RegistClients(client, argJson)
+	// ChannelにSubscribe
+	com.SubscribeAll(demandCallback, supplyCallback, &wg)
 	wg.Wait()
 
 	wg.Add(1)
-	serveMux := http.NewServeMux()
+	// 起動時、プロバイダがいれば登録する
+	collectParticipants()
 
-	serveMux.Handle("/socket.io/", ioserv)
-	serveMux.HandleFunc("/", assetsFileHandler)
-	//Order = "GetParticipant"
-	//orderGetParticipant()
-	log.Printf("Starting Harmoware VIS  Provider %s  on port %d", version, *port)
-	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", *port), serveMux)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	//orderGetParticipant()
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!
 

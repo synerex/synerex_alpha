@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package api.daemon;
+
+option go_package="daemon";
+
+import "simulation/agent/agent.proto";
+
+service SimDaemon {
+    rpc SetAgentsOrder(SetAgentsMessage) returns (Response) {}
+	rpc ClearAgentsOrder(ClearAgentsMessage) returns (Response) {}
+	rpc SetClockOrder(SetClockMessage) returns (Response) {}
+	rpc StartClockOrder(StartClockMessage) returns (Response) {}
+	rpc StopClockOrder(StopClockMessage) returns (Response) {}
+}
+
+message Response {
+    bool ok = 1;
+    string err = 2;
+}
+
+message SetAgentsMessage {
+	repeated agent.Agent agents = 1;
+}
+
+message ClearAgentsMessage {
+}
+
+message SetClockMessage {
+	double global_time = 1;
+	double time_step = 2;
+}
+
+message StartClockMessage {
+	uint64 step_num = 1;
+}
+
+message StopClockMessage {
+
+}

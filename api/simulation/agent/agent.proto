@@ -3,117 +3,53 @@ syntax = "proto3";
 package api.agent;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/agent";
-//import "simulation/route/route.proto";
 
-message GetAgentsDemand {
-    uint32 time = 1;
-    uint32 area_id = 2;
-    AgentType agent_type = 3;
-    StatusType status_type = 4;
-	string meta = 5;
+import "simulation/agent/pedestrian.proto";
+import "simulation/agent/car.proto";
+import "simulation/agent/train.proto";
+import "simulation/agent/signal.proto";
+import "simulation/common/common.proto";
+
+message GetSameAreaAgentsRequest {
+    uint64 area_id = 1;
+    common.AgentType agent_type = 2;
 }
 
-message GetAgentsSupply {
-    uint32 time = 1;
-    uint32 area_id = 2;
-    AgentType agent_type = 3;
-    repeated AgentInfo agents_info = 4;
-    StatusType status_type = 5;
-	string meta = 6;
+message GetSameAreaAgentsResponse {
+    repeated Agent agents = 1;
 }
 
-message SetAgentsDemand {
-    repeated AgentInfo agents_info = 1;
-    StatusType status_type = 2;
-	string meta = 3;
+message GetNeighborAreaAgentsResponse {
+    repeated Agent agents = 1;
 }
 
-message SetAgentsSupply {
-    uint32 time = 1;
-    uint32 area_id = 2;
-    AgentType agent_type = 3;
-    StatusType status_type = 4;
-	string meta = 5;
+message SetAgentsRequest {
+    repeated Agent agents = 1;
 }
 
-message ForwardAgentsSupply {
-    uint32 time = 1;
-    uint32 area_id = 2;
-    AgentType agent_type = 3;
-    repeated AgentInfo agents_info = 4;
-    StatusType status_type = 5;
-	string meta = 6;
+message SetAgentsResponse {
 }
 
-message GetAgentRouteDemand {
-    AgentInfo agents_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
+message ClearAgentsRequest {
 }
 
-message GetAgentRouteSupply {
-    AgentInfo agents_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
+message ClearAgentsResponse {
 }
 
-message GetAgentsRouteDemand {
-    repeated AgentInfo agents_info = 1;
-    StatusType status_type = 2;
-	string meta = 3;
+message VisualizeAgentsResponse {
+    uint64 area_id = 1;
+    common.AgentType agent_type = 2;
+    repeated Agent agents = 3;
 }
 
-message GetAgentsRouteSupply {
-    repeated AgentInfo agents_info = 1;
-    StatusType status_type = 2;
-	string meta = 3;
+message Agent {
+    uint64 id = 1;
+    common.AgentType type = 2;
+	oneof data {
+		pedestrian.Pedestrian pedestrian = 3;
+		car.Car car = 4;
+		train.Train train = 5;
+		signal.Signal signal = 6;
+	}
 }
 
-message AgentInfo {
-    uint32 time = 1;
-    uint32 agent_id = 2;
-    uint32 control_area = 3;
-    AgentStatus agent_status = 4;
-    AgentType agent_type = 6;
-    Route route = 7;
-}
-
-    
-message Coord {
-    float lat = 1;
-    float lon = 2;
-}
-
-message RouteInfo {
-    repeated Coord transit_point = 1;
-    Coord next_transit = 2;
-    float total_distance = 3;
-    float required_time = 4;
-}
-
-message Route {
-    Coord coord = 1;
-    float direction = 2;
-    float speed = 3;
-    Coord destination = 4;
-    Coord departure = 5;
-    RouteInfo route_info = 6;
-}
-
-
-message AgentStatus {
-    string age = 1;
-    string sex = 2;
-    string name = 3;
-}
-
-enum StatusType {
-    OK = 0;
-    NG = 1;
-    NONE = 2;
-}
-
-enum AgentType {
-    PEDESTRIAN = 0;
-    CAR = 1;
-}

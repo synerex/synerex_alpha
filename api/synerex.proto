@@ -6,18 +6,7 @@ option go_package="api";
 
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
-import "fleet/fleet.proto";
-import "rideshare/rideshare.proto";
-import "adservice/adservice.proto";
-import "library/library.proto";
-import "ptransit/ptransit.proto";
-import "routing/routing.proto";
-import "marketing/marketing.proto";
-import "simulation/area/area.proto";
-import "simulation/agent/agent.proto";
-import "simulation/clock/clock.proto";
-import "simulation/route/route.proto";
-import "simulation/participant/participant.proto";
+import "simulation/synerex/synerex.proto";
 
 service Synerex {
     rpc RegisterDemand(Demand) returns (Response) {}
@@ -63,18 +52,12 @@ message ConfirmResponse{
 
 enum ChannelType {
     NONE = 0;
-    RIDE_SHARE = 1;  // Rideshare Service Information
-    AD_SERVICE = 2;  // Advertisement Service Information
-    LIB_SERVICE = 3; // Public Library Service Information
-    PT_SERVICE = 4;  // Public Transit Information
-    ROUTING_SERVICE = 5; // Routing Service
-    MARKETING_SERVICE = 6; // Marketing (Ad/Enquate)
-    CLOCK_SERVICE = 7;  // Simulation Clock Service Information
-    AREA_SERVICE = 8;  // Simulation Area Service Information
-    AGENT_SERVICE = 9; // Simulation Agent Service Information
-    PARTICIPANT_SERVICE = 10; // Simulation Agent Service Information
-    ROUTE_SERVICE = 11; // Simulation Agent Service Information
-    END = 12;
+    CLOCK_SERVICE = 1;  // Simulation Clock Service Information
+    AREA_SERVICE = 2;  // Simulation Area Service Information
+    AGENT_SERVICE = 3; // Simulation Agent Service Information
+    PARTICIPANT_SERVICE = 4; // Simulation Agent Service Information
+    ROUTE_SERVICE = 5; // Simulation Agent Service Information
+    END = 6;
 }
 
 message Supply{
@@ -88,25 +71,7 @@ message Supply{
     string arg_json = 7;
     fixed64 mbus_id = 8;   // new mbus id for select demand.
     oneof arg_oneof {
-        fleet.Fleet arg_Fleet  = 10;   // message Fleet
-        rideshare.RideShare arg_RideShare = 11;
-        adservice.AdService arg_AdService = 12;
-        library.LibService arg_LibService = 13;
-        ptransit.PTService arg_PTService = 14;
-        routing.RoutingService arg_RoutingService = 15;
-        marketing.MarketingService arg_MarketingService = 16;
-        ptransit.PTgtfs arg_PTgtfs = 17;
-        clock.SetClockSupply arg_SetClockSupply = 18;
-        clock.ForwardClockSupply arg_ForwardClockSupply = 19;
-        clock.BackClockSupply arg_BackClockSupply = 20;
-        area.GetAreaSupply arg_GetAreaSupply = 21;
-        agent.GetAgentsSupply arg_GetAgentsSupply = 22;
-        agent.SetAgentsSupply arg_SetAgentsSupply = 23;
-        agent.ForwardAgentsSupply arg_ForwardAgentsSupply = 24;
-        participant.GetParticipantSupply arg_GetParticipantSupply = 25;
-        participant.SetParticipantSupply arg_SetParticipantSupply = 26;
-        agent.GetAgentRouteSupply arg_GetAgentRouteSupply = 27;
-        agent.GetAgentsRouteSupply arg_GetAgentsRouteSupply = 28;
+        synerex.SimSupply sim_supply = 9;
     }
 }
 
@@ -121,24 +86,7 @@ message Demand {
     string arg_json = 7;
     fixed64 mbus_id = 8;   // new mbus id for select supply...
     oneof arg_oneof {
-        fleet.Fleet arg_Fleet = 10;   // message Fleet
-        rideshare.RideShare arg_RideShare = 11;
-        adservice.AdService arg_AdService = 12;
-        library.LibService arg_LibService = 13;
-        ptransit.PTService arg_PTService = 14;
-        routing.RoutingService arg_RoutingService = 15;
-        marketing.MarketingService arg_MarketingService = 16;
-        ptransit.PTgtfs arg_PTgtfs = 17;
-        clock.SetClockDemand arg_SetClockDemand = 18;
-        clock.ForwardClockDemand arg_ForwardClockDemand = 19;
-        clock.BackClockDemand arg_BackClockDemand = 20;
-        area.GetAreaDemand arg_GetAreaDemand = 21;
-        agent.GetAgentsDemand arg_GetAgentsDemand = 22;
-        agent.SetAgentsDemand arg_SetAgentsDemand = 23;
-        participant.GetParticipantDemand arg_GetParticipantDemand = 25;
-        participant.SetParticipantDemand arg_SetParticipantDemand = 26;
-        agent.GetAgentRouteDemand arg_GetAgentRouteDemand = 27;
-        agent.GetAgentsRouteDemand arg_GetAgentsRouteDemand = 28;
+		synerex.SimDemand sim_demand = 9;
     }
 }
 

@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package api.pedestrian;
+
+option go_package="github.com/synerex/synerex_alpha/api/simulation/agent";
+
+import "simulation/common/common.proto";
+
+message Pedestrian {
+    PedStatus status = 4;
+    PedRoute route = 7;
+}
+
+message PedRoute {
+    common.Coord position = 1;
+    double direction = 2;
+    double speed = 3;
+    common.Coord destination = 4;
+    common.Coord departure = 5;
+    repeated common.Coord transit_points = 6;
+    common.Coord next_transit = 7;
+    double total_distance = 8;
+    double required_time = 9;
+}
+
+
+message PedStatus {
+    string age = 1;
+    string sex = 2;
+    string name = 3;
+}

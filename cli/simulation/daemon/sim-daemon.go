@@ -4,10 +4,10 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -22,10 +22,13 @@ import (
 	"syscall"
 	"time"
 
-	gosocketio "github.com/mtfelian/golang-socketio"
-	"github.com/synerex/synerex_alpha/provider/simulation/simutil/objects/agent"
-
+	"github.com/google/uuid"
 	"github.com/kardianos/service"
+	gosocketio "github.com/mtfelian/golang-socketio"
+	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/common"
+	"github.com/synerex/synerex_alpha/api/simulation/daemon"
+	"google.golang.org/grpc"
 )
 
 var version = "0.04"
@@ -42,6 +45,7 @@ var providerMap map[string]*exec.Cmd
 var providerMutex sync.RWMutex
 
 var githubBranch string
+var client daemon.SimDaemonClient
 
 type SynerexService struct {
 }
@@ -55,66 +59,9 @@ type SubCommands struct {
 	RunFunc     func()
 }
 
-type Order2 struct {
-	Type       string
-	ClockInfo  ClockInfo
-	AreaInfo   AreaInfo
-	AgentsInfo []AgentInfo
-}
-
 type Order struct {
 	Type   string
 	Option string
-}
-
-type Options struct {
-	optJsonName string
-	optAgentNum int
-}
-
-type Coord struct {
-	Lat float32 `json:"lat"`
-	Lon float32 `json:"lon"`
-}
-
-type Route struct {
-	Coord       Coord   `json:"coord"`
-	Direction   float32 `json:"direction"`
-	Speed       float32 `json:"speed"`
-	Departure   Coord   `json:"departure"`
-	Destination Coord   `json:"destination"`
-}
-
-type Status struct {
-	Name string `json:"name"`
-	Age  string `json:"age"`
-	Sex  string `json:"sex"`
-}
-
-type Rule struct {
-}
-
-type ClockInfo struct {
-	Time string `json:"time"`
-}
-
-type AreaInfo struct {
-	Id   uint32 `json:"id"`
-	Name string `json:"name"`
-}
-
-type AgentInfo struct {
-	Id     uint32 `json:"id"`
-	Type   string `json:"type"`
-	Status Status `json:"status"`
-	Route  Route  `json:"route"`
-	Rule   Rule   `json:"rule"`
-}
-
-type SimData struct {
-	Clock ClockInfo   `json:"clock"`
-	Area  []AreaInfo  `json:"area"`
-	Agent []AgentInfo `json:"agent"`
 }
 
 // for Structures for Github json.
@@ -206,7 +153,7 @@ func init() {
 			Description: "Order",
 		},
 		{
-			CmdName:     "SetTime",
+			CmdName:     "SetClock",
 			Description: "Order",
 		},
 		{
@@ -214,23 +161,27 @@ func init() {
 			Description: "Order",
 		},
 		{
-			CmdName:     "SetAgent",
+			CmdName:     "SetAgents",
 			Description: "Order",
 		},
 		{
-			CmdName:     "Start",
+			CmdName:     "ClearAgents",
 			Description: "Order",
 		},
 		{
-			CmdName:     "Stop",
+			CmdName:     "StartClock",
 			Description: "Order",
 		},
 		{
-			CmdName:     "Forward",
+			CmdName:     "StopClock",
 			Description: "Order",
 		},
 		{
-			CmdName:     "Back",
+			CmdName:     "ForwardClock",
+			Description: "Order",
+		},
+		{
+			CmdName:     "BackClock",
 			Description: "Order",
 		},
 		{
@@ -746,7 +697,7 @@ func handleRun(target string) string {
 	return "Can't find command " + target
 }
 
-func calcRoute() Route {
+/*func calcRoute() Route {
 
 	sLon := float32(136.974000)
 	eLon := float32(136.982000)
@@ -756,10 +707,6 @@ func calcRoute() Route {
 		Lon: sLon + (eLon-sLon)*rand.Float32(),
 		Lat: sLat + (eLat-sLat)*rand.Float32(),
 	}
-	/*destination := Coord{
-		Lon: sLon + (eLon-sLon)*rand.Float32(),
-		Lat: sLat + (eLat-sLat)*rand.Float32(),
-	}*/
 	destination := Coord{
 		Lon: 136.98800,
 		Lat: 35.156208,
@@ -844,6 +791,39 @@ func calcRoute3() *agent.Route {
 	}
 
 	return route
+}*/
+
+// Agentオブジェクトの変換
+func calcRoute() *agent.PedRoute {
+
+	var departure, destination *common.Coord
+	sLon := float64(136.982800)
+	eLon := float64(136.98800)
+	sLat := float64(35.152800)
+	eLat := float64(35.160200)
+	departure = &common.Coord{
+		Longitude: sLon + (eLon-sLon)*rand.Float64(),
+		Latitude:  sLat + (eLat-sLat)*rand.Float64(),
+	}
+	destination = &common.Coord{
+		Longitude: 136.974000,
+		Latitude:  35.156476,
+	}
+
+	transitPoints := make([]*common.Coord, 0)
+	transitPoints = append(transitPoints, destination)
+
+	route := &agent.PedRoute{
+		Position:    departure,
+		Direction:   100 * rand.Float64(),
+		Speed:       100 * rand.Float64(),
+		Departure:   departure,
+		Destination: destination,
+		TransitPoints: transitPoints,
+		NextTransit: destination,
+	}
+
+	return route
 }
 
 func generateUid(i int) uint32 {
@@ -862,12 +842,14 @@ func createRandomAgentType() string {
 
 func handleOrder(order *Order) string {
 	target := order.Type
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	fmt.Printf("Target is : %v\n", target)
 	for _, sc := range cmdArray {
 		if sc.CmdName == target {
 			var res string
 			if target == "SetAll" {
 				// JSONファイル読み込み
-				jsonName := order.Option
+				/*jsonName := order.Option
 				fmt.Printf("jsonName is : %v\n", order.Option)
 				bytes, err := ioutil.ReadFile(jsonName)
 				if err != nil {
@@ -879,71 +861,76 @@ func handleOrder(order *Order) string {
 				if err := json.Unmarshal(bytes, &simData); err != nil {
 					log.Fatal(err)
 				}
-				//fmt.Printf("simData is : %v\n", simData.Clock)
-				if simData.Clock.Time != "" && simData.Area != nil && simData.Agent != nil {
-					var order2 Order2
-					// getParticipant
-					order2.Type = "GetParticipant"
-					sioCh.Scenario.Emit("scenario", order2)
-					time.Sleep(4 * time.Second)
-					/*// setTime
-					order2.Type = "SetTime"
-					order2.ClockInfo = simData.Clock
-					sioCh.Scenario.Emit("scenario", order2)
-					time.Sleep(1 * time.Second)
-					// setArea
-					for _, areaInfo := range simData.Area{
-						order2.Type = "SetArea"
-						order2.AreaInfo = areaInfo
-						sioCh.Scenario.Emit("scenario", order2)
-						time.Sleep(1 * time.Second)
-					}*/
-					// setAgent
-					order2.Type = "SetAgent"
-					order2.AgentsInfo = simData.Agent
-					sioCh.Scenario.Emit("scenario", order2)
-					time.Sleep(1 * time.Second)
-
+				*/
+			} else if target == "SetClock" {
+				message := &daemon.SetClockMessage{
+					GlobalTime: float64(0),
+					TimeStep:   float64(1),
 				}
+				r, err := client.SetClockOrder(ctx, message)
+				if err != nil {
+					log.Fatalf("could not order: %v", err)
+				}
+				log.Printf("Response: %s", r.Ok)
 
-			} else if target == "SetAgent" {
+			} else if target == "SetAgents" {
 				agentNum, _ := strconv.Atoi(order.Option)
-				agentsInfo := make([]AgentInfo, 0)
-				/*for i := 0; i < agentNum; i++ {
-					ped := agent.NewPedestrian()
-					ped.Status = &agent.Status{
-						Name: "A",
-						Age:  "20",
-						Sex:  agent.Male,
-					}
-					ped.ID = uint64(generateUid(i))
-					ped.Type = agent.PEDESTRIAN
-					ped.Route = calcRoute3()
-					agentsInfo = append(agentsInfo, ped)
-				}*/
+				agents := make([]*agent.Agent, 0)
+
 				for i := 0; i < agentNum; i++ {
-					agentInfo := AgentInfo{
-						Id:   uint32(i),
-						Type: "pedestrian",
-						Status: Status{
-							Name: "A",
-							Age:  "20",
-							Sex:  "Femail",
-						},
-						Route: calcRoute2(agentNum, i),
+					uuid, err := uuid.NewRandom()
+					if err == nil {
+						agent := &agent.Agent{
+							Id:   uint64(uuid.ID()),
+							Type: common.AgentType_PEDESTRIAN,
+							Data: &agent.Agent_Pedestrian{
+								Pedestrian: &agent.Pedestrian{
+									Status: &agent.PedStatus{
+										Age:  "20",
+										Name: "rui",
+									},
+									Route: calcRoute(),
+								},
+							},
+						}
+						agents = append(agents, agent)
 					}
-					agentsInfo = append(agentsInfo, agentInfo)
 				}
 
-				var order2 Order2
-				order2.Type = "SetAgent"
-				order2.AgentsInfo = agentsInfo
-				sioCh.Scenario.Emit("scenario", order2)
-				time.Sleep(1 * time.Second)
-			} else {
-				var order2 Order2
-				order2.Type = target
-				sioCh.Scenario.Emit("scenario", order2)
+				message := &daemon.SetAgentsMessage{
+					Agents: agents,
+				}
+				r, err := client.SetAgentsOrder(ctx, message)
+				if err != nil {
+					log.Fatalf("could not order: %v", err)
+				}
+				log.Printf("Response: %s", r.Ok)
+
+			} else if target == "StartClock" {
+
+				message := &daemon.StartClockMessage{
+					StepNum: uint64(1),
+				}
+				r, err := client.StartClockOrder(ctx, message)
+				if err != nil {
+					log.Fatalf("could not order: %v", err)
+				}
+				log.Printf("Response: %s", r.Ok)
+
+			} else if target == "StopClock" {
+				message := &daemon.StopClockMessage{}
+				r, err := client.StopClockOrder(ctx, message)
+				if err != nil {
+					log.Fatalf("could not order: %v", err)
+				}
+				log.Printf("Response: %s", r.Ok)
+			} else if target == "ClearAgents" {
+				message := &daemon.ClearAgentsMessage{}
+				r, err := client.ClearAgentsOrder(ctx, message)
+				if err != nil {
+					log.Fatalf("could not order: %v", err)
+				}
+				log.Printf("Response: %s", r.Ok)
 			}
 
 			res = "ok"
@@ -1127,8 +1114,6 @@ func (sesrv *SynerexService) run() error {
 		logger.Infof("order from %s as %s", c.IP(), c.Id())
 		logger.Infof("Get order command %s %v", nid, order)
 
-		//test :=  map[string]string{"Order": nid, "Meta": "test"}
-
 		return handleOrder(order)
 	})
 
@@ -1271,6 +1256,15 @@ func main() {
 			}
 		}
 	}()
+
+	// Connect Daemon Server
+	conn, err := grpc.Dial("127.0.0.1:9996", grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("did not connect: %v", err)
+	}
+	defer conn.Close()
+	client = daemon.NewSimDaemonClient(conn)
+	fmt.Println("Succsess Connection with Daemon Server ")
 
 	//	logger.Info("Starting Synerex Engine "+version)
 	status, err := serv.Manage(svc)

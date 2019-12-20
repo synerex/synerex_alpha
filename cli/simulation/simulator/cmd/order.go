@@ -48,28 +48,32 @@ var orderCmds = [...]orderCmdInfo{
 		CmdName: "SetAll",
 	},
 	{
-		Aliases: []string{"SetTime", "setTime", "settime", "set-time"},
-		CmdName: "SetTime",
+		Aliases: []string{"SetClock", "setClock", "setclock", "set-clock"},
+		CmdName: "SetClock",
 	},
 	{
 		Aliases: []string{"SetArea", "setArea", "setarea", "set-area"},
 		CmdName: "SetArea",
 	},
 	{
-		Aliases: []string{"SetAgent", "setAgent", "setagent", "set-agent"},
-		CmdName: "SetAgent",
+		Aliases: []string{"SetAgents", "setAgents", "setagents", "set-agents", "SetAgent", "setAgent", "setagent", "set-agent"},
+		CmdName: "SetAgents",
+	},
+	{
+		Aliases: []string{"ClearAgents", "clearAgents", "clearagents", "clear-agents", "ClearAgent", "clearAgent", "clearagent", "clear-agent"},
+		CmdName: "ClearAgents",
 	},
 	{
 		Aliases: []string{"GetParticipant", "getParticipant", "getparticipant", "get-participant"},
 		CmdName: "GetParticipant",
 	},
 	{
-		Aliases: []string{"Start", "start"},
-		CmdName: "Start",
+		Aliases: []string{"StartClock", "startClock", "start"},
+		CmdName: "StartClock",
 	},
 	{
-		Aliases: []string{"Stop", "stop"},
-		CmdName: "Stop",
+		Aliases: []string{"StopClock", "stopClock", "stop"},
+		CmdName: "StopClock",
 	},
 	{
 		Aliases: []string{"Clear", "clear"},
@@ -119,13 +123,8 @@ func handleOrder(cmd *cobra.Command, args []string) {
 					switch ci.CmdName {
 					case "SetAll":
 						order.Option = o.optJsonName
-					case "SetTime":
-					case "SetArea":
-					case "SetAgent":
+					case "SetAgents":
 						order.Option = o.optAgentNum
-					case "Start":
-					case "Stop":
-					case "Clear":
 					}
 
 					fmt.Printf("simulator: Starting '%s'\n", ci.CmdName)

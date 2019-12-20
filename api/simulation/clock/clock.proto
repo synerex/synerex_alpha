@@ -3,57 +3,51 @@ syntax = "proto3";
 package api.clock;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/clock";
-//import "common/common.proto";
 
-message SetClockDemand{
-    uint32 time = 1;
-    uint32 cycle_duration = 2;
-    StatusType status_type = 3;
-    string meta = 4;
+message SetClockRequest{
+    Clock clock = 1;
 }
 
-message SetClockSupply{
-    ClockInfo clock_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
+message SetClockResponse{
 }
 
-message ForwardClockDemand{
-    uint32 time = 1;
-    uint32 cycle_num = 2;
-    StatusType status_type = 3;
-    string meta = 4;
+message GetClockRequest{
 }
 
-message ForwardClockSupply{
-    ClockInfo clock_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
+message GetClockResponse{
+    Clock clock = 1;
 }
 
-message BackClockDemand{
-    uint32 time = 1;
-    uint32 cycle_num = 2;
-    StatusType status_type = 3;
-    string meta = 4;
+message ForwardClockRequest{
+    uint64 step_num = 1;
 }
 
-message BackClockSupply{
-    ClockInfo clock_info = 1;
-    StatusType status_type = 2;
-    string meta = 3;
+message ForwardClockResponse{
 }
 
-message ClockInfo {
-        uint32 time = 1;
-        uint32 cycle_num = 2;
-        uint32 cycle_duration = 3;
-        uint32 cycle_interval = 4;
+message BackClockRequest{
+    uint64 step_num = 1;
 }
 
-enum StatusType {
-    OK = 0;
-    NG = 1;
-    NONE = 2;
+message BackClockResponse{
 }
+
+message StartClockRequest{
+    uint64 step_num = 1;
+}
+
+message StartClockResponse{
+}
+
+message StopClockRequest{
+}
+
+message StopClockResponse{
+}
+
+message Clock {
+        double global_time = 1;
+        double time_step = 2;
+}
+
 

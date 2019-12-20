@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package api.common;
+
+option go_package="github.com/synerex/synerex_alpha/api/simulation/common";
+
+message Coord {
+    double latitude = 1;
+    double longitude = 2;
+}
+
+enum AgentType {
+	NONE = 0;
+    PEDESTRIAN = 1;
+    CAR = 2;
+	TRAIN = 3;
+	SIGNAL = 4;
+}

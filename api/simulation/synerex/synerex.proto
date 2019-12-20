@@ -1,0 +1,112 @@
+syntax = "proto3";
+
+package api.synerex;
+
+option go_package="github.com/synerex/synerex_alpha/api/simulation/synerex";
+
+import "simulation/agent/agent.proto";
+import "simulation/area/area.proto";
+import "simulation/clock/clock.proto";
+import "simulation/participant/participant.proto";
+
+message SimDemand {
+        // participant info
+        DemandType demand_type = 1;
+
+        // meta data
+        StatusType status_type = 2;
+	    string meta = 3;
+
+		// demand data
+        oneof data {
+            agent.GetSameAreaAgentsRequest get_same_area_agents_request = 4;
+			agent.SetAgentsRequest set_agents_request = 5;
+			agent.ClearAgentsRequest clear_agents_request = 6;
+			area.GetAreaRequest get_area_request = 7;
+			participant.RegistParticipantRequest regist_participant_request = 8;
+			participant.DeleteParticipantRequest delete_participant_request = 9;
+			participant.SetParticipantsRequest set_participants_request = 10;
+			participant.CollectParticipantsRequest collect_participants_request = 11;
+			participant.DownScenarioRequest down_scenario_request = 12;
+			clock.GetClockRequest get_clock_request = 13;
+			clock.SetClockRequest set_clock_request = 14;
+			clock.StartClockRequest start_clock_request = 15;
+			clock.StopClockRequest stop_clock_request = 16;
+			clock.ForwardClockRequest forward_clock_request = 17;
+			clock.BackClockRequest back_clock_request = 18;
+        }
+    }
+
+ message SimSupply {
+        // demand type
+        SupplyType supply_type = 1;
+
+        // meta data
+        StatusType status_type = 2;
+        string meta = 3;
+
+		// supply data
+        oneof data {
+            agent.GetSameAreaAgentsResponse get_same_area_agents_response = 4;
+			agent.GetNeighborAreaAgentsResponse get_neighbor_area_agents_response = 5;
+			agent.SetAgentsResponse set_agents_response = 6;
+			agent.ClearAgentsResponse clear_agents_response = 7;
+			agent.VisualizeAgentsResponse visualize_agents_response = 8;
+			area.GetAreaResponse get_area_response = 9;
+			participant.RegistParticipantResponse regist_participant_response = 10;
+			participant.DeleteParticipantResponse delete_participant_response = 11;
+			participant.SetParticipantsResponse set_participants_response = 12;
+			participant.DownScenarioResponse down_scenario_response = 13;
+			clock.GetClockResponse get_clock_response = 14;
+			clock.SetClockResponse set_clock_response = 15;
+			clock.StartClockResponse start_clock_response = 16;
+			clock.StopClockResponse stop_clock_response = 17;
+			clock.ForwardClockResponse forward_clock_response = 18;
+			clock.BackClockResponse back_clock_response = 19;
+        }
+    }
+
+enum StatusType {
+    OK = 0;
+    NG = 1;
+    NONE = 2;
+}
+
+enum DemandType {
+    GET_SAME_AREA_AGENTS_REQUEST = 0;
+    SET_AGENTS_REQUEST = 1;
+    GET_AREA_REQUEST = 2;
+	REGIST_PARTICIPANT_REQUEST = 3;
+	DELETE_PARTICIPANT_REQUEST = 4;
+	SET_PARTICIPANTS_REQUEST = 5;
+	COLLECT_PARTICIPANTS_REQUEST = 6;
+	GET_CLOCK_REQUEST = 7;
+	SET_CLOCK_REQUEST = 8;
+	START_CLOCK_REQUEST = 9;
+	STOP_CLOCK_REQUEST = 10;
+	FORWARD_CLOCK_REQUEST = 11;
+	BACK_CLOCK_REQUEST = 12;
+    CLEAR_AGENTS_REQUEST = 13;
+    DOWN_SCENARIO_REQUEST = 14;
+}
+
+enum SupplyType {
+    GET_SAME_AREA_AGENTS_RESPONSE = 0;
+	GET_NEIGHBOR_AREA_AGENTS_RESPONSE = 1;
+    SET_AGENTS_RESPONSE = 2;
+    GET_AREA_RESPONSE = 3;
+	REGIST_PARTICIPANT_RESPONSE = 4;
+	DELETE_PARTICIPANT_RESPONSE = 5;
+	SET_PARTICIPANTS_RESPONSE = 6;
+	GET_CLOCK_RESPONSE = 7;
+	SET_CLOCK_RESPONSE = 8;
+	START_CLOCK_RESPONSE = 9;
+	STOP_CLOCK_RESPONSE = 10;
+	FORWARD_CLOCK_RESPONSE = 11;
+	BACK_CLOCK_RESPONSE = 12;
+    CLEAR_AGENTS_RESPONSE = 13;
+    VISUALIZE_AGENTS_RESPONSE = 14;
+    DOWN_SCENARIO_RESPONSE = 15;
+}
+
+
