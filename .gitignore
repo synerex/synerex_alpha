@@ -19,12 +19,13 @@ cli/daemon/se-daemon
 cli/se/se
 monitor/monitor-server
 nodeserv/nodeid-server
-provider/ad/ad-provider
-provider/fleet/fleet-provider
-provider/multi/multi-provider
-provider/taxi/taxi-provider
-provider/user/user-provider
 server/synerex-server
+provider/simulation/scenario/scenario-provider
+provider/simulation/pedestrian/pedestrian-provider
+provider/simulation/car/car-provider
+provider/simulation/area/area-provider
+provider/simulation/visualization/visualization-provider
+provider/simulation/route/*
 provider/simulation/visualization/mclient/node_modules
 
 # Go module file
