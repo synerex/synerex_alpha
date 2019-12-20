@@ -840,6 +840,48 @@ func createRandomAgentType() string {
 	}
 }
 
+/*type simDaemonServer struct{}
+
+// SendOrder
+func (s *simDaemonServer) SendOrder(stream *daemon.SetOrder) error {
+	message := &daemon.SetClockMessage{
+		GlobalTime: float64(0),
+		TimeStep:   float64(1),
+	}
+
+	order := &daemon.OrderMessage{
+		OrderType: daemon.OrderType_SET_CLOCK,
+		Message: &daemon.OrderMessage_SetClockMessage{message}
+	}
+	err = stream.Send(order)
+	if err != nil {
+		return err
+	}
+	for {
+		in, err := stream.Recv()
+		if err == io.EOF {
+            return nil
+        }
+        if err != nil {
+            return err
+        }
+
+		message := &daemon.SetClockMessage{
+			GlobalTime: float64(0),
+			TimeStep:   float64(1),
+		}
+
+		order := &daemon.OrderMessage{
+			OrderType: daemon.OrderType_SET_CLOCK,
+			Message: &daemon.OrderMessage_SetClockMessage{message}
+		}
+        err = stream.Send(order)
+        if err != nil {
+            return err
+        }
+	}
+}*/
+
 func handleOrder(order *Order) string {
 	target := order.Type
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)

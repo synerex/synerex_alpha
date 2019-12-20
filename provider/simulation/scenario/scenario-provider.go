@@ -33,27 +33,14 @@ var (
 	daemonPort       = ":9996"
 	clockTime        = flag.Int("time", 1, "Time")
 	version          = "0.01"
-	startCollectId   bool
-	isStop           bool
 	isStart          bool
-	isSetClock       bool
-	isSetArea        bool
-	isSetAgent       bool
-	isGetParticipant bool
 	mu               sync.Mutex
-	startSync        bool
 	com              *communicator.ScenarioCommunicator
 	sim              *simulator.ScenarioSimulator
 )
 
 func init() {
-	isStop = false
-	isSetClock = false
-	isSetAgent = false
-	isSetArea = false
 	isStart = false
-	isGetParticipant = false
-	startSync = false
 }
 
 // startClock:
@@ -71,11 +58,10 @@ func startClock(stepNum uint64) {
 	time.Sleep(time.Duration(sim.TimeStep) * time.Second)
 
 	// 次のサイクルを行う
-	if isStop != true {
+	if isStart {
 		startClock(stepNum)
 	} else {
 		log.Printf("\x1b[30m\x1b[47m \n Finish: Clock stopped \n GlobalTime:  %v \n TimeStep: %v \x1b[0m\n", sim.GlobalTime, sim.TimeStep)
-		isStop = false
 		isStart = false
 		// exit goroutin
 		return
@@ -85,7 +71,7 @@ func startClock(stepNum uint64) {
 
 // stopClock: Clockを停止する
 func stopClock() (bool, error) {
-	isStop = true
+	isStart = false
 	return true, nil
 }
 
@@ -98,7 +84,6 @@ func setAgents(agents []*agent.Agent) (bool, error) {
 	// 同期のため待機
 	com.WaitSetAgentsResponse()
 
-	isSetAgent = true
 	log.Printf("\x1b[30m\x1b[47m \n Finish: Agents set \n Add: %v \x1b[0m\n", len(agents))
 	return true, nil
 }
@@ -273,6 +258,7 @@ func (s *simDaemonServer) SetClockOrder(ctx context.Context, in *daemon.SetClock
 func (s *simDaemonServer) StartClockOrder(ctx context.Context, in *daemon.StartClockMessage) (*daemon.Response, error) {
 	log.Printf("Received:StartClock")
 	stepNum := in.GetStepNum()
+	log.Printf("debug %v\n", isStart)
 	if isStart {
 		log.Printf("\x1b[30m\x1b[47m \n Simulator is already started. \x1b[0m\n")
 	} else {
@@ -288,7 +274,6 @@ func (s *simDaemonServer) StopClockOrder(ctx context.Context, in *daemon.StopClo
 	ok, err := stopClock()
 	return &daemon.Response{Ok: ok}, err
 }
-
 
 
 func runDaemonServer() {

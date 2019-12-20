@@ -12,11 +12,23 @@ service SimDaemon {
 	rpc SetClockOrder(SetClockMessage) returns (Response) {}
 	rpc StartClockOrder(StartClockMessage) returns (Response) {}
 	rpc StopClockOrder(StopClockMessage) returns (Response) {}
+	// rpc Order(stream OrderMessage) returns (stream Response) {}
 }
 
 message Response {
     bool ok = 1;
     string err = 2;
+}
+
+message OrderMessage {
+	OrderType order_type = 1;
+	oneof message {
+		SetAgentsMessage set_agents_message = 2;
+		ClearAgentsMessage clear_agents_message = 3;
+		SetClockMessage set_clock_message = 4;
+		StartClockMessage start_clock_message = 5;
+		StopClockMessage stop_clock_message = 6;
+	}
 }
 
 message SetAgentsMessage {
@@ -37,4 +49,12 @@ message StartClockMessage {
 
 message StopClockMessage {
 
+}
+
+enum OrderType {
+    SET_AGENTS = 0;
+    CLEAR_AGENTS = 1;
+    SET_CLOCK = 2;
+    START_CLOCK = 3;
+    STOP_CLOCK = 4;
 }
