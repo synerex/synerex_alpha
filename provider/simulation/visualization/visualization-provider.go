@@ -7,6 +7,7 @@ import (
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
 	"github.com/synerex/synerex_alpha/api/simulation/synerex"
@@ -18,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	//"encoding/json"
 
 	gosocketio "github.com/mtfelian/golang-socketio"
 	"github.com/synerex/synerex_alpha/provider/simulation/visualization/simulator"
@@ -41,6 +43,45 @@ var (
 func init(){
 	isDownScenario = false
 }
+
+type AreaInfo struct {
+	id    int64   `json:"id"`
+	name string   `json:"name"`
+	d_slon   float64 `json:"d_slon"`
+	d_slat   float64 `json:"d_slat"`
+	d_elon float64 `json:"d_elon"`
+	d_elat float64   `json:"d_elat"`
+	c_slon   float64 `json:"c_slon"`
+	c_slat   float64 `json:"c_slat"`
+	c_elon float64 `json:"c_elon"`
+	c_elat float64   `json:"c_elat"`
+}
+
+// getAreaJson: areaInfoをjson化する関数
+/*func (a *AreaInfo) GetAreaJson() string {
+	s := fmt.Sprintf("{\"mtype\":%d,\"id\":%d,\"lat\":%f,\"lon\":%f,\"angle\":%f,\"speed\":%d,\"area\":%d}",
+		a.mtype, a.id, a.lat, a.lon, a.angle, a.speed, a.area)
+	return s
+}*/
+
+func sendAreaToHarmowareVis(areas []*area.Area){
+	jsonAreas := make([]string, 0)
+//	for i, _ := range areas{
+//		
+//	}
+//	ai := &AreaInfo {
+//		id: 23,
+//		name: "sampleMap",
+//	}
+	//jsonAreas = append(jsonAreas, ai.GetAreaJson())
+	
+	//bytes, _ := json.Marshal(&ai)
+	jsonAreas = append(jsonAreas, "test")
+	mu.Lock()
+	ioserv.BroadcastToAll("area", jsonAreas)
+	mu.Unlock()
+}
+
 
 type MapMarker struct {
 	mtype int32   `json:"mtype"`
@@ -287,6 +328,8 @@ func runServer() *gosocketio.Server {
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		log.Printf("Connected from %s as %s", c.IP(), c.Id())
+
+		sendAreaToHarmowareVis(make([]*area.Area, 0))
 		// do something.
 	})
 
@@ -383,6 +426,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!

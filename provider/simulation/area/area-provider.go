@@ -50,6 +50,7 @@ func readAreaData() []*area.Area {
 	return areaData
 }
 
+
 // notifyStartUp : 起動時に、他プロバイダの参加者情報を集める
 func notifyStartUp() {
 

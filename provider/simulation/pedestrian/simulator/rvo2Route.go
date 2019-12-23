@@ -196,12 +196,12 @@ func (rvo2route *RVO2Route) CalcNextAgents() []*agent.Agent {
 	currentAgents := rvo2route.Agents
 
 	timeStep := rvo2route.TimeStep
-	neighborDist := 0.075 // どのくらいの距離の相手をNeighborと認識するか?Neighborとの距離をどのくらいに保つか？ぶつかったと認識する距離？
-	maxneighbors := 100   // 周り何体を計算対象とするか
-	timeHorizon := 1.5
-	timeHorizonObst := 2.0
-	radius := 0.025  // エージェントの半径
-	maxSpeed := 0.02 // エージェントの最大スピード
+	neighborDist := 0.005 // どのくらいの距離の相手をNeighborと認識するか?Neighborとの距離をどのくらいに保つか？ぶつかったと認識する距離？
+	maxneighbors := 10   // 周り何体を計算対象とするか
+	timeHorizon := 0.15
+	timeHorizonObst := 0.20
+	radius := 0.001  // エージェントの半径
+	maxSpeed := 0.005 // エージェントの最大スピード
 	sim = rvo.NewRVOSimulator(timeStep, neighborDist, maxneighbors, timeHorizon, timeHorizonObst, radius, maxSpeed, &rvo.Vector2{X: 0, Y: 0})
 
 	// scenario設定

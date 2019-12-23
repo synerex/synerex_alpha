@@ -20,6 +20,7 @@ import Controller from "../components/controller";
 import * as io from "socket.io-client";
 
 const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN; //Acquire Mapbox accesstoken
+console.log("mapbox_token: ", MAPBOX_TOKEN);
 
 class App extends Container {
     constructor(props) {
@@ -134,8 +135,15 @@ class App extends Container {
             console.log("Socket.IO connected!");
         });
         socket.on("event", this.getEvent.bind(this));
+        socket.on("area", this.getArea.bind(this));
         socket.on("disconnect", () => {
             console.log("Socket.IO disconnected!");
+        });
+    }
+
+    getArea(socketData) {
+        socketData.forEach(areaData => {
+            console.log("areaData: ", areaData);
         });
     }
 
@@ -172,6 +180,7 @@ class App extends Container {
                     movedata.operation.push({
                         elapsedtime: time,
                         position: [lon, lat, 0],
+                        radius: 1,
                         angle,
                         speed,
                         color
@@ -199,6 +208,7 @@ class App extends Container {
                         {
                             elapsedtime: time,
                             position: [lon, lat, 0],
+                            radius: 1,
                             angle,
                             speed,
                             color
