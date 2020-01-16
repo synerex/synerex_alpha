@@ -109,7 +109,7 @@ func (p *CarCommunicator) CreateWaitIdList(myAgentType common.AgentType, myAreaI
 			getClockIdList = append(getClockIdList, clockChannelId)
 			deleteParticipantIdList = append(deleteParticipantIdList, participantChannelId)
 		}
-		if myAreaId == areaId {
+		if myAreaId == areaId && agentChannelId != uint64(p.MyClients.AgentClient.ClientID) {
 			getSameAreaAgentsIdList = append(getSameAreaAgentsIdList, agentChannelId)
 		}
 		for _, neighborAreaId := range neighborAreaIds {
@@ -228,14 +228,19 @@ func (p *CarCommunicator) SendToGetClockResponse(sp *pb.Supply) {
 
 // WaitGetSameAreaAgentsResponse : GetSameAreaAgentsResponseを待機する
 func (p *CarCommunicator) WaitGetSameAreaAgentsResponse() []*agent.Agent {
-	// channelの初期化
-	p.GetSameAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-	spMap := p.Wait(p.GetSameAreaAgentsIdList, p.GetSameAreaAgentsCh)
-	// Agentsを取得
 	sameAgents := make([]*agent.Agent, 0)
-	for _, sp := range spMap {
-		agents := sp.GetSimSupply().GetGetSameAreaAgentsResponse().GetAgents()
-		sameAgents = append(sameAgents, agents...)
+	// 同じエリアが他にない場合、スキップ
+	if len(p.GetSameAreaAgentsIdList) != 0{
+		spMap := p.Wait(p.GetSameAreaAgentsIdList, p.GetSameAreaAgentsCh)
+		// Agentsを取得
+	
+		for _, sp := range spMap {
+			agents := sp.GetSimSupply().GetGetSameAreaAgentsResponse().GetAgents()
+			sameAgents = append(sameAgents, agents...)
+		}
+	
+		// channelの初期化
+		p.GetSameAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	}
 	return sameAgents
 }
@@ -248,11 +253,8 @@ func (p *CarCommunicator) SendToGetSameAreaAgentsResponse(sp *pb.Supply) {
 // WaitGetNeighborAreaAgentsResponse : GetNeighborAreaAgentsResponseを待機する
 func (p *CarCommunicator) WaitGetNeighborAreaAgentsResponse() []*agent.Agent {
 	neighborAgents := make([]*agent.Agent, 0)
-
-	if len(p.GetNeighborAreaAgentsIdList) == 0 {
-		// 隣接するエリアがない場合
-		return neighborAgents
-	} else {
+	// 隣接エリアが他にない場合、スキップ
+	if len(p.GetNeighborAreaAgentsIdList) != 0 {
 
 		spMap := p.Wait(p.GetNeighborAreaAgentsIdList, p.GetNeighborAreaAgentsCh)
 		// Agentsを取得
@@ -264,8 +266,9 @@ func (p *CarCommunicator) WaitGetNeighborAreaAgentsResponse() []*agent.Agent {
 		// channelの初期化:　チャネルにすでに情報が入っているため最後に初期化する
 		p.GetNeighborAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 
-		return neighborAgents
 	}
+
+	return neighborAgents
 }
 
 // SendToGetNeighborAreaAgentsResponse : GetNeighborAreaAgentsResponseを送る

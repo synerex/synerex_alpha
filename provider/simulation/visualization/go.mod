@@ -6,12 +6,13 @@ require (
 	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0
-	github.com/synerex/synerex_alpha/api/simulation/common v0.0.0-00010101000000-000000000000 // indirect
-	github.com/synerex/synerex_alpha/api/simulation/synerex v0.0.0-00010101000000-000000000000 // indirect
+	github.com/synerex/synerex_alpha/api/simulation/common v0.0.0-00010101000000-000000000000
+	github.com/synerex/synerex_alpha/api/simulation/participant v0.0.0
+	github.com/synerex/synerex_alpha/api/simulation/synerex v0.0.0-00010101000000-000000000000
 	github.com/synerex/synerex_alpha/provider/simulation/simutil/communicator v0.0.0-00010101000000-000000000000 // indirect
 	github.com/synerex/synerex_alpha/provider/simulation/simutil/simulator v0.0.0-00010101000000-000000000000 // indirect
-	github.com/synerex/synerex_alpha/provider/simulation/visualization/communicator v0.0.0-00010101000000-000000000000 // indirect
-	github.com/synerex/synerex_alpha/provider/simulation/visualization/simulator v0.0.0-00010101000000-000000000000 // indirect
+	github.com/synerex/synerex_alpha/provider/simulation/visualization/communicator v0.0.0-00010101000000-000000000000
+	github.com/synerex/synerex_alpha/provider/simulation/visualization/simulator v0.0.0-00010101000000-000000000000
 	github.com/synerex/synerex_alpha/sxutil v0.0.0
 	google.golang.org/grpc v1.22.1
 )

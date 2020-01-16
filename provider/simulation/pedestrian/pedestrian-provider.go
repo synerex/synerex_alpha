@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"github.com/paulmach/orb/geojson"
+	"io/ioutil"
+	//"encoding/json"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
@@ -32,6 +35,18 @@ func init(){
 	flag.Parse()
 	areaId = uint64(*areaIdFlag)
 	isDownScenario = false
+}
+
+func loadGeoJson(fname string) *geojson.FeatureCollection  {
+	bytes, err := ioutil.ReadFile(fname)
+	if err != nil {
+		log.Print("Can't read file:" , err)
+		panic("load json")
+	}
+
+	fc, _ := geojson.UnmarshalFeatureCollection(bytes)
+
+	return fc
 }
 
 // getArea: 起動時にエリアを取得する関数
@@ -318,6 +333,8 @@ func main() {
 	// Pedestrian Simulator
 	sim = simulator.NewPedSimulator(1.0, 0.0)
 
+
+
 	client := pb.NewSynerexClient(conn)
 	argJson := fmt.Sprintf("{Client:Ped, AreaId: %d}", areaId)
 
@@ -336,6 +353,9 @@ func main() {
 	getArea()
 	// 新規参加登録
 	registParticipant()
+		// geogsonをロードしてsimulatorにセット
+		//fc := loadGeoJson("higashiyama.geojson")
+		//sim.SetGeoInfo(fc)
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!

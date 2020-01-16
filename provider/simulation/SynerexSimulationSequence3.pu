@@ -2,6 +2,15 @@
 
 @startuml
 
+'12/23までに行うこと'
+'Todo: geojson通りに壁を設置する'
+'FIX: エージェントの動きがおかしい'
+'Todo: geojson内にエージェントをランダムに設置'
+'Todo: geojson内のランダムな地点へ移動'
+'FIX: Pedestrianを停止するとscenarioまで停止してしまう'
+'Todo: daemon,モニタ上で操作できるようにする'
+'Todo: 連携するエリアの大きさプロバイダ数の自動調整'
+
 'http://plantuml.com/ja/guide'
 
 

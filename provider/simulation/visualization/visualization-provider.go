@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 	"sync"
-
+	"time"
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
@@ -17,6 +17,7 @@ import (
 	//	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"fmt"
 	"net/http"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	//"encoding/json"
@@ -63,6 +64,23 @@ type AreaInfo struct {
 		a.mtype, a.id, a.lat, a.lon, a.angle, a.speed, a.area)
 	return s
 }*/
+func sendFile(fname string) {
+	log.Printf("sendFile")
+
+	bytes, err := ioutil.ReadFile(fname)
+	if err != nil {
+		log.Print("Can't read file:", err)
+		panic("load json")
+	}
+	
+	strjs := string(bytes)
+	log.Printf("json: ", len(strjs))
+
+	mu.Lock()
+	ioserv.BroadcastToAll("geojson", strjs)
+	mu.Unlock()
+
+}
 
 func sendAreaToHarmowareVis(areas []*area.Area){
 	jsonAreas := make([]string, 0)
@@ -112,7 +130,7 @@ func sendToHarmowareVis(sumAgents []*agent.Agent) {
 			case common.AgentType_PEDESTRIAN:
 				ped := agentInfo.GetPedestrian()
 				mm := &MapMarker{
-					mtype: int32(agentInfo.Type), // depends on type of Ped: 0, Car , 1
+					mtype: int32(agentInfo.Type), 
 					id:    int32(agentInfo.Id),
 					lat:   float32(ped.Route.Position.Latitude),
 					lon:   float32(ped.Route.Position.Longitude),
@@ -124,7 +142,7 @@ func sendToHarmowareVis(sumAgents []*agent.Agent) {
 			case common.AgentType_CAR:
 				car := agentInfo.GetCar()
 				mm := &MapMarker{
-					mtype: int32(agentInfo.Type), // depends on type of Ped: 0, Car , 1
+					mtype: int32(agentInfo.Type), 
 					id:    int32(agentInfo.Id),
 					lat:   float32(car.Route.Position.Latitude),
 					lon:   float32(car.Route.Position.Longitude),
@@ -136,7 +154,7 @@ func sendToHarmowareVis(sumAgents []*agent.Agent) {
 			case common.AgentType_TRAIN:
 				train := agentInfo.GetTrain()
 				mm := &MapMarker{
-					mtype: int32(agentInfo.Type), // depends on type of Ped: 0, Car , 1
+					mtype: int32(agentInfo.Type), 
 					id:    int32(agentInfo.Id),
 					lat:   float32(train.Route.Position.Latitude),
 					lon:   float32(train.Route.Position.Longitude),
@@ -329,8 +347,9 @@ func runServer() *gosocketio.Server {
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		log.Printf("Connected from %s as %s", c.IP(), c.Id())
 
-		sendAreaToHarmowareVis(make([]*area.Area, 0))
-		// do something.
+		//sendAreaToHarmowareVis(make([]*area.Area, 0))
+		// geojsonを送信
+		sendFile("higashiyama.geojson")
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
@@ -414,6 +433,8 @@ func main() {
 	// 新規参加登録
 	registParticipant()
 
+
+
 	wg.Add(1)
 	serveMux := http.NewServeMux()
 
@@ -421,6 +442,9 @@ func main() {
 	serveMux.HandleFunc("/", assetsFileHandler)
 	//Order = "GetParticipant"
 	//orderGetParticipant()
+
+	
+
 	log.Printf("Starting Harmoware VIS  Provider %s  on port %d", version, *port)
 	err = http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", *port), serveMux)
 	if err != nil {

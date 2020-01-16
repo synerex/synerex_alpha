@@ -4,7 +4,6 @@ import {
     connectToHarmowareVis,
     HarmoVisLayers,
     MovesLayer,
-    LineMapLayer,
     MovesInput,
     LoadingIcon,
     FpsDisplay,
@@ -15,12 +14,22 @@ import {
     BasedProps
 } from "harmoware-vis";
 
+//import { StaticMap,  } from 'react-map-gl';
+import { Layer } from "@deck.gl/core";
+import DeckGL from "@deck.gl/react";
+import { GeoJsonLayer, LineLayer } from "@deck.gl/layers";
+
+import {
+    _MapContext as MapContext,
+    InteractiveMap,
+    NavigationControl
+} from "react-map-gl";
+
 import Controller from "../components/controller";
 
 import * as io from "socket.io-client";
 
 const MAPBOX_TOKEN = process.env.MAPBOX_ACCESS_TOKEN; //Acquire Mapbox accesstoken
-console.log("mapbox_token: ", MAPBOX_TOKEN);
 
 class App extends Container {
     constructor(props) {
@@ -36,98 +45,11 @@ class App extends Container {
             depotOptionVisible: false,
             heatmapVisible: false,
             optionChange: false,
-            popup: [0, 0, ""],
-            linemapData: [
-                // area
-                {
-                    sourcePosition: [136.973172, 35.152476, 0],
-                    targetPosition: [136.984031, 35.152476, 0],
-                    strokeWidth: 6.0
-                },
-                {
-                    sourcePosition: [136.973172, 35.160678, 0],
-                    targetPosition: [136.984031, 35.160678, 0],
-                    strokeWidth: 6.0
-                },
-                {
-                    sourcePosition: [136.973172, 35.152476, 0],
-                    targetPosition: [136.973172, 35.160678, 0],
-                    strokeWidth: 6.0
-                },
-                {
-                    sourcePosition: [136.984031, 35.152476, 0],
-                    targetPosition: [136.984031, 35.160678, 0],
-                    strokeWidth: 6.0
-                },
-
-                {
-                    sourcePosition: [136.981014, 35.152476, 0],
-                    targetPosition: [136.990047, 35.152476, 0],
-                    strokeWidth: 6.0
-                },
-                {
-                    sourcePosition: [136.981014, 35.160678, 0],
-                    targetPosition: [136.990047, 35.160678, 0],
-                    strokeWidth: 6.0
-                },
-                {
-                    sourcePosition: [136.981014, 35.152476, 0],
-                    targetPosition: [136.981014, 35.160678, 0],
-                    strokeWidth: 6.0
-                },
-                {
-                    sourcePosition: [136.990047, 35.152476, 0],
-                    targetPosition: [136.990047, 35.160678, 0],
-                    strokeWidth: 6.0
-                },
-                // controlled
-                {
-                    sourcePosition: [136.9825, 35.152476, 0],
-                    targetPosition: [136.9825, 35.160678, 0],
-                    color: [255, 0, 255],
-                    strokeWidth: 6.0
-                }
-
-                // wall1　下
-                /*{
-                    sourcePosition: [136.9823, 35.155078, 0],
-                    targetPosition: [136.9823, 35.152476, 0],
-                    color: [55, 100, 200],
-                    strokeWidth: 6.0
-                },
-                {
-                    sourcePosition: [136.9827, 35.155078, 0],
-                    targetPosition: [136.9827, 35.152476, 0],
-                    color: [55, 100, 200],
-                    strokeWidth: 6.0
-                },
-                {
-                    sourcePosition: [136.9823, 35.155078, 0],
-                    targetPosition: [136.9827, 35.155078, 0],
-                    color: [55, 100, 200],
-                    strokeWidth: 6.0
-                },
-
-                // wall2 上
-                {
-                    sourcePosition: [136.9823, 35.157576, 0],
-                    targetPosition: [136.9823, 35.160678, 0],
-                    color: [55, 100, 200],
-                    strokeWidth: 6.0
-                },
-                {
-                    sourcePosition: [136.9827, 35.157576, 0],
-                    targetPosition: [136.9827, 35.160678, 0],
-                    color: [55, 100, 200],
-                    strokeWidth: 6.0
-                },
-                {
-                    sourcePosition: [136.9823, 35.157576, 0],
-                    targetPosition: [136.9827, 35.157576, 0],
-                    color: [55, 100, 200],
-                    strokeWidth: 6.0
-                }*/
-            ]
+            mapbox_token: MAPBOX_TOKEN,
+            geojson: null,
+            lines: [],
+            linecolor: [0, 255, 255],
+            popup: [0, 0, ""]
         };
 
         // for receiving event info.
@@ -135,26 +57,98 @@ class App extends Container {
             console.log("Socket.IO connected!");
         });
         socket.on("event", this.getEvent.bind(this));
-        socket.on("area", this.getArea.bind(this));
+        socket.on("geojson", this.getGeoJson.bind(this));
+        socket.on("lines", this.getLines.bind(this));
+        socket.on("agents", this.getAgents.bind(this));
+
+        /*socket.on('mapbox_token', (token) => {
+			console.log("Token Got:" + MAPBOX_TOKEN)
+			this.setState({ mapbox_token: token })
+		});*/
+
         socket.on("disconnect", () => {
             console.log("Socket.IO disconnected!");
         });
     }
 
-    getArea(socketData) {
-        socketData.forEach(areaData => {
-            console.log("areaData: ", areaData);
-        });
+    getGeoJson(data) {
+        console.log("Geojson:" + data.length);
+        console.log("jsonData", data);
+        console.log(JSON.parse(data));
+        this.setState({ geojson: JSON.parse(data) });
+    }
+
+    getLines(data) {
+        console.log("getLines!:" + data.length);
+        //		console.log(data)
+        if (this.state.lines.length > 0) {
+            const ladd = JSON.parse(data);
+            const lbase = this.state.lines;
+            const lists = lbase.concat(ladd);
+            this.setState({ lines: lists });
+        } else {
+            this.setState({ lines: JSON.parse(data) });
+        }
+    }
+
+    getAgents(data) {
+        const { actions, movesbase } = this.props;
+        const agents = JSON.parse(data).agents;
+        //		console.log(data)
+        //		console.log(agents)
+
+        const time = Date.now() / 1000; // set time as now. (If data have time, ..)
+        //		let hit = false;
+        //		const movesbasedata = [...movesbase]; // why copy !?
+        let setMovesbase = [];
+
+        if (movesbase.length == 0) {
+            //			console.log("Initial!:" + agents.length)
+            for (let i = 0, len = agents.length; i < len; i++) {
+                setMovesbase.push({
+                    mtype: 0,
+                    id: i,
+                    departuretime: time,
+                    arrivaltime: time,
+                    operation: [
+                        {
+                            elapsedtime: time,
+                            position: [
+                                agents[i].point[0],
+                                agents[i].point[1],
+                                0
+                            ],
+                            angle: 0,
+                            speed: 1
+                        }
+                    ]
+                });
+            }
+            // we may refresh viewport
+        } else {
+            //			console.log("Aget Update!" + data.length+":"+ agents[0])
+            for (let i = 0, lengthi = movesbase.length; i < lengthi; i++) {
+                movesbase[i].arrivaltime = time;
+                movesbase[i].operation.push({
+                    elapsedtime: time,
+                    position: [agents[i].point[0], agents[i].point[1], 0],
+                    angle: 0,
+                    speed: 1
+                });
+                //				setMovesbase.push(movesbase[i]);
+            }
+            setMovesbase = movesbase;
+        }
+
+        actions.updateMovesBase(setMovesbase);
     }
 
     getEvent(socketsData) {
-        //console.log("Get event4 socketsData!!", socketsData)
         const { actions, movesbase, movedData } = this.props;
         const time = Date.now() / 1000; // set time as now. (If data have time, ..)
         const setMovesbase = [];
         //const setMovedData = [];
-        const movesbasedata = [...movesbase]; // why copy !?
-        //const movedData2 = [...movedData]; // why copy !?
+        const movesbasedata = [...movesbase];
 
         console.log("socketData length", socketsData.length);
         //console.log("movesbasedata length", movesbasedata.length)
@@ -180,7 +174,7 @@ class App extends Container {
                     movedata.operation.push({
                         elapsedtime: time,
                         position: [lon, lat, 0],
-                        radius: 1,
+                        radius: 3,
                         angle,
                         speed,
                         color
@@ -208,16 +202,13 @@ class App extends Container {
                         {
                             elapsedtime: time,
                             position: [lon, lat, 0],
-                            radius: 1,
+                            radius: 3,
                             angle,
                             speed,
                             color
                         }
                     ]
                 });
-                /*setMovedData.push({
-				sourceColor: [255, 0, 255]
-	    });*/
             }
         });
 
@@ -232,47 +223,40 @@ class App extends Container {
         const setMovesbase = [];
         let dataModify = false;
         const compareTime = settime - maxKeepSecond;
-        for (let i = 0, lengthi = movesbasedata.length; i < lengthi; i += 1) {
-            const {
-                departuretime: propsdeparturetime,
-                operation: propsoperation
-            } = movesbasedata[i];
-            let departuretime = propsdeparturetime;
-            let startIndex = propsoperation.length;
-            for (
-                let j = 0, lengthj = propsoperation.length;
-                j < lengthj;
-                j += 1
-            ) {
-                if (propsoperation[j].elapsedtime > compareTime) {
-                    startIndex = j;
-                    departuretime = propsoperation[j].elapsedtime;
-                    break;
-                }
-            }
-            if (startIndex === 0) {
-                setMovesbase.push(Object.assign({}, movesbasedata[i]));
-            } else if (startIndex < propsoperation.length) {
-                setMovesbase.push(
-                    Object.assign({}, movesbasedata[i], {
-                        operation: propsoperation.slice(startIndex),
-                        departuretime
-                    })
-                );
-                dataModify = true;
-            } else {
-                dataModify = true;
-            }
+
+        /*
+		for (let i = 0, lengthi = movesbasedata.length; i < lengthi; i += 1) {
+			const { departuretime: propsdeparturetime, operation: propsoperation } = movesbasedata[i];
+			let departuretime = propsdeparturetime;
+			let startIndex = propsoperation.length;
+			for (let j = 0, lengthj = propsoperation.length; j < lengthj; j += 1) {
+				if (propsoperation[j].elapsedtime > compareTime) {
+					startIndex = j;
+					departuretime = propsoperation[j].elapsedtime;
+					break;
+				}
+			}
+			if (startIndex === 0) {
+				setMovesbase.push(Object.assign({}, movesbasedata[i]));
+			} else
+				if (startIndex < propsoperation.length) {
+					setMovesbase.push(Object.assign({}, movesbasedata[i], {
+						operation: propsoperation.slice(startIndex), departuretime
+					}));
+					dataModify = true;
+				} else {
+					dataModify = true;
+				}
+		}*/
+        if (!animatePause) {
+            actions.setAnimatePause(true);
         }
-        if (dataModify) {
-            if (!animatePause) {
-                actions.setAnimatePause(true);
-            }
-            actions.updateMovesBase(setMovesbase);
-            if (!animatePause) {
-                actions.setAnimatePause(false);
-            }
+        actions.updateMovesBase(setMovesbase);
+        if (!animatePause) {
+            actions.setAnimatePause(false);
         }
+        console.log(this.props.viewport);
+        console.log(MapContext.viewport);
     }
 
     getMoveDataChecked(e) {
@@ -291,6 +275,16 @@ class App extends Container {
         this.setState({ optionChange: e.target.checked });
     }
 
+    initialize(gl) {
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+        console.log("GL Initialized!");
+    }
+
+    logViewPort(state, view) {
+        console.log("Viewport changed!", state, view);
+    }
+
     render() {
         const props = this.props;
         const {
@@ -303,29 +297,10 @@ class App extends Container {
             routePaths,
             lightSettings,
             movesbase,
-            movedData
+            movedData,
+            mapStyle
         } = props;
-        //console.log("viewPort: ", viewport);
-        /*var pedMovesbase = []
-	var pedMovedData = []
-	var carMovesbase = []
-	var carMovedData = []
-	var movedDataInfo = [...movedData]
-	movesbase.forEach((movebase, index)=>{
-		let mtype = movebase.mtype
-		if (mtype === 0){	// ped
-			pedMovesbase.push(movebase)
-			pedMovedData.push(movedDataInfo[index])
-		}else if(mtype === 1){
-			carMovesbase.push(movebase)
-			carMovedData.push(movedDataInfo[index])
-		}
-	})
-	console.log("pedmobes", pedMovesbase)
-		console.log("pedmovedData", pedMovedData)
-		console.log("carmobes", carMovesbase)
-		console.log("carmovedData", carMovedData)*/
-
+        //	const { movesFileName } = inputFileName;
         const optionVisible = false;
         const onHover = el => {
             if (el && el.object) {
@@ -345,7 +320,118 @@ class App extends Container {
                 this.setState({ popup: [0, 0, ""] });
             }
         };
+        var layers = [];
 
+        if (this.state.geojson != null) {
+            console.log("push layer geojson");
+            layers.push(
+                new GeoJsonLayer({
+                    id: "geojson-layer",
+                    data: this.state.geojson,
+                    pickable: true,
+                    stroked: false,
+                    filled: true,
+                    extruded: true,
+                    lineWidthScale: 2,
+                    lineWidthMinPixels: 2,
+                    getFillColor: [160, 160, 180, 200],
+                    //				getLineColor: d => colorToRGBArray(d.properties.color),
+                    getLineColor: [255, 255, 255],
+                    getRadius: 1,
+                    getLineWidth: 1,
+                    getElevation: 10
+                    //				onHover: ({object, x, y}) => {
+                    //				  const tooltip = object.properties.name || object.properties.station;
+                    //				}
+                })
+            );
+        }
+
+        if (this.state.lines.length > 0) {
+            this.lines = 0;
+            layers.push(
+                new LineLayer({
+                    visible: true,
+                    data: this.state.lines,
+                    getSourcePosition: d => d.from,
+                    getTargetPosition: d => d.to,
+                    getColor: this.state.linecolor,
+                    getWidth: 1,
+                    widthMinPixels: 0.1
+                })
+            );
+        }
+
+        if (this.state.moveDataVisible && movedData.length > 0) {
+            layers.push(
+                new MovesLayer({
+                    viewport,
+                    routePaths,
+                    movesbase,
+                    movedData,
+                    clickedObject,
+                    actions,
+                    lightSettings,
+                    visible: this.state.moveDataVisible,
+                    optionVisible: this.state.moveOptionVisible,
+                    layerRadiusScale: 0.01,
+                    getRaduis: x => 0.02,
+                    getStrokeWidth: 0.01,
+                    optionCellSize: 2,
+                    sizeScale: 1,
+                    iconChange: false,
+                    optionChange: false, // this.state.optionChange,
+                    onHover
+                })
+            );
+        }
+
+        const onViewportChange =
+            this.props.onViewportChange || actions.setViewport;
+        //		viewState={viewport}
+
+        const visLayer =
+            this.state.mapbox_token.length > 0 ? (
+                <DeckGL
+                    layers={layers}
+                    onWebGLInitialized={this.initialize}
+                    initialViewState={{
+                        longitude: 136.974572,
+                        latitude: 35.158625,
+                        zoom: 17
+                    }}
+                    controller={true}
+                    ContextProvider={MapContext.Provider}
+                >
+                    <InteractiveMap
+                        viewport={viewport}
+                        mapStyle={"mapbox://styles/mapbox/dark-v8"}
+                        onViewportChange={onViewportChange}
+                        mapboxApiAccessToken={this.state.mapbox_token}
+                        visible={true}
+                    ></InteractiveMap>
+                </DeckGL>
+            ) : (
+                <LoadingIcon loading={true} />
+            );
+
+        /*					<div style={{ position: "absolute", left: 30, top: 120, zIndex: 1 }}>
+						<NavigationControl />
+					</div>
+				*/
+
+        /*				<InteractiveMap
+					viewport={viewport} 
+					mapStyle={'mapbox://styles/mapbox/dark-v8'}
+					onViewportChange={onViewportChange}
+					mapboxApiAccessToken={this.state.mapbox_token}
+					visible={true}>
+
+					<DeckGL viewState={viewport} layers={layers} onWebGLInitialized={this.initialize} />
+
+				</InteractiveMap>
+				: <LoadingIcon loading={true} />;
+*/
         return (
             <div>
                 <Controller
@@ -360,43 +446,7 @@ class App extends Container {
                         this
                     )}
                 />
-                <div className="harmovis_area">
-                    <HarmoVisLayers
-                        viewport={viewport}
-                        actions={actions}
-                        mapboxApiAccessToken={MAPBOX_TOKEN}
-                        layers={
-                            this.state.moveDataVisible && movedData.length > 0
-                                ? [
-                                      new LineMapLayer({
-                                          viewport,
-                                          linemapData: this.state.linemapData
-                                      }),
-                                      new MovesLayer({
-                                          viewport,
-                                          routePaths,
-                                          movesbase,
-                                          movedData,
-                                          clickedObject,
-                                          actions,
-                                          lightSettings,
-                                          visible: this.state.moveDataVisible,
-                                          optionVisible: this.state
-                                              .moveOptionVisible,
-                                          optionChange: this.state.optionChange,
-                                          iconChange: false,
-                                          onHover
-                                      })
-                                  ]
-                                : [
-                                      new LineMapLayer({
-                                          viewport,
-                                          linemapData: this.state.linemapData
-                                      })
-                                  ]
-                        }
-                    />
-                </div>
+                <div className="harmovis_area">{visLayer}</div>
                 <svg
                     width={viewport.width}
                     height={viewport.height}
@@ -418,7 +468,7 @@ class App extends Container {
                             : null}
                     </g>
                 </svg>
-                <LoadingIcon loading={loading} />
+
                 <FpsDisplay />
             </div>
         );

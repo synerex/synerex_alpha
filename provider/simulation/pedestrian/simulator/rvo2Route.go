@@ -3,17 +3,60 @@ package simulator
 import (
 	"fmt"
 	"math"
+	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/geojson"
+	//monitor "github.com/RuiHirano/rvo2-go/monitor"
 
 	rvo "github.com/RuiHirano/rvo2-go/src/rvosimulator"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
+	"io/ioutil"
+	"log"
+
 )
 
 var (
 	sim *rvo.RVOSimulator
+	fcs *geojson.FeatureCollection
+	//mo *monitor.Monitor
+	//dataCount int
 )
 
+/*func init(){
+	dataCount = 0
+
+	// monitor 
+	mo = monitor.NewMonitor(sim)
+	go showMonitor()
+	
+}*/
+
+func loadGeoJson(fname string) *geojson.FeatureCollection{
+
+	bytes, err := ioutil.ReadFile(fname)
+	if err != nil {
+		log.Print("Can't read file:", err)
+		panic("load json")
+	}
+	fc, _ := geojson.UnmarshalFeatureCollection(bytes)
+
+	return fc
+}
+/*func showMonitor(){
+	for {
+		if dataCount == 100{
+			break
+		}
+	}
+
+	// run monitor server
+	err := mo.RunServer()
+	if err != nil{
+		fmt.Printf("error occor...: ", err)
+	}
+}
+*/
 type RVO2Route struct {
 	TimeStep   float64
 	GlobalTime float64
@@ -24,6 +67,9 @@ type RVO2Route struct {
 
 func NewRVO2Route(timeStep float64, globalTime float64, area *area.Area, agentsInfo []*agent.Agent, agentType common.AgentType) *RVO2Route {
 
+	// set obstacle
+	fcs = loadGeoJson("higashiyama.geojson")
+	
 	r := &RVO2Route{
 		TimeStep:   timeStep,
 		GlobalTime: globalTime,
@@ -100,6 +146,8 @@ func (rvo2route *RVO2Route) InvScaleCoord(coord *common.Coord) *common.Coord {
 	return invScaleCoord
 }
 
+
+
 // DecideNextTransit: 次の経由地を求める関数
 func (rvo2route *RVO2Route) DecideNextTransit(nextTransit *common.Coord, transitPoint []*common.Coord, distance float64, destination *common.Coord) *common.Coord {
 	// 距離が5m以下の場合
@@ -125,6 +173,7 @@ func (rvo2route *RVO2Route) DecideNextTransit(nextTransit *common.Coord, transit
 
 // SetupScenario: Scenarioを設定する関数
 func (rvo2route *RVO2Route) SetupScenario() {
+
 
 	// Set Agent
 	for i, agent := range rvo2route.Agents {
@@ -159,16 +208,31 @@ func (rvo2route *RVO2Route) SetupScenario() {
 	}
 
 	// Set Obstacle
-	/*if len(scaledObstacles) != 0 {
-		for _, obstacle := range scaledObstacles {
-			rvoObsPosition := []*rvo.Vector2{}
-			for _, position := range obstacle.Position {
-				rvoObsPosition = append(rvoObsPosition, &rvo.Vector2{X: float64(position.Lon), Y: float64(position.Lat)})
+	for _, feature := range fcs.Features {
+		multiPosition := feature.Geometry.(orb.MultiLineString)[0]
+		//fmt.Printf("geometry: ", multiPosition)
+		rvoObstacle := []*rvo.Vector2{}
+		for i, positionArray := range multiPosition{
+			if i+1 < len(multiPosition){
+				position1 := &common.Coord{
+					Longitude: positionArray[0],
+					Latitude: positionArray[1],
+				}
+				scaledPosition1 := rvo2route.ScaleCoord(position1)
+				position2 := &common.Coord{
+					Longitude: multiPosition[i+1][0],
+					Latitude: multiPosition[i+1][1],
+				}
+				scaledPosition2 := rvo2route.ScaleCoord(position2)
+
+			rvoObstacle = append(rvoObstacle, &rvo.Vector2{X: float64(scaledPosition1.Longitude), Y: float64(scaledPosition1.Latitude)})
+			rvoObstacle = append(rvoObstacle, &rvo.Vector2{X: float64(scaledPosition2.Longitude), Y: float64(scaledPosition2.Latitude)})
+			sim.AddObstacle(rvoObstacle)
 			}
-			sim.AddObstacle(rvoObsPosition)
 		}
-		sim.ProcessObstacles()
-	}*/
+	}
+
+	sim.ProcessObstacles()
 
 	fmt.Printf("Simulation has %v agents and %v obstacle vertices in it.\n", sim.GetNumAgents(), sim.GetNumObstacleVertices())
 	fmt.Printf("Running Simulation..\n\n")
@@ -196,12 +260,12 @@ func (rvo2route *RVO2Route) CalcNextAgents() []*agent.Agent {
 	currentAgents := rvo2route.Agents
 
 	timeStep := rvo2route.TimeStep
-	neighborDist := 0.005 // どのくらいの距離の相手をNeighborと認識するか?Neighborとの距離をどのくらいに保つか？ぶつかったと認識する距離？
+	neighborDist := 0.0005 // どのくらいの距離の相手をNeighborと認識するか?Neighborとの距離をどのくらいに保つか？ぶつかったと認識する距離？
 	maxneighbors := 10   // 周り何体を計算対象とするか
-	timeHorizon := 0.15
-	timeHorizonObst := 0.20
-	radius := 0.001  // エージェントの半径
-	maxSpeed := 0.005 // エージェントの最大スピード
+	timeHorizon := 1.0
+	timeHorizonObst := 1.0
+	radius := 0.0001  // エージェントの半径
+	maxSpeed := 0.001 // エージェントの最大スピード
 	sim = rvo.NewRVOSimulator(timeStep, neighborDist, maxneighbors, timeHorizon, timeHorizonObst, radius, maxSpeed, &rvo.Vector2{X: 0, Y: 0})
 
 	// scenario設定

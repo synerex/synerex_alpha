@@ -797,17 +797,19 @@ func calcRoute3() *agent.Route {
 func calcRoute() *agent.PedRoute {
 
 	var departure, destination *common.Coord
-	sLon := float64(136.982800)
-	eLon := float64(136.98800)
-	sLat := float64(35.152800)
-	eLat := float64(35.160200)
+	sLon := float64(136.974694)
+	//eLon := float64(136.98800)
+	sLat := float64(35.158200)
+	//eLat := float64(35.160200)
 	departure = &common.Coord{
-		Longitude: sLon + (eLon-sLon)*rand.Float64(),
-		Latitude:  sLat + (eLat-sLat)*rand.Float64(),
+		//Longitude: sLon + (eLon-sLon)*rand.Float64(),
+		//Latitude:  sLat + (eLat-sLat)*rand.Float64(),
+		Longitude: sLon + 0.0001*rand.Float64(),
+		Latitude:  sLat + 0.0001*rand.Float64(),
 	}
 	destination = &common.Coord{
-		Longitude: 136.974000,
-		Latitude:  35.156476,
+		Longitude: 136.974640,
+		Latitude:  35.157671,
 	}
 
 	transitPoints := make([]*common.Coord, 0)

@@ -7,14 +7,19 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/common"
 	ped "github.com/synerex/synerex_alpha/provider/simulation/pedestrian/agent"
 	"github.com/synerex/synerex_alpha/provider/simulation/simutil/simulator"
+	"github.com/paulmach/orb/geojson"
+)
+
+var (
+	geoInfo                      *geojson.FeatureCollection
 )
 
 // SynerexSimulator :
 type PedSimulator struct {
 	*simulator.SynerexSimulator //埋め込み
 	Area                        *area.Area
-	Agents                      []*agent.Agent
 	AgentType                   common.AgentType
+	Agents                      []*agent.Agent
 }
 
 // NewSenerexSimulator:
@@ -31,6 +36,11 @@ func NewPedSimulator(timeStep float64, globalTime float64) *PedSimulator {
 	}
 
 	return sim
+}
+
+// SetObstacles :　Obstaclesを追加する関数
+func (sim *PedSimulator) SetGeoInfo(_geoInfo *geojson.FeatureCollection) {
+	geoInfo = _geoInfo
 }
 
 // SetArea :　Areaを追加する関数
