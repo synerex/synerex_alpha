@@ -1,0 +1,15 @@
+{
+"type": "FeatureCollection",
+"name": "area",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "id": 1, "type": "control", "name": "Higashiyama-NW" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 136.97285, 35.159431 ], [ 136.97705, 35.159431 ], [ 136.97705, 35.156431 ], [ 136.972850, 35.156431 ], [ 136.97285, 35.159431 ] ] ] } },
+{ "type": "Feature", "properties": { "id": 2, "type": "control", "name": "Higashiyama-NE"  }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 136.981308, 35.159431 ], [ 136.97705, 35.159431 ], [ 136.97705, 35.156431 ], [ 136.981308, 35.156431 ], [ 136.981308, 35.159431 ] ] ] } },
+{ "type": "Feature", "properties": { "id": 3, "type": "control", "name": "Higashiyama-SE"  }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 136.981308, 35.153578 ], [ 136.97705, 35.153578 ], [ 136.97705, 35.156431 ], [ 136.981308, 35.156431 ], [ 136.981308, 35.153578 ] ] ] } },
+{ "type": "Feature", "properties": { "id": 4, "type": "control", "name": "Higashiyama-SW"  }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 136.97285, 35.153578 ], [ 136.97705, 35.153578 ], [ 136.97705, 35.156431 ], [ 136.97285, 35.156431 ], [ 136.97285, 35.153578 ] ] ] } },
+{ "type": "Feature", "properties": { "id": 5, "type": "duplicate", "name": "Higashiyama-NW" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 136.97285, 35.159431 ], [ 136.97705, 35.159431 ], [ 136.97705, 35.156431 ], [ 136.972850, 35.156431 ], [ 136.97285, 35.159431 ] ] ] } },
+{ "type": "Feature", "properties": { "id": 6, "type": "duplicate", "name": "Higashiyama-NE"  }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 136.981308, 35.159431 ], [ 136.97705, 35.159431 ], [ 136.97705, 35.156431 ], [ 136.981308, 35.156431 ], [ 136.981308, 35.159431 ] ] ] } },
+{ "type": "Feature", "properties": { "id": 7, "type": "duplicate", "name": "Higashiyama-SE"  }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 136.981308, 35.153578 ], [ 136.97705, 35.153578 ], [ 136.97705, 35.156431 ], [ 136.981308, 35.156431 ], [ 136.981308, 35.153578 ] ] ] } },
+{ "type": "Feature", "properties": { "id": 8, "type": "duplicate", "name": "Higashiyama-SW"  }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 136.97285, 35.153578 ], [ 136.97705, 35.153578 ], [ 136.97705, 35.156431 ], [ 136.97285, 35.156431 ], [ 136.97285, 35.153578 ] ] ] } }
+]
+}

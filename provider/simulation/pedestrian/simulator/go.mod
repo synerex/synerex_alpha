@@ -1,7 +1,6 @@
 module github.com/synerex/synerex_alpha/provider/simulation/pedestrian/simulator
 
 require (
-	github.com/RuiHirano/rvo2-go v1.1.0
 	github.com/synerex/synerex_alpha/api v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0

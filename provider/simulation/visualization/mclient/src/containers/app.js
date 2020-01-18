@@ -47,6 +47,7 @@ class App extends Container {
             optionChange: false,
             mapbox_token: MAPBOX_TOKEN,
             geojson: null,
+            areajson: null,
             lines: [],
             linecolor: [0, 255, 255],
             popup: [0, 0, ""]
@@ -54,11 +55,11 @@ class App extends Container {
 
         // for receiving event info.
         socket.on("connect", () => {
-            console.log("Socket.IO connected!");
+            console.log("Socket.IO connected2!");
         });
         socket.on("event", this.getEvent.bind(this));
         socket.on("geojson", this.getGeoJson.bind(this));
-        socket.on("lines", this.getLines.bind(this));
+        socket.on("areajson", this.getAreaJson.bind(this));
         socket.on("agents", this.getAgents.bind(this));
 
         /*socket.on('mapbox_token', (token) => {
@@ -76,6 +77,13 @@ class App extends Container {
         console.log("jsonData", data);
         console.log(JSON.parse(data));
         this.setState({ geojson: JSON.parse(data) });
+    }
+
+    getAreaJson(data) {
+        console.log("Areajson:" + data.length);
+        console.log("jsonData", data);
+        console.log(JSON.parse(data));
+        this.setState({ areajson: JSON.parse(data) });
     }
 
     getLines(data) {
@@ -174,7 +182,7 @@ class App extends Container {
                     movedata.operation.push({
                         elapsedtime: time,
                         position: [lon, lat, 0],
-                        radius: 3,
+                        radius: 20,
                         angle,
                         speed,
                         color
@@ -202,7 +210,7 @@ class App extends Container {
                         {
                             elapsedtime: time,
                             position: [lon, lat, 0],
-                            radius: 3,
+                            radius: 20,
                             angle,
                             speed,
                             color
@@ -322,7 +330,7 @@ class App extends Container {
         };
         var layers = [];
 
-        if (this.state.geojson != null) {
+        if (this.state.geojson != null && this.state.areajson != null) {
             console.log("push layer geojson");
             layers.push(
                 new GeoJsonLayer({
@@ -337,6 +345,54 @@ class App extends Container {
                     getFillColor: [160, 160, 180, 200],
                     //				getLineColor: d => colorToRGBArray(d.properties.color),
                     getLineColor: [255, 255, 255],
+                    getRadius: 1,
+                    getLineWidth: 1,
+                    getElevation: 10
+                    //				onHover: ({object, x, y}) => {
+                    //				  const tooltip = object.properties.name || object.properties.station;
+                    //				}
+                })
+            );
+        }
+
+        if (this.state.areajson != null && this.state.geojson != null) {
+			console.log("push layer areajson");
+			controlAreaLine =
+            layers.push(
+                new GeoJsonLayer({
+                    id: "areajson-layer",
+                    data: this.state.areajson,
+                    pickable: true,
+                    stroked: false,
+                    filled: true,
+                    extruded: true,
+                    lineWidthScale: 2,
+                    lineWidthMinPixels: 2,
+                    getFillColor: [160, 160, 180, 200],
+                    //				getLineColor: d => colorToRGBArray(d.properties.color),
+                    getLineColor: [255, 255, 255],
+                    getRadius: 1,
+                    getLineWidth: 1,
+                    getElevation: 10
+                    //				onHover: ({object, x, y}) => {
+                    //				  const tooltip = object.properties.name || object.properties.station;
+                    //				}
+                })
+			);
+			
+			layers.push(
+                new GeoJsonLayer({
+                    id: "areajson-layer",
+                    data: this.state.areajson,
+                    pickable: true,
+                    stroked: false,
+                    filled: true,
+                    extruded: true,
+                    lineWidthScale: 2,
+                    lineWidthMinPixels: 2,
+                    getFillColor: [160, 160, 180, 200],
+                    //				getLineColor: d => colorToRGBArray(d.properties.color),
+                    getLineColor: [255, 0, 0],
                     getRadius: 1,
                     getLineWidth: 1,
                     getElevation: 10

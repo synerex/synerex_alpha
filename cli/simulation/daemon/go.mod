@@ -8,6 +8,7 @@ require (
 	github.com/kardianos/service v0.0.0-20180910224244-b1866cf76903
 	github.com/mtfelian/golang-socketio v0.0.0-20181017124241-8d8ec6f9bb4c
 	github.com/mtfelian/synced v0.0.0-20180626092057-b82cebd56589 // indirect
+	github.com/paulmach/orb v0.1.5 // indirect
 	github.com/sirupsen/logrus v1.1.1 // indirect
 	github.com/synerex/synerex_alpha/api v0.0.0-00010101000000-000000000000 // indirect
 	github.com/synerex/synerex_alpha/api/simulation/agent v0.0.0

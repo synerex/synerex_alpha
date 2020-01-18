@@ -39,10 +39,14 @@ var (
 	com        *communicator.VisualizationCommunicator
 	sim        *simulator.VisualizationSimulator
 	isDownScenario bool
+	geofile string
+	areafile string
 )
 
 func init(){
 	isDownScenario = false
+	geofile = "higashiyama.geojson"
+	areafile = "area.geojson"
 }
 
 type AreaInfo struct {
@@ -64,22 +68,42 @@ type AreaInfo struct {
 		a.mtype, a.id, a.lat, a.lon, a.angle, a.speed, a.area)
 	return s
 }*/
-func sendFile(fname string) {
+func sendFile() {
 	log.Printf("sendFile")
 
-	bytes, err := ioutil.ReadFile(fname)
+	// load area
+	bytes, err := ioutil.ReadFile(areafile)
 	if err != nil {
 		log.Print("Can't read file:", err)
 		panic("load json")
 	}
 	
 	strjs := string(bytes)
-	log.Printf("json: ", len(strjs))
+	log.Printf("area json: ", len(strjs))
+	log.Printf("area json: ", strjs)
 
+	//send area
+	mu.Lock()
+	ioserv.BroadcastToAll("areajson", strjs)
+	mu.Unlock()
+	time.Sleep(1 * time.Second)
+
+	// load geo
+	bytes, err = ioutil.ReadFile(geofile)
+	if err != nil {
+		log.Print("Can't read file:", err)
+		panic("load json")
+	}
+	
+	strjs = string(bytes)
+	log.Printf("geo json: ", len(strjs))
+
+	// send geo
 	mu.Lock()
 	ioserv.BroadcastToAll("geojson", strjs)
 	mu.Unlock()
 
+	
 }
 
 func sendAreaToHarmowareVis(areas []*area.Area){
@@ -349,7 +373,7 @@ func runServer() *gosocketio.Server {
 
 		//sendAreaToHarmowareVis(make([]*area.Area, 0))
 		// geojsonを送信
-		sendFile("higashiyama.geojson")
+		sendFile()
 	})
 
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {

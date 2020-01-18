@@ -19,18 +19,7 @@ import (
 var (
 	sim *rvo.RVOSimulator
 	fcs *geojson.FeatureCollection
-	//mo *monitor.Monitor
-	//dataCount int
 )
-
-/*func init(){
-	dataCount = 0
-
-	// monitor 
-	mo = monitor.NewMonitor(sim)
-	go showMonitor()
-	
-}*/
 
 func loadGeoJson(fname string) *geojson.FeatureCollection{
 
@@ -43,20 +32,7 @@ func loadGeoJson(fname string) *geojson.FeatureCollection{
 
 	return fc
 }
-/*func showMonitor(){
-	for {
-		if dataCount == 100{
-			break
-		}
-	}
 
-	// run monitor server
-	err := mo.RunServer()
-	if err != nil{
-		fmt.Printf("error occor...: ", err)
-	}
-}
-*/
 type RVO2Route struct {
 	TimeStep   float64
 	GlobalTime float64
@@ -103,50 +79,6 @@ func (rvo2route *RVO2Route) CalcDirectionAndDistance(startCoord *common.Coord, g
 	return direction, distance
 }
 
-// ScaleCoord: 座標をrvo用に変換する関数(0-1)
-func (rvo2route *RVO2Route) ScaleCoord(coord *common.Coord) *common.Coord {
-
-	// エリア情報
-	areaCoord := rvo2route.Area.DuplicateArea
-	height := math.Abs(areaCoord.EndLat - areaCoord.StartLat)
-	minLat := math.Min(areaCoord.EndLat, areaCoord.StartLat)
-	width := math.Abs(areaCoord.EndLon - areaCoord.StartLon)
-	minLon := math.Min(areaCoord.EndLon, areaCoord.StartLon)
-
-	// scale化
-	scaledLat := (coord.Latitude - minLat) / height
-	scaledLon := (coord.Longitude - minLon) / width
-
-	scaledCoord := &common.Coord{
-		Latitude:  scaledLat,
-		Longitude: scaledLon,
-	}
-
-	return scaledCoord
-}
-
-// InvScaleCoord: 座標をsynerex-simulation用に変換する関数(lon, lat)
-func (rvo2route *RVO2Route) InvScaleCoord(coord *common.Coord) *common.Coord {
-
-	// エリア情報
-	areaCoord := rvo2route.Area.DuplicateArea
-	height := math.Abs(areaCoord.EndLat - areaCoord.StartLat)
-	minLat := math.Min(areaCoord.EndLat, areaCoord.StartLat)
-	width := math.Abs(areaCoord.EndLon - areaCoord.StartLon)
-	minLon := math.Min(areaCoord.EndLon, areaCoord.StartLon)
-
-	lat := coord.Latitude*height + minLat
-	lon := coord.Longitude*width + minLon
-
-	invScaleCoord := &common.Coord{
-		Latitude:  lat,
-		Longitude: lon,
-	}
-
-	return invScaleCoord
-}
-
-
 
 // DecideNextTransit: 次の経由地を求める関数
 func (rvo2route *RVO2Route) DecideNextTransit(nextTransit *common.Coord, transitPoint []*common.Coord, distance float64, destination *common.Coord) *common.Coord {
@@ -174,21 +106,12 @@ func (rvo2route *RVO2Route) DecideNextTransit(nextTransit *common.Coord, transit
 // SetupScenario: Scenarioを設定する関数
 func (rvo2route *RVO2Route) SetupScenario() {
 
-
 	// Set Agent
-	for i, agent := range rvo2route.Agents {
+	for _, agent := range rvo2route.Agents {
 		ped := agent.GetPedestrian()
-		scaledPosition := rvo2route.ScaleCoord(ped.Route.Position)
-		/*scaledVelocity := rvo2route.ScaleCoord(
-			&common.Coord{
-				Latitude:  math.Sin(float64(ped.Route.Direction * math.Pi / 180)),
-				Longitude: math.Cos(float64(ped.Route.Direction * math.Pi / 180)),
-			},
-		)*/
-		scaledGoal := rvo2route.ScaleCoord(ped.Route.NextTransit)
-		position := &rvo.Vector2{X: scaledPosition.Longitude, Y: scaledPosition.Latitude}
-		//velocity := &rvo.Vector2{X: scaledVelocity.Longitude, Y: scaledVelocity.Latitude}
-		goal := &rvo.Vector2{X: scaledGoal.Longitude, Y: scaledGoal.Latitude}
+
+		position := &rvo.Vector2{X: ped.Route.Position.Longitude, Y: ped.Route.Position.Latitude}
+		goal := &rvo.Vector2{X: ped.Route.NextTransit.Longitude, Y: ped.Route.NextTransit.Latitude}
 
 		// Agentを追加
 		id, _ := sim.AddDefaultAgent(position)
@@ -197,12 +120,7 @@ func (rvo2route *RVO2Route) SetupScenario() {
 		sim.SetAgentGoal(id, goal)
 		
 		// エージェントの速度方向ベクトルを設定
-		// setPrefVelocity
-		goalVector := sim.GetAgentGoalVector(i)
-
-		if rvo.Sqr(goalVector) > 1 {
-			goalVector = rvo.Normalize(goalVector)
-		}
+		goalVector := sim.GetAgentGoalVector(id)
 		sim.SetAgentPrefVelocity(id, goalVector)
 		//sim.SetAgentMaxSpeed(id, float64(agent.MaxSpeed))
 	}
@@ -212,24 +130,17 @@ func (rvo2route *RVO2Route) SetupScenario() {
 		multiPosition := feature.Geometry.(orb.MultiLineString)[0]
 		//fmt.Printf("geometry: ", multiPosition)
 		rvoObstacle := []*rvo.Vector2{}
-		for i, positionArray := range multiPosition{
-			if i+1 < len(multiPosition){
-				position1 := &common.Coord{
-					Longitude: positionArray[0],
-					Latitude: positionArray[1],
-				}
-				scaledPosition1 := rvo2route.ScaleCoord(position1)
-				position2 := &common.Coord{
-					Longitude: multiPosition[i+1][0],
-					Latitude: multiPosition[i+1][1],
-				}
-				scaledPosition2 := rvo2route.ScaleCoord(position2)
 
-			rvoObstacle = append(rvoObstacle, &rvo.Vector2{X: float64(scaledPosition1.Longitude), Y: float64(scaledPosition1.Latitude)})
-			rvoObstacle = append(rvoObstacle, &rvo.Vector2{X: float64(scaledPosition2.Longitude), Y: float64(scaledPosition2.Latitude)})
-			sim.AddObstacle(rvoObstacle)
-			}
+		for _, positionArray := range multiPosition{
+				position := &rvo.Vector2{
+					X: positionArray[0],
+					Y: positionArray[1],
+				}
+
+				rvoObstacle = append(rvoObstacle, position)
 		}
+
+		sim.AddObstacle(rvoObstacle)
 	}
 
 	sim.ProcessObstacles()
@@ -238,34 +149,18 @@ func (rvo2route *RVO2Route) SetupScenario() {
 	fmt.Printf("Running Simulation..\n\n")
 }
 
-func (rvo2route *RVO2Route) SetPreferredVelocities() {
-
-	for i, _ := range rvo2route.Agents {
-
-		// setPrefVelocity
-		goalVector := sim.GetAgentGoalVector(i)
-
-		if rvo.Sqr(goalVector) > 1 {
-			goalVector = rvo.Normalize(goalVector)
-		}
-
-		sim.SetAgentPrefVelocity(i, goalVector)
-
-	}
-}
-
 func (rvo2route *RVO2Route) CalcNextAgents() []*agent.Agent {
 
 	nextControlAgents := make([]*agent.Agent, 0)
 	currentAgents := rvo2route.Agents
 
 	timeStep := rvo2route.TimeStep
-	neighborDist := 0.0005 // どのくらいの距離の相手をNeighborと認識するか?Neighborとの距離をどのくらいに保つか？ぶつかったと認識する距離？
+	neighborDist := 0.00008 // どのくらいの距離の相手をNeighborと認識するか?Neighborとの距離をどのくらいに保つか？ぶつかったと認識する距離？
 	maxneighbors := 10   // 周り何体を計算対象とするか
 	timeHorizon := 1.0
 	timeHorizonObst := 1.0
-	radius := 0.0001  // エージェントの半径
-	maxSpeed := 0.001 // エージェントの最大スピード
+	radius := 0.00001  // エージェントの半径
+	maxSpeed := 0.00004 // エージェントの最大スピード
 	sim = rvo.NewRVOSimulator(timeStep, neighborDist, maxneighbors, timeHorizon, timeHorizonObst, radius, maxSpeed, &rvo.Vector2{X: 0, Y: 0})
 
 	// scenario設定
@@ -280,16 +175,15 @@ func (rvo2route *RVO2Route) CalcNextAgents() []*agent.Agent {
 		currentPedInfo := agentInfo.GetPedestrian()
 		// 計算する前に自エリアにいる場合、次のルートを計算する
 		if rvo2route.IsAgentInControlArea(agentInfo) {
-
 			destination := currentPedInfo.Route.Destination
 
 			// rvoの位置情報を緯度経度に変換する
 			rvoAgentPosition := sim.GetAgentPosition(int(rvoId))
-			scaledPosition := &common.Coord{
+
+			nextCoord := &common.Coord{
 				Latitude:  rvoAgentPosition.Y,
 				Longitude: rvoAgentPosition.X,
 			}
-			nextCoord := rvo2route.InvScaleCoord(scaledPosition)
 
 			// 現在の位置とゴールとの距離と角度を求める (度, m))
 			direction, distance := rvo2route.CalcDirectionAndDistance(nextCoord, currentPedInfo.Route.NextTransit)

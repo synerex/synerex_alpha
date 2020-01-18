@@ -226,6 +226,7 @@ func callbackForwardClockRequest(dm *pb.Demand) {
 	// 重複エリアのエージェントを更新する
 	nextDuplicateAgents := sim.UpdateDuplicateAgents(nextControlAgents, neighborAreaAgents)
 
+	//log.Printf("nextD: %v", nextDuplicateAgents)
 	// Agentsをセットする
 	sim.SetAgents(nextDuplicateAgents)
 

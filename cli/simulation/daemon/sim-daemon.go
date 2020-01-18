@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -29,6 +28,16 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/common"
 	"github.com/synerex/synerex_alpha/api/simulation/daemon"
 	"google.golang.org/grpc"
+	"math/rand"
+	//"math"
+	"github.com/paulmach/orb"
+	"github.com/paulmach/orb/geojson"
+	"io/ioutil"
+)
+
+var (
+	fcs *geojson.FeatureCollection
+	geofile string
 )
 
 var version = "0.04"
@@ -46,6 +55,23 @@ var providerMutex sync.RWMutex
 
 var githubBranch string
 var client daemon.SimDaemonClient
+
+func loadGeoJson(fname string) *geojson.FeatureCollection{
+
+	bytes, err := ioutil.ReadFile(fname)
+	if err != nil {
+		log.Print("Can't read file:", err)
+		panic("load json")
+	}
+	fc, _ := geojson.UnmarshalFeatureCollection(bytes)
+
+	return fc
+}
+
+func init(){
+	geofile = "transit_points.geojson"
+	fcs = loadGeoJson(geofile)
+}
 
 type SynerexService struct {
 }
@@ -697,120 +723,29 @@ func handleRun(target string) string {
 	return "Can't find command " + target
 }
 
-/*func calcRoute() Route {
+func decideCoordInGeo(fcs *geojson.FeatureCollection) *common.Coord{
 
-	sLon := float32(136.974000)
-	eLon := float32(136.982000)
-	sLat := float32(35.152800)
-	eLat := float32(35.160200)
-	departure := Coord{
-		Lon: sLon + (eLon-sLon)*rand.Float32(),
-		Lat: sLat + (eLat-sLat)*rand.Float32(),
-	}
-	destination := Coord{
-		Lon: 136.98800,
-		Lat: 35.156208,
-	}
-	route := Route{
-		Coord:       departure,
-		Direction:   100 * rand.Float32(),
-		Speed:       100 * rand.Float32(),
-		Departure:   departure,
-		Destination: destination,
-	}
+	geoCoords := fcs.Features[0].Geometry.(orb.MultiLineString)[0]
+	transitNum := rand.Int63n(int64(len(geoCoords)-1))
 
-	return route
+	longitude := geoCoords[transitNum][0] + 0.0001 * rand.Float64()
+	latitude := geoCoords[transitNum][1] + 0.0001 * rand.Float64()
+	coord := &common.Coord{
+		Longitude: longitude,
+		Latitude: latitude,
+	}
+	log.Printf("coord: ", coord)
+
+	return coord
 }
-
-// Test用。二つのエリアからエージェントが交わる想定
-func calcRoute2(agentNum int, i int) Route {
-
-	var departure, destination Coord
-	if i < 15 {
-		sLon := float32(136.974000)
-		eLon := float32(136.982000)
-		sLat := float32(35.153800)
-		eLat := float32(35.158200)
-		departure = Coord{
-			Lon: sLon + (eLon-sLon)*rand.Float32(),
-			Lat: sLat + (eLat-sLat)*rand.Float32(),
-		}
-		destination = Coord{
-			Lon: 136.988000,
-			Lat: 35.156476,
-		}
-	} else {
-		sLon := float32(136.982800)
-		eLon := float32(136.98800)
-		sLat := float32(35.153800)
-		eLat := float32(35.158200)
-		departure = Coord{
-			Lon: sLon + (eLon-sLon)*rand.Float32(),
-			Lat: sLat + (eLat-sLat)*rand.Float32(),
-		}
-		destination = Coord{
-			Lon: 136.974000,
-			Lat: 35.156476,
-		}
-	}
-
-	route := Route{
-		Coord:       departure,
-		Direction:   100 * rand.Float32(),
-		Speed:       100 * rand.Float32(),
-		Departure:   departure,
-		Destination: destination,
-	}
-
-	return route
-}
-
-// Agentオブジェクトの変換
-func calcRoute3() *agent.Route {
-
-	var departure, destination *agent.Coord
-	sLon := float64(136.982800)
-	eLon := float64(136.98800)
-	sLat := float64(35.152800)
-	eLat := float64(35.160200)
-	departure = &agent.Coord{
-		Longitude: sLon + (eLon-sLon)*rand.Float64(),
-		Latitude:  sLat + (eLat-sLat)*rand.Float64(),
-	}
-	destination = &agent.Coord{
-		Longitude: 136.974000,
-		Latitude:  35.156476,
-	}
-
-	route := &agent.Route{
-		Position:    departure,
-		Direction:   100 * rand.Float64(),
-		Speed:       100 * rand.Float64(),
-		Departure:   departure,
-		Destination: destination,
-	}
-
-	return route
-}*/
 
 // Agentオブジェクトの変換
 func calcRoute() *agent.PedRoute {
 
 	var departure, destination *common.Coord
-	sLon := float64(136.974694)
-	//eLon := float64(136.98800)
-	sLat := float64(35.158200)
-	//eLat := float64(35.160200)
-	departure = &common.Coord{
-		//Longitude: sLon + (eLon-sLon)*rand.Float64(),
-		//Latitude:  sLat + (eLat-sLat)*rand.Float64(),
-		Longitude: sLon + 0.0001*rand.Float64(),
-		Latitude:  sLat + 0.0001*rand.Float64(),
-	}
-	destination = &common.Coord{
-		Longitude: 136.974640,
-		Latitude:  35.157671,
-	}
+	
+	departure = decideCoordInGeo(fcs)
+	destination = decideCoordInGeo(fcs)
 
 	transitPoints := make([]*common.Coord, 0)
 	transitPoints = append(transitPoints, destination)
