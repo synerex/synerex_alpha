@@ -4,7 +4,7 @@ import (
 	"flag"
 	"log"
 	"sync"
-	"time"
+	//"time"
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/area"
@@ -62,6 +62,21 @@ type AreaInfo struct {
 	c_elat float64   `json:"c_elat"`
 }
 
+func sendFile2() {
+	log.Printf("sendFile2")
+	// JSONファイル読み込み
+	bytes, err := ioutil.ReadFile("area2.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	strjs := string(bytes)
+
+	mu.Lock()
+	ioserv.BroadcastToAll("areajson", strjs)
+	mu.Unlock()
+
+}
+
 // getAreaJson: areaInfoをjson化する関数
 /*func (a *AreaInfo) GetAreaJson() string {
 	s := fmt.Sprintf("{\"mtype\":%d,\"id\":%d,\"lat\":%f,\"lon\":%f,\"angle\":%f,\"speed\":%d,\"area\":%d}",
@@ -71,7 +86,7 @@ type AreaInfo struct {
 func sendFile() {
 	log.Printf("sendFile")
 
-	// load area
+	/*// load area
 	bytes, err := ioutil.ReadFile(areafile)
 	if err != nil {
 		log.Print("Can't read file:", err)
@@ -86,16 +101,16 @@ func sendFile() {
 	mu.Lock()
 	ioserv.BroadcastToAll("areajson", strjs)
 	mu.Unlock()
-	time.Sleep(1 * time.Second)
+	time.Sleep(1 * time.Second)*/
 
 	// load geo
-	bytes, err = ioutil.ReadFile(geofile)
+	bytes, err := ioutil.ReadFile(geofile)
 	if err != nil {
 		log.Print("Can't read file:", err)
 		panic("load json")
 	}
 	
-	strjs = string(bytes)
+	strjs := string(bytes)
 	log.Printf("geo json: ", len(strjs))
 
 	// send geo
@@ -373,6 +388,7 @@ func runServer() *gosocketio.Server {
 
 		//sendAreaToHarmowareVis(make([]*area.Area, 0))
 		// geojsonを送信
+		sendFile2()
 		sendFile()
 	})
 

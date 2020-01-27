@@ -11,6 +11,8 @@ import (
 	"github.com/synerex/synerex_alpha/api/simulation/synerex"
 	"github.com/synerex/synerex_alpha/provider/simulation/area/communicator"
 	"github.com/synerex/synerex_alpha/sxutil"
+	"github.com/paulmach/orb/geojson"
+	//"github.com/paulmach/orb"
 
 	//	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"encoding/json"
@@ -28,15 +30,32 @@ var (
 	com        *communicator.AreaCommunicator
 	sim        *simulator.AreaSimulator
 	areaData   []*area.Area
+	areafile string
+	fcs *geojson.FeatureCollection
 )
 
 func init() {
 	areaData = readAreaData()
+	areafile = "area.geojson"
+	//fcs = loadGeoJson(areafile)
 }
+
+/*func loadGeoJson(fname string) *geojson.FeatureCollection{
+
+	bytes, err := ioutil.ReadFile(fname)
+	if err != nil {
+		log.Print("Can't read file:", err)
+		panic("load json")
+	}
+	fc, _ := geojson.UnmarshalFeatureCollection(bytes)
+	log.Printf("fc: %v\n", fc.Features[0].Geometry.(orb.MultiLineString)[0])
+
+	return fc
+}*/
 
 func readAreaData() []*area.Area {
 	// JSONファイル読み込み
-	bytes, err := ioutil.ReadFile("area.json")
+	bytes, err := ioutil.ReadFile("area3.json")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,11 +85,26 @@ func callbackGetAreaRequest(dm *pb.Demand) {
 		if data.Id == areaId {
 			// area情報を送信
 			com.GetAreaResponse(targetId, data)
-			log.Printf("\x1b[30m\x1b[47m \n Finish: Area information sent. \n AreaData : %v \x1b[0m\n", data)
+			log.Printf("\x1b[30m\x1b[47m \n Finish: Area information sent. \n AreaData : %v \x1b[0m\n", data.GetDuplicateArea())
 			break
 		}
 	}
 }
+
+/*func callbackGetAreaRequest2(dm *pb.Demand) {
+	areaId := dm.GetSimDemand().GetGetAreaRequest().GetId()
+	targetId := dm.GetId()
+	// AreaDataからエリア情報を取得
+	for i, feature := range fcs.Features {
+		multiPosition := feature.Geometry.(orb.MultiLineString)[0]
+		if data.Id == areaId {
+			// area情報を送信
+			com.GetAreaResponse(targetId, data)
+			log.Printf("\x1b[30m\x1b[47m \n Finish: Area information sent. \n AreaData : %v \x1b[0m\n", data)
+			break
+		}
+	}
+}*/
 
 // callback for each Supply
 func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {

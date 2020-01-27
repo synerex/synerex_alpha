@@ -3,6 +3,7 @@ package communicator
 import (
 	"fmt"
 	"time"
+	"log"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
@@ -16,10 +17,12 @@ import (
 
 var (
 	CHANNEL_BUFFER_SIZE int
+	CHANNEL_BUFFER_SIZE2 int
 )
 
 func init() {
 	CHANNEL_BUFFER_SIZE = 10
+	CHANNEL_BUFFER_SIZE2 = 30
 }
 
 // PedCommunicator :
@@ -42,16 +45,16 @@ func NewPedCommunicator() *PedCommunicator {
 
 	communicator := &PedCommunicator{
 		SynerexCommunicator:         communicator.NewSynerexCommunicator(),
-		GetAreaCh:                   make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
+		GetAreaCh:                   make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2),
 		DeleteParticipantIdList:     make([]uint64, 0),
-		DeleteParticipantCh:         make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
+		DeleteParticipantCh:         make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2),
 		GetClockIdList:              make([]uint64, 0),
-		GetClockCh:                  make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
+		GetClockCh:                  make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2),
 		GetSameAreaAgentsIdList:     make([]uint64, 0),
 		GetSameAreaAgentsCh:         make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
 		GetNeighborAreaAgentsIdList: make([]uint64, 0),
-		GetNeighborAreaAgentsCh:     make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
-		RegistParticipantCh:         make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
+		GetNeighborAreaAgentsCh:     make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2),
+		RegistParticipantCh:         make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2),
 	}
 
 	return communicator
@@ -143,7 +146,7 @@ func (p *PedCommunicator) GetMyParticipant(areaId uint64) *participant.Participa
 // WaitGetAreaResponse : GetAreaResponseを待機する
 func (p *PedCommunicator) WaitGetAreaResponse() (*area.Area, error) {
 	// channelの初期化
-	p.GetAreaCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	p.GetAreaCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2)
 
 	errch := make(chan error, 1)
 	// timeout
@@ -171,7 +174,7 @@ func (p *PedCommunicator) WaitRegistParticipantResponse() error{
 
 
 	// channelの初期化
-	p.RegistParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	p.RegistParticipantCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2)
 
 	errch := make(chan error, 1)
 
@@ -212,7 +215,7 @@ func (p *PedCommunicator) SendToDeleteParticipantResponse(sp *pb.Supply) {
 // WaitGetClockResponse : GetClockResponseを待機する
 func (p *PedCommunicator) WaitGetClockResponse() *clock.Clock {
 	// channelの初期化
-	p.GetClockCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+	p.GetClockCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2)
 	// spの待機
 	spMap := p.Wait(p.GetClockIdList, p.GetClockCh)
 	// ClockInfoを取得
@@ -242,9 +245,10 @@ func (p *PedCommunicator) WaitGetSameAreaAgentsResponse() []*agent.Agent {
 			sameAgents = append(sameAgents, agents...)
 		}
 	
-		// channelの初期化
-		p.GetSameAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	}
+
+	// channelの初期化
+	p.GetSameAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	return sameAgents
 }
 
@@ -256,9 +260,11 @@ func (p *PedCommunicator) SendToGetSameAreaAgentsResponse(sp *pb.Supply) {
 // WaitGetNeighborAreaAgentsResponse : GetNeighborAreaAgentsResponseを待機する
 func (p *PedCommunicator) WaitGetNeighborAreaAgentsResponse() []*agent.Agent {
 	neighborAgents := make([]*agent.Agent, 0)
+	
 	// 隣接エリアが他にない場合、スキップ
 	if len(p.GetNeighborAreaAgentsIdList) != 0 {
-
+		//p.GetNeighborAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
+		log.Printf("neighborAgents: %v\n", p.GetNeighborAreaAgentsIdList)
 		spMap := p.Wait(p.GetNeighborAreaAgentsIdList, p.GetNeighborAreaAgentsCh)
 		// Agentsを取得
 		for _, sp := range spMap {
@@ -266,10 +272,12 @@ func (p *PedCommunicator) WaitGetNeighborAreaAgentsResponse() []*agent.Agent {
 			neighborAgents = append(neighborAgents, agents...)
 		}
 
+		//close(p.GetNeighborAreaAgentsCh)
+		//p.GetNeighborAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 		// channelの初期化:　チャネルにすでに情報が入っているため最後に初期化する
-		p.GetNeighborAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
-
+		//p.GetNeighborAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE)
 	}
+	
 
 	return neighborAgents
 }
@@ -277,4 +285,8 @@ func (p *PedCommunicator) WaitGetNeighborAreaAgentsResponse() []*agent.Agent {
 // SendToGetNeighborAreaAgentsResponse : GetNeighborAreaAgentsResponseを送る
 func (p *PedCommunicator) SendToGetNeighborAreaAgentsResponse(sp *pb.Supply) {
 	p.SendToWait(sp, p.GetNeighborAreaAgentsCh)
+}
+
+func (p *PedCommunicator) InitChannel(){
+	p.GetNeighborAreaAgentsCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2)
 }

@@ -1,0 +1,166 @@
+[
+    {
+        "id": 1,
+        "name": "Higashiyama-NW",
+        "duplicate_area": [
+            {
+                "latitude": 35.159431,
+                "longitude": 136.97285
+            },
+            {
+                "latitude": 35.159431,
+                "longitude": 136.97755
+            },
+            {
+                "latitude": 35.155931,
+                "longitude": 136.97755
+            },
+            {
+                "latitude": 35.155931,
+                "longitude": 136.97285
+            }
+        ],
+        "control_area": [
+            {
+                "latitude": 35.159431,
+                "longitude": 136.97285
+            },
+            {
+                "latitude": 35.159431,
+                "longitude": 136.97705
+            },
+            {
+                "latitude": 35.156431,
+                "longitude": 136.97705
+            },
+            {
+                "latitude": 35.156431,
+                "longitude": 136.97285
+            }
+        ],
+        "neighbor_areas": [2, 3, 4]
+    },
+    {
+        "id": 2,
+        "name": "Higashiyama-NE",
+        "duplicate_area": [
+            {
+                "latitude": 35.159431,
+                "longitude": 136.981308
+            },
+            {
+                "latitude": 35.159431,
+                "longitude": 136.97655
+            },
+            {
+                "latitude": 35.155931,
+                "longitude": 136.97655
+            },
+            {
+                "latitude": 35.155931,
+                "longitude": 136.981308
+            }
+        ],
+        "control_area": [
+            {
+                "latitude": 35.159431,
+                "longitude": 136.981308
+            },
+            {
+                "latitude": 35.159431,
+                "longitude": 136.97705
+            },
+            {
+                "latitude": 35.156431,
+                "longitude": 136.97705
+            },
+            {
+                "latitude": 35.156431,
+                "longitude": 136.981308
+            }
+        ],
+        "neighbor_areas": [1, 3, 4]
+    },
+    {
+        "id": 3,
+        "name": "Higashiyama-SE",
+        "duplicate_area": [
+            {
+                "latitude": 35.153578,
+                "longitude": 136.981308
+            },
+            {
+                "latitude": 35.153578,
+                "longitude": 136.97655
+            },
+            {
+                "latitude": 35.156931,
+                "longitude": 136.97655
+            },
+            {
+                "latitude": 35.156931,
+                "longitude": 136.981308
+            }
+        ],
+        "control_area": [
+            {
+                "latitude": 35.153578,
+                "longitude": 136.981308
+            },
+            {
+                "latitude": 35.153578,
+                "longitude": 136.97705
+            },
+            {
+                "latitude": 35.156431,
+                "longitude": 136.97705
+            },
+            {
+                "latitude": 35.156431,
+                "longitude": 136.981308
+            }
+        ],
+        "neighbor_areas": [1, 2, 4]
+    },
+    {
+        "id": 4,
+        "name": "Higashiyama-SW",
+        "duplicate_area": [
+            {
+                "latitude": 35.153578,
+                "longitude": 136.97285
+            },
+            {
+                "latitude": 35.153578,
+                "longitude": 136.97755
+            },
+            {
+                "latitude": 35.156931,
+                "longitude": 136.97755
+            },
+            {
+                "latitude": 35.156931,
+                "longitude": 136.97285
+            }
+        ],
+        "control_area": [
+            {
+                "latitude": 35.153578,
+                "longitude": 136.97285
+            },
+            {
+                "latitude": 35.153578,
+                "longitude": 136.97705
+            },
+            {
+                "latitude": 35.156431,
+                "longitude": 136.97705
+            },
+            {
+                "latitude": 35.156431,
+                "longitude": 136.97285
+            }
+        ],
+        "neighbor_areas": [1, 2, 3]
+    }
+]

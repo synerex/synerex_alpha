@@ -48,7 +48,12 @@ class App extends Container {
             mapbox_token: MAPBOX_TOKEN,
             geojson: null,
             areajson: null,
-            lines: [],
+            lines: [
+                {
+                    sourcePosition: [136.97285, 35.159431, 0],
+                    targetPosition: [136.97705, 35.159431, 0]
+                }
+            ],
             linecolor: [0, 255, 255],
             popup: [0, 0, ""]
         };
@@ -169,14 +174,14 @@ class App extends Container {
             let hit = false;
             movesbasedata.forEach(movedata => {
                 if (mtype === movedata.mtype && id === movedata.id) {
-                    let color = [0, 200, 0];
-                    if (mtype == 0) {
+                    let color = [0, 255, 0];
+                    /*if (mtype == 0) {
                         // Ped
                         color = [0, 200, 120];
                     } else if (mtype == 1) {
                         // Car
                         color = [200, 0, 0];
-                    }
+                    }*/
                     hit = true;
                     movedata.arrivaltime = time;
                     movedata.operation.push({
@@ -193,14 +198,14 @@ class App extends Container {
             });
 
             if (!hit) {
-                let color = [0, 200, 0];
-                if (mtype == 0) {
+                let color = [0, 255, 0];
+                /*if (mtype == 0) {
                     // Ped
                     color = [0, 200, 120];
                 } else if (mtype == 1) {
                     // Car
                     color = [200, 0, 0];
-                }
+                }*/
                 setMovesbase.push({
                     mtype,
                     id,
@@ -330,7 +335,7 @@ class App extends Container {
         };
         var layers = [];
 
-        if (this.state.geojson != null && this.state.areajson != null) {
+        if (this.state.geojson != null) {
             console.log("push layer geojson");
             layers.push(
                 new GeoJsonLayer({
@@ -355,10 +360,69 @@ class App extends Container {
             );
         }
 
-        if (this.state.areajson != null && this.state.geojson != null) {
-			console.log("push layer areajson");
-			controlAreaLine =
-            layers.push(
+        if (this.state.areajson != null) {
+            console.log("push layer areajson");
+            this.state.areajson.forEach(value => {
+                value.duplicate_area.forEach((area, index) => {
+                    let sourcePosition = [];
+                    let targetPosition = [];
+                    if (index != value.duplicate_area.length - 1) {
+                        sourcePosition = [area.longitude, area.latitude];
+                        targetPosition = [
+                            value.duplicate_area[index + 1].longitude,
+                            value.duplicate_area[index + 1].latitude
+                        ];
+                    } else {
+                        sourcePosition = [area.longitude, area.latitude];
+                        targetPosition = [
+                            value.duplicate_area[0].longitude,
+                            value.duplicate_area[0].latitude
+                        ];
+                    }
+                    layers.push(
+                        new LineLayer({
+                            visible: true,
+                            data: value.duplicate_area,
+                            getSourcePosition: d => sourcePosition,
+                            getTargetPosition: d => targetPosition,
+                            getColor: this.state.linecolor,
+                            getWidth: 1,
+                            widthMinPixels: 0.1
+                        })
+                    );
+                });
+
+                value.control_area.forEach((area, index) => {
+                    let sourcePosition = [];
+                    let targetPosition = [];
+                    if (index != value.control_area.length - 1) {
+                        sourcePosition = [area.longitude, area.latitude];
+                        targetPosition = [
+                            value.control_area[index + 1].longitude,
+                            value.control_area[index + 1].latitude
+                        ];
+                    } else {
+                        sourcePosition = [area.longitude, area.latitude];
+                        targetPosition = [
+                            value.control_area[0].longitude,
+                            value.control_area[0].latitude
+                        ];
+                    }
+                    layers.push(
+                        new LineLayer({
+                            visible: true,
+                            data: value.control_area,
+                            getSourcePosition: d => sourcePosition,
+                            getTargetPosition: d => targetPosition,
+                            getColor: this.state.linecolor,
+                            getWidth: 1,
+                            widthMinPixels: 0.1
+                        })
+                    );
+                });
+            });
+
+            /*controlAreaLine = layers.push(
                 new GeoJsonLayer({
                     id: "areajson-layer",
                     data: this.state.areajson,
@@ -378,44 +442,7 @@ class App extends Container {
                     //				  const tooltip = object.properties.name || object.properties.station;
                     //				}
                 })
-			);
-			
-			layers.push(
-                new GeoJsonLayer({
-                    id: "areajson-layer",
-                    data: this.state.areajson,
-                    pickable: true,
-                    stroked: false,
-                    filled: true,
-                    extruded: true,
-                    lineWidthScale: 2,
-                    lineWidthMinPixels: 2,
-                    getFillColor: [160, 160, 180, 200],
-                    //				getLineColor: d => colorToRGBArray(d.properties.color),
-                    getLineColor: [255, 0, 0],
-                    getRadius: 1,
-                    getLineWidth: 1,
-                    getElevation: 10
-                    //				onHover: ({object, x, y}) => {
-                    //				  const tooltip = object.properties.name || object.properties.station;
-                    //				}
-                })
-            );
-        }
-
-        if (this.state.lines.length > 0) {
-            this.lines = 0;
-            layers.push(
-                new LineLayer({
-                    visible: true,
-                    data: this.state.lines,
-                    getSourcePosition: d => d.from,
-                    getTargetPosition: d => d.to,
-                    getColor: this.state.linecolor,
-                    getWidth: 1,
-                    widthMinPixels: 0.1
-                })
-            );
+            );*/
         }
 
         if (this.state.moveDataVisible && movedData.length > 0) {

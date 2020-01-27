@@ -1,0 +1,70 @@
+[
+    {
+        "id": 1,
+        "name": "Higashiyama-NW",
+        "duplicate_area": {
+            "start_lon": 136.97285,
+            "end_lon": 136.97755,
+            "start_lat": 35.155931,
+            "end_lat": 35.159431
+        },
+        "control_area": {
+            "start_lon": 136.97285,
+            "end_lon": 136.97705,
+            "start_lat": 35.156431,
+            "end_lat": 35.159431
+        },
+        "neighbor_areas": [2, 3, 4]
+    },
+    {
+        "id": 2,
+        "name": "Higashiyama-NE",
+        "duplicate_area": {
+            "start_lon": 136.97605,
+            "end_lon": 136.981308,
+            "start_lat": 35.155931,
+            "end_lat": 35.159431
+        },
+        "control_area": {
+            "start_lon": 136.97705,
+            "end_lon": 136.981308,
+            "start_lat": 35.156431,
+            "end_lat": 35.159431
+        },
+        "neighbor_areas": [1, 3, 4]
+    },
+    {
+        "id": 3,
+        "name": "Higashiyama-SE",
+        "duplicate_area": {
+            "start_lon": 136.97655,
+            "end_lon": 136.981308,
+            "start_lat": 35.153578,
+            "end_lat": 35.156931
+        },
+        "control_area": {
+            "start_lon": 136.97705,
+            "end_lon": 136.981308,
+            "start_lat": 35.153578,
+            "end_lat": 35.156431
+        },
+        "neighbor_areas": [1, 2, 4]
+    },
+    {
+        "id": 4,
+        "name": "Higashiyama-SW",
+        "duplicate_area": {
+            "start_lon": 136.97285,
+            "end_lon": 136.97755,
+            "start_lat": 35.153578,
+            "end_lat": 35.156931
+        },
+        "control_area": {
+            "start_lon": 136.97285,
+            "end_lon": 136.97705,
+            "start_lat": 35.153578,
+            "end_lat": 35.156431
+        },
+        "neighbor_areas": [1, 2, 3]
+    }
+]

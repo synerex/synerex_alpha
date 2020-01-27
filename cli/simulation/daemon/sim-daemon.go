@@ -3,8 +3,8 @@ package main
 // Daemon code for Synergic Exchange
 import (
 	"bufio"
-	"bytes"
-	"context"
+	//"bytes"
+	//"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,14 +14,15 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
-	"runtime/debug"
-	"strconv"
+	//"runtime/debug"
+	//"strconv"
 	"strings"
 	"sync"
 	"syscall"
 	"time"
+	
 
-	"github.com/google/uuid"
+	//"github.com/google/uuid"
 	"github.com/kardianos/service"
 	gosocketio "github.com/mtfelian/golang-socketio"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
@@ -90,6 +91,7 @@ type Order struct {
 	Option string
 }
 
+
 // for Structures for Github json.
 type committer struct {
 	Name string
@@ -119,6 +121,28 @@ type sioChannel struct {
 var sioCh sioChannel
 
 var cmdArray []SubCommands
+var orderArray []OrderData
+var providerArray []ProviderData
+
+type OrderData struct{
+	Name string
+	Options []Option
+}
+
+type Option struct{
+	Key string
+	Value string
+}
+
+type ProviderData struct{
+	CmdName     string
+	Description string
+	SrcDir      string
+	BinName     string
+	GoFiles     []string
+	RunFunc     func()
+	Options     []Option
+}
 
 func init() {
 	//	stdlog = log.New(os.Stdout, "", log.Ldate|log.Ltime)
@@ -129,7 +153,7 @@ func init() {
 	cmdArray = []SubCommands{
 		{
 			CmdName: "All",
-			RunFunc: runAllServ,
+			RunFunc: runAll,
 			GoFiles: nil,
 		},
 		{
@@ -215,9 +239,154 @@ func init() {
 			Description: "Order",
 		},
 	}
+
+	providerArray = []ProviderData{
+		{
+			CmdName: "RunAll",
+			RunFunc: runAll,
+			GoFiles: nil,
+			Options: nil,
+		},
+		{
+			CmdName: "KillAll",
+			RunFunc: killAll,
+			GoFiles: nil,
+			Options: nil,
+		},
+		{
+			CmdName: "NodeIDServer",
+			SrcDir:  "nodeserv",
+			BinName: "nodeid-server",
+			GoFiles: []string{"nodeid-server.go"},
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+		{
+			CmdName: "MonitorServer",
+			SrcDir:  "monitor",
+			BinName: "monitor-server",
+			GoFiles: []string{"monitor-server.go"},
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+		{
+			CmdName: "SynerexServer",
+			SrcDir:  "server",
+			BinName: "synerex-server",
+			GoFiles: []string{"synerex-server.go", "message-store.go"},
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+		{
+			CmdName: "Area",
+			SrcDir:  "provider/simulation/area",
+			BinName: "area-provider",
+			GoFiles: []string{"area-provider.go"},
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+		{
+			CmdName: "Scenario",
+			SrcDir:  "provider/simulation/scenario",
+			BinName: "scenario-provider",
+			GoFiles: []string{"scenario-provider.go"},
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+		{
+			CmdName: "Pedestrian",
+			SrcDir:  "provider/simulation/pedestrian",
+			BinName: "pedestrian-provider",
+			GoFiles: []string{"pedestrian-provider.go"},
+			Options: []Option{Option{
+				Key: "areaId",
+				Value: "1",
+			}},
+		},
+		{
+			CmdName: "Car",
+			SrcDir:  "provider/simulation/car",
+			BinName: "car-provider",
+			GoFiles: []string{"car-provider.go"},
+			Options: []Option{Option{
+				Key: "areaId",
+				Value: "1",
+			}},
+		},
+		{
+			CmdName: "Visualization",
+			SrcDir:  "provider/simulation/visualization",
+			BinName: "visualization-provider",
+			GoFiles: []string{"visualization-provider.go"},
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+	}
+
+	orderArray = []OrderData{
+		{
+			Name:     "SetClock",
+			Options: []Option{Option{
+				Key: "clock",
+				Value: "0",
+			}},
+		},
+		{
+			Name:     "ClearClock",
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+		{
+			Name:     "SetAgents",
+			Options: []Option{Option{
+				Key: "type",
+				Value: "pedestrian",
+			},
+			Option{
+				Key: "num",
+				Value: "0",
+			}},
+		},
+		{
+			Name:     "ClearAgents",
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+		{
+			Name:     "StartClock",
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+		{	
+			Name:     "StopClock",
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+	}
+
 }
 
-func githubHandler(w http.ResponseWriter, r *http.Request) {
+/*func githubHandler(w http.ResponseWriter, r *http.Request) {
 	status := 400
 	if r.Method == http.MethodPost {
 		bufbody := new(bytes.Buffer)
@@ -315,7 +484,7 @@ func githubPullAndRun() {
 		}
 	}
 
-}
+}*/
 
 func (sesrv *SynerexService) Start(s service.Service) error {
 	go sesrv.run()
@@ -348,6 +517,9 @@ func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, file, fi.ModTime(), f)
 }
 
+/////////////// Handle Command /////////////
+/////////////////////////////////////////
+
 func runMyCmd(cmd *exec.Cmd, cmdName string) {
 	providerMutex.Lock()
 	providerMap[cmdName] = cmd
@@ -374,11 +546,14 @@ func runMyCmd(cmd *exec.Cmd, cmdName string) {
 		} else if err != nil {
 			logger.Infof("Err %v\n", err)
 		}
+		
+ 
 		if server != nil {
 			server.BroadcastToAll("log", "["+cmdName+"]"+string(line))
 		}
 		logger.Infof("[%s]:%s", cmdName, string(line))
 	}
+	
 	//	log.Printf("[%s]:Now ending...",cmdName)
 	logger.Infof("[%s]:Now ending...", cmdName)
 
@@ -466,7 +641,7 @@ func buildCmd(sc SubCommands) string { // build local node server
 }
 
 // run From SubCommand
-func runProp(sc SubCommands) string { // start local node server
+func runProp(sc ProviderData) string { // start local node server
 	logger.Infof("run '%s'\n", sc.CmdName)
 	providerMutex.RLock()
 	_, ok := providerMap[sc.CmdName]
@@ -541,29 +716,31 @@ func getGoEnv() []string { // we need to get/set gopath
 	return newenv
 }
 
-func runAllServ() {
+/////////////// Handle All /////////////
+/////////////////////////////////////////
+
+func runAll() {
 	runSubCmd("NodeIDServer")
 	runSubCmd("MonitorServer")
-	time.Sleep(1 * time.Second)
 	runSubCmd("SynerexServer")
-	time.Sleep(1 * time.Second)
 	runSubCmd("Area")
-	time.Sleep(1 * time.Second)
-	runSubCmd("PedArea")
-	runSubCmd("CarArea")
-	time.Sleep(1 * time.Second)
 	runSubCmd("Scenario")
 }
 
 func killAll() {
-	killCmd("Scenario")
+	for _, sc := range providerArray{
+		if sc.RunFunc == nil{
+			killCmd(sc.CmdName)
+		}	
+	}
+	/*killCmd("Scenario")
 	killCmd("PedArea")
 	killCmd("CarArea")
 	killCmd("Area")
 	killCmd("Clock")
 	killCmd("SynerexServer")
 	killCmd("MonitorServer")
-	killCmd("NodeIDServer")
+	killCmd("NodeIDServer")*/
 }
 
 func buildAll() []string {
@@ -593,6 +770,9 @@ func cleanAll() []string {
 	return resp
 }
 
+/////////////// GetName /////////////
+/////////////////////////////////////////
+
 // obtain key of the cmdMap array
 func getCmdArray() []string {
 	keys := make([]string, len(cmdArray))
@@ -602,8 +782,32 @@ func getCmdArray() []string {
 	return keys
 }
 
+// obtain key of the cmdMap array
+func getOrderNames() []string {
+	keys := make([]string, len(orderArray))
+	for i, sc := range orderArray {
+		bytes, _  := json.Marshal(sc)
+		keys[i] = string(bytes)
+	}
+	return keys
+}
+// obtain key of the cmdMap array
+func getProviderNames() []string {
+	keys := make([]string, len(providerArray))
+	for i, sc := range providerArray {
+		bytes, err  := json.Marshal(sc)
+
+		log.Printf("json: %v\n", err)
+		keys[i] = string(bytes)
+	}
+	return keys
+}
+
+/////////////// Handle SubCommand /////////////
+/////////////////////////////////////////
+
 func runSubCmd(cmd string) {
-	for _, sc := range cmdArray {
+	for _, sc := range providerArray {
 		if sc.CmdName == cmd {
 			runProp(sc)
 			return
@@ -634,7 +838,7 @@ func cleanSubCmd(cmd string) string {
 	return str
 }
 
-func runSimulator() string {
+/*func runSimulator() string {
 	log.Printf("Running Simulator..\n")
 
 	currentRoot, err := os.Getwd()
@@ -659,7 +863,10 @@ func runSimulator() string {
 	})
 
 	return "ok"
-}
+}*/
+
+/////////////// Handle Type /////////////
+/////////////////////////////////////////
 
 func handleBuild(target []string) []string {
 	resp := make([]string, len(target))
@@ -702,22 +909,17 @@ func handleRuns(target []string) []string { // we need to think order of servers
 
 func handleRun(target string) string {
 	var res string
-	if target == "Simulator" {
-		res = runSimulator()
-		return res
-	} else {
-		for _, sc := range cmdArray {
+		for _, sc := range providerArray {
 			if sc.CmdName == target {
 				if sc.RunFunc == nil {
 					res = runProp(sc)
 				} else {
-					//			res = sc.RunFunc()
+					// when start "All"
 					res = "ok"
 					sc.RunFunc()
 				}
 				return res
 			}
-		}
 	}
 	logger.Infof("Can't find command %s", target)
 	return "Can't find command " + target
@@ -819,14 +1021,28 @@ func (s *simDaemonServer) SendOrder(stream *daemon.SetOrder) error {
 	}
 }*/
 
-func handleOrder(order *Order) string {
-	target := order.Type
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+func handleOrder(order *UIOrder) string {
+	target := order.Name
+	//ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	fmt.Printf("Target is : %v\n", target)
-	for _, sc := range cmdArray {
-		if sc.CmdName == target {
+	for _, sc := range orderArray {
+		if sc.Name == target {
 			var res string
-			if target == "SetAll" {
+			switch target{
+			case "SetClock":
+				fmt.Printf("SetClock\n")
+			case "ClearClock":
+				fmt.Printf("ClearClock\n")
+			case "SetAgents":
+				fmt.Printf("SetAgents\n")
+			case "ClearAgents":
+				fmt.Printf("ClearAgents\n")
+			case "StartClock":
+				fmt.Printf("StartClock\n")
+			case "StopClock":
+				fmt.Printf("StopClock\n")
+			}
+			///if target == "Clock" {
 				// JSONファイル読み込み
 				/*jsonName := order.Option
 				fmt.Printf("jsonName is : %v\n", order.Option)
@@ -841,7 +1057,10 @@ func handleOrder(order *Order) string {
 					log.Fatal(err)
 				}
 				*/
-			} else if target == "SetClock" {
+			//}
+			
+			
+			/*else if target == "SetClock" {
 				message := &daemon.SetClockMessage{
 					GlobalTime: float64(0),
 					TimeStep:   float64(1),
@@ -910,7 +1129,7 @@ func handleOrder(order *Order) string {
 					log.Fatalf("could not order: %v", err)
 				}
 				log.Printf("Response: %s", r.Ok)
-			}
+			}*/
 
 			res = "ok"
 			logger.Infof("your order is %s", target)
@@ -944,7 +1163,7 @@ func killCmd(target string) string {
 	return res
 }
 
-func handleStop(target []string) []string {
+/*func handleStop(target []string) []string {
 	resp := make([]string, len(target))
 	for i, proc := range target {
 		if proc == "All" || proc == "all" {
@@ -963,10 +1182,10 @@ func handleRestart(target []string) []string {
 		handleRun(tg)
 	}
 	return resp
-}
+}*/
 
 // ps commands from se cli
-func checkRunning(opt string) []string {
+/*func checkRunning(opt string) []string {
 	isLong := false
 	if opt == "long" {
 		isLong = true
@@ -1000,26 +1219,35 @@ func checkRunning(opt string) []string {
 	providerMutex.RUnlock()
 	return procs
 
-}
+}*/
 
-func interfaceToString(target interface{}) []string {
+/*func interfaceToString(target interface{}) []string {
 	procs := target.([]interface{})
 	resp := make([]string, len(procs))
 	for i, pp := range procs {
 		resp[i] = pp.(string)
 	}
 	return resp
+}*/
+
+//type debugLogger struct{}
+
+/*type Option struct{
+	Key string
+	Value []string
+}*/
+type UIOrder struct{
+	Name string
+	Options []*Option
 }
 
-type debugLogger struct{}
-
-func (d debugLogger) Write(p []byte) (n int, err error) {
+/*func (d debugLogger) Write(p []byte) (n int, err error) {
 	s := string(p)
 	if strings.Contains(s, "multiple response.WriteHeader") {
 		debug.PrintStack()
 	}
 	return os.Stderr.Write(p)
-}
+}*/
 
 func (sesrv *SynerexService) run() error {
 	logger.Info("Starting.. Synergic Engine:" + version)
@@ -1027,7 +1255,7 @@ func (sesrv *SynerexService) run() error {
 	if err != nil {
 		logger.Errorf("se-daemon: Can' get registered directory: %s", err.Error())
 	}
-	d := filepath.Join(currentRoot, "dclient", "build")
+	d := filepath.Join(currentRoot, "monitor", "build")
 
 	assetsDir = http.Dir(d)
 	server = gosocketio.NewServer()
@@ -1036,14 +1264,17 @@ func (sesrv *SynerexService) run() error {
 		logger.Infof("Connected from %s as %s", c.IP(), c.Id())
 		// we need to send providers array
 		// send Provider info to the web client
-		c.Emit("providers", getCmdArray())
+		logger.Infof("send")
+		// Fix Infinite Loop Connection
+		c.Emit("providers", getProviderNames())
+		c.Emit("commands", getOrderNames())
 
 	})
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
 		logger.Infof("Disconnected from %s as %s", c.IP(), c.Id())
 	})
 
-	server.On("setCh", func(c *gosocketio.Channel, param interface{}) string {
+	/*server.On("setCh", func(c *gosocketio.Channel, param interface{}) string {
 		// need to check param short or long
 		opt, ok := param.(string)
 		logger.Infof("param is %s as %s", ok, opt)
@@ -1051,9 +1282,9 @@ func (sesrv *SynerexService) run() error {
 			sioCh.Scenario = c
 		}
 		return "ok"
-	})
+	})*/
 
-	server.On("ps", func(c *gosocketio.Channel, param interface{}) []string {
+	/*server.On("ps", func(c *gosocketio.Channel, param interface{}) []string {
 		// need to check param short or long
 		opt := param.(string)
 
@@ -1078,45 +1309,28 @@ func (sesrv *SynerexService) run() error {
 	server.On("clean", func(c *gosocketio.Channel, param interface{}) []string {
 		procs := interfaceToString(param)
 		return handleClean(procs)
+	})*/
+
+	server.On("run", func(c *gosocketio.Channel, param *UIOrder) string {
+		targetName := param.Name
+		logger.Infof("Get run command %s", targetName)
+
+		return handleRun(targetName)
 	})
 
-	server.On("run", func(c *gosocketio.Channel, param interface{}) string {
-		nid := param.(string)
-		//		fmt.Printf("Get Run Command %s\n", nid)
-		logger.Infof("Get run command %s", nid)
-		return handleRun(nid)
-	})
+	server.On("command", func(c *gosocketio.Channel, param *UIOrder) string {
+		targetName := param.Name
+		logger.Infof("Get order command %s", targetName)
 
-	server.On("order", func(c *gosocketio.Channel, order *Order) string {
-		nid := order.Type
-		//		fmt.Printf("Get Run Command %s\n", nid)
-		logger.Infof("order from %s as %s", c.IP(), c.Id())
-		logger.Infof("Get order command %s %v", nid, order)
-
-		return handleOrder(order)
+		return handleOrder(param)
 	})
 
 	serveMux := http.NewServeMux()
-
 	serveMux.Handle("/socket.io/", server)
 	serveMux.HandleFunc("/", assetsFileHandler)
-	// for GitHub auto development
-	serveMux.HandleFunc("/github/", githubHandler)
-
-	logger.Info("Starting Synerex Engine daemon on port ", port)
-
-	hLogger := log.New(debugLogger{}, "", 0)
-
-	server := &http.Server{
-		Addr:     fmt.Sprintf(":%d", port),
-		Handler:  serveMux,
-		ErrorLog: hLogger,
-	}
-	err = server.ListenAndServe()
-
-	//	err = http.ListenAndServe(fmt.Sprintf(":%d", port), serveMux)
-	if err != nil {
-		logger.Error(err)
+	log.Println("Serving at localhost:9995...")
+	if err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), serveMux); err != nil {
+		log.Panic(err)
 	}
 
 	return nil

@@ -1,6 +1,7 @@
 module github.com/synerex/synerex_alpha/provider/simulation/area-provider
 
 require (
+	github.com/paulmach/orb v0.1.5 // indirect
 	github.com/synerex/synerex_alpha/api v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/area v0.0.0
 	github.com/synerex/synerex_alpha/api/simulation/clock v0.0.0

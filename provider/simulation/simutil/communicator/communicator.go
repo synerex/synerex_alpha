@@ -18,12 +18,8 @@ import (
 
 var (
 	mu                  sync.Mutex
-	CHANNEL_BUFFER_SIZE int
 )
 
-func init() {
-	CHANNEL_BUFFER_SIZE = 10
-}
 
 type Clients struct {
 	AgentClient       *sxutil.SMServiceClient
@@ -138,6 +134,7 @@ func (s *SynerexCommunicator) Wait(idList []uint64, waitCh chan *pb.Supply) map[
 		for {
 			select {
 			case psp := <-waitCh:
+
 
 				mu.Lock()
 				// spのidがidListに入っているか

@@ -8,6 +8,8 @@ import (
 	"sync"
 	"github.com/paulmach/orb/geojson"
 	"io/ioutil"
+	//"time"
+	//"runtime"
 	//"encoding/json"
 
 	pb "github.com/synerex/synerex_alpha/api"
@@ -61,7 +63,7 @@ func getArea() {
 	}else{
 		// エリア情報をセット
 		sim.SetArea(areaInfo)
-		log.Printf("\x1b[30m\x1b[47m \n Finish: Area information got. \n AreaId:  %v \n AreaName: %v \x1b[0m\n", sim.GetArea().Id, sim.GetArea().Name)
+		log.Printf("\x1b[30m\x1b[47m \n Finish: Area information got. \n AreaId:  %v \n AreaName: %v \x1b[0m\n", areaInfo.GetId(), areaInfo.GetName())
 	}
 }
 
@@ -204,6 +206,8 @@ func callbackDownScenarioRequest(dm *pb.Demand) {
 
 // callbackForwardClock: Agentを計算し、クロックを進める要求
 func callbackForwardClockRequest(dm *pb.Demand) {
+	//t_start := time.Now()
+	com.InitChannel()
 	dm.GetSimDemand().GetForwardClockRequest().GetStepNum()
 	targetId := dm.GetId()
 
@@ -216,6 +220,7 @@ func callbackForwardClockRequest(dm *pb.Demand) {
 	// agentがDuplicateで計算されている？
 	nextControlAgents := sim.ForwardStep(sameAreaAgents)
 
+
 	// 隣接エリアにエージェントの情報を送信
 	com.GetNeighborAreaAgentsResponse(targetId, nextControlAgents)
 
@@ -226,7 +231,7 @@ func callbackForwardClockRequest(dm *pb.Demand) {
 	// 重複エリアのエージェントを更新する
 	nextDuplicateAgents := sim.UpdateDuplicateAgents(nextControlAgents, neighborAreaAgents)
 
-	//log.Printf("nextD: %v", nextDuplicateAgents)
+	
 	// Agentsをセットする
 	sim.SetAgents(nextDuplicateAgents)
 
@@ -238,6 +243,8 @@ func callbackForwardClockRequest(dm *pb.Demand) {
 
 	// セット完了通知を送る
 	com.ForwardClockResponse(targetId)
+	//t_end := time.Now()
+	//log.Printf("time: %v\n", t_end.Sub(t_start).Seconds())
 	log.Printf("\x1b[30m\x1b[47m \n Finish: Clock forwarded. \n Time:  %v \n Agents Num: %v \x1b[0m\n", sim.GlobalTime, len(nextControlAgents))
 }
 

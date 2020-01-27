@@ -37,7 +37,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-const MessageChannelBufferSize = 10
+const MessageChannelBufferSize = 20
 
 var (
 	port    = flag.Int("port", 10000, "The Synerex Server Listening Port")
@@ -84,7 +84,7 @@ func (s *synerexServerInfo) RegisterDemand(c context.Context, dm *api.Demand) (r
 }
 
 func (s *synerexServerInfo) RegisterSupply(c context.Context, sp *api.Supply) (r *api.Response, e error) {
-	fmt.Printf("Register Supply!!!")
+	//fmt.Printf("Register Supply!!!")
 	okFlag := true
 	okMsg := ""
 	str := ""
@@ -103,7 +103,7 @@ func (s *synerexServerInfo) RegisterSupply(c context.Context, sp *api.Supply) (r
 
 	}
 	s.smu.RUnlock()
-	fmt.Printf("RS: %d, %s:", len(chs), str)
+	//fmt.Printf("RS: %d, %s:", len(chs), str)
 	r = &api.Response{Ok: okFlag, Err: okMsg}
 	return r, nil
 }

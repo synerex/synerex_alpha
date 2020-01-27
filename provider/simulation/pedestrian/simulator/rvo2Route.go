@@ -1,7 +1,7 @@
 package simulator
 
 import (
-	"fmt"
+	//"fmt"
 	"math"
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geojson"
@@ -145,8 +145,8 @@ func (rvo2route *RVO2Route) SetupScenario() {
 
 	sim.ProcessObstacles()
 
-	fmt.Printf("Simulation has %v agents and %v obstacle vertices in it.\n", sim.GetNumAgents(), sim.GetNumObstacleVertices())
-	fmt.Printf("Running Simulation..\n\n")
+	//fmt.Printf("Simulation has %v agents and %v obstacle vertices in it.\n", sim.GetNumAgents(), sim.GetNumObstacleVertices())
+	//fmt.Printf("Running Simulation..\n\n")
 }
 
 func (rvo2route *RVO2Route) CalcNextAgents() []*agent.Agent {

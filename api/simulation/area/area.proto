@@ -3,7 +3,7 @@ syntax = "proto3";
 package api.area;
 
 option go_package="github.com/synerex/synerex_alpha/api/simulation/area";
-
+import "simulation/common/common.proto";
 
 
 message GetAreaRequest {
@@ -27,4 +27,12 @@ message AreaCoord {
     double start_lon = 2;
     double end_lat = 3;
     double end_lon = 4;
+}
+
+message Area2 {
+    uint64 id = 1;
+    string name = 2;
+    repeated uint64 neighbor_areas = 3;
+    repeated common.Coord duplicate_area = 4;
+    repeated common.Coord control_area = 5;
 }
