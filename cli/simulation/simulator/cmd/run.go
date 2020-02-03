@@ -53,12 +53,12 @@ var cmds = [...]cmdInfo{
 		CmdName: "Scenario",
 	},
 	{
-		Aliases: []string{"PedArea", "Ped-Area", "ped-area"},
-		CmdName: "PedArea",
+		Aliases: []string{"Pedestrian", "pedestrian", "ped"},
+		CmdName: "Pedestrian",
 	},
 	{
-		Aliases: []string{"CarArea", "Car-Area", "car-area"},
-		CmdName: "CarArea",
+		Aliases: []string{"Car", "car"},
+		CmdName: "Car",
 	},
 	{
 		Aliases: []string{"simulator", "sim", "Simulator"},

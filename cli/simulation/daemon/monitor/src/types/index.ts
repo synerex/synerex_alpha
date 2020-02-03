@@ -12,9 +12,13 @@ export interface Command {
 	Option: Option["SET_AGENTS"] | Option["SET_AREA"] | Option["SET_CLOCK"] | Option["START_CLOCK"] | Option["STOP_CLOCK"]
 }
 
+export interface DialogStatus {
+	Open: boolean; // 1サイクルにかかった時間
+	Command?: Command;
+}
+
 export interface Log {
-	ID: string
-	Type: ProviderType
+	ID: number
 	Description: string
 }
 
@@ -72,12 +76,12 @@ export interface Order {
 }
 
 export class Provider {
-	ID: string
+	ID: number
 	Type: ProviderType
 	Logs: Log[]
 	RunningInfos: RunningInfo[]
 
-	constructor(id: string, type: ProviderType) {
+	constructor(id: number, type: ProviderType) {
 		this.ID = id
 		this.Type = type
 		this.Logs = []
@@ -101,6 +105,10 @@ export class Provider {
 			case ProviderType.SYNEREX_SERVER:
 				return "Synerex Server"
 		}
+	}
+
+	getLogs() {
+		return this.Logs
 	}
 
 	addLog(log: Log) {

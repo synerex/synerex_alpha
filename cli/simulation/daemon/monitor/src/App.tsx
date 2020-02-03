@@ -15,8 +15,8 @@ import {
 } from "./types";
 
 const mockProviders: Provider[] = [
-    new Provider("1", ProviderType.PEDESTRIAN),
-    new Provider("2", ProviderType.PEDESTRIAN)
+    new Provider(1, ProviderType.PEDESTRIAN),
+    new Provider(2, ProviderType.CAR)
 ];
 
 const mockCommands: Command[] = [
@@ -56,8 +56,6 @@ const mockCommands: Command[] = [
 
 const socket: SocketIOClient.Socket = io();
 const App: React.FC = () => {
-    //const [logs, setLogs] = useState<Log[]>([]);
-    //const [runningInfos, setRunningInfos] = useState<RunningInfo[]>([]);
     const [providers, setProviders] = useState<Provider[]>(mockProviders);
     const [commands, setCommands] = useState<Command[]>(mockCommands);
     useEffect(() => {
@@ -66,55 +64,115 @@ const App: React.FC = () => {
         });
         socket.on("log", (jsonArray: string) => addLog(jsonArray));
         socket.on("running", (jsonArray: string) => addRunnningInfo(jsonArray));
-        socket.on("providers", (jsonStr: string[]) => addProvider(jsonStr));
+        socket.on("providers", (jsonStr: string[]) => getProviders(jsonStr));
         //socket.on("commands", (jsonArray: string[]) => getCommands(jsonArray));
         socket.on("disconnect", () => {
             console.log("Socket.IO Disconnected!");
         });
     }, []);
 
-    const getProvider = (id: Provider["ID"]) => {
-        providers.forEach((provider: Provider) => {
-            if (provider.ID === id) {
-                return provider;
-            }
-        });
-        return null;
-    };
-
     // logがdaemonから送られる
     const addLog = (jsonStr: string) => {
-        let newProviders: Provider[] = [...providers];
-        const id: Provider["ID"] = "0";
-        const log: Log = {
-            ID: id,
-            Type: ProviderType.NODEID_SERVER,
-            Description: jsonStr
-        };
-        providers.forEach((provider: Provider, index: number) => {
-            if (provider.ID === id) {
-                provider.Logs.push(log);
-                newProviders.splice(index, 1, provider);
-            }
+        setProviders(prevProviders => {
+            let newProviders: Provider[] = [...prevProviders];
+            //console.log("setLog11", prevProviders);
+            //console.log("setLog1", jsonStr);
+            const prelog = JSON.parse(jsonStr);
+            //console.log("setLog2", prelog);
+            const log: Log = {
+                ID: prelog.ID,
+                Description: prelog.Description
+            };
+            //console.log("Log: ", log);
+            prevProviders.forEach((provider: Provider, index: number) => {
+                //console.log("pro same: ", provider.ID, log.ID);
+                if (provider.ID === log.ID) {
+                    //console.log("same id");
+                    provider.addLog(log);
+                    newProviders.splice(index, 1, provider);
+                }
+            });
+            //console.log("setLog", newProviders);
+            return newProviders;
         });
-        setProviders(newProviders);
     };
 
     // 1サイクル毎にプロバイダ毎の所要時間などの情報がdaemonから送られる
     const addRunnningInfo = (jsonStr: string) => {
-        let newProviders: Provider[] = [...providers];
-        const id: Provider["ID"] = "0";
-        const runningInfo: RunningInfo = {
-            Duration: 0,
-            AgentsNum: 0
-        };
-        providers.forEach((provider: Provider, index: number) => {
-            if (provider.ID === id) {
-                provider.RunningInfos.push(runningInfo);
-                newProviders.splice(index, 1, provider);
-            }
+        setProviders(prevProviders => {
+            let newProviders: Provider[] = [...prevProviders];
+            const id: Provider["ID"] = 0;
+            const runningInfo: RunningInfo = {
+                Duration: 0,
+                AgentsNum: 0
+            };
+            prevProviders.forEach((provider: Provider, index: number) => {
+                if (provider.ID === id) {
+                    provider.RunningInfos.push(runningInfo);
+                    newProviders.splice(index, 1, provider);
+                }
+            });
+            return newProviders;
         });
-        setProviders(newProviders);
+        //console.log("setRunningInof");
+        //setProviders(newProviders);
+    };
+
+    // providerに変化があった場合にdaemonから送られる
+    const getProviders = (jsonArray: string[]) => {
+        setProviders(prevProviders => {
+            let newProviders: Provider[] = [];
+            jsonArray.forEach((pjson: string) => {
+                const provider = JSON.parse(pjson);
+                let existProvider = null;
+                let newProvider = null;
+                prevProviders.forEach((prevProvider: Provider) => {
+                    // 新規プロバイダの場合追加
+                    if (provider.ID === prevProvider.ID) {
+                        // すでに存在する場合、元のプロバイダを追加
+                        existProvider = prevProvider;
+                        /*newProvider = new Provider(
+                            provider.ID,
+                            checkProviderType(provider.Name)
+                        );*/
+                    }
+                });
+                if (existProvider) {
+                    //console.log("exist!", existProvider);
+                    newProviders.push(existProvider);
+                } else {
+                    //console.log("new!", existProvider);
+                    newProviders.push(
+                        new Provider(
+                            provider.ID,
+                            checkProviderType(provider.Name)
+                        )
+                    );
+                }
+            });
+            return newProviders;
+        });
+    };
+
+    const checkProviderType = (name: string) => {
+        switch (name) {
+            case "NodeIDServer":
+                return ProviderType.NODEID_SERVER;
+            case "MonitorServer":
+                return ProviderType.MONITOR_SERVER;
+            case "SynerexServer":
+                return ProviderType.SYNEREX_SERVER;
+            case "Scenario":
+                return ProviderType.SCENARIO;
+            case "Pedestrian":
+                return ProviderType.PEDESTRIAN;
+            case "Visualization":
+                return ProviderType.VISUALIZATION;
+            case "Car":
+                return ProviderType.CAR;
+            default:
+                return ProviderType.PEDESTRIAN;
+        }
     };
 
     // providerに変化があった場合にdaemonから送られる
@@ -122,7 +180,7 @@ const App: React.FC = () => {
         console.log("Get Providers!", jsonArray);
         let newProviders: Provider[] = [...providers];
         jsonArray.forEach((pName: string) => {
-            const id: Provider["ID"] = "0";
+            const id: Provider["ID"] = 0;
             const type: ProviderType = ProviderType.PEDESTRIAN;
             var hasID: boolean = false;
             providers.forEach((provider: Provider) => {
@@ -154,11 +212,13 @@ const App: React.FC = () => {
     /*const runProvider = (provider: Provider) => {
         console.log("Click Provider!", provider);
         socket.emit("run", provider);
-    };*/
+	};*/
 
     const runCommand = (command: Command) => {
         console.log("Click Command!", command);
-        socket.emit("command", command);
+        //socket.emit("command", command);
+        const err = true;
+        return err;
     };
 
     return (

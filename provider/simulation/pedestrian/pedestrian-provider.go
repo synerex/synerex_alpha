@@ -8,12 +8,14 @@ import (
 	"sync"
 	"github.com/paulmach/orb/geojson"
 	"io/ioutil"
+	"encoding/json"
 	//"time"
 	//"runtime"
 	//"encoding/json"
 
 	pb "github.com/synerex/synerex_alpha/api"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
+	"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/participant"
 	"github.com/synerex/synerex_alpha/api/simulation/synerex"
 	"github.com/synerex/synerex_alpha/provider/simulation/pedestrian/communicator"
@@ -22,19 +24,31 @@ import (
 	"google.golang.org/grpc"
 )
 
+
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	areaIdFlag     = flag.Int("areaId", 1, "Area Id") 
+	areaJson     = flag.String("areaJson", "", "Area Json") 
+	areaInfo *area.Area2
 	agentType  = common.AgentType_PEDESTRIAN               // PEDESTRIAN
 	com        *communicator.PedCommunicator
-	sim        *simulator.PedSimulator
+	sim        *simulator.PedSimulator;
 	areaId uint64
 	isDownScenario bool
 )
 
+
+func flagToAreaInfo(areaJson string) *area.Area2{
+	bytes := []byte(areaJson)
+	json.Unmarshal(bytes, &areaInfo)
+    return areaInfo
+}
+
 func init(){
 	flag.Parse()
+	areaInfo = flagToAreaInfo(*areaJson)
+	log.Printf("flagtest: %v\n", areaInfo)
 	areaId = uint64(*areaIdFlag)
 	isDownScenario = false
 }

@@ -16,3 +16,20 @@ enum AgentType {
 	TRAIN = 3;
 	SIGNAL = 4;
 }
+
+enum ProviderType {
+    SCENARIO = 0;
+    AREA = 1;
+    CAR = 2;
+    PEDESTRIAN = 3;
+    ROUTE = 4;
+	VISUALIZATION = 5;
+}
+
+enum OrderType {
+    SET_AGENTS = 0;
+    CLEAR_AGENTS = 1;
+    SET_CLOCK = 2;
+    START_CLOCK = 3;
+    STOP_CLOCK = 4;
+}

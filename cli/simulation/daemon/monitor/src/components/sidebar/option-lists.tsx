@@ -18,26 +18,26 @@ const OptionLists: React.FC<Props> = props => {
 
     const [option, setOption] = useState<Command["Option"]>(command.Option);
 
-    const handleChange = (value: string, i: number) => {
-        const newOptions = [...options];
-        newOptions[i] = {
-            Key: options[i].Key,
+    /*const handleChange = (value: string, i: number) => {
+        const newOption = [...option];
+        newOption[i] = {
+            Key: option[i].Key,
             Value: value
         };
-        setOptions(newOptions);
+        setOption(newOption);
     };
 
     const handleClick = () => {
-        console.log("options: ", options);
+        console.log("option: ", option);
         const newCommand: Command = {
             Name: command.Name,
-            Options: options
+            Option: option
         };
         runCommand(newCommand);
-    };
+    };*/
     return (
         <div>
-            {Object.keys(option).forEach((k: string, i: number) => (
+            {/*{Object.keys(option).forEach((k: string, i: number) => (
                 <ListItem key={i}>
                     <ListItemText primary={k} />
                     <TextField
@@ -48,7 +48,7 @@ const OptionLists: React.FC<Props> = props => {
             ))}
             <Button onClick={() => handleClick()} variant={"contained"}>
                 Run
-            </Button>
+			</Button>*/}
         </div>
     );
 };

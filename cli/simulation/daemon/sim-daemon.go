@@ -12,18 +12,13 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path/filepath"
 	//"runtime/debug"
 	//"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 	
-
-	//"github.com/google/uuid"
-	"github.com/kardianos/service"
 	gosocketio "github.com/mtfelian/golang-socketio"
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
@@ -39,23 +34,18 @@ import (
 var (
 	fcs *geojson.FeatureCollection
 	geofile string
+	version = "0.04"
+	port = 9995
+	assetsDir http.FileSystem
+	server *gosocketio.Server = nil
+	//providerMap map[string]*exec.Cmd
+	runProviders map[string]*Provider
+	providerMutex sync.RWMutex
+	client daemon.SimDaemonClient
+	providerArray []ProviderData
 )
 
-var version = "0.04"
-var logger service.Logger
-var errlog *log.Logger
-var port = 9995
-var isDaemon = false
-var interrupt chan os.Signal
 
-var assetsDir http.FileSystem
-var server *gosocketio.Server = nil
-
-var providerMap map[string]*exec.Cmd
-var providerMutex sync.RWMutex
-
-var githubBranch string
-var client daemon.SimDaemonClient
 
 func loadGeoJson(fname string) *geojson.FeatureCollection{
 
@@ -74,61 +64,6 @@ func init(){
 	fcs = loadGeoJson(geofile)
 }
 
-type SynerexService struct {
-}
-
-type SubCommands struct {
-	CmdName     string
-	Description string
-	SrcDir      string
-	BinName     string
-	GoFiles     []string
-	RunFunc     func()
-}
-
-type Order struct {
-	Type   string
-	Option string
-}
-
-
-// for Structures for Github json.
-type committer struct {
-	Name string
-}
-type headCommit struct {
-	Url       string
-	Timestamp string
-	Committer committer
-}
-type pusher struct {
-	Name string
-}
-type repository struct {
-	Name string
-}
-type data struct {
-	Ref         string
-	Head_commit headCommit
-	Pusher      pusher
-	Repository  repository
-}
-
-type sioChannel struct {
-	Scenario *gosocketio.Channel
-}
-
-var sioCh sioChannel
-
-var cmdArray []SubCommands
-var orderArray []OrderData
-var providerArray []ProviderData
-
-type OrderData struct{
-	Name string
-	Options []Option
-}
-
 type Option struct{
 	Key string
 	Value string
@@ -136,125 +71,85 @@ type Option struct{
 
 type ProviderData struct{
 	CmdName     string
+	Type ProviderType
 	Description string
 	SrcDir      string
 	BinName     string
 	GoFiles     []string
-	RunFunc     func()
 	Options     []Option
 }
 
-func init() {
-	//	stdlog = log.New(os.Stdout, "", log.Ldate|log.Ltime)
-	errlog = log.New(os.Stderr, "", log.Ldate|log.Ltime)
-	providerMap = make(map[string]*exec.Cmd)
-	providerMutex = sync.RWMutex{}
+// Log
+type Log struct{
+	ID int
+	Description string
+}
 
-	cmdArray = []SubCommands{
-		{
-			CmdName: "All",
-			RunFunc: runAll,
-			GoFiles: nil,
-		},
-		{
-			CmdName: "NodeIDServer",
-			SrcDir:  "nodeserv",
-			BinName: "nodeid-server",
-			GoFiles: []string{"nodeid-server.go"},
-		},
-		{
-			CmdName: "MonitorServer",
-			SrcDir:  "monitor",
-			BinName: "monitor-server",
-			GoFiles: []string{"monitor-server.go"},
-		},
-		{
-			CmdName: "SynerexServer",
-			SrcDir:  "server",
-			BinName: "synerex-server",
-			GoFiles: []string{"synerex-server.go", "message-store.go"},
-		},
-		{
-			CmdName: "Area",
-			SrcDir:  "provider/simulation/area",
-			BinName: "area-provider",
-			GoFiles: []string{"area-provider.go"},
-		},
-		{
-			CmdName: "Scenario",
-			SrcDir:  "provider/simulation/scenario",
-			BinName: "scenario-provider",
-			GoFiles: []string{"scenario-provider.go"},
-		},
-		{
-			CmdName: "PedArea",
-			SrcDir:  "provider/simulation/ped-area",
-			BinName: "ped-area-provider",
-			GoFiles: []string{"ped-area-provider.go"},
-		},
-		{
-			CmdName: "CarArea",
-			SrcDir:  "provider/simulation/car-area",
-			BinName: "car-area-provider",
-			GoFiles: []string{"car-area-provider.go"},
-		},
-		{
-			CmdName:     "GetParticipant",
-			Description: "Order",
-		},
-		{
-			CmdName:     "SetClock",
-			Description: "Order",
-		},
-		{
-			CmdName:     "SetArea",
-			Description: "Order",
-		},
-		{
-			CmdName:     "SetAgents",
-			Description: "Order",
-		},
-		{
-			CmdName:     "ClearAgents",
-			Description: "Order",
-		},
-		{
-			CmdName:     "StartClock",
-			Description: "Order",
-		},
-		{
-			CmdName:     "StopClock",
-			Description: "Order",
-		},
-		{
-			CmdName:     "ForwardClock",
-			Description: "Order",
-		},
-		{
-			CmdName:     "BackClock",
-			Description: "Order",
-		},
-		{
-			CmdName:     "SetAll",
-			Description: "Order",
-		},
-	}
+// Provider Info
+type ProviderType int
+const (
+	ProviderType_SCENARIO  ProviderType = 0
+    ProviderType_AREA  ProviderType = 1
+    ProviderType_CAR  ProviderType = 2
+    ProviderType_PEDESTRIAN  ProviderType = 3
+    ProviderType_ROUTE ProviderType = 4
+	ProviderType_VISUALIZATION  ProviderType = 5
+	ProviderType_NODE_ID_SERVER ProviderType = 6
+	ProviderType_SYNEREX_SERVER ProviderType = 7
+	ProviderType_MONITOR_SERVER ProviderType = 8
+)
+
+type ProviderOption struct{
+	NodeServAddr string
+	SynerexServAddr string
+	AreaCoord string
+}
+
+type Provider struct{
+	ID int
+	Name string
+	Type ProviderType
+	Option *ProviderOption
+	Cmd *exec.Cmd
+}
+
+// Order Info
+type OrderType int
+const (
+	OrderType_SET_AGENTS  OrderType = 0
+    OrderType_CLEAR_AGENTS  OrderType = 1
+    OrderType_SET_CLOCK  OrderType = 2
+    OrderType_START_CLOCK  OrderType = 3
+	OrderType_STOP_CLOCK OrderType = 4
+)
+
+type Coord struct{
+	Longitude float64
+	Latitude float64
+}
+
+type OrderOption struct{
+	AgentNum int
+	Time float64
+	AreaCoord []*Coord
+}
+
+type Order struct {
+	ID string
+	Type   OrderType
+	Name string
+	Option OrderOption
+}
+
+func init() {
+	runProviders = make(map[string]*Provider)
+	//providerMap = make(map[string]*exec.Cmd)
+	providerMutex = sync.RWMutex{}
 
 	providerArray = []ProviderData{
 		{
-			CmdName: "RunAll",
-			RunFunc: runAll,
-			GoFiles: nil,
-			Options: nil,
-		},
-		{
-			CmdName: "KillAll",
-			RunFunc: killAll,
-			GoFiles: nil,
-			Options: nil,
-		},
-		{
 			CmdName: "NodeIDServer",
+			Type: ProviderType_NODE_ID_SERVER,
 			SrcDir:  "nodeserv",
 			BinName: "nodeid-server",
 			GoFiles: []string{"nodeid-server.go"},
@@ -265,6 +160,7 @@ func init() {
 		},
 		{
 			CmdName: "MonitorServer",
+			Type: ProviderType_MONITOR_SERVER,
 			SrcDir:  "monitor",
 			BinName: "monitor-server",
 			GoFiles: []string{"monitor-server.go"},
@@ -275,6 +171,7 @@ func init() {
 		},
 		{
 			CmdName: "SynerexServer",
+			Type: ProviderType_SYNEREX_SERVER,
 			SrcDir:  "server",
 			BinName: "synerex-server",
 			GoFiles: []string{"synerex-server.go", "message-store.go"},
@@ -285,6 +182,7 @@ func init() {
 		},
 		{
 			CmdName: "Area",
+			Type: ProviderType_AREA,
 			SrcDir:  "provider/simulation/area",
 			BinName: "area-provider",
 			GoFiles: []string{"area-provider.go"},
@@ -295,6 +193,7 @@ func init() {
 		},
 		{
 			CmdName: "Scenario",
+			Type: ProviderType_SCENARIO,
 			SrcDir:  "provider/simulation/scenario",
 			BinName: "scenario-provider",
 			GoFiles: []string{"scenario-provider.go"},
@@ -305,6 +204,7 @@ func init() {
 		},
 		{
 			CmdName: "Pedestrian",
+			Type: ProviderType_PEDESTRIAN,
 			SrcDir:  "provider/simulation/pedestrian",
 			BinName: "pedestrian-provider",
 			GoFiles: []string{"pedestrian-provider.go"},
@@ -315,6 +215,7 @@ func init() {
 		},
 		{
 			CmdName: "Car",
+			Type: ProviderType_CAR,
 			SrcDir:  "provider/simulation/car",
 			BinName: "car-provider",
 			GoFiles: []string{"car-provider.go"},
@@ -325,6 +226,7 @@ func init() {
 		},
 		{
 			CmdName: "Visualization",
+			Type: ProviderType_VISUALIZATION,
 			SrcDir:  "provider/simulation/visualization",
 			BinName: "visualization-provider",
 			GoFiles: []string{"visualization-provider.go"},
@@ -335,161 +237,45 @@ func init() {
 		},
 	}
 
-	orderArray = []OrderData{
-		{
-			Name:     "SetClock",
-			Options: []Option{Option{
-				Key: "clock",
-				Value: "0",
-			}},
-		},
-		{
-			Name:     "ClearClock",
-			Options: []Option{Option{
-				Key: "test",
-				Value: "0",
-			}},
-		},
-		{
-			Name:     "SetAgents",
-			Options: []Option{Option{
-				Key: "type",
-				Value: "pedestrian",
-			},
-			Option{
-				Key: "num",
-				Value: "0",
-			}},
-		},
-		{
-			Name:     "ClearAgents",
-			Options: []Option{Option{
-				Key: "test",
-				Value: "0",
-			}},
-		},
-		{
-			Name:     "StartClock",
-			Options: []Option{Option{
-				Key: "test",
-				Value: "0",
-			}},
-		},
-		{	
-			Name:     "StopClock",
-			Options: []Option{Option{
-				Key: "test",
-				Value: "0",
-			}},
-		},
-	}
-
 }
 
-/*func githubHandler(w http.ResponseWriter, r *http.Request) {
-	status := 400
-	if r.Method == http.MethodPost {
-		bufbody := new(bytes.Buffer)
-		bufbody.ReadFrom(r.Body)
-		buf := bufbody.Bytes()
-		var d data
-		err := json.Unmarshal(buf, &d)
-		if err != nil {
-			return
-		}
-		logger.Infof("UnMarshaled WebHook from:%s", d.Repository.Name)
-		logger.Infof("Pusher    :%s", d.Pusher)
-		logger.Infof("Committer :%s", d.Head_commit.Committer.Name)
-		logger.Infof("URL       :%s", d.Head_commit.Url)
-		status = 200
-		if d.Ref == "refs/heads/"+githubBranch {
-			fmt.Println("Now staring rebuild and rerun.")
-			githubPullAndRun()
-		}
-	}
-	w.WriteHeader(status)
-}
-
-// for github end.
-
-func pullGithub() {
-
-	var cmd *exec.Cmd
-
-	runArgs := []string{"pull"}
-	cmd = exec.Command("git", runArgs...)
-
-	pipe, err := cmd.StderrPipe()
-	if err != nil {
-		logger.Infof("Error for getting stdout pipe %s\n", cmd.Args[0])
-		return
-	}
-	err = cmd.Start()
-	if err != nil {
-		logger.Infof("Error for executing %s %v\n", cmd.Args[0], err)
-		return
-	}
-	logger.Infof("Starting %s..\n", cmd.Args[0])
-
-	reader := bufio.NewReader(pipe)
-	for {
-		line, _, err := reader.ReadLine()
-		if err == io.EOF {
-			logger.Infof("Command [%s] EOF\n", "git")
-			break
-		} else if err != nil {
-			logger.Infof("Err %v\n", err)
-		}
-		logger.Infof("[%s]:%s", "git", string(line))
-	}
-	logger.Infof("[%s]:Now ending...", "git")
-
-	cmd.Wait()
-
-	logger.Infof("Command [%s] closed\n", "git")
-}
-
-// compile and rerun..
-func githubPullAndRun() {
-	//first get
-	//
-	var procs []string
-	i := 0
-
+// providerに変化があった場合にGUIに情報を送る
+func sendRunnningProviders(){
 	providerMutex.RLock()
-	for key, _ := range providerMap {
-		procs[i] = key
-		i += 1
+
+	//fmt.Printf("providers---------- %v\n", len(runProviders))
+	rpJsons := make([]string, 0)
+	for _, rp := range runProviders {
+		bytes, _ := json.Marshal(rp)
+    	rpJson := string(bytes)
+		fmt.Printf("provider----------\n")
+		//fmt.Printf("Json: %v \n", rpJson)
+		rpJsons = append(rpJsons, rpJson)
 	}
+	//c.Emit("providers", rpJsons)
+	server.BroadcastToAll("providers", rpJsons)
 	providerMutex.RUnlock()
+}
 
-	// stop running processes
-	handleStop(procs)
+// プロバイダの状態確認
+/*func checkRunning2() {
 
-	// then build and rerun
-	//	cleanAll() need not to clean all?
-
-	// we need to pull!
-	pullGithub()
-
-	buildAll() // sometime it fails.. umm we need to fix it.
-
-	handleRun("NodeIDServer")
-	handleRun("MonitorServer")
-	handleRun("SynerexServer")
-
-	for _, proc := range procs {
-		if proc != "NodeIDServer" && proc != "MonitorServer" && proc != "SynerexServer" {
-			handleRun(proc)
+	go func(){
+		for{
+			providerMutex.RLock()
+			time.Sleep(1*time.Second)
+			fmt.Printf("time----------\n")
+			for key, cx := range providerMap {
+				pid := cx.Process.Pid
+				fmt.Printf("provider----------\n")
+				fmt.Printf("%5d: %-20s : \n", pid, key)
+			}
+			providerMutex.RUnlock()
+			//return 
 		}
-	}
-
+	}()
 }*/
 
-func (sesrv *SynerexService) Start(s service.Service) error {
-	go sesrv.run()
-	return nil
-}
 
 // assetsFileHandler for static Data
 func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
@@ -520,146 +306,88 @@ func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
 /////////////// Handle Command /////////////
 /////////////////////////////////////////
 
-func runMyCmd(cmd *exec.Cmd, cmdName string) {
-	providerMutex.Lock()
-	providerMap[cmdName] = cmd
-	providerMutex.Unlock()
+func runMyCmd(provider *Provider) {
+	cmd := provider.Cmd
+	cmdName := provider.Name
 
 	pipe, err := cmd.StderrPipe()
 	if err != nil {
-		logger.Infof("Error for getting stdout pipe %s\n", cmd.Args[0])
+		log.Printf("Error for getting stdout pipe %s\n", cmd.Args[0])
 		return
 	}
 	err = cmd.Start()
 	if err != nil {
-		logger.Infof("Error for executing %s %v\n", cmd.Args[0], err)
+		log.Printf("Error for executing %s %v\n", cmd.Args[0], err)
 		return
 	}
-	logger.Infof("Starting %s..\n", cmd.Args[0])
+	log.Printf("Starting %s..\n", cmd.Args[0])
 
+	// プロバイダーをリストに追加
+	providerMutex.Lock()
+	provider.ID = cmd.Process.Pid
+	runProviders[cmdName] = provider
+	providerMutex.Unlock()
+
+	// logを送る
 	reader := bufio.NewReader(pipe)
 	for {
 		line, _, err := reader.ReadLine()
 		if err == io.EOF {
-			logger.Infof("Command [%s] EOF\n", cmdName)
+			log.Printf("Command [%s] EOF\n", cmdName)
 			break
 		} else if err != nil {
-			logger.Infof("Err %v\n", err)
+			log.Printf("Err %v\n", err)
 		}
-		
+
+		logInfo := &Log{
+			ID: provider.ID,
+			Description: string(line),
+		}
+
+		bytes, err  := json.Marshal(logInfo)
+		logjson := string(bytes)
+		//fmt.Printf("Log is %v \n", logjson)
  
 		if server != nil {
-			server.BroadcastToAll("log", "["+cmdName+"]"+string(line))
+			server.BroadcastToAll("log", logjson)
 		}
-		logger.Infof("[%s]:%s", cmdName, string(line))
+		log.Printf("[%s]:%s", cmdName, string(line))
 	}
 	
 	//	log.Printf("[%s]:Now ending...",cmdName)
-	logger.Infof("[%s]:Now ending...", cmdName)
+	log.Printf("[%s]:Now ending...", cmdName)
 
 	cmd.Wait()
 	providerMutex.Lock()
-	delete(providerMap, cmdName)
+	//delete(providerMap, cmdName)
+	delete(runProviders, cmdName)
 	providerMutex.Unlock()
 
-	logger.Infof("Command [%s] closed\n", cmdName)
+	log.Printf("Command [%s] closed\n", cmdName)
 }
 
-// delete all bin files
-func cleanCmd(sc SubCommands) string { // build local node server
-	logger.Infof("clean '%s'\n", sc.CmdName)
-
-	d, err := getRegisteredDir()
-	if err != nil {
-		logger.Errorf("%s", err.Error())
-		return "cannot get dir: " + err.Error()
-	}
-
-	binpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../../" + sc.SrcDir + "/" + binName(sc.BinName))
-	_, err = os.Stat(binpath)
-
-	if err != nil {
-		return "none"
-	}
-	os.Remove(binpath)
-	return "ok"
-}
-
-// bulid From SubCommand
-func buildCmd(sc SubCommands) string { // build local node server
-	logger.Infof("build '%s'\n", sc.CmdName)
-	providerMutex.RLock()
-	_, ok := providerMap[sc.CmdName]
-	providerMutex.RUnlock()
-	if ok {
-		logger.Warningf("%s is already running\n", sc.CmdName)
-		return sc.CmdName + " is already running" // return to se command
-	}
-
-	d, err := getRegisteredDir()
-	if err != nil {
-		logger.Errorf("%s", err.Error())
-		return "cannot get dir: " + err.Error()
-	}
-
-	// get src dir
-	srcpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../../" + sc.SrcDir)
-	binpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../../" + sc.SrcDir + "/" + binName(sc.BinName))
-	fi, err := os.Stat(binpath)
-
-	// obtain most latest source file time.
-	modTime := time.Date(2018, time.August, 1, 0, 0, 0, 0, time.UTC)
-	for _, fn := range sc.GoFiles {
-		sp := filepath.FromSlash(filepath.ToSlash(srcpath) + "/" + fn)
-		ss, errf := os.Stat(sp)
-		if errf != nil {
-			return "Can't find file " + srcpath + ":" + err.Error()
-		}
-
-		if ss.ModTime().After(modTime) {
-			modTime = ss.ModTime()
-		}
-	}
-
-	var cmd *exec.Cmd
-
-	// check mod time
-	if err == nil && fi.ModTime().After(modTime) { // check binary time
-		// if binary is newer than sources
-		return "new"
-	} else {
-		runArgs := append([]string{"build"}, sc.GoFiles...)
-		cmd = exec.Command("go", runArgs...) // run go build with srcfile
-	}
-
-	cmd.Dir = srcpath
-	cmd.Env = getGoEnv()
-
-	go runMyCmd(cmd, sc.CmdName)
-	// no way to check the command result...
-	return "ok"
-}
 
 // run From SubCommand
 func runProp(sc ProviderData) string { // start local node server
-	logger.Infof("run '%s'\n", sc.CmdName)
+	log.Printf("run '%s'\n", sc.CmdName)
 	providerMutex.RLock()
-	_, ok := providerMap[sc.CmdName]
+	//_, ok := providerMap[sc.CmdName]
+	_, ok := runProviders[sc.CmdName]
 	providerMutex.RUnlock()
 	if ok {
-		logger.Warningf("%s is already running\n", sc.CmdName)
+		log.Printf("%s is already running\n", sc.CmdName)
 		return sc.CmdName + " is already running" // return to se command
 	}
 
-	d, err := getRegisteredDir()
+	d, err := os.Getwd()
 	if err != nil {
-		logger.Errorf("%s", err.Error())
+		log.Printf("%s", err.Error())
 		return "cannot get dir: " + err.Error()
 	}
 
 	// get src dir
 	srcpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../../" + sc.SrcDir)
-	binpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../../" + sc.SrcDir + "/" + binName(sc.BinName))
+	binpath := filepath.FromSlash(filepath.ToSlash(d) + "/../../../" + sc.SrcDir + "/" + sc.BinName)
 	fi, err := os.Stat(binpath)
 
 	// obtain most latest source file time.
@@ -676,23 +404,45 @@ func runProp(sc ProviderData) string { // start local node server
 
 	// check mod time
 	if err == nil && fi.ModTime().After(modTime) { // check binary time
-		cmd = exec.Command("./" + binName(sc.BinName)) // run binary
+		cmd = exec.Command("./" + sc.BinName) // run binary
 	} else {
 		runArgs := append([]string{"run"}, sc.GoFiles...)
-		logger.Infof("runArgs: [%s] %d, %s %s", sc.CmdName, len(sc.GoFiles), runArgs[0], runArgs[1])
+		log.Printf("runArgs: [%s] %d, %s %s", sc.CmdName, len(sc.GoFiles), runArgs[0], runArgs[1])
 		cmd = exec.Command("go", runArgs...) // run go with srcfile
 	}
 
 	cmd.Dir = srcpath
 	cmd.Env = getGoEnv()
 
-	go runMyCmd(cmd, sc.CmdName)
+	provider := &Provider{
+		Name: sc.CmdName,
+		Type: sc.Type,
+		Option: createOption(),
+		Cmd: cmd,
+	}
+	go runMyCmd(provider)
 	// no way to check the command result...
 	return "ok"
 }
 
+func createOption() *ProviderOption{
+	po := &ProviderOption{
+	}
+	return po
+}
+
+func getGoPath() string{
+	env := os.Environ()
+	for _, ev := range env {
+		if strings.Contains(ev,"GOPATH=") {
+			return ev
+		}
+	}
+	return ""
+}
+
 func getGoEnv() []string { // we need to get/set gopath
-	d, _ := getRegisteredDir() // may obtain dir of se-daemon
+	d, _ := os.Getwd() // may obtain dir of se-daemon
 	gopath := filepath.FromSlash(filepath.ToSlash(d) + "/../../../../")
 	absGopath, _ := filepath.Abs(gopath)
 	env := os.Environ()
@@ -708,220 +458,27 @@ func getGoEnv() []string { // we need to get/set gopath
 		}
 	}
 	if !foundPath { // this might happen at in the daemon..
-		gp, err := getRegisteredGoPath()
-		if err == nil {
-			newenv = append(newenv, gp)
-		}
+		gp := getGoPath()
+		newenv = append(newenv, gp)
 	}
 	return newenv
 }
 
-/////////////// Handle All /////////////
-/////////////////////////////////////////
-
-func runAll() {
-	runSubCmd("NodeIDServer")
-	runSubCmd("MonitorServer")
-	runSubCmd("SynerexServer")
-	runSubCmd("Area")
-	runSubCmd("Scenario")
-}
-
-func killAll() {
-	for _, sc := range providerArray{
-		if sc.RunFunc == nil{
-			killCmd(sc.CmdName)
-		}	
-	}
-	/*killCmd("Scenario")
-	killCmd("PedArea")
-	killCmd("CarArea")
-	killCmd("Area")
-	killCmd("Clock")
-	killCmd("SynerexServer")
-	killCmd("MonitorServer")
-	killCmd("NodeIDServer")*/
-}
-
-func buildAll() []string {
-	resp := make([]string, len(cmdArray))
-	i := 0
-	for _, sc := range cmdArray {
-		if sc.CmdName != "All" {
-			resp[i] = buildSubCmd(sc.CmdName)
-			if resp[i] == "ok" {
-				time.Sleep(7 * time.Second)
-			}
-			i++
-		}
-	}
-	return resp
-}
-
-func cleanAll() []string {
-	resp := make([]string, len(cmdArray))
-	i := 0
-	for _, sc := range cmdArray {
-		if sc.CmdName != "All" {
-			resp[i] = cleanSubCmd(sc.CmdName)
-			i++
-		}
-	}
-	return resp
-}
-
-/////////////// GetName /////////////
-/////////////////////////////////////////
-
-// obtain key of the cmdMap array
-func getCmdArray() []string {
-	keys := make([]string, len(cmdArray))
-	for i, sc := range cmdArray {
-		keys[i] = sc.CmdName
-	}
-	return keys
-}
-
-// obtain key of the cmdMap array
-func getOrderNames() []string {
-	keys := make([]string, len(orderArray))
-	for i, sc := range orderArray {
-		bytes, _  := json.Marshal(sc)
-		keys[i] = string(bytes)
-	}
-	return keys
-}
-// obtain key of the cmdMap array
-func getProviderNames() []string {
-	keys := make([]string, len(providerArray))
-	for i, sc := range providerArray {
-		bytes, err  := json.Marshal(sc)
-
-		log.Printf("json: %v\n", err)
-		keys[i] = string(bytes)
-	}
-	return keys
-}
 
 /////////////// Handle SubCommand /////////////
 /////////////////////////////////////////
-
-func runSubCmd(cmd string) {
-	for _, sc := range providerArray {
-		if sc.CmdName == cmd {
-			runProp(sc)
-			return
-		}
-	}
-	logger.Errorf("Can't find subcommand %s", cmd)
-}
-
-func buildSubCmd(cmd string) string {
-	for _, sc := range cmdArray {
-		// part of commands don't enter .. by RH
-		if sc.Description == "Order" {
-			return "order"
-		} else if sc.CmdName == cmd {
-			return buildCmd(sc)
-		}
-	}
-	str := fmt.Sprintf("Can't find subcommand %s", cmd)
-	return str
-}
-func cleanSubCmd(cmd string) string {
-	for _, sc := range cmdArray {
-		if sc.CmdName == cmd {
-			return cleanCmd(sc)
-		}
-	}
-	str := fmt.Sprintf("Can't find subcommand %s", cmd)
-	return str
-}
-
-/*func runSimulator() string {
-	log.Printf("Running Simulator..\n")
-
-	currentRoot, err := os.Getwd()
-	if err != nil {
-		log.Fatal(err)
-	}
-	d := filepath.Join(currentRoot, "mclient", "build")
-
-	assetsDir = http.Dir(d)
-	log.Println("AssetDir:", assetsDir)
-
-	assetsDir = http.Dir(d)
-	server := gosocketio.NewServer()
-
-	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
-		log.Printf("Connected from %s as %s", c.IP(), c.Id())
-		// do something.
-	})
-
-	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
-		log.Printf("Disconnected from %s as %s", c.IP(), c.Id())
-	})
-
-	return "ok"
-}*/
-
-/////////////// Handle Type /////////////
-/////////////////////////////////////////
-
-func handleBuild(target []string) []string {
-	resp := make([]string, len(target))
-	for i, proc := range target {
-		if proc == "All" || proc == "all" {
-			return buildAll()
-			// you don't need to build others
-		} else {
-			resp[i] = buildSubCmd(proc)
-		}
-	}
-	return resp
-
-}
-
-func handleClean(target []string) []string {
-	resp := make([]string, len(target))
-	for i, proc := range target {
-		if proc == "All" || proc == "all" {
-			return cleanAll()
-			// you don't need to build others
-		} else {
-			resp[i] = cleanSubCmd(proc)
-		}
-	}
-	return resp
-}
-
-func handleRuns(target []string) []string { // we need to think order of servers...
-	resp := make([]string, len(target))
-	for i, proc := range target {
-		if proc == "All" || proc == "all" {
-			resp[i] = "-"
-		} else {
-			resp[i] = handleRun(proc)
-		}
-	}
-	return resp
-}
 
 func handleRun(target string) string {
 	var res string
 		for _, sc := range providerArray {
 			if sc.CmdName == target {
-				if sc.RunFunc == nil {
-					res = runProp(sc)
-				} else {
-					// when start "All"
-					res = "ok"
-					sc.RunFunc()
-				}
+				res = runProp(sc)
+				
 				return res
 			}
 	}
-	logger.Infof("Can't find command %s", target)
+	
+	log.Printf("Can't find command %s", target)
 	return "Can't find command " + target
 }
 
@@ -965,11 +522,6 @@ func calcRoute() *agent.PedRoute {
 	return route
 }
 
-func generateUid(i int) uint32 {
-	time := time.Now().Unix() + int64(i)
-	return uint32(time)
-}
-
 func createRandomAgentType() string {
 	num := rand.Float32()
 	if num > 0.5 {
@@ -979,53 +531,35 @@ func createRandomAgentType() string {
 	}
 }
 
-/*type simDaemonServer struct{}
-
-// SendOrder
-func (s *simDaemonServer) SendOrder(stream *daemon.SetOrder) error {
-	message := &daemon.SetClockMessage{
-		GlobalTime: float64(0),
-		TimeStep:   float64(1),
-	}
-
-	order := &daemon.OrderMessage{
-		OrderType: daemon.OrderType_SET_CLOCK,
-		Message: &daemon.OrderMessage_SetClockMessage{message}
-	}
-	err = stream.Send(order)
-	if err != nil {
-		return err
-	}
-	for {
-		in, err := stream.Recv()
-		if err == io.EOF {
-            return nil
-        }
-        if err != nil {
-            return err
-        }
-
-		message := &daemon.SetClockMessage{
-			GlobalTime: float64(0),
-			TimeStep:   float64(1),
-		}
-
-		order := &daemon.OrderMessage{
-			OrderType: daemon.OrderType_SET_CLOCK,
-			Message: &daemon.OrderMessage_SetClockMessage{message}
-		}
-        err = stream.Send(order)
-        if err != nil {
-            return err
-        }
-	}
-}*/
 
 func handleOrder(order *UIOrder) string {
 	target := order.Name
-	//ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	fmt.Printf("Target is : %v\n", target)
-	for _, sc := range orderArray {
+	switch target {
+	case "SetClock":
+		fmt.Printf("SetClock\n")
+		return "ok"
+	case "ClearClock":
+		fmt.Printf("ClearClock\n")
+		return "ok"
+	case "SetAgents":
+		fmt.Printf("SetAgents\n")
+		return "ok"
+	case "ClearAgents":
+		fmt.Printf("ClearAgents\n")
+		return "ok"
+	case "StartClock":
+		fmt.Printf("StartClock\n")
+		return "ok"
+	case "StopClock":
+		fmt.Printf("StopClock\n")
+		return "ok"
+	default:
+		err := "true"
+		log.Printf("Can't find command %s", target)
+		return err
+	}
+	/*for _, sc := range orderArray {
 		if sc.Name == target {
 			var res string
 			switch target{
@@ -1041,7 +575,7 @@ func handleOrder(order *UIOrder) string {
 				fmt.Printf("StartClock\n")
 			case "StopClock":
 				fmt.Printf("StopClock\n")
-			}
+			}*/
 			///if target == "Clock" {
 				// JSONファイル読み込み
 				/*jsonName := order.Option
@@ -1131,58 +665,15 @@ func handleOrder(order *UIOrder) string {
 				log.Printf("Response: %s", r.Ok)
 			}*/
 
-			res = "ok"
-			logger.Infof("your order is %s", target)
+		/*	res = "ok"
+			log.Printf("your order is %s", target)
 			return res
 		}
 	}
-	logger.Infof("Can't find command %s", target)
-	return "Can't find command " + target
+	log.Printf("Can't find command %s", target)
+	return "Can't find command " + target*/
 }
 
-func killCmd(target string) string {
-	res := "no"
-	providerMutex.RLock()
-	cmd, ok := providerMap[target]
-	providerMutex.RUnlock()
-	if ok {
-		logger.Infof("Try to stop %s\n", target)
-		err := cmd.Process.Signal(os.Kill)
-		if err != nil {
-			res = err.Error()
-		} else {
-			logger.Infof("OK to kill %s\n", target)
-			res = "ok"
-			/*			err = cmd.Process.Release()
-						if err != nil {
-							logger.Info("Release failed on %s\n",target)
-						}
-			*/
-		}
-	}
-	return res
-}
-
-/*func handleStop(target []string) []string {
-	resp := make([]string, len(target))
-	for i, proc := range target {
-		if proc == "All" || proc == "all" {
-			killAll()
-			break // you don't need to kill others
-		} else {
-			resp[i] = killCmd(proc)
-		}
-	}
-	return resp
-}
-
-func handleRestart(target []string) []string {
-	resp := handleStop(target)
-	for _, tg := range target {
-		handleRun(tg)
-	}
-	return resp
-}*/
 
 // ps commands from se cli
 /*func checkRunning(opt string) []string {
@@ -1221,39 +712,18 @@ func handleRestart(target []string) []string {
 
 }*/
 
-/*func interfaceToString(target interface{}) []string {
-	procs := target.([]interface{})
-	resp := make([]string, len(procs))
-	for i, pp := range procs {
-		resp[i] = pp.(string)
-	}
-	return resp
-}*/
 
-//type debugLogger struct{}
-
-/*type Option struct{
-	Key string
-	Value []string
-}*/
 type UIOrder struct{
 	Name string
 	Options []*Option
 }
 
-/*func (d debugLogger) Write(p []byte) (n int, err error) {
-	s := string(p)
-	if strings.Contains(s, "multiple response.WriteHeader") {
-		debug.PrintStack()
-	}
-	return os.Stderr.Write(p)
-}*/
-
-func (sesrv *SynerexService) run() error {
-	logger.Info("Starting.. Synergic Engine:" + version)
-	currentRoot, err := getRegisteredDir()
+// simulator cliからの通信
+func runSimulatorServer() error {
+	log.Printf("Starting.. Synergic Engine:" + version)
+	currentRoot, err := os.Getwd()
 	if err != nil {
-		logger.Errorf("se-daemon: Can' get registered directory: %s", err.Error())
+		log.Printf("se-daemon: Can' get registered directory: %s", err.Error())
 	}
 	d := filepath.Join(currentRoot, "monitor", "build")
 
@@ -1261,66 +731,38 @@ func (sesrv *SynerexService) run() error {
 	server = gosocketio.NewServer()
 
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel, param interface{}) {
-		logger.Infof("Connected from %s as %s", c.IP(), c.Id())
+		log.Printf("Connected from %s as %s", c.IP(), c.Id())
 		// we need to send providers array
-		// send Provider info to the web client
-		logger.Infof("send")
-		// Fix Infinite Loop Connection
-		c.Emit("providers", getProviderNames())
-		c.Emit("commands", getOrderNames())
+		time.Sleep(1000 * time.Millisecond)
+		sendRunnningProviders()
 
 	})
 	server.On(gosocketio.OnDisconnection, func(c *gosocketio.Channel) {
-		logger.Infof("Disconnected from %s as %s", c.IP(), c.Id())
+		log.Printf("Disconnected from %s as %s", c.IP(), c.Id())
 	})
 
-	/*server.On("setCh", func(c *gosocketio.Channel, param interface{}) string {
+
+	server.On("ps", func(c *gosocketio.Channel, param interface{}) []string {
 		// need to check param short or long
-		opt, ok := param.(string)
-		logger.Infof("param is %s as %s", ok, opt)
-		if ok && opt == "Scenario" {
-			sioCh.Scenario = c
-		}
-		return "ok"
-	})*/
+		//opt := param.(string)
 
-	/*server.On("ps", func(c *gosocketio.Channel, param interface{}) []string {
-		// need to check param short or long
-		opt := param.(string)
-
-		return checkRunning(opt)
+		//return checkRunning(opt)
+		return []string{"ok"}
 	})
+	
 
-	server.On("stop", func(c *gosocketio.Channel, param interface{}) []string {
-		procs := interfaceToString(param)
-		return handleStop(procs)
-	})
+	server.On("run", func(c *gosocketio.Channel, param interface{}) string {
+		targetName := param.(string)
+		log.Printf("Get run command %s", targetName)
 
-	server.On("restart", func(c *gosocketio.Channel, param interface{}) []string {
-		procs := interfaceToString(param)
-		return handleRestart(procs)
-	})
-
-	server.On("build", func(c *gosocketio.Channel, param interface{}) []string {
-		procs := interfaceToString(param)
-		return handleBuild(procs)
-	})
-
-	server.On("clean", func(c *gosocketio.Channel, param interface{}) []string {
-		procs := interfaceToString(param)
-		return handleClean(procs)
-	})*/
-
-	server.On("run", func(c *gosocketio.Channel, param *UIOrder) string {
-		targetName := param.Name
-		logger.Infof("Get run command %s", targetName)
-
-		return handleRun(targetName)
+		ok := handleRun(targetName)
+		sendRunnningProviders()
+		return ok
 	})
 
 	server.On("command", func(c *gosocketio.Channel, param *UIOrder) string {
 		targetName := param.Name
-		logger.Infof("Get order command %s", targetName)
+		log.Printf("Get order command %s", targetName)
 
 		return handleOrder(param)
 	})
@@ -1336,121 +778,9 @@ func (sesrv *SynerexService) run() error {
 	return nil
 }
 
-func (sesrv *SynerexService) Stop(s service.Service) error {
-	// how to stop serv.
-	logger.Info("Stopping Synerex Engine.")
-	// stop all running sub commands
-	killAll()
 
-	return nil
-}
-
-func (sesrv *SynerexService) Manage(s service.Service) (string, error) {
-	interrupt = make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt, os.Kill, syscall.SIGTERM)
-
-	usage := "Usage: se-daemon install | uninstall | start | stop | status | build | clean"
-
-	if len(os.Args) > 1 {
-		command := os.Args[1]
-		switch command {
-		case "install":
-			// Install se-daemon as a service
-			//
-			err := registerCurrentDir() // for each Operating System.
-			if err != nil {
-				logger.Error(err)
-			}
-
-			return "Synerex Engine Installed.", s.Install()
-		case "uninstall":
-			err := removeRegisteredDir() // uninstall
-			if err != nil {
-				logger.Error(err)
-			}
-			return "Synerex Engine Uninstalled.", s.Uninstall()
-		case "start":
-			return "Start Synerex Engine", s.Start()
-		case "stop":
-
-			return "Stop Synerex Engine", s.Stop()
-		case "status":
-			st, err := s.Status()
-			var stst string
-			switch st {
-			case service.StatusRunning:
-				stst = "Running"
-			case service.StatusStopped:
-				stst = "Stopped"
-			default:
-				stst = "Unknown"
-			}
-			return "Status :" + stst, err
-		case "build":
-			// just build all codes for simplicity
-			buildAll()
-			return "Build all binaries", nil
-		case "clean":
-			// just build all codes for simplicity
-			cleanAll()
-			return "Clean all binaries", nil
-		case "github": // check
-			if len(os.Args) > 2 {
-				githubBranch = os.Args[2]
-			}
-			fmt.Println("Accept Github Webhook for branch " + githubBranch)
-			//			return "Accept Github Webhook for branch "+githubBranch, nil
-		default:
-			return usage, nil
-		}
-	}
-
-	err := s.Run()
-	if err != nil {
-		logger.Error(err)
-	}
-	return "", nil
-}
-
-func main() {
-	// add gops agent.
-	//	fmt.Println("Start gops agent")
-	//	if gerr := agent.Listen(agent.Options{}); gerr != nil {
-	//		log.Fatal(gerr)
-	//}
-
-	serv := &SynerexService{}
-
-	svcConfig := &service.Config{
-		Name:        "SynerexEngineDaemon",
-		DisplayName: "Synerex Engine Daemon",
-		Description: "Synerex Engine Daemon for controlling agents",
-	}
-
-	svc, err := service.New(serv, svcConfig)
-
-	if err != nil {
-		errlog.Println("Error:", err)
-		os.Exit(1)
-	}
-
-	errs := make(chan error, 5)
-	logger, err = svc.Logger(errs)
-	st, err := svc.Status()
-	if st == service.StatusRunning {
-		isDaemon = true
-	}
-
-	go func() {
-		for {
-			err := <-errs
-			if err != nil {
-				log.Print(err)
-			}
-		}
-	}()
-
-	// Connect Daemon Server
+func runScenarioServer(){
+	// Connect Daemon Server：シナリオとの通信
 	conn, err := grpc.Dial("127.0.0.1:9996", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
@@ -1458,13 +788,26 @@ func main() {
 	defer conn.Close()
 	client = daemon.NewSimDaemonClient(conn)
 	fmt.Println("Succsess Connection with Daemon Server ")
+}
 
-	//	logger.Info("Starting Synerex Engine "+version)
-	status, err := serv.Manage(svc)
-	if err != nil {
-		errlog.Println(status, "\nError:", err)
-		os.Exit(1)
-	}
 
-	fmt.Println(status)
+func main() {
+
+	// scenarioへの送信クライアントサーバ
+	go runScenarioServer()
+
+	// cli, monitorの受信サーバ
+	go runSimulatorServer()
+	
+	// run server
+	handleRun("NodeIDServer")
+	time.Sleep(500 * time.Millisecond)
+	handleRun("MonitorServer")
+	time.Sleep(500 * time.Millisecond)
+	handleRun("SynerexServer")
+	//checkRunning2()
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	wg.Wait()
 }

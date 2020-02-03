@@ -1,26 +1,16 @@
 import React, { useState, useEffect } from "react";
-import {
-    Divider,
-    Drawer,
-    createStyles,
-    Theme,
-    Typography,
-    TextField
-} from "@material-ui/core";
+import { Divider, Drawer } from "@material-ui/core";
 import theme from "../../styles/theme";
-import { List, ListItem, Button } from "@material-ui/core";
-import { Provider, Command, Option } from "../../types";
+import { List, ListItem, Button, Modal } from "@material-ui/core";
+import { Provider, Command, Option, DialogStatus } from "../../types";
 import { SideButton, ListButton, ListTitle } from "./style";
 import ListItemText from "@material-ui/core/ListItemText";
-import Collapse from "@material-ui/core/Collapse";
-import InboxIcon from "@material-ui/icons/MoveToInbox";
-import CollapseList from "./collapse-list";
-import OptionLists from "./option-lists";
+import CommandDialog from "./dialog";
 
 interface Props {
     providers: Provider[];
     commands: Command[];
-    runCommand: (command: Command) => void;
+    runCommand: (command: Command) => boolean;
 }
 
 const drawerWidth = 240;
@@ -28,6 +18,18 @@ const headerHeight = 70;
 
 const Sidebar: React.FC<Props> = props => {
     const { providers, commands, runCommand } = props;
+
+    const [dialogStatus, setDialogStatus] = useState<DialogStatus>({
+        Open: false
+    });
+
+    const handleOpen = (command: Command) => {
+        setDialogStatus({ Open: true, Command: command });
+    };
+
+    const handleClose = () => {
+        setDialogStatus({ Open: false });
+    };
 
     return (
         <Drawer
@@ -38,40 +40,26 @@ const Sidebar: React.FC<Props> = props => {
             }}
         >
             <div style={{ width: drawerWidth, marginTop: headerHeight }}>
-                {/*<List dense={false}>
-                    <ListTitle>{"Providers"}</ListTitle>
-
-                    {providers.map((provider: Provider, i) => (
-                        <CollapseList
-                            //key={provider.Name}
-                            title={provider.getName()}
-                        >
-                            <OptionLists
-                                target={provider}
-                                handleRun={(provider: Provider) =>
-                                    runProvider(provider)
-                                }
-                            />
-                        </CollapseList>
-                    ))}
-							</List>*/}
-
                 <List>
                     <ListTitle>{"Commands"}</ListTitle>
+                    <Divider />
                     {commands.map((command, i) => (
-                        <CollapseList
-                            //key={command.Name}
-                            title={command.Name}
-                        >
-                            <OptionLists
-                                command={command}
-                                runCommand={(command: Command) =>
-                                    runCommand(command)
-                                }
-                            />
-                        </CollapseList>
+                        <div>
+                            {" "}
+                            <ListItem
+                                button
+                                onClick={() => handleOpen(command)}
+                            >
+                                <ListItemText primary={command.Name} />
+                            </ListItem>
+                        </div>
                     ))}
                 </List>
+                <CommandDialog
+                    dialogStatus={dialogStatus}
+                    handleClose={handleClose}
+                    handleRun={runCommand}
+                />
             </div>
         </Drawer>
     );
