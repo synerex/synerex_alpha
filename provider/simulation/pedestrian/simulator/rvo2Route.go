@@ -36,12 +36,12 @@ func loadGeoJson(fname string) *geojson.FeatureCollection{
 type RVO2Route struct {
 	TimeStep   float64
 	GlobalTime float64
-	Area       *area.Area
+	Area       *area.Area2
 	Agents     []*agent.Agent
 	AgentType  common.AgentType
 }
 
-func NewRVO2Route(timeStep float64, globalTime float64, area *area.Area, agentsInfo []*agent.Agent, agentType common.AgentType) *RVO2Route {
+func NewRVO2Route(timeStep float64, globalTime float64, area *area.Area2, agentsInfo []*agent.Agent, agentType common.AgentType) *RVO2Route {
 
 	// set obstacle
 	fcs = loadGeoJson("higashiyama.geojson")
@@ -230,13 +230,27 @@ func (rvo2route *RVO2Route) IsAgentInControlArea(agentInfo *agent.Agent) bool {
 	ped := agentInfo.GetPedestrian()
 	lat := ped.Route.Position.Latitude
 	lon := ped.Route.Position.Longitude
-	slat := areaInfo.ControlArea.StartLat
-	elat := areaInfo.ControlArea.EndLat
-	slon := areaInfo.ControlArea.StartLon
-	elon := areaInfo.ControlArea.EndLon
-	if agentInfo.Type == agentType && slat <= lat && lat < elat && slon <= lon && lon < elon {
-		return true
+	areaCoords := areaInfo.ControlArea
+	deg := 0.0
+	for i, coord := range areaCoords{
+		p2lat := coord.Latitude
+		p2lon := coord.Longitude
+		p3lat := areaCoords[i+1].Latitude
+		p3lon := areaCoords[i+1].Longitude
+		if i == len(areaCoords)-1 {
+			p3lat = areaCoords[0].Latitude
+			p3lon = areaCoords[0].Longitude
+		}
+		alat := p2lat - lat
+		alon := p2lon - lon
+		blat := p3lat - lat
+		blon := p3lon - lon
+		cos := (alat*blat + alon*blon) / (math.Sqrt(alat*alat + alon+alon)*math.Sqrt(blat*blat + blon+blon))
+		deg += math.Acos(cos) * float64(180) / math.Pi
 	}
-	//log.Printf("agent type and coord is not match...\n\n")
-	return false
+	if agentInfo.Type == agentType && math.Round(deg) == 360{
+		return true
+	} else {
+		return false
+	}
 }

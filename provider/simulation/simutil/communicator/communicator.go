@@ -220,7 +220,7 @@ func (s *SynerexCommunicator) GetAreaRequest(areaId uint64) {
 
 // CLEAR OK
 // getAreaSupply :　エリア情報を取得する
-func (s *SynerexCommunicator) GetAreaResponse(tid uint64, areaInfo *area.Area) {
+func (s *SynerexCommunicator) GetAreaResponse(tid uint64, areaInfo *area.Area2) {
 	getAreaResponse := &area.GetAreaResponse{
 		Area: areaInfo,
 	}

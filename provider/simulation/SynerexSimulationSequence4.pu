@@ -1,0 +1,191 @@
+
+
+@startuml
+
+'12/23までに行うこと'
+'Todo: geojson通りに壁を設置する'
+'FIX: エージェントの動きがおかしい'
+'Todo: geojson内にエージェントをランダムに設置'
+'Todo: geojson内のランダムな地点へ移動'
+'FIX: Pedestrianを停止するとscenarioまで停止してしまう'
+'Todo: daemon,モニタ上で操作できるようにする'
+'Todo: 連携するエリアの大きさプロバイダ数の自動調整'
+
+'http://plantuml.com/ja/guide'
+
+
+title SynerexSimulationSequence
+
+actor User
+participant SimServ
+box "SynerexServer(Master)" #LightBlue
+control MasterAPI
+end box 
+participant SimProvider
+participant NodeServ
+'participant SynerexServ
+participant Clock
+box "SynerexServer" #LightBlue
+control StatusAPI
+control ClockAPI
+control AgentAPI
+control AreaAPI
+control ParticipantAPI
+end box 
+'control RouteAPI
+participant PedA
+participant PedA2
+participant PedA3
+participant CarA
+participant PedB
+participant CarB
+participant Vis
+
+== StartUp ==
+User -> SimServ: StartUp
+User -> SimServ: SetArea(東山)
+SimServ -> MasterAPI: StartUp(東山)
+MasterAPI -> SimProvider: StartUp(東山)
+SimProvider -> NodeServ: StartUp
+'SimProvider -> SynerexServ: StartUp
+SimProvider -> Clock: StartUp
+SimProvider -> Vis: StartUp
+
+
+== SetClock ==
+User -> SimServ: SetClock
+SimServ -> MasterAPI: SetClock 12:00
+MasterAPI -> SimProvider: SetClock 12:00
+SimProvider -> ClockAPI: SetClock 12:00
+ClockAPI -> Clock: SetClock 12:00
+Clock -> ClockAPI: SetClockOK
+ClockAPI -> SimProvider: SetClockOK
+
+
+== SetAgents ==
+User -> SimServ: Domain(Ped,Car):
+note over SimServ: 該当してないエリアに\nエージェントを設置された場合、\nWarningをだす。\n 該当しているエリアの\nServに命令する
+SimServ --> SimProvider: Domain(Ped, Car)
+note over SimProvider: 必要なエリア分割数を\n計算する
+note over SimProvider: 自作PartIDか\nSynerexのClientIDか
+SimProvider --> PedA: StartUp: AreaCoord, ServerAddr, ParticipantInfo?
+SimProvider --> CarA: StartUp: AreaCoord, ServerAddr, ParticipantInfo?
+SimProvider --> PedB: StartUp: AreaCoord, ServerAddr, ParticipantInfo?
+SimProvider --> CarB: StartUp: AreaCoord, ServerAddr, ParticipantInfo?
+note over PedA: PedA起動時の動き
+note over PedA: ParticipantInfoを保存
+note over PedA: Clock情報を取得する
+PedA -> ClockAPI: GetClock
+ClockAPI -> Clock: GetClock
+Clock -> ClockAPI: SendClock(12:00)
+ClockAPI -> PedA: SendClock(12:00)
+note over PedA: Clockに沿って\nエージェントを設置\nstart時のみでいいかも
+
+note over SimProvider: 起動したら
+SimProvider -> AgentAPI: SetAgent
+AgentAPI -> PedA: SetAgent
+PedA -> AgentAPI: SetAgentOK
+AgentAPI -> SimProvider: SetAgentOK
+
+
+
+
+== Start ==
+User -> SimServ: Start
+SimServ -> MasterAPI: Start
+MasterAPI -> SimProvider: Start
+SimProvider -> ClockAPI: startClock
+ClockAPI -> Clock: startClock
+activate Clock #FFBBBB
+Clock -> ClockAPI: RD(ForwardClockDemand)
+
+'PedAのForward処理'
+ClockAPI -> PedA: Forward
+activate ClockAPI
+activate PedA #FFBBBB
+
+'同じエリアのエージェントを取得'
+note over PedA: 同じエリアの\nエージェント取得
+PedA -> AgentAPI: RD(GetSameAreaAgentsDemand)
+activate AgentAPI
+AgentAPI -> CarA: 
+activate CarA #c0c0c0
+CarA -> AgentAPI: PS(SendSameAreaAgentsSupply)
+deactivate CarA
+AgentAPI -> PedA:
+deactivate AgentAPI
+
+note over PedA: 計算
+'隣のエージェントに情報を送信'
+PedA -> AgentAPI: RS(SendNeighborAreaAgentsSupply)
+
+'隣のエージェントから情報を取得'
+note over PedA: 隣接エリアの\nエージェント取得
+PedB -> AgentAPI: RS(SendNeighborAreaAgentsSupply)
+activate AgentAPI
+AgentAPI -> PedA: 
+deactivate AgentAPI
+
+'エージェントの更新' 
+note over PedA: 更新
+
+'可視化プロバイダへ送信'
+PedA -> AgentAPI: PS(SendAgentsSupply)
+activate AgentAPI
+AgentAPI -> Vis: 
+deactivate AgentAPI
+
+PedA -> ClockAPI: PS(ForwardClockSupply)
+ClockAPI -> Clock:
+deactivate ClockAPI
+
+deactivate Clock
+
+PedA -> StatusAPI: SendStatus
+StatusAPI -> SimProvider: SendStatus 
+deactivate PedA
+
+note over SimProvider: ステータスを集める
+
+== プロバイダ分割 ==
+note over SimProvider: 計算処理が多い場合\nProviderを分割する
+SimProvider -> PedA2: StartUp(AreaCoord, ServerAddrm ParticipantInfo)
+PedA2 -> AgentAPI: DivideInfo, Agents, Area
+AgentAPI -> PedA: DivideInfo, Agents, Area
+PedA -> AgentAPI: SendAgents
+AgentAPI -> PedA2: SendAgents
+note over PedA2: 新しいエージェント, エリアをセット
+PedA2 -> StatusAPI: OK
+StatusAPI -> SimProvider: OK
+
+SimProvider -> PedA3: StartUp(AreaCoord, ServerAddrm ParticipantInfo)
+PedA3 -> AgentAPI: DivideInfo, Agents, Area
+AgentAPI -> PedA: DivideInfo, Agents, Area
+PedA -> AgentAPI: SendAgents
+AgentAPI -> PedA3: SendAgents
+note over PedA3: 新しいエージェント, エリアをセット
+PedA3 -> StatusAPI: OK
+StatusAPI -> SimProvider: OK
+
+
+note over SimProvider: Participantを更新(Pedは除外する)
+SimProvider -> ParticipantAPI: UpdateParticipant
+ParticipantAPI -> : All
+PedA2 -> SimProvider: AllOK
+
+note over SimProvider: PedをKillする
+SimProvider -> PedA: Kill
+
+note over Clock: sleep
+note over Clock: cycle 2 ...repeat
+
+== Stop ==
+User -> SimServ: Stop
+SimServ -> MasterAPI: Stop
+MasterAPI -> SimProvider: Stop
+SimProvider -> ClockAPI: Stop
+ClockAPI -> Clock: Stop
+note over Clock: Stop
+
+
+@enduml

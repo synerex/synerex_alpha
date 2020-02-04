@@ -17,7 +17,7 @@ var (
 // SynerexSimulator :
 type PedSimulator struct {
 	*simulator.SynerexSimulator //埋め込み
-	Area                        *area.Area
+	Area                        *area.Area2
 	AgentType                   common.AgentType
 	Agents                      []*agent.Agent
 }
@@ -30,7 +30,7 @@ func NewPedSimulator(timeStep float64, globalTime float64) *PedSimulator {
 			TimeStep:   timeStep,
 			GlobalTime: globalTime,
 		},
-		Area:      &area.Area{},
+		Area:      &area.Area2{},
 		AgentType: common.AgentType_PEDESTRIAN,
 		Agents:    make([]*agent.Agent, 0),
 	}
@@ -44,12 +44,12 @@ func (sim *PedSimulator) SetGeoInfo(_geoInfo *geojson.FeatureCollection) {
 }
 
 // SetArea :　Areaを追加する関数
-func (sim *PedSimulator) SetArea(areaInfo *area.Area) {
+func (sim *PedSimulator) SetArea(areaInfo *area.Area2) {
 	sim.Area = areaInfo
 }
 
 // GetArea :　Areaを取得する関数
-func (sim *PedSimulator) GetArea() *area.Area {
+func (sim *PedSimulator) GetArea() *area.Area2 {
 	return sim.Area
 }
 

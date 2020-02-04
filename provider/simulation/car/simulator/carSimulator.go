@@ -13,7 +13,7 @@ import (
 // SynerexSimulator :
 type CarSimulator struct {
 	*simulator.SynerexSimulator //埋め込み
-	Area                        *area.Area
+	Area                        *area.Area2
 	Agents                      []*agent.Agent
 	AgentType                   common.AgentType
 }
@@ -26,7 +26,7 @@ func NewCarSimulator(timeStep float64, globalTime float64) *CarSimulator {
 			TimeStep:   timeStep,
 			GlobalTime: globalTime,
 		},
-		Area:      &area.Area{},
+		Area:      &area.Area2{},
 		AgentType: common.AgentType_CAR,
 		Agents:    make([]*agent.Agent, 0),
 	}
@@ -35,12 +35,12 @@ func NewCarSimulator(timeStep float64, globalTime float64) *CarSimulator {
 }
 
 // SetArea :　Areaを追加する関数
-func (sim *CarSimulator) SetArea(areaInfo *area.Area) {
+func (sim *CarSimulator) SetArea(areaInfo *area.Area2) {
 	sim.Area = areaInfo
 }
 
 // GetArea :　Areaを取得する関数
-func (sim *CarSimulator) GetArea() *area.Area {
+func (sim *CarSimulator) GetArea() *area.Area2 {
 	return sim.Area
 }
 

@@ -11,7 +11,7 @@ message GetAreaRequest {
 }
 
 message GetAreaResponse {
-    Area area = 1;
+    Area2 area = 1;
 }
 
 message Area {

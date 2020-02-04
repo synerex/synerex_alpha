@@ -13,8 +13,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sort"
 	//"runtime/debug"
 	//"strconv"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -57,11 +59,6 @@ func loadGeoJson(fname string) *geojson.FeatureCollection{
 	fc, _ := geojson.UnmarshalFeatureCollection(bytes)
 
 	return fc
-}
-
-func init(){
-	geofile = "transit_points.geojson"
-	fcs = loadGeoJson(geofile)
 }
 
 type Option struct{
@@ -141,7 +138,177 @@ type Order struct {
 	Option OrderOption
 }
 
+// エリアの初期値
+var initAreaNum = 4
+
+// エリア分割の閾値(100人超えたら分割)
+var areaAgentNum = 100
+
+// 担当するAreaの範囲
+var mockAreaData = []*common.Coord{
+	{Latitude: 35.156431, Longitude: 136.97285,},
+	{Latitude: 35.156431, Longitude: 136.981308,},
+	{Latitude: 35.153578, Longitude: 136.981308,},
+	{Latitude: 35.153578, Longitude: 136.97285,},
+}
+
+type ProviderState struct{
+	Area []*common.Coord
+	AgentNum int
+	Time float64
+}
+
+var providerStats = []*ProviderState{
+	{
+		Area: []*common.Coord{
+			{Latitude: 35.156431, Longitude: 136.97285,},
+			{Latitude: 35.156431, Longitude: 136.981308,},
+			{Latitude: 35.153578, Longitude: 136.981308,},
+			{Latitude: 35.153578, Longitude: 136.97285,},
+		},
+		AgentNum: 50,
+		Time: 0.0,
+	},
+	{
+		Area: []*common.Coord{
+			{Latitude: 35.156431, Longitude: 136.97285,},
+			{Latitude: 35.156431, Longitude: 136.981308,},
+			{Latitude: 35.153578, Longitude: 136.981308,},
+			{Latitude: 35.153578, Longitude: 136.97285,},
+		},
+		AgentNum: 50,
+		Time: 0.0,
+	},
+	{
+		Area: []*common.Coord{
+			{Latitude: 35.156431, Longitude: 136.97285,},
+			{Latitude: 35.156431, Longitude: 136.981308,},
+			{Latitude: 35.153578, Longitude: 136.981308,},
+			{Latitude: 35.153578, Longitude: 136.97285,},
+		},
+		AgentNum: 50,
+		Time: 0.0,
+	},
+}
+
+var mockProviderStats = []*ProviderState{
+	{
+		Area: []*common.Coord{
+			{Latitude: 0, Longitude: 100,},
+			{Latitude: 100, Longitude: 100,},
+			{Latitude: 100, Longitude: 0,},
+			{Latitude: 0, Longitude: 0,},
+		},
+		AgentNum: 50,
+		Time: 0.0,
+	},
+}
+
+func Sub(coord1 *common.Coord, coord2 *common.Coord)*common.Coord{
+	return &common.Coord{Latitude: coord1.Latitude-coord2.Latitude, Longitude: coord1.Longitude-coord2.Longitude}
+}
+
+func Mul(coord1 *common.Coord, coord2 *common.Coord) float64 {
+	return coord1.Latitude*coord2.Latitude + coord1.Longitude*coord2.Longitude
+}
+
+func Abs(coord1 *common.Coord) float64 {
+	return math.Sqrt(Mul(coord1, coord1))
+}
+
+func Add(coord1 *common.Coord, coord2 *common.Coord) *common.Coord {
+	return &common.Coord{Latitude: coord1.Latitude + coord2.Latitude, Longitude: coord1.Longitude + coord2.Longitude}
+}
+
+func Div(coord *common.Coord, s float64) *common.Coord {
+	return &common.Coord{Latitude: coord.Latitude / s, Longitude: coord.Longitude / s}
+}
+
+type ByAbs struct {
+	Coords []*common.Coord
+}
+
+func (b ByAbs) Less(i, j int) bool{
+	return Abs(b.Coords[i]) < Abs(b.Coords[j])
+}
+func (b ByAbs) Len() int {
+    return len(b.Coords)
+}
+
+func (b ByAbs) Swap(i, j int) {
+    b.Coords[i], b.Coords[j] = b.Coords[j], b.Coords[i]
+}
+
+func updateProvider(newProviderStats []*ProviderState) []*ProviderState{
+	// write area devide algorithm
+	updatedProviderStats := make([]*ProviderState, 0)
+	for _, state := range newProviderStats{
+		if state.AgentNum > areaAgentNum{
+			// devide area
+			//vectors := make([]*common.Coord, 0)
+			
+			point1, point2, point3, point4 := state.Area[0], state.Area[1], state.Area[2], state.Area[3]
+			point1vecs := []*common.Coord{Sub(point1, point1), Sub(point2, point1), Sub(point3, point1), Sub(point4, point1)}
+			// 昇順にする
+			sort.Sort(ByAbs{point1vecs})
+			devPoint1 := Div(point1vecs[2], 2)	//分割点1
+			divPoint2 := Add(Div(point1vecs[2], 2), point1vecs[1]) //分割点2
+			// 二つに分割
+			coords1 := []*common.Coord{
+				Add(point1vecs[0], point1vecs[0]), Add(point1vecs[1], point1vecs[0]), Add(devPoint1, point1vecs[0]), Add(divPoint2, point1vecs[0]),
+			}
+			coords2 := []*common.Coord{
+				Add(point1vecs[2], point1vecs[0]), Add(point1vecs[3], point1vecs[0]), Add(devPoint1, point1vecs[0]), Add(divPoint2, point1vecs[0]),
+			}
+			// 追加
+			state1 := &ProviderState{
+				Area: coords1,
+				AgentNum: state.AgentNum/2,
+				Time: state.Time,
+			}
+			state2 := &ProviderState{
+				Area: coords2,
+				AgentNum: state.AgentNum/2,
+				Time: state.Time,
+			}
+
+			updatedProviderStats = append(updatedProviderStats, state1)
+			updatedProviderStats = append(updatedProviderStats, state2)
+		}else{
+			updatedProviderStats = append(updatedProviderStats, state)
+		}
+	}
+	return updatedProviderStats
+}
+
+func areaTest(){
+	go func(){
+		for{
+			log.Printf("time: ---\n")
+			time.Sleep(1 * time.Second)
+			// change provider stats
+			newProviderStats := make([]*ProviderState, 0)
+			for i, state := range mockProviderStats{
+				if i == 0{
+					log.Printf("agentNum: %v, providerNum: %v\n", state.AgentNum, len(mockProviderStats))
+				}
+				log.Printf("area: %v\n", state.Area)
+				state.AgentNum += 30
+				newProviderStats = append(newProviderStats, state)
+			}
+			// update provider
+			mockProviderStats = updateProvider(newProviderStats)
+
+			// startup provider
+			//log.Printf("providerStats: %v\n", providerStats)
+		}
+	}()
+}
+
 func init() {
+	areaTest()
+	geofile = "transit_points.geojson"
+	fcs = loadGeoJson(geofile)
 	runProviders = make(map[string]*Provider)
 	//providerMap = make(map[string]*exec.Cmd)
 	providerMutex = sync.RWMutex{}

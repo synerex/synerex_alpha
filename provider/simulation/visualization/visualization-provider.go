@@ -121,7 +121,7 @@ func sendFile() {
 	
 }
 
-func sendAreaToHarmowareVis(areas []*area.Area){
+func sendAreaToHarmowareVis(areas []*area.Area2){
 	jsonAreas := make([]string, 0)
 //	for i, _ := range areas{
 //		
@@ -386,7 +386,7 @@ func runServer() *gosocketio.Server {
 	server.On(gosocketio.OnConnection, func(c *gosocketio.Channel) {
 		log.Printf("Connected from %s as %s", c.IP(), c.Id())
 
-		//sendAreaToHarmowareVis(make([]*area.Area, 0))
+		//sendAreaToHarmowareVis(make([]*area.Area2, 0))
 		// geojsonを送信
 		sendFile2()
 		sendFile()

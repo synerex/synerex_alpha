@@ -144,7 +144,7 @@ func (p *PedCommunicator) GetMyParticipant(areaId uint64) *participant.Participa
 }
 
 // WaitGetAreaResponse : GetAreaResponseを待機する
-func (p *PedCommunicator) WaitGetAreaResponse() (*area.Area, error) {
+func (p *PedCommunicator) WaitGetAreaResponse() (*area.Area2, error) {
 	// channelの初期化
 	p.GetAreaCh = make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2)
 

@@ -12,7 +12,7 @@ import (
 // SynerexSimulator :
 type VisualizationSimulator struct {
 	*simulator.SynerexSimulator //埋め込み
-	Area                        *area.Area
+	Area                        *area.Area2
 	Agents                      []*agent.Agent
 	AgentType                   common.AgentType
 }

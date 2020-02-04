@@ -12,13 +12,13 @@ import (
 type SimpleRoute struct {
 	TimeStep       float64
 	GlobalTime     float64
-	Area           *area.Area
+	Area           *area.Area2
 	Agents         []*agent.Agent
 	AgentType      common.AgentType
 	SameAreaAgents []*agent.Agent
 }
 
-func NewSimpleRoute(timeStep float64, globalTime float64, area *area.Area, agents []*agent.Agent, agentType common.AgentType) *SimpleRoute {
+func NewSimpleRoute(timeStep float64, globalTime float64, area *area.Area2, agents []*agent.Agent, agentType common.AgentType) *SimpleRoute {
 	r := &SimpleRoute{
 		TimeStep:   timeStep,
 		GlobalTime: globalTime,
@@ -96,9 +96,9 @@ func (simple *SimpleRoute) DecideNextTransit(nextTransit *common.Coord, transitP
 }
 
 // CalcNextRoute：次の時刻のRouteを計算する関数
-func (simple *SimpleRoute) CalcNextRoute(agentInfo *agent.Agent, sameAreaAgents []*agent.Agent) *agent.PedRoute {
+func (simple *SimpleRoute) CalcNextRoute(agentInfo *agent.Agent, sameAreaAgents []*agent.Agent) *agent.CarRoute {
 
-	route := agentInfo.GetPedestrian().Route
+	route := agentInfo.GetCar().Route
 	speed := route.Speed
 	currentPosition := route.Position
 	nextTransit := route.NextTransit
@@ -134,7 +134,7 @@ func (simple *SimpleRoute) CalcNextRoute(agentInfo *agent.Agent, sameAreaAgents 
 	//	log.Printf("\x1b[30m\x1b[47m LOCATION CULC ERROR %v \x1b[0m\n", nextPosition)
 	//}
 
-	nextRoute := &agent.PedRoute{
+	nextRoute := &agent.CarRoute{
 		Position:      nextPosition,
 		Direction:     direction,
 		Speed:         distance,
@@ -153,18 +153,32 @@ func (simple *SimpleRoute) CalcNextRoute(agentInfo *agent.Agent, sameAreaAgents 
 func (simple *SimpleRoute) IsAgentInControlArea(agentInfo *agent.Agent) bool {
 	areaInfo := simple.Area
 	agentType := simple.AgentType
-	ped := agentInfo.GetPedestrian()
-	lat := ped.Route.Position.Latitude
-	lon := ped.Route.Position.Longitude
-	slat := areaInfo.ControlArea.StartLat
-	elat := areaInfo.ControlArea.EndLat
-	slon := areaInfo.ControlArea.StartLon
-	elon := areaInfo.ControlArea.EndLon
-	if agentInfo.Type == agentType && slat <= lat && lat < elat && slon <= lon && lon < elon {
-		return true
+	car := agentInfo.GetCar()
+	lat := car.Route.Position.Latitude
+	lon := car.Route.Position.Longitude
+	areaCoords := areaInfo.ControlArea
+	deg := 0.0
+	for i, coord := range areaCoords{
+		p2lat := coord.Latitude
+		p2lon := coord.Longitude
+		p3lat := areaCoords[i+1].Latitude
+		p3lon := areaCoords[i+1].Longitude
+		if i == len(areaCoords)-1 {
+			p3lat = areaCoords[0].Latitude
+			p3lon = areaCoords[0].Longitude
+		}
+		alat := p2lat - lat
+		alon := p2lon - lon
+		blat := p3lat - lat
+		blon := p3lon - lon
+		cos := (alat*blat + alon*blon) / (math.Sqrt(alat*alat + alon+alon)*math.Sqrt(blat*blat + blon+blon))
+		deg += math.Acos(cos) * float64(180) / math.Pi
 	}
-	//log.Printf("agent type and coord is not match...\n\n")
-	return false
+	if agentInfo.Type == agentType && math.Round(deg) == 360{
+		return true
+	} else {
+		return false
+	}
 }
 
 // CalcNextAgents: 次の時刻のエージェントを取得する関数
@@ -176,22 +190,22 @@ func (simple *SimpleRoute) CalcNextAgents() []*agent.Agent {
 		// 自エリアにいる場合、次のルートを計算する
 		if simple.IsAgentInControlArea(agentInfo) {
 
-			// 現在のPedestrian情報
-			currentPedInfo := agentInfo.GetPedestrian()
+			// 現在のCar情報
+			currentCarInfo := agentInfo.GetCar()
 
 			// 次の時刻のRouteを計算
 			nextRoute := simple.CalcNextRoute(agentInfo, simple.SameAreaAgents)
 
-			ped := &agent.Pedestrian{
-				Status: currentPedInfo.Status,
+			car := &agent.Car{
+				Status: currentCarInfo.Status,
 				Route:  nextRoute,
 			}
 
 			nextControlAgent := &agent.Agent{
 				Id:   agentInfo.Id,
 				Type: agentInfo.Type,
-				Data: &agent.Agent_Pedestrian{
-					Pedestrian: ped,
+				Data: &agent.Agent_Car{
+					Car: car,
 				},
 			}
 			// Agent追加

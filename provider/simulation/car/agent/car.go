@@ -5,7 +5,7 @@ import (
 	"math"
 
 	"github.com/synerex/synerex_alpha/api/simulation/agent"
-	"github.com/synerex/synerex_alpha/api/simulation/area"
+	//"github.com/synerex/synerex_alpha/api/simulation/area"
 	"github.com/synerex/synerex_alpha/api/simulation/common"
 )
 
@@ -22,10 +22,27 @@ func NewCar(agent *agent.Agent) *Car {
 
 // CLEAR
 // エージェントがエリアの中にいるかどうか
-func (p *Car) IsInArea(mapCoord *area.AreaCoord) bool {
+func (p *Car) IsInArea(areaCoords []*common.Coord) bool {
 	lat := p.Route.Position.Latitude
 	lon := p.Route.Position.Longitude
-	if mapCoord.StartLat < lat && lat < mapCoord.EndLat && mapCoord.StartLon < lon && lon < mapCoord.EndLon {
+	deg := 0.0
+	for i, coord := range areaCoords{
+		p2lat := coord.Latitude
+		p2lon := coord.Longitude
+		p3lat := areaCoords[i+1].Latitude
+		p3lon := areaCoords[i+1].Longitude
+		if i == len(areaCoords)-1 {
+			p3lat = areaCoords[0].Latitude
+			p3lon = areaCoords[0].Longitude
+		}
+		alat := p2lat - lat
+		alon := p2lon - lon
+		blat := p3lat - lat
+		blon := p3lon - lon
+		cos := (alat*blat + alon*blon) / (math.Sqrt(alat*alat + alon+alon)*math.Sqrt(blat*blat + blon+blon))
+		deg += math.Acos(cos) * float64(180) / math.Pi
+	}
+	if math.Round(deg) == 360{
 		return true
 	} else {
 		return false

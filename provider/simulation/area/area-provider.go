@@ -29,7 +29,7 @@ var (
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	com        *communicator.AreaCommunicator
 	sim        *simulator.AreaSimulator
-	areaData   []*area.Area
+	areaData   []*area.Area2
 	areafile string
 	fcs *geojson.FeatureCollection
 )
@@ -53,19 +53,28 @@ func init() {
 	return fc
 }*/
 
-func readAreaData() []*area.Area {
+type SubArea struct{
+	Id int
+	Name string
+	DuplicateArea string
+	ControlArea string
+	NeighborAreas string
+}
+
+func readAreaData() []*area.Area2 {
 	// JSONファイル読み込み
-	bytes, err := ioutil.ReadFile("area3.json")
+	bytes, err := ioutil.ReadFile("area2.json")
 	if err != nil {
 		log.Fatal(err)
 	}
 	// JSONデコード
-	var areaData []*area.Area
+	var areaData []*area.Area2
+	var subAreaData []*SubArea
 
-	if err := json.Unmarshal(bytes, &areaData); err != nil {
+	if err := json.Unmarshal(bytes, &subAreaData); err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("\x1b[30m\x1b[47m \n Finish: Area data got. \n AreaData lenth : %v \x1b[0m\n", len(areaData))
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Area data got. \n AreaData lenth : %v \x1b[0m\n", subAreaData[0].DuplicateArea)
 	return areaData
 }
 
