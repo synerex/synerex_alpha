@@ -27,6 +27,7 @@ func init() {
 
 // PedCommunicator :
 type PedCommunicator struct {
+	ProviderId uint64
 	*communicator.SynerexCommunicator //埋め込み
 	GetAreaCh                         chan *pb.Supply
 	RegistParticipantCh               chan *pb.Supply
@@ -41,9 +42,10 @@ type PedCommunicator struct {
 }
 
 // NewSenerexCommunicator:
-func NewPedCommunicator() *PedCommunicator {
+func NewPedCommunicator(pid uint64) *PedCommunicator {
 
 	communicator := &PedCommunicator{
+		ProviderId: pid,
 		SynerexCommunicator:         communicator.NewSynerexCommunicator(),
 		GetAreaCh:                   make(chan *pb.Supply, CHANNEL_BUFFER_SIZE2),
 		DeleteParticipantIdList:     make([]uint64, 0),
@@ -129,6 +131,7 @@ func (p *PedCommunicator) CreateWaitIdList(myAgentType common.AgentType, myAreaI
 
 func (p *PedCommunicator) GetMyParticipant(areaId uint64) *participant.Participant {
 	participant := &participant.Participant{
+		Id: p.ProviderId,
 		ChannelId: &participant.ChannelId{
 			ParticipantChannelId: uint64(p.MyClients.ParticipantClient.ClientID),
 			AreaChannelId:        uint64(p.MyClients.AreaClient.ClientID),

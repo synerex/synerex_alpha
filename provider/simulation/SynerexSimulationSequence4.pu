@@ -11,6 +11,12 @@
 'Todo: daemon,モニタ上で操作できるようにする'
 'Todo: 連携するエリアの大きさプロバイダ数の自動調整'
 
+'2/3-
+'Todo: StartUp OK
+'Todo: SetClock
+'Todo: SetAgents
+'Todo: Start
+
 'http://plantuml.com/ja/guide'
 
 

@@ -41,12 +41,20 @@ message CollectParticipantsRequest {
     Participant participant = 1;
 }
 
+message UpdateParticipantsRequest {
+	repeated Participant participants = 1;
+}
+
+message UpdateParticipantsResponse {
+}
+
 
 message Participant {
-    ChannelId channel_id = 1;
-    ProviderType provider_type = 2;
-    uint64 area_id = 3;
-    common.AgentType agent_type = 4;
+	uint64 id = 1;
+    ChannelId channel_id = 2;
+    ProviderType provider_type = 3;
+    uint64 area_id = 4;
+    common.AgentType agent_type = 5;
 }
 
 message ChannelId {
@@ -65,5 +73,6 @@ enum ProviderType {
     PEDESTRIAN = 3;
     ROUTE = 4;
 	VISUALIZATION = 5;
+	CLOCK = 6;
 }
 

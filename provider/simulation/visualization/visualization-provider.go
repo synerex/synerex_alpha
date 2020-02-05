@@ -31,6 +31,7 @@ import (
 var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
+	pidFlag     = flag.Int("pid", 2, "Provider Id") 
 	port       = flag.Int("port", 10080, "HarmoVis Provider Listening Port")
 	version    = "0.01"
 	mu         sync.Mutex
@@ -41,9 +42,12 @@ var (
 	isDownScenario bool
 	geofile string
 	areafile string
+	pid uint64
 )
 
 func init(){
+	flag.Parse()
+	pid = uint64(*pidFlag)
 	isDownScenario = false
 	geofile = "higashiyama.geojson"
 	areafile = "area.geojson"
@@ -252,6 +256,8 @@ func callbackSetParticipantsRequest(dm *pb.Demand) {
 
 	// セット完了通知を送る
 	com.SetParticipantsResponse(targetId)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Set Participants \x1b[0m\n")
+	
 }
 
 // getClock: クロック情報を取得する関数
@@ -326,6 +332,7 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	switch dm.GetSimDemand().DemandType {
 
 	case synerex.DemandType_SET_PARTICIPANTS_REQUEST:
+		log.Printf("\x1b[30m\x1b[47m \n Finish: Set Participants \x1b[0m\n")
 		// 参加者リストをセットする要求
 		callbackSetParticipantsRequest(dm)
 	case synerex.DemandType_FORWARD_CLOCK_REQUEST:
@@ -427,7 +434,6 @@ func assetsFileHandler(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 
-	flag.Parse()
 
 	sxutil.RegisterNodeName(*nodesrv, "VisualizationProvider", false)
 
@@ -443,7 +449,7 @@ func main() {
 	}
 
 	// Clientとして登録
-	com = communicator.NewVisualizationCommunicator()
+	com = communicator.NewVisualizationCommunicator(pid)
 
 	sxutil.RegisterDeferFunction(func() { deleteParticipant(); conn.Close() })
 

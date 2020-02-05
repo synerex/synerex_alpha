@@ -24,6 +24,7 @@ func init() {
 
 // CarCommunicator :
 type CarCommunicator struct {
+	ProviderId uint64
 	*communicator.SynerexCommunicator //埋め込み
 	GetAreaCh                         chan *pb.Supply
 	RegistParticipantCh               chan *pb.Supply
@@ -38,9 +39,10 @@ type CarCommunicator struct {
 }
 
 // NewSenerexCommunicator:
-func NewCarCommunicator() *CarCommunicator {
+func NewCarCommunicator(pid uint64) *CarCommunicator {
 
 	communicator := &CarCommunicator{
+		ProviderId: pid,
 		SynerexCommunicator:         communicator.NewSynerexCommunicator(),
 		GetAreaCh:                   make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
 		DeleteParticipantIdList:     make([]uint64, 0),
@@ -126,6 +128,7 @@ func (p *CarCommunicator) CreateWaitIdList(myAgentType common.AgentType, myAreaI
 
 func (p *CarCommunicator) GetMyParticipant(areaId uint64) *participant.Participant {
 	participant := &participant.Participant{
+		Id: p.ProviderId,
 		ChannelId: &participant.ChannelId{
 			ParticipantChannelId: uint64(p.MyClients.ParticipantClient.ClientID),
 			AreaChannelId:        uint64(p.MyClients.AreaClient.ClientID),

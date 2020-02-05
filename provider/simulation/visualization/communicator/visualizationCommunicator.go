@@ -23,6 +23,7 @@ func init() {
 
 // VisualizationCommunicator :
 type VisualizationCommunicator struct {
+	ProviderId uint64
 	*communicator.SynerexCommunicator //埋め込み
 	VisualizeAgentsIdList             []uint64
 	VisualizeAgentsCh                 chan *pb.Supply
@@ -34,9 +35,10 @@ type VisualizationCommunicator struct {
 }
 
 // NewVisualizationCommunicator:
-func NewVisualizationCommunicator() *VisualizationCommunicator {
+func NewVisualizationCommunicator(pid uint64) *VisualizationCommunicator {
 
 	communicator := &VisualizationCommunicator{
+		ProviderId: pid,
 		SynerexCommunicator:     communicator.NewSynerexCommunicator(),
 		VisualizeAgentsIdList:   make([]uint64, 0),
 		VisualizeAgentsCh:       make(chan *pb.Supply, CHANNEL_BUFFER_SIZE),
@@ -111,6 +113,7 @@ func (p *VisualizationCommunicator) CreateWaitIdList() {
 
 func (p *VisualizationCommunicator) GetMyParticipant() *participant.Participant {
 	participant := &participant.Participant{
+		Id: p.ProviderId,
 		ChannelId: &participant.ChannelId{
 			ParticipantChannelId: uint64(p.MyClients.ParticipantClient.ClientID),
 			AreaChannelId:        uint64(p.MyClients.AreaClient.ClientID),

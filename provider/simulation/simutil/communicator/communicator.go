@@ -218,6 +218,8 @@ func (s *SynerexCommunicator) GetAreaRequest(areaId uint64) {
 	s.sendDemand(s.MyClients.AreaClient, opts)
 }
 
+
+
 // CLEAR OK
 // getAreaSupply :　エリア情報を取得する
 func (s *SynerexCommunicator) GetAreaResponse(tid uint64, areaInfo *area.Area2) {
@@ -312,6 +314,85 @@ func (s *SynerexCommunicator) SetClockResponse(targetId uint64) {
 	}
 
 	nm := "setClock respnse by area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target:    targetId,
+		Name:      nm,
+		JSON:      js,
+		SimSupply: simSupply,
+	}
+
+	s.sendProposeSupply(s.MyClients.ClockClient, opts)
+}
+
+// StartClockRequest : クロックをスタートする
+func (s *SynerexCommunicator) StartClockRequest(stepNum uint64) {
+	startClockRequest := &clock.StartClockRequest{
+		StepNum: stepNum,
+	}
+
+	simDemand := &synerex.SimDemand{
+		DemandType: synerex.DemandType_SET_CLOCK_REQUEST,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimDemand_StartClockRequest{startClockRequest},
+	}
+
+	nm := ""
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SimDemand: simDemand}
+	s.sendDemand(s.MyClients.ClockClient, opts)
+}
+
+// StartClockSupply :　StartClockのResponse
+func (s *SynerexCommunicator) StartClockResponse(targetId uint64) {
+	startClockResponse := &clock.StartClockResponse{}
+
+	simSupply := &synerex.SimSupply{
+		SupplyType: synerex.SupplyType_SET_CLOCK_RESPONSE,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimSupply_StartClockResponse{startClockResponse},
+	}
+
+	nm := "startClock respnse by area-provider"
+	js := ""
+	opts := &sxutil.SupplyOpts{
+		Target:    targetId,
+		Name:      nm,
+		JSON:      js,
+		SimSupply: simSupply,
+	}
+
+	s.sendProposeSupply(s.MyClients.ClockClient, opts)
+}
+
+// StopClockRequest : クロックをスタートする
+func (s *SynerexCommunicator) StopClockRequest() {
+	stopClockRequest := &clock.StopClockRequest{
+	}
+
+	simDemand := &synerex.SimDemand{
+		DemandType: synerex.DemandType_SET_CLOCK_REQUEST,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimDemand_StopClockRequest{stopClockRequest},
+	}
+
+	nm := ""
+	js := ""
+	opts := &sxutil.DemandOpts{Name: nm, JSON: js, SimDemand: simDemand}
+	s.sendDemand(s.MyClients.ClockClient, opts)
+}
+
+// StopClockSupply :　StopClockのResponse
+func (s *SynerexCommunicator) StopClockResponse(targetId uint64) {
+	stopClockResponse := &clock.StopClockResponse{}
+
+	simSupply := &synerex.SimSupply{
+		SupplyType: synerex.SupplyType_SET_CLOCK_RESPONSE,
+		StatusType: synerex.StatusType_NONE,
+		Data:       &synerex.SimSupply_StopClockResponse{stopClockResponse},
+	}
+
+	nm := "stopClock respnse by area-provider"
 	js := ""
 	opts := &sxutil.SupplyOpts{
 		Target:    targetId,
@@ -623,7 +704,9 @@ func (s *SynerexCommunicator) BackClockRequest(stepNum uint64) {
 
 }
 
-// registParticipantResponse :　参加する意向をSupply
+
+
+// registParticipantResponse :　登録完了通知
 func (s *SynerexCommunicator) RegistParticipantResponse(dm *pb.Demand) {
 
 	registParticipantResponse := &participant.RegistParticipantResponse{}
@@ -646,7 +729,7 @@ func (s *SynerexCommunicator) RegistParticipantResponse(dm *pb.Demand) {
 	s.sendProposeSupply(s.MyClients.ParticipantClient, opts)
 }
 
-// RegistParticipantRequest :　参加者を募集するDemand
+// RegistParticipantRequest :　参加者を登録するDemand
 func (s *SynerexCommunicator) RegistParticipantRequest(participantInfo *participant.Participant) {
 
 	registParticipantRequest := &participant.RegistParticipantRequest{

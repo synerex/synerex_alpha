@@ -29,13 +29,14 @@ var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	areaIdFlag     = flag.Int("areaId", 1, "Area Id") 
-	areaJson     = flag.String("areaJson", "", "Area Json") 
+	pidFlag     = flag.Int("pid", 1, "Provider Id") 
+	areaJson     = flag.String("area_json", "", "Area Json") 
 	areaInfo *area.Area2
 	agentType  = common.AgentType_PEDESTRIAN               // PEDESTRIAN
 	com        *communicator.PedCommunicator
 	sim        *simulator.PedSimulator;
 	areaId uint64
-	isDownScenario bool
+	pid uint64
 )
 
 
@@ -48,46 +49,20 @@ func flagToAreaInfo(areaJson string) *area.Area2{
 func init(){
 	flag.Parse()
 	areaInfo = flagToAreaInfo(*areaJson)
-	log.Printf("flagtest: %v\n", areaInfo)
+	log.Printf("\x1b[31m\x1b[47m \nAreaInfo: %v \x1b[0m\n", areaInfo)
 	areaId = uint64(*areaIdFlag)
-	isDownScenario = false
+	pid = uint64(*pidFlag)
 }
 
-func loadGeoJson(fname string) *geojson.FeatureCollection  {
-	bytes, err := ioutil.ReadFile(fname)
-	if err != nil {
-		log.Print("Can't read file:" , err)
-		panic("load json")
-	}
 
-	fc, _ := geojson.UnmarshalFeatureCollection(bytes)
-
-	return fc
-}
-
-// getArea: 起動時にエリアを取得する関数
-func getArea() {
-	// エリアを取得するRequest
-	com.GetAreaRequest(areaId)
-	// Responseの待機
-	areaInfo, err := com.WaitGetAreaResponse()
-
-	if err != nil {
-		log.Printf("\x1b[31m\x1b[47m \n Error: %v \x1b[0m\n", err)
-	}else{
-		// エリア情報をセット
-		sim.SetArea(areaInfo)
-		log.Printf("\x1b[30m\x1b[47m \n Finish: Area information got. \n AreaId:  %v \n AreaName: %v \x1b[0m\n", areaInfo.GetId(), areaInfo.GetName())
-	}
-}
 
 // registParticipant: 新規参加登録をする関数
 func registParticipant() {
 
 	// 新規参加登録をするRequest
 	participant := com.GetMyParticipant(areaId)
-	com.RegistParticipantRequest(participant)
 
+	com.RegistParticipantRequest(participant)
 	// Responseの待機
 	err := com.WaitRegistParticipantResponse()
 	if err != nil {
@@ -125,6 +100,7 @@ func callbackSetParticipantsRequest(dm *pb.Demand) {
 
 	// セット完了通知を送る
 	com.SetParticipantsResponse(targetId)
+	log.Printf("\x1b[30m\x1b[47m \n Finish: Set Participants \x1b[0m\n")
 }
 
 // getClock: クロック情報を取得する関数
@@ -192,31 +168,7 @@ func callbackClearAgentsRequest(dm *pb.Demand) {
 	log.Printf("\x1b[30m\x1b[47m \n Finish: Agents cleared.  \n Total:  %v \x1b[0m\n", len(sim.GetAgents()))
 }
 
-// callbackScenarioStartUpRequest:
-func callbackScenarioStartUpRequest(dm *pb.Demand) {
-	// 新規参加登録 
-	// TODO: Why go-routin ? 
-	go registParticipant()
-	
-	// scenarioが再開された
-	isDownScenario = false
-}
 
-// callbackAreaStartUpRequest:
-func callbackAreaStartUpRequest(dm *pb.Demand) {
-	// エリアを取得する
-	getArea()
-}
-
-// callbackDownScenarioRequest:
-func callbackDownScenarioRequest(dm *pb.Demand) {
-	targetId := dm.GetId()
-	// scenarioがダウンした
-	isDownScenario = true
-	// 返答を返す
-	com.DownScenarioResponse(targetId)
-	log.Printf("\x1b[31m\x1b[47m \n Error: scenario-provider crashed...\n Please restart scenario-provider.   \x1b[0m\n")
-}
 
 // callbackForwardClock: Agentを計算し、クロックを進める要求
 func callbackForwardClockRequest(dm *pb.Demand) {
@@ -269,16 +221,6 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case synerex.DemandType_SET_PARTICIPANTS_REQUEST:
 		// 参加者リストをセットする要求
 		callbackSetParticipantsRequest(dm)
-	case synerex.DemandType_NOTIFY_START_UP_REQUEST:
-		// プロバイダ起動時の要求
-		providerType := dm.GetSimDemand().GetNotifyStartUpRequest().GetProviderType()
-		if providerType == participant.ProviderType_SCENARIO {
-			// scenario-provider起動時
-			callbackScenarioStartUpRequest(dm)
-		}else if providerType == participant.ProviderType_AREA {
-			// area-provider起動時
-			callbackAreaStartUpRequest(dm)
-		}
 	case synerex.DemandType_SET_AGENTS_REQUEST:
 		// Agentをセットする要求
 		callbackSetAgentsRequest(dm)
@@ -294,9 +236,6 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 	case synerex.DemandType_GET_SAME_AREA_AGENTS_REQUEST:
 		// 同じエリアのエージェントの要求
 		callbackGetSameAreaAgentsRequest(dm)
-	case synerex.DemandType_DOWN_SCENARIO_REQUEST:
-		// Scenarioがダウンした場合の要求
-		callbackDownScenarioRequest(dm)
 	default:
 		//log.Println("demand callback is invalid.")
 	}
@@ -306,9 +245,6 @@ func demandCallback(clt *sxutil.SMServiceClient, dm *pb.Demand) {
 func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 
 	switch sp.GetSimSupply().SupplyType {
-	case synerex.SupplyType_GET_AREA_RESPONSE:
-		// エリア情報の取得
-		com.SendToGetAreaResponse(sp)
 	case synerex.SupplyType_GET_CLOCK_RESPONSE:
 		// Clock情報の取得
 		com.SendToGetClockResponse(sp)
@@ -332,7 +268,8 @@ func supplyCallback(clt *sxutil.SMServiceClient, sp *pb.Supply) {
 }
 
 func main() {
-	log.Printf("area id is: %v, agent type is %v", areaId, agentType)
+	log.Printf("\x1b[31m\x1b[47m \n SyneServ: %v, NodeServ: %v, AreaJson: %v Pid: %v   \x1b[0m\n", *serverAddr, *nodesrv, *areaJson, pid)
+	//log.Printf("area id is: %v, agent type is %v", areaId, agentType)
 
 	sxutil.RegisterNodeName(*nodesrv, "PedProvider", false)
 
@@ -348,7 +285,7 @@ func main() {
 	}
 
 	// Communicator
-	com = communicator.NewPedCommunicator()
+	com = communicator.NewPedCommunicator(pid)
 
 	sxutil.RegisterDeferFunction(func() { deleteParticipant(); conn.Close() })
 
@@ -369,15 +306,9 @@ func main() {
 	com.SubscribeAll(demandCallback, supplyCallback, &wg)
 	wg.Wait()
 
-	// start up(setArea)
 	wg.Add(1)
-	// 起動時にエリア情報を取得する
-	getArea()
 	// 新規参加登録
 	registParticipant()
-		// geogsonをロードしてsimulatorにセット
-		//fc := loadGeoJson("higashiyama.geojson")
-		//sim.SetGeoInfo(fc)
 
 	wg.Wait()
 	sxutil.CallDeferFunctions() // cleanup!

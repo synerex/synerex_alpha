@@ -21,16 +21,19 @@ var (
 	serverAddr = flag.String("server_addr", "127.0.0.1:10000", "The server address in the format of host:port")
 	nodesrv    = flag.String("nodesrv", "127.0.0.1:9990", "Node ID Server")
 	areaIdFlag     = flag.Int("areaId", 1, "Area Id") 
+	pidFlag     = flag.Int("pid", 1, "Provider Id") 
 	agentType  = common.AgentType_CAR                      // CAR
 	com        *communicator.CarCommunicator
 	sim        *simulator.CarSimulator
 	areaId uint64
+	pid uint64
 	isDownScenario bool
 )
 
 func init(){
 	flag.Parse()
 	areaId = uint64(*areaIdFlag)
+	pid = uint64(*pidFlag)
 	isDownScenario = false
 }
 
@@ -311,7 +314,7 @@ func main() {
 
 
 	// Clientとして登録
-	com = communicator.NewCarCommunicator()
+	com = communicator.NewCarCommunicator(pid)
 
 	sxutil.RegisterDeferFunction(func() { deleteParticipant(); conn.Close() })
 

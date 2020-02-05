@@ -61,10 +61,7 @@ func loadGeoJson(fname string) *geojson.FeatureCollection{
 	return fc
 }
 
-type Option struct{
-	Key string
-	Value string
-}
+
 
 type ProviderData struct{
 	CmdName     string
@@ -82,50 +79,17 @@ type Log struct{
 	Description string
 }
 
-// Provider Info
-type ProviderType int
-const (
-	ProviderType_SCENARIO  ProviderType = 0
-    ProviderType_AREA  ProviderType = 1
-    ProviderType_CAR  ProviderType = 2
-    ProviderType_PEDESTRIAN  ProviderType = 3
-    ProviderType_ROUTE ProviderType = 4
-	ProviderType_VISUALIZATION  ProviderType = 5
-	ProviderType_NODE_ID_SERVER ProviderType = 6
-	ProviderType_SYNEREX_SERVER ProviderType = 7
-	ProviderType_MONITOR_SERVER ProviderType = 8
-)
 
-type ProviderOption struct{
-	NodeServAddr string
-	SynerexServAddr string
-	AreaCoord string
-}
-
-type Provider struct{
-	ID int
-	Name string
-	Type ProviderType
-	Option *ProviderOption
-	Cmd *exec.Cmd
-}
 
 // Order Info
-type OrderType int
-const (
-	OrderType_SET_AGENTS  OrderType = 0
-    OrderType_CLEAR_AGENTS  OrderType = 1
-    OrderType_SET_CLOCK  OrderType = 2
-    OrderType_START_CLOCK  OrderType = 3
-	OrderType_STOP_CLOCK OrderType = 4
-)
+
 
 type Coord struct{
 	Longitude float64
 	Latitude float64
 }
 
-type OrderOption struct{
+/*type OrderOption struct{
 	AgentNum int
 	Time float64
 	AreaCoord []*Coord
@@ -136,7 +100,7 @@ type Order struct {
 	Type   OrderType
 	Name string
 	Option OrderOption
-}
+}*/
 
 // エリアの初期値
 var initAreaNum = 4
@@ -306,7 +270,7 @@ func areaTest(){
 }
 
 func init() {
-	areaTest()
+	//areaTest()
 	geofile = "transit_points.geojson"
 	fcs = loadGeoJson(geofile)
 	runProviders = make(map[string]*Provider)
@@ -397,6 +361,17 @@ func init() {
 			SrcDir:  "provider/simulation/visualization",
 			BinName: "visualization-provider",
 			GoFiles: []string{"visualization-provider.go"},
+			Options: []Option{Option{
+				Key: "test",
+				Value: "0",
+			}},
+		},
+		{
+			CmdName: "Clock",
+			Type: ProviderType_CLOCK,
+			SrcDir:  "provider/simulation/clock",
+			BinName: "clock-provider",
+			GoFiles: []string{"clock-provider.go"},
 			Options: []Option{Option{
 				Key: "test",
 				Value: "0",
@@ -879,10 +854,59 @@ func handleOrder(order *UIOrder) string {
 
 }*/
 
-
 type UIOrder struct{
 	Name string
 	Options []*Option
+}
+
+// Order
+type OrderType int
+const (
+	OrderType_SET_AGENTS  OrderType = 0
+    OrderType_SET_AREA  OrderType = 1
+    OrderType_SET_CLOCK  OrderType = 2
+    OrderType_START_CLOCK  OrderType = 3
+	OrderType_STOP_CLOCK OrderType = 4
+)
+
+type Option struct{
+	Key string
+	Value string
+}
+
+type Order struct {
+	Type   OrderType
+	Name string
+	Options []*Option
+}
+
+// Provider
+type ProviderType int
+const (
+	ProviderType_SCENARIO  ProviderType = 0
+    ProviderType_AREA  ProviderType = 1
+    ProviderType_CAR  ProviderType = 2
+    ProviderType_PEDESTRIAN  ProviderType = 3
+    ProviderType_ROUTE ProviderType = 4
+	ProviderType_VISUALIZATION  ProviderType = 5
+	ProviderType_NODE_ID_SERVER ProviderType = 6
+	ProviderType_SYNEREX_SERVER ProviderType = 7
+	ProviderType_MONITOR_SERVER ProviderType = 8
+	ProviderType_CLOCK ProviderType = 9
+)
+
+type ProviderOption struct{
+	NodeServAddr string
+	SynerexServAddr string
+	AreaCoord string
+}
+
+type Provider struct{
+	ID int
+	Name string
+	Type ProviderType
+	Option *ProviderOption
+	Cmd *exec.Cmd
 }
 
 // simulator cliからの通信
@@ -925,6 +949,15 @@ func runSimulatorServer() error {
 		ok := handleRun(targetName)
 		sendRunnningProviders()
 		return ok
+	})
+
+	server.On("order", func(c *gosocketio.Channel, param *Order) string {
+		targetName := param.Type
+		log.Printf("Get order command %s", targetName)
+
+		//ok := handleRun(targetName)
+		//sendRunnningProviders()
+		return "ok"
 	})
 
 	server.On("command", func(c *gosocketio.Channel, param *UIOrder) string {
@@ -972,6 +1005,8 @@ func main() {
 	handleRun("MonitorServer")
 	time.Sleep(500 * time.Millisecond)
 	handleRun("SynerexServer")
+	time.Sleep(500 * time.Millisecond)
+	handleRun("Clock")
 	//checkRunning2()
 
 	wg := sync.WaitGroup{}

@@ -28,56 +28,68 @@ import (
 type orderCmdInfo struct {
 	Aliases []string
 	CmdName string
+	Type OrderType
+}
+
+/*type Order struct {
+	Type   string
+	Option string
+}*/
+
+type Options struct {
+	Json string
+	AgentNum string
+	ClockTime string
+}
+
+// Order
+type OrderType int
+const (
+	OrderType_SET_AGENTS  OrderType = 0
+    OrderType_SET_AREA  OrderType = 1
+    OrderType_SET_CLOCK  OrderType = 2
+    OrderType_START_CLOCK  OrderType = 3
+	OrderType_STOP_CLOCK OrderType = 4
+)
+
+type Option struct{
+	Key string
+	Value string
 }
 
 type Order struct {
-	Type   string
-	Option string
-}
-
-type Options struct {
-	optJsonName string
-	optAgentNum string
+	Type   OrderType
+	Name string
+	Options []*Option
 }
 
 var o = Options{}
 
 var orderCmds = [...]orderCmdInfo{
 	{
-		Aliases: []string{"SetAll", "setAll"},
-		CmdName: "SetAll",
-	},
-	{
 		Aliases: []string{"SetClock", "setClock", "setclock", "set-clock"},
 		CmdName: "SetClock",
+		Type: OrderType_SET_CLOCK,
 	},
 	{
 		Aliases: []string{"SetArea", "setArea", "setarea", "set-area"},
 		CmdName: "SetArea",
+		Type: OrderType_SET_AREA,
 	},
 	{
 		Aliases: []string{"SetAgents", "setAgents", "setagents", "set-agents", "SetAgent", "setAgent", "setagent", "set-agent"},
 		CmdName: "SetAgents",
-	},
-	{
-		Aliases: []string{"ClearAgents", "clearAgents", "clearagents", "clear-agents", "ClearAgent", "clearAgent", "clearagent", "clear-agent"},
-		CmdName: "ClearAgents",
-	},
-	{
-		Aliases: []string{"GetParticipant", "getParticipant", "getparticipant", "get-participant"},
-		CmdName: "GetParticipant",
+		Type: OrderType_SET_AGENTS,
 	},
 	{
 		Aliases: []string{"StartClock", "startClock", "start"},
 		CmdName: "StartClock",
+		Type: OrderType_START_CLOCK,
 	},
 	{
 		Aliases: []string{"StopClock", "stopClock", "stop"},
 		CmdName: "StopClock",
-	},
-	{
-		Aliases: []string{"Clear", "clear"},
-		CmdName: "Clear",
+		Type: OrderType_STOP_CLOCK,
 	},
 }
 
@@ -121,14 +133,13 @@ func handleOrder(cmd *cobra.Command, args []string) {
 			for _, str := range ci.Aliases {
 				if args[0] == str {
 					switch ci.CmdName {
-					case "SetAll":
-						order.Option = o.optJsonName
 					case "SetAgents":
-						order.Option = o.optAgentNum
+						//order.Option = o.optAgentNum
 					}
 
 					fmt.Printf("simulator: Starting '%s'\n", ci.CmdName)
-					order.Type = ci.CmdName
+					order.Type = ci.Type
+					order.Name = ci.CmdName
 					findflag = sendOrder(ci.CmdName, order)
 					break
 				}
@@ -157,6 +168,7 @@ For example:
 
 func init() {
 	rootCmd.AddCommand(orderCmd)
-	orderCmd.Flags().StringVarP(&o.optJsonName, "json", "j", "sample.json", "string option")
-	orderCmd.Flags().StringVarP(&o.optAgentNum, "rand", "r", "1", "string option")
+	orderCmd.Flags().StringVarP(&o.Json, "json", "j", "sample.json", "json name")
+	orderCmd.Flags().StringVarP(&o.AgentNum, "num", "n", "1", "agent num")
+	orderCmd.Flags().StringVarP(&o.ClockTime, "time", "t", "0", "clock time")
 }
