@@ -63,7 +63,7 @@ const AreaMonitor: React.FC<Props> = props => {
             <div style={{ height: "100vh", width: "100%" }}>
                 <GoogleMapReact
                     bootstrapURLKeys={{
-                        key: "AIzaSyBj9mm1Y-7mnZx2Vh1DLrLhWwZ9taRqAI0"
+                        key: "------"
                     }}
                     defaultCenter={defaultProps.center}
                     defaultZoom={defaultProps.zoom}
