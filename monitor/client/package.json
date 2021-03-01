@@ -10,7 +10,7 @@
     "sane": "^4.0.2",
     "socket.io": "^2.1.1",
     "socket.io-client": "^2.1.1",
-    "three": "^0.98.0"
+    "three": "^0.125.0"
   },
   "scripts": {
     "start": "react-scripts start",
