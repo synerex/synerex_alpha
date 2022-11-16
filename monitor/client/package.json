@@ -6,7 +6,7 @@
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
     "react-resize-listener": "^0.3.6",
-    "react-scripts": "2.1.1",
+    "react-scripts": "5.0.1",
     "sane": "^4.0.2",
     "socket.io": "^2.1.1",
     "socket.io-client": "^2.1.1",
